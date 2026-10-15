@@ -109,3 +109,97 @@ jobs:
             build/new-api-ubuntu-*.tar.gz.sha256
           if-no-files-found: error
           retention-days: 30
+
+      - name: Build Docker image from the executable
+        if: github.ref == 'refs/heads/usage-reporting'
+        run: |
+          IMAGE="new-api:usage-reporting-${GITHUB_SHA}"
+          docker build --file Dockerfile.runtime \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "$IMAGE" build/package
+          docker run --rm "$IMAGE" --version
+
+      - name: Verify Docker startup with an isolated database
+        if: github.ref == 'refs/heads/usage-reporting'
+        run: |
+          IMAGE="new-api:usage-reporting-${GITHUB_SHA}"
+          CONTAINER=$(docker run -d \
+            -e SESSION_SECRET=ci-only-session-secret \
+            -e CRYPTO_SECRET=ci-only-crypto-secret \
+            -e SQLITE_PATH=/data/new-api.db "$IMAGE")
+          trap 'docker logs "$CONTAINER"; docker rm -f "$CONTAINER" >/dev/null' EXIT
+          for attempt in $(seq 1 60); do
+            if docker exec "$CONTAINER" wget -q -T 3 -O /dev/null http://127.0.0.1:3000/api/status; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Export Docker image for Ubuntu deployment
+        if: github.ref == 'refs/heads/usage-reporting'
+        run: |
+          mkdir -p build/docker
+          ARCHIVE="new-api-docker-ubuntu-${GOARCH}.tar.gz"
+          docker save "new-api:usage-reporting-${GITHUB_SHA}" | gzip -1 > "build/docker/$ARCHIVE"
+          cd build/docker
+          sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+          docker load --input "$ARCHIVE"
+
+      - name: Upload Docker image archive
+        if: github.ref == 'refs/heads/usage-reporting'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: new-api-docker-ubuntu-${{ matrix.arch }}
+          path: build/docker/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish_docker:
+    name: Publish Docker deployment packages
+    needs: build
+    if: github.ref == 'refs/heads/usage-reporting'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Download verified Docker images
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: new-api-docker-ubuntu-*
+          path: publish
+          merge-multiple: true
+
+      - name: Prepare deployment script
+        run: |
+          sed "s/__BUILD_COMMIT__/${GITHUB_SHA}/g" bin/deploy-ubuntu-docker.sh > publish/install-new-api-isolated.sh
+          bash -n publish/install-new-api-isolated.sh
+          cd publish
+          sha256sum --check new-api-docker-ubuntu-amd64.tar.gz.sha256
+          sha256sum --check new-api-docker-ubuntu-arm64.tar.gz.sha256
+          sha256sum install-new-api-isolated.sh > install-new-api-isolated.sh.sha256
+
+      - name: Publish deployment assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="usage-reporting-docker-${GITHUB_SHA}"
+          cat > release-notes.txt <<'NOTES'
+          Docker images built and verified by GitHub Actions for Linux amd64 and arm64.
+          The deployment script downloads the matching image, verifies its checksum, and starts an independent NewAPI instance on port 3001 with a separate SQLite database.
+          No application compilation or Docker build is performed on the Ubuntu server.
+          NOTES
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --draft --prerelease --latest=false \
+              --title "NewAPI usage reporting Docker (${GITHUB_SHA:0:7})" \
+              --notes-file release-notes.txt
+          fi
+          gh release upload "$TAG" publish/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+          printf 'Docker deployment packages: https://github.com/%s/releases/tag/%s\n' "$GITHUB_REPOSITORY" "$TAG" >> "$GITHUB_STEP_SUMMARY"
