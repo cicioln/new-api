@@ -282,6 +282,17 @@ func UpdateOption(c *gin.Context) {
 			common.ApiError(c, err)
 			return
 		}
+	case "global.usage_display_ratio":
+		ratio, parseErr := strconv.ParseFloat(strings.TrimSpace(option.Value.(string)), 64)
+		if parseErr != nil || !model_setting.ValidUsageDisplayRatio(ratio) {
+			common.ApiErrorT(c, "Usage display ratio must be a finite number greater than zero")
+			return
+		}
+	case "global.usage_passthrough_enabled":
+		if option.Value != "true" && option.Value != "false" {
+			common.ApiErrorT(c, "Usage passthrough must be true or false")
+			return
+		}
 	case operation_setting.ToolPriceOptionKey:
 		err = operation_setting.ValidateToolPricesJSON(option.Value.(string))
 		if err != nil {

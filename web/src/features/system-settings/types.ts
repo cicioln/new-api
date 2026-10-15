@@ -227,6 +227,8 @@ export type ContentSettings = {
 }
 
 export type ModelSettings = {
+  'global.usage_passthrough_enabled': boolean
+  'global.usage_display_ratio': number
   'global.pass_through_request_enabled': boolean
   'global.thinking_model_blacklist': string
   'global.chat_completions_to_responses_policy': string

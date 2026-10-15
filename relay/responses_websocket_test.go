@@ -20,6 +20,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/model_setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
@@ -500,6 +501,43 @@ func newTestResponsesWSTarget(t *testing.T) (*websocket.Conn, func()) {
 	t.Helper()
 	target, _, cleanup := newTestWebSocketPair(t)
 	return target, cleanup
+}
+
+func TestResponsesWSUsageReportingPreservesAccountingPayload(t *testing.T) {
+	settings := model_setting.GetGlobalSettings()
+	original := *settings
+	t.Cleanup(func() { *settings = original })
+	for _, passthrough := range []bool{false, true} {
+		t.Run(fmt.Sprintf("passthrough=%t", passthrough), func(t *testing.T) {
+			settings.UsagePassthroughEnabled, settings.UsageDisplayRatio = passthrough, 0.5
+			client, server, cleanup := newTestWebSocketPair(t)
+			defer cleanup()
+			upstream := []byte(`{"type":"response.completed","response":{"id":"resp-test","usage":{"input_tokens":100,"output_tokens":20,"total_tokens":120,"input_tokens_details":{"cached_tokens":80},"output_tokens_details":{"reasoning_tokens":10}}}}`)
+			state := &responsesWSCallState{done: make(chan struct{})}
+			session := &responsesWSSession{
+				ctx: context.Background(), client: server, current: state,
+				request: httptest.NewRequest(http.MethodGet, "/v1/responses", nil),
+				runner: func(_ *http.Request, _ string, _ func(*gin.Context) *types.NewAPIError) *types.NewAPIError {
+					state.terminal = &responsesWSMessage{kind: websocket.TextMessage, body: upstream}
+					return nil
+				},
+			}
+			message := []byte(`{"type":"response.create","model":"gpt-5.1","input":"hi"}`)
+			envelope, streamID, err := parseResponsesWSEnvelope(message)
+			require.NoError(t, err)
+			session.runRequest(state, message, envelope, streamID, "request-test")
+			require.NoError(t, client.SetReadDeadline(time.Now().Add(5*time.Second)))
+			_, body, err := client.ReadMessage()
+			require.NoError(t, err)
+			if passthrough {
+				assert.Equal(t, upstream, body)
+			} else {
+				assert.JSONEq(t, `{"type":"response.completed","response":{"id":"resp-test","usage":{"input_tokens":50,"output_tokens":10,"total_tokens":60,"input_tokens_details":{"cached_tokens":40},"output_tokens_details":{"reasoning_tokens":5}}}}`, string(body))
+			}
+			// The same raw body is used by the upstream usage accumulator.
+			assert.Contains(t, string(upstream), `"total_tokens":120`)
+		})
+	}
 }
 
 func newTestWebSocketPair(t *testing.T) (*websocket.Conn, *websocket.Conn, func()) {

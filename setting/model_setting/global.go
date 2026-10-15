@@ -1,6 +1,7 @@
 package model_setting
 
 import (
+	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -36,6 +37,8 @@ func (p ChatCompletionsToResponsesPolicy) IsChannelEnabled(channelID int, channe
 }
 
 type GlobalSettings struct {
+	UsagePassthroughEnabled   bool     `json:"usage_passthrough_enabled"`
+	UsageDisplayRatio         float64  `json:"usage_display_ratio"`
 	PassThroughRequestEnabled bool     `json:"pass_through_request_enabled"`
 	ThinkingModelBlacklist    []string `json:"thinking_model_blacklist"`
 	// EffortTailModelIDs lists real model IDs that sit inside the GPT/o-series
@@ -46,6 +49,8 @@ type GlobalSettings struct {
 
 // 默认配置
 var defaultOpenaiSettings = GlobalSettings{
+	UsagePassthroughEnabled:   false,
+	UsageDisplayRatio:         DefaultUsageDisplayRatio,
 	PassThroughRequestEnabled: false,
 	ThinkingModelBlacklist: []string{
 		"moonshotai/kimi-k2-thinking",
@@ -74,6 +79,23 @@ func init() {
 
 func GetGlobalSettings() *GlobalSettings {
 	return &globalSettings
+}
+
+const DefaultUsageDisplayRatio = 0.6657
+
+// ValidUsageDisplayRatio also guards values loaded from older/manual options.
+func ValidUsageDisplayRatio(ratio float64) bool {
+	return ratio > 0 && !math.IsNaN(ratio) && !math.IsInf(ratio, 0)
+}
+
+func (s *GlobalSettings) GetUsageReportingRatio() float64 {
+	if s.UsagePassthroughEnabled {
+		return 1
+	}
+	if !ValidUsageDisplayRatio(s.UsageDisplayRatio) {
+		return DefaultUsageDisplayRatio
+	}
+	return s.UsageDisplayRatio
 }
 
 const thinkingBlacklistRegexPrefix = "re:"

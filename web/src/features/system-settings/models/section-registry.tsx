@@ -23,6 +23,7 @@ import { ClaudeSettingsCard } from './claude-settings-card'
 import { GeminiSettingsCard } from './gemini-settings-card'
 import { GlobalSettingsCard } from './global-settings-card'
 import { GrokSettingsCard } from './grok-settings-card'
+import { UsageReportingSettingsCard } from './usage-reporting-settings-card'
 
 function formatJsonForEditor(value: string, fallback: string) {
   const raw = (value ?? '').toString().trim()
@@ -35,6 +36,16 @@ function formatJsonForEditor(value: string, fallback: string) {
 }
 
 const MODELS_SECTIONS = [
+  {
+    id: 'usage-reporting',
+    titleKey: 'Usage Reporting',
+    build: (settings: ModelSettings) => (
+      <UsageReportingSettingsCard
+        passthrough={settings['global.usage_passthrough_enabled'] ?? false}
+        ratio={settings['global.usage_display_ratio'] ?? 0.6657}
+      />
+    ),
+  },
   {
     id: 'global',
     titleKey: 'Global Model Configuration',

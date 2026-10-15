@@ -7276,6 +7276,14 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Usage Reporting": "Rapport d’utilisation",
+    "Report Actual Token Usage": "Renvoyer l’utilisation réelle des tokens",
+    "Usage Display Ratio": "Coefficient d’affichage de l’utilisation",
+    "When enabled, return token usage at 1:1 for clients that calculate context occupancy from usage. When disabled, apply the display ratio (default 0.6657).": "Si activé, renvoie les tokens à 1:1 pour les clients qui calculent le contexte à partir de usage. Sinon, applique le coefficient d’affichage (0.6657 par défaut).",
+    "Token counts are multiplied by this positive coefficient and rounded to the nearest integer. Billing and usage logs retain the original counts.": "Le nombre de tokens est multiplié par ce coefficient positif et arrondi à l’entier le plus proche. La facturation et les journaux conservent les valeurs d’origine.",
+    "Usage display ratio must be a finite number greater than zero": "Le coefficient d’affichage doit être un nombre fini supérieur à zéro",
+    "Usage passthrough must be true or false": "La transmission de l’utilisation doit valoir true ou false",
+    "This setting applies to all clients, including Codex. Clients that use usage to trigger automatic compaction may compact at a different time when scaling is enabled.": "Ce réglage concerne tous les clients, y compris Codex. La mise à l’échelle peut modifier le moment de la compression automatique des clients qui utilisent usage pour la déclencher."
   }
 }

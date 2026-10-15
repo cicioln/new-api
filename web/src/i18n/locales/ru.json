@@ -7276,6 +7276,14 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Usage Reporting": "Передача использования",
+    "Report Actual Token Usage": "Передавать реальное число токенов",
+    "Usage Display Ratio": "Коэффициент отображения использования",
+    "When enabled, return token usage at 1:1 for clients that calculate context occupancy from usage. When disabled, apply the display ratio (default 0.6657).": "При включении токены передаются 1:1 для клиентов, рассчитывающих заполнение контекста по usage. Иначе применяется коэффициент отображения (по умолчанию 0.6657).",
+    "Token counts are multiplied by this positive coefficient and rounded to the nearest integer. Billing and usage logs retain the original counts.": "Число токенов умножается на этот положительный коэффициент и округляется до целого. Оплата и журналы сохраняют исходные значения.",
+    "Usage display ratio must be a finite number greater than zero": "Коэффициент отображения должен быть конечным числом больше нуля",
+    "Usage passthrough must be true or false": "Передача использования должна иметь значение true или false",
+    "This setting applies to all clients, including Codex. Clients that use usage to trigger automatic compaction may compact at a different time when scaling is enabled.": "Настройка применяется ко всем клиентам, включая Codex. Масштабирование может изменить момент автоматического сжатия в клиентах, использующих usage для его запуска."
   }
 }

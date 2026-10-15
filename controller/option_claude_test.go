@@ -32,3 +32,29 @@ func TestUpdateOptionRejectsNegativeClaudeDefaultMaxTokens(t *testing.T) {
 	assert.False(t, payload.Success)
 	assert.Contains(t, payload.Message, "-1")
 }
+
+func TestUpdateOptionRejectsInvalidUsageReportingSettings(t *testing.T) {
+	for _, tc := range []struct{ key, value string }{
+		{"global.usage_display_ratio", "0"},
+		{"global.usage_display_ratio", "-0.5"},
+		{"global.usage_display_ratio", "NaN"},
+		{"global.usage_display_ratio", "+Inf"},
+		{"global.usage_display_ratio", "1e999"},
+		{"global.usage_display_ratio", "invalid"},
+		{"global.usage_passthrough_enabled", "yes"},
+	} {
+		t.Run(tc.key+"/"+tc.value, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			context, _ := gin.CreateTestContext(response)
+			payload, err := common.Marshal(map[string]string{"key": tc.key, "value": tc.value})
+			require.NoError(t, err)
+			context.Request = httptest.NewRequest(http.MethodPut, "/api/option/", strings.NewReader(string(payload)))
+			UpdateOption(context)
+			var result struct {
+				Success bool `json:"success"`
+			}
+			require.NoError(t, common.Unmarshal(response.Body.Bytes(), &result))
+			assert.False(t, result.Success)
+		})
+	}
+}

@@ -7276,6 +7276,14 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Usage Reporting": "使用量の報告",
+    "Report Actual Token Usage": "実際のトークン使用量を報告",
+    "Usage Display Ratio": "使用量の表示係数",
+    "When enabled, return token usage at 1:1 for clients that calculate context occupancy from usage. When disabled, apply the display ratio (default 0.6657).": "有効にすると、usage からコンテキスト使用率を計算するクライアント向けにトークン数を 1:1 で返します。無効時は表示係数（既定値 0.6657）を適用します。",
+    "Token counts are multiplied by this positive coefficient and rounded to the nearest integer. Billing and usage logs retain the original counts.": "トークン数に正の係数を掛け、最も近い整数に丸めます。課金と使用量ログには元の値を保持します。",
+    "Usage display ratio must be a finite number greater than zero": "表示係数にはゼロより大きい有限の数値を指定してください",
+    "Usage passthrough must be true or false": "使用量の透過設定には true または false を指定してください",
+    "This setting applies to all clients, including Codex. Clients that use usage to trigger automatic compaction may compact at a different time when scaling is enabled.": "この設定は Codex を含むすべてのクライアントに適用されます。usage に基づいて自動圧縮を行うクライアントでは、係数の適用により圧縮のタイミングが変わる場合があります。"
   }
 }

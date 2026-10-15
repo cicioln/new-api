@@ -7276,6 +7276,14 @@
     "Zhipu": "智谱",
     "Zhipu GLM": "智谱GLM",
     "Zhipu V4": "智谱 V4",
-    "Zoom": "缩放"
+    "Zoom": "缩放",
+    "Usage Reporting": "用量上报",
+    "Report Actual Token Usage": "上报真实 Token 用量",
+    "Usage Display Ratio": "用量展示系数",
+    "When enabled, return token usage at 1:1 for clients that calculate context occupancy from usage. When disabled, apply the display ratio (default 0.6657).": "开启后按 1:1 返回 Token 用量，适配根据 usage 计算上下文占用的客户端。关闭时按展示系数缩放，默认为 0.6657。",
+    "Token counts are multiplied by this positive coefficient and rounded to the nearest integer. Billing and usage logs retain the original counts.": "Token 数乘以此正数系数后四舍五入为整数。计费与用量日志保留原始数值。",
+    "Usage display ratio must be a finite number greater than zero": "用量展示系数必须为大于零的有限数值",
+    "Usage passthrough must be true or false": "用量透传必须为 true 或 false",
+    "This setting applies to all clients, including Codex. Clients that use usage to trigger automatic compaction may compact at a different time when scaling is enabled.": "此设置适用于所有客户端，包括 Codex。启用缩放后，根据 usage 触发自动压缩的客户端可能改变压缩时机。"
   }
 }

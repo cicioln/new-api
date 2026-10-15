@@ -27,6 +27,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/model_setting"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -79,10 +80,11 @@ type responsesWSControl struct {
 // Only the request worker reads or changes billing state. Socket readers pass
 // bounded messages to it; cancellation never performs an independent refund.
 type responsesWSCallState struct {
-	inbox    chan responsesWSMessage
-	controls chan responsesWSControl
-	done     chan struct{}
-	terminal *responsesWSMessage
+	usageReportingRatio float64
+	inbox               chan responsesWSMessage
+	controls            chan responsesWSControl
+	done                chan struct{}
+	terminal            *responsesWSMessage
 	// A nonzero closeCode ends the connection after this request.
 	closeCode   int
 	closeReason string
@@ -179,6 +181,7 @@ func ResponsesWebSocketHelper(c *gin.Context, client *websocket.Conn, runner Res
 }
 
 func (s *responsesWSSession) runRequest(state *responsesWSCallState, message []byte, envelope responsesWSCreateEvent, streamID string, requestID string) {
+	state.usageReportingRatio = model_setting.GetGlobalSettings().GetUsageReportingRatio()
 	create, parseErr := normalizeResponsesWSCreateEvent(message, envelope, streamID)
 	var apiErr *types.NewAPIError
 	defer func() {
@@ -202,7 +205,7 @@ func (s *responsesWSSession) runRequest(state *responsesWSCallState, message []b
 		if outgoing != nil {
 			if err := s.client.SetWriteDeadline(time.Now().Add(responsesWSWriteTimeout)); err != nil {
 				state.closeCode = websocket.CloseInternalServerErr
-			} else if err := s.client.WriteMessage(outgoing.kind, outgoing.body); err != nil {
+			} else if err := s.client.WriteMessage(outgoing.kind, middleware.ScaleResponseUsage(outgoing.body, state.usageReportingRatio)); err != nil {
 				state.closeCode = websocket.CloseInternalServerErr
 			}
 		}
@@ -396,7 +399,7 @@ func (s *responsesWSSession) runCall(c *gin.Context, state *responsesWSCallState
 				info.StreamStatus.RecordError("invalid upstream websocket event")
 			} else {
 				if event.Type != "error" && event.StreamID != "" && event.StreamID != create.StreamID {
-					if err := s.writeClient(incoming.kind, incoming.body); err != nil {
+					if err := s.writeClient(incoming.kind, incoming.body, state.usageReportingRatio); err != nil {
 						s.shutdown(websocket.CloseInternalServerErr, "")
 					}
 					continue
@@ -414,7 +417,7 @@ func (s *responsesWSSession) runCall(c *gin.Context, state *responsesWSCallState
 					}
 					terminal, ambiguous, controlError := responsesWSErrorEndsRequest(rejection, create.StreamID, responseID, sentControl)
 					if !terminal {
-						if err := s.writeClient(incoming.kind, incoming.body); err != nil {
+						if err := s.writeClient(incoming.kind, incoming.body, state.usageReportingRatio); err != nil {
 							s.shutdown(websocket.CloseInternalServerErr, "")
 						}
 						// Only a control error in this stream resolves its pending control.
@@ -474,7 +477,7 @@ func (s *responsesWSSession) runCall(c *gin.Context, state *responsesWSCallState
 				ConsumeResponsesQuota(c, info, accumulator.Finish())
 				return nil
 			}
-			if err := s.writeClient(incoming.kind, incoming.body); err != nil {
+			if err := s.writeClient(incoming.kind, incoming.body, state.usageReportingRatio); err != nil {
 				s.shutdown(websocket.CloseInternalServerErr, "")
 			}
 			if accepted && pendingControl != nil {
@@ -655,7 +658,7 @@ func (s *responsesWSSession) startTargetReader(target *websocket.Conn) {
 				s.shutdown(code, "upstream connection closed")
 				return
 			}
-			if writeErr := s.writeClient(kind, body); writeErr != nil {
+			if writeErr := s.writeClient(kind, body, model_setting.GetGlobalSettings().GetUsageReportingRatio()); writeErr != nil {
 				s.shutdown(websocket.CloseInternalServerErr, "")
 				return
 			}
@@ -710,13 +713,13 @@ func (s *responsesWSSession) writeTarget(kind int, message []byte) error {
 	return target.WriteMessage(kind, message)
 }
 
-func (s *responsesWSSession) writeClient(kind int, message []byte) error {
+func (s *responsesWSSession) writeClient(kind int, message []byte, usageReportingRatio float64) error {
 	s.clientWriteMu.Lock()
 	defer s.clientWriteMu.Unlock()
 	if err := s.client.SetWriteDeadline(time.Now().Add(responsesWSWriteTimeout)); err != nil {
 		return err
 	}
-	return s.client.WriteMessage(kind, message)
+	return s.client.WriteMessage(kind, middleware.ScaleResponseUsage(message, usageReportingRatio))
 }
 
 func (s *responsesWSSession) sendError(eventID, streamID string, apiErr *types.NewAPIError) {
@@ -725,7 +728,7 @@ func (s *responsesWSSession) sendError(eventID, streamID string, apiErr *types.N
 	}
 	payload, err := buildResponsesWSErrorPayload(eventID, streamID, apiErr)
 	if err == nil {
-		_ = s.writeClient(websocket.TextMessage, payload)
+		_ = s.writeClient(websocket.TextMessage, payload, 1)
 	}
 }
 

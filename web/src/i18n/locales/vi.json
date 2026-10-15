@@ -7276,6 +7276,14 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Usage Reporting": "Báo cáo mức sử dụng",
+    "Report Actual Token Usage": "Báo cáo số token thực tế",
+    "Usage Display Ratio": "Hệ số hiển thị mức sử dụng",
+    "When enabled, return token usage at 1:1 for clients that calculate context occupancy from usage. When disabled, apply the display ratio (default 0.6657).": "Khi bật, trả số token theo tỷ lệ 1:1 cho ứng dụng tính mức chiếm dụng ngữ cảnh từ usage. Khi tắt, áp dụng hệ số hiển thị (mặc định 0.6657).",
+    "Token counts are multiplied by this positive coefficient and rounded to the nearest integer. Billing and usage logs retain the original counts.": "Số token được nhân với hệ số dương này và làm tròn đến số nguyên gần nhất. Tính phí và nhật ký sử dụng giữ số liệu gốc.",
+    "Usage display ratio must be a finite number greater than zero": "Hệ số hiển thị phải là số hữu hạn lớn hơn không",
+    "Usage passthrough must be true or false": "Truyền mức sử dụng phải là true hoặc false",
+    "This setting applies to all clients, including Codex. Clients that use usage to trigger automatic compaction may compact at a different time when scaling is enabled.": "Cài đặt áp dụng cho mọi ứng dụng, bao gồm Codex. Việc thay đổi tỷ lệ có thể đổi thời điểm nén tự động ở ứng dụng dùng usage để kích hoạt nén."
   }
 }
