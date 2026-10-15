@@ -1,0 +1,111 @@
+name: Build for Ubuntu
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ubuntu-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Ubuntu (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      GOWORK: 'off'
+      CGO_ENABLED: '0'
+      GOOS: linux
+      GOARCH: ${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve version
+        run: |
+          VERSION="$(tr -d '\r\n' < VERSION)-$(git rev-parse --short HEAD)"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: bun install --frozen-lockfile
+
+      - name: Verify frontend
+        working-directory: web
+        run: |
+          bun run typecheck
+          bun run test src/features/system-settings/models/__tests__/usage-reporting.test.tsx
+
+      - name: Build frontend
+        working-directory: web
+        env:
+          VITE_REACT_APP_VERSION: ${{ env.VERSION }}
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: bun run build
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            relaykit/go.sum
+            tokenkit/go.sum
+
+      - name: Verify usage reporting
+        run: |
+          go test ./middleware ./relay -run 'TestUsageReporting|TestResponsesWS' -count=1 -timeout 120s
+          go test ./controller -run 'TestUpdateOptionRejectsInvalidUsageReportingSettings$' -count=1 -timeout 60s
+          go test ./setting/model_setting -count=1 -timeout 60s
+
+      - name: Build executable with embedded frontend
+        run: |
+          mkdir -p build/package
+          go build -trimpath \
+            -pgo="$(go list -m -f '{{.Dir}}' github.com/Calcium-Ion/moejs)/default.pgo" \
+            -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=$VERSION" \
+            -o build/package/new-api .
+          chmod +x build/package/new-api
+          cp LICENSE NOTICE THIRD-PARTY-LICENSES.md VERSION build/package/
+          printf '%s\n' "$VERSION" > build/package/BUILD_VERSION
+
+      - name: Check Ubuntu executable
+        run: |
+          file build/package/new-api
+          build/package/new-api --version
+
+      - name: Package
+        run: |
+          cd build
+          ARCHIVE="new-api-ubuntu-${GOARCH}.tar.gz"
+          tar -czf "$ARCHIVE" -C package .
+          sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+
+      - name: Upload Ubuntu package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: new-api-ubuntu-${{ matrix.arch }}
+          path: |
+            build/new-api-ubuntu-*.tar.gz
+            build/new-api-ubuntu-*.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
