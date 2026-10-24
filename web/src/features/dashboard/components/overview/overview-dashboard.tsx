@@ -48,6 +48,7 @@ import {
 } from '@/components/page-transition'
 import { Button } from '@/components/ui/button'
 import { IconBadge, type IconBadgeTone } from '@/components/ui/icon-badge'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { fetchTokenKey, getApiKeys } from '@/features/keys/api'
 import type { ApiKey } from '@/features/keys/types'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
@@ -60,15 +61,32 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
 import {
+  getPeriodHours,
+  useOverviewUsage,
+  usePerfSummary,
+} from '../../hooks/use-overview-data'
+import {
   useApiInfo,
   useDashboardContentVisibility,
 } from '../../hooks/use-status-data'
+import {
+  getGreetingKey,
+  OVERVIEW_PERIOD_IDS,
+  OVERVIEW_PERIODS,
+  type OverviewPeriod,
+} from '../../lib/overview'
 import { AnnouncementsPanel } from './announcements-panel'
 import { ApiInfoPanel } from './api-info-panel'
 import { FAQPanel } from './faq-panel'
-import { PerformanceHealthPanel } from './performance-health-panel'
-import { SummaryCards } from './summary-cards'
+import { OverviewKpis } from './overview-kpis'
+import { OverviewModelHealth } from './overview-model-health'
+import { OverviewModelShare } from './overview-model-share'
+import { OverviewRecentRequests } from './overview-recent-requests'
+import { OverviewTrend } from './overview-trend'
 import { UptimePanel } from './uptime-panel'
+
+const OVERVIEW_PERIOD_STORAGE_KEY = 'dashboard_overview_period'
+const HEALTH_WINDOW_HOURS = 24
 
 const SETUP_GUIDE_VISIBILITY_STORAGE_KEY =
   'dashboard_overview_setup_guide_expanded'
@@ -138,6 +156,16 @@ function saveSetupGuideExpanded(expanded: boolean): void {
     SETUP_GUIDE_VISIBILITY_STORAGE_KEY,
     expanded ? 'expanded' : 'collapsed'
   )
+}
+
+function getSavedOverviewPeriod(): OverviewPeriod {
+  try {
+    const saved = window.localStorage.getItem(OVERVIEW_PERIOD_STORAGE_KEY)
+    if (saved && saved in OVERVIEW_PERIODS) return saved as OverviewPeriod
+  } catch {
+    // Storage can be unavailable in private windows; fall back to the default.
+  }
+  return '7d'
 }
 
 function getCurrentOrigin(): string {
@@ -475,6 +503,12 @@ export function OverviewDashboard() {
   const [manualSetupGuideExpanded, setManualSetupGuideExpanded] = useState<
     boolean | null
   >(() => getSavedSetupGuideExpanded())
+  const [period, setPeriod] = useState<OverviewPeriod>(() =>
+    getSavedOverviewPeriod()
+  )
+  const usage = useOverviewUsage(period)
+  const periodPerf = usePerfSummary(getPeriodHours(period))
+  const healthPerf = usePerfSummary(HEALTH_WINDOW_HOURS)
 
   const requestCount = Number(user?.request_count ?? 0)
   const remainQuota = Number(user?.quota ?? 0)
@@ -615,8 +649,23 @@ export function OverviewDashboard() {
   const setupGuideExpanded =
     manualSetupGuideExpanded ?? (setupStatusReady && !setupComplete)
   const showLeftContentPanels =
-    isAdmin || showApiInfoPanel || showAnnouncementsPanel || showFAQPanel
+    showApiInfoPanel || showAnnouncementsPanel || showFAQPanel
   const showContentPanels = showLeftContentPanels || showUptimePanel
+
+  const handlePeriodChange = (values: unknown[]) => {
+    const next = values[0]
+    if (typeof next !== 'string' || !(next in OVERVIEW_PERIODS)) return
+    setPeriod(next as OverviewPeriod)
+    try {
+      window.localStorage.setItem(OVERVIEW_PERIOD_STORAGE_KEY, next)
+    } catch {
+      // Remembering the period is a convenience only.
+    }
+  }
+  const displayName = user?.display_name || user?.username || ''
+  const greeting = t(getGreetingKey(new Date().getHours()), {
+    name: displayName,
+  })
 
   const handleSetupGuideToggle = () => {
     const nextExpanded = !setupGuideExpanded
@@ -629,8 +678,25 @@ export function OverviewDashboard() {
 
   return (
     <SectionPageLayout>
-      <SectionPageLayout.Title>{t('Overview')}</SectionPageLayout.Title>
+      <SectionPageLayout.Title>{greeting}</SectionPageLayout.Title>
+      <SectionPageLayout.Description>
+        {t('Usage, spend and model health for your account at a glance.')}
+      </SectionPageLayout.Description>
       <SectionPageLayout.Actions>
+        <ToggleGroup
+          value={[period]}
+          onValueChange={handlePeriodChange}
+          variant='outline'
+          size='sm'
+          aria-label={t('Time range')}
+          className='bg-card'
+        >
+          {OVERVIEW_PERIOD_IDS.map((id) => (
+            <ToggleGroupItem key={id} value={id}>
+              {t(OVERVIEW_PERIODS[id].labelKey)}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
         {setupStatusReady && setupComplete && (
           <Button
             ref={setupGuideToggleRef}
@@ -644,9 +710,13 @@ export function OverviewDashboard() {
             {t('Setup guide')}
           </Button>
         )}
+        <Button size='sm' render={<Link to='/keys' />}>
+          <KeyRound data-icon='inline-start' />
+          {t('Create API Key')}
+        </Button>
       </SectionPageLayout.Actions>
       <SectionPageLayout.Content>
-        <div className='flex flex-col gap-4'>
+        <div className='flex flex-col gap-3.5'>
           <div id={setupGuideId} hidden={!setupGuideExpanded}>
             {setupGuideExpanded && (
               <CardStaggerContainer className='grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]'>
@@ -787,7 +857,37 @@ export function OverviewDashboard() {
             </CardStaggerContainer>
           )}
 
-          <SummaryCards />
+          <OverviewKpis
+            period={period}
+            aggregate={usage.aggregate}
+            loading={usage.loading}
+            performance={periodPerf.data?.data.summary}
+            performanceLoading={periodPerf.isLoading}
+          />
+
+          <div className='grid grid-cols-1 gap-3.5 lg:grid-cols-[1.7fr_1fr]'>
+            <OverviewTrend
+              period={period}
+              bucketStarts={usage.window.bucketStarts}
+              counts={usage.aggregate.series.count}
+              quotas={usage.aggregate.series.quota}
+              loading={usage.loading}
+            />
+            <OverviewModelShare
+              models={usage.aggregate.models}
+              totalQuota={usage.aggregate.current.quota}
+              loading={usage.loading}
+            />
+          </div>
+
+          <div className='grid grid-cols-1 gap-3.5 lg:grid-cols-[1.7fr_1fr]'>
+            <OverviewRecentRequests />
+            <OverviewModelHealth
+              models={healthPerf.data?.data.models ?? []}
+              windowEnd={healthPerf.data?.data.window_end}
+              loading={healthPerf.isLoading}
+            />
+          </div>
 
           {showContentPanels && (
             <CardStaggerContainer
@@ -802,17 +902,9 @@ export function OverviewDashboard() {
                 <div
                   className={cn(
                     'grid min-w-0 grid-cols-1 gap-4',
-                    (showApiInfoPanel ||
-                      showAnnouncementsPanel ||
-                      showFAQPanel) &&
-                      'lg:grid-cols-2'
+                    'lg:grid-cols-2'
                   )}
                 >
-                  {isAdmin && (
-                    <CardStaggerItem className='lg:col-span-2'>
-                      <PerformanceHealthPanel />
-                    </CardStaggerItem>
-                  )}
                   {showApiInfoPanel && (
                     <CardStaggerItem>
                       <ApiInfoPanel />

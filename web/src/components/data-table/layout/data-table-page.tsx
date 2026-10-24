@@ -338,6 +338,44 @@ export function DataTablePage<TData>(props: DataTablePageProps<TData>) {
   const toolbarNode = renderToolbar(props, viewToggle)
   const mobileNode = renderMobile(props, showMobile, cardViewActive, viewMode)
   const desktopNode = renderDesktop(props, showMobile, cardViewActive, viewMode)
+  // Desktop tables sit in one card with the toolbar on top and the pager at
+  // the bottom; mobile lists and card grids keep the open page layout.
+  const framed =
+    !showMobile &&
+    !(cardViewActive && viewMode === DATA_TABLE_VIEW_MODES.CARD) &&
+    props.paginationInFooter === undefined
+
+  if (framed) {
+    const fixedHeight = props.fixedHeight !== false
+    return (
+      <>
+        <div
+          data-slot='data-table-frame'
+          className={cn(
+            'bg-card flex flex-col overflow-hidden rounded-lg border',
+            fixedHeight && 'h-full min-h-0',
+            props.className
+          )}
+        >
+          {toolbarNode != null && (
+            <div className='border-b px-3.5 py-3'>{toolbarNode}</div>
+          )}
+          {desktopNode}
+          {props.afterTable}
+          {props.showPagination !== false && (
+            <div className='text-muted-foreground border-t px-[18px] py-3 text-[12.5px]'>
+              <DataTablePagination
+                table={props.table}
+                compact={props.compactPagination}
+              />
+            </div>
+          )}
+        </div>
+        {props.bulkActions}
+      </>
+    )
+  }
+
   const paginationNode = renderPagination(props)
 
   return (
@@ -550,6 +588,7 @@ function renderDesktop<TData>(
       pinnedColumns={props.pinnedColumns}
       containerClassName={cn(
         fixedHeight && 'min-h-0 flex-1',
+        props.paginationInFooter === undefined && 'rounded-none border-0',
         'transition-opacity duration-150',
         isFetchingOnly && 'pointer-events-none opacity-60',
         props.tableClassName

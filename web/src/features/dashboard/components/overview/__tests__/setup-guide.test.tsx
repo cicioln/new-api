@@ -79,6 +79,10 @@ beforeEach(() => {
         return { data: { success: true, data: ['gpt-4o-mini'] } }
       case '/api/data/self':
         return { data: { success: true, data: [] } }
+      case '/api/log/self?p=1&page_size=6':
+        return { data: { success: true, data: { items: [], total: 0 } } }
+      case '/api/perf-metrics/summary':
+        return { data: { success: true, data: { models: [], summary: null } } }
       default:
         throw new Error(`Unexpected dashboard request: ${url}`)
     }
@@ -112,9 +116,16 @@ describe('overview setup guide', () => {
 
     const toggle = await screen.findByRole('button', { name: 'Setup guide' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(
-      screen.getAllByRole('heading').map((heading) => heading.textContent)
-    ).toEqual(['Overview', 'Usage at a glance'])
+    const headings = screen
+      .getAllByRole('heading')
+      .map((heading) => heading.textContent)
+    expect(headings[0]).toMatch(/dashboard-user$/)
+    expect(headings.slice(1)).toEqual([
+      'Request trend',
+      'Model usage distribution',
+      'Recent requests',
+      'Model health',
+    ])
     expect(screen.queryByText('Setup guide complete')).not.toBeInTheDocument()
     expect(screen.queryByText('Setup progress: 3/3')).not.toBeInTheDocument()
     for (const name of ['API Keys', 'Channels', 'Usage Logs', 'Pricing']) {
@@ -132,7 +143,7 @@ describe('overview setup guide', () => {
     await renderOverview()
     const toggle = await screen.findByRole('button', { name: 'Setup guide' })
 
-    await user.tab()
+    act(() => toggle.focus())
     expect(toggle).toHaveFocus()
     await user.keyboard('{Enter}')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')

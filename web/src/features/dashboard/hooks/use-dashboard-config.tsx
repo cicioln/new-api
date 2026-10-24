@@ -16,17 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  Hash,
-  Coins,
-  Layers,
-  Gauge,
-  Zap,
-  Flame,
-  TrendingUp,
-  Activity,
-  type LucideIcon,
-} from 'lucide-react'
+import { Hash, Coins, Layers, Gauge, Zap, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import type { IconBadgeTone } from '@/components/ui/icon-badge'
@@ -86,44 +76,6 @@ export function useModelStatCardsConfig(): StatCardConfig[] {
       iconTone: 'warning',
       getValue: (stat, timeRangeMinutes = 1) =>
         safeDivide(stat?.tpm ?? 0, timeRangeMinutes),
-    },
-  ]
-}
-
-export function useSummaryCardsConfig(totals: {
-  todayUsageDisplay: string
-  usedDisplay: string
-  requestCountDisplay: string
-  currencyLabel: string
-  currencyEnabled: boolean
-}) {
-  const { t } = useTranslation()
-
-  return [
-    {
-      key: 'todayUsage',
-      title: t('Last 24h usage'),
-      value: totals.todayUsageDisplay,
-      description: totals.currencyEnabled
-        ? `${t('Consumed in the last 24 hours')} (${totals.currencyLabel})`
-        : t('Consumed in the last 24 hours'),
-      icon: Flame,
-    },
-    {
-      key: 'usage',
-      title: t('Historical Usage'),
-      value: totals.usedDisplay,
-      description: totals.currencyEnabled
-        ? `${t('Total consumed')} (${totals.currencyLabel})`
-        : t('Total consumed quota'),
-      icon: TrendingUp,
-    },
-    {
-      key: 'requests',
-      title: t('Request Count'),
-      value: totals.requestCountDisplay,
-      description: t('Total requests made'),
-      icon: Activity,
     },
   ]
 }
