@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync/atomic"
 	"testing"
 
@@ -492,4 +493,66 @@ func TestTestAllChannelsRejectsExistingActiveTask(t *testing.T) {
 	require.Equal(t, http.StatusConflict, recorder.Code)
 	require.Contains(t, recorder.Body.String(), existing.TaskID)
 	require.Contains(t, recorder.Body.String(), "A channel test task is already running or queued")
+}
+
+func TestChannelListsFilterByStatusTabAndTagDatabaseMatrix(t *testing.T) {
+	for _, dialect := range []struct{ kind, env string }{{"sqlite", ""}, {"mysql", "TEST_MYSQL_DSN"}, {"postgres", "TEST_POSTGRES_DSN"}} {
+		t.Run(dialect.kind, func(t *testing.T) {
+			dsn := ""
+			if dialect.env != "" {
+				dsn = os.Getenv(dialect.env)
+				if dsn == "" {
+					t.Skipf("%s not configured", dialect.env)
+				}
+			}
+			db := modelManagementDB(t, dialect.kind, dsn)
+			prod := "prod"
+			for _, channel := range []model.Channel{
+				{Id: 1, Name: "alpha", Type: 1, Key: "k1", Status: common.ChannelStatusEnabled, Models: "gpt-5", Group: "default", Tag: &prod},
+				{Id: 2, Name: "beta", Type: 1, Key: "k2", Status: common.ChannelStatusAutoDisabled, Models: "claude-opus", Group: "default", Tag: &prod},
+				{Id: 3, Name: "gamma", Type: 14, Key: "k3", Status: common.ChannelStatusManuallyDisabled, Models: "claude-opus", Group: "default"},
+			} {
+				require.NoError(t, db.Create(&channel).Error)
+			}
+			type listResponse struct {
+				Success bool `json:"success"`
+				Data    struct {
+					Items        []model.Channel `json:"items"`
+					Total        int             `json:"total"`
+					StatusCounts map[string]int  `json:"status_counts"`
+					Tags         []string        `json:"tags"`
+				} `json:"data"`
+			}
+			ids := func(items []model.Channel) []int {
+				out := make([]int, 0, len(items))
+				for _, item := range items {
+					out = append(out, item.Id)
+				}
+				return out
+			}
+
+			var auto listResponse
+			modelManagementRequest(t, GetAllChannels, http.MethodGet, "/api/channel/?status=auto&p=1&page_size=10", nil, &auto)
+			require.True(t, auto.Success)
+			assert.Equal(t, []int{2}, ids(auto.Data.Items))
+			assert.Equal(t, map[string]int{"1": 1, "2": 1, "3": 1}, auto.Data.StatusCounts)
+			assert.Equal(t, []string{"prod"}, auto.Data.Tags)
+
+			var manual listResponse
+			modelManagementRequest(t, GetAllChannels, http.MethodGet, "/api/channel/?status=manual&p=1&page_size=10", nil, &manual)
+			assert.Equal(t, []int{3}, ids(manual.Data.Items))
+
+			var tagged listResponse
+			modelManagementRequest(t, GetAllChannels, http.MethodGet, "/api/channel/?tag=prod&p=1&page_size=10", nil, &tagged)
+			assert.ElementsMatch(t, []int{1, 2}, ids(tagged.Data.Items))
+			assert.Equal(t, map[string]int{"1": 1, "3": 1}, tagged.Data.StatusCounts)
+
+			var byModel listResponse
+			modelManagementRequest(t, SearchChannels, http.MethodGet, "/api/channel/search?keyword=claude&status=auto&p=1&page_size=10", nil, &byModel)
+			require.True(t, byModel.Success)
+			assert.Equal(t, []int{2}, ids(byModel.Data.Items))
+			assert.Equal(t, map[string]int{"3": 1, "2": 1}, byModel.Data.StatusCounts)
+			assert.Equal(t, []string{"prod"}, byModel.Data.Tags)
+		})
+	}
 }

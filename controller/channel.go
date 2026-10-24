@@ -61,6 +61,10 @@ func parseStatusFilter(statusParam string) int {
 		return common.ChannelStatusEnabled
 	case "disabled", "0":
 		return 0
+	case "manual", "2":
+		return common.ChannelStatusManuallyDisabled
+	case "auto", "3":
+		return common.ChannelStatusAutoDisabled
 	default:
 		return -1
 	}
@@ -142,17 +146,51 @@ func applyChannelStatusFilter(query *gorm.DB, statusFilter int) *gorm.DB {
 	if statusFilter == 0 {
 		return query.Where("status != ?", common.ChannelStatusEnabled)
 	}
+	if statusFilter > common.ChannelStatusEnabled {
+		return query.Where("status = ?", statusFilter)
+	}
 	return query
 }
 
-func buildChannelListQuery(group string, statusFilter int, typeFilter int) *gorm.DB {
+// channelMatchesStatusFilter mirrors applyChannelStatusFilter for in-memory search results.
+func channelMatchesStatusFilter(channel *model.Channel, statusFilter int) bool {
+	switch {
+	case statusFilter < 0:
+		return true
+	case statusFilter == 0:
+		return channel.Status != common.ChannelStatusEnabled
+	default:
+		return channel.Status == statusFilter
+	}
+}
+
+func buildChannelListQuery(group string, statusFilter int, typeFilter int, tag string) *gorm.DB {
 	query := model.DB.Model(&model.Channel{})
 	query = model.ApplyChannelGroupFilter(query, group)
 	query = applyChannelStatusFilter(query, statusFilter)
 	if typeFilter >= 0 {
 		query = query.Where("type = ?", typeFilter)
 	}
+	if tag != "" {
+		query = query.Where("tag = ?", tag)
+	}
 	return query
+}
+
+// channelStatusCounts counts channels by status for the status tabs.
+func channelStatusCounts(query *gorm.DB) (map[int]int64, error) {
+	var results []struct {
+		Status int
+		Count  int64
+	}
+	if err := query.Select("status, count(*) as count").Group("status").Find(&results).Error; err != nil {
+		return nil, err
+	}
+	counts := make(map[int]int64, len(results))
+	for _, r := range results {
+		counts[r.Status] = r.Count
+	}
+	return counts, nil
 }
 
 func GetChannelOps(c *gin.Context) {
@@ -198,6 +236,7 @@ func GetAllChannels(c *gin.Context) {
 	statusParam := c.Query("status")
 	// statusFilter: -1 all, 1 enabled, 0 disabled (include auto & manual)
 	statusFilter := parseStatusFilter(statusParam)
+	tagFilter := strings.TrimSpace(c.Query("tag"))
 	// type filter
 	typeStr := c.Query("type")
 	typeFilter := -1
@@ -210,13 +249,13 @@ func GetAllChannels(c *gin.Context) {
 	var total int64
 
 	if enableTagMode {
-		tags, err := model.GetPaginatedChannelTags(buildChannelListQuery(groupFilter, statusFilter, typeFilter), pageInfo.GetStartIdx(), pageInfo.GetPageSize())
+		tags, err := model.GetPaginatedChannelTags(buildChannelListQuery(groupFilter, statusFilter, typeFilter, tagFilter), pageInfo.GetStartIdx(), pageInfo.GetPageSize())
 		if err != nil {
 			common.SysError(common.LogText("failed to get paginated tags: %s", err.Error()))
 			common.ApiErrorT(c, "Failed to fetch tags. Please try again later")
 			return
 		}
-		total, err = model.CountChannelTags(buildChannelListQuery(groupFilter, statusFilter, typeFilter))
+		total, err = model.CountChannelTags(buildChannelListQuery(groupFilter, statusFilter, typeFilter, tagFilter))
 		if err != nil {
 			common.SysError(common.LogText("failed to count tags: %s", err.Error()))
 			common.ApiErrorT(c, "Failed to count tags. Please try again later")
@@ -227,7 +266,7 @@ func GetAllChannels(c *gin.Context) {
 				continue
 			}
 			var tagChannels []*model.Channel
-			err := sortOptions.Apply(buildChannelListQuery(groupFilter, statusFilter, typeFilter).Where("tag = ?", *tag)).
+			err := sortOptions.Apply(buildChannelListQuery(groupFilter, statusFilter, typeFilter, tagFilter).Where("tag = ?", *tag)).
 				Omit("key").
 				Find(&tagChannels).Error
 			if err != nil {
@@ -238,13 +277,13 @@ func GetAllChannels(c *gin.Context) {
 			channelData = append(channelData, tagChannels...)
 		}
 	} else {
-		if err := buildChannelListQuery(groupFilter, statusFilter, typeFilter).Count(&total).Error; err != nil {
+		if err := buildChannelListQuery(groupFilter, statusFilter, typeFilter, tagFilter).Count(&total).Error; err != nil {
 			common.SysError(common.LogText("failed to count channels: %s", err.Error()))
 			common.ApiErrorT(c, "Failed to count channels. Please try again later")
 			return
 		}
 
-		err := sortOptions.Apply(buildChannelListQuery(groupFilter, statusFilter, typeFilter)).
+		err := sortOptions.Apply(buildChannelListQuery(groupFilter, statusFilter, typeFilter, tagFilter)).
 			Limit(pageInfo.GetPageSize()).
 			Offset(pageInfo.GetStartIdx()).
 			Omit("key").
@@ -260,7 +299,7 @@ func GetAllChannels(c *gin.Context) {
 		clearChannelInfo(datum)
 	}
 
-	countQuery := buildChannelListQuery(groupFilter, statusFilter, -1)
+	countQuery := buildChannelListQuery(groupFilter, statusFilter, -1, tagFilter)
 	var results []struct {
 		Type  int64
 		Count int64
@@ -274,12 +313,26 @@ func GetAllChannels(c *gin.Context) {
 	for _, r := range results {
 		typeCounts[r.Type] = r.Count
 	}
+	statusCounts, err := channelStatusCounts(buildChannelListQuery(groupFilter, -1, typeFilter, tagFilter))
+	if err != nil {
+		common.SysError(common.LogText("failed to count channel statuses: %s", err.Error()))
+		common.ApiErrorT(c, "Failed to count channels. Please try again later")
+		return
+	}
+	tags, err := model.GetPaginatedChannelTags(buildChannelListQuery(groupFilter, -1, -1, ""), 0, -1)
+	if err != nil {
+		common.SysError(common.LogText("failed to get paginated tags: %s", err.Error()))
+		common.ApiErrorT(c, "Failed to fetch tags. Please try again later")
+		return
+	}
 	common.ApiSuccess(c, gin.H{
-		"items":       channelData,
-		"total":       total,
-		"page":        pageInfo.GetPage(),
-		"page_size":   pageInfo.GetPageSize(),
-		"type_counts": typeCounts,
+		"items":         channelData,
+		"total":         total,
+		"page":          pageInfo.GetPage(),
+		"page_size":     pageInfo.GetPageSize(),
+		"type_counts":   typeCounts,
+		"status_counts": statusCounts,
+		"tags":          channelTagNames(tags),
 	})
 	return
 }
@@ -379,7 +432,7 @@ func SearchChannels(c *gin.Context) {
 		for _, tag := range tags {
 			if tag != nil && *tag != "" {
 				var tagChannels []*model.Channel
-				err := sortOptions.Apply(buildChannelListQuery(group, -1, -1).Where("tag = ?", *tag)).
+				err := sortOptions.Apply(buildChannelListQuery(group, -1, -1, *tag)).
 					Omit("key").
 					Find(&tagChannels).Error
 				if err != nil {
@@ -398,25 +451,24 @@ func SearchChannels(c *gin.Context) {
 		channelData = channels
 	}
 
-	if statusFilter == common.ChannelStatusEnabled || statusFilter == 0 {
-		filtered := make([]*model.Channel, 0, len(channelData))
-		for _, ch := range channelData {
-			if statusFilter == common.ChannelStatusEnabled && ch.Status != common.ChannelStatusEnabled {
-				continue
-			}
-			if statusFilter == 0 && ch.Status == common.ChannelStatusEnabled {
-				continue
-			}
-			filtered = append(filtered, ch)
+	tagSet := make(map[string]struct{})
+	tagFilter := strings.TrimSpace(c.Query("tag"))
+	tagged := make([]*model.Channel, 0, len(channelData))
+	for _, ch := range channelData {
+		tag := ch.GetTag()
+		if tag != "" {
+			tagSet[tag] = struct{}{}
 		}
-		channelData = filtered
+		if tagFilter == "" || tag == tagFilter {
+			tagged = append(tagged, ch)
+		}
 	}
-
-	// calculate type counts for search results
-	typeCounts := make(map[int64]int64)
-	for _, channel := range channelData {
-		typeCounts[int64(channel.Type)]++
+	channelData = tagged
+	tags := make([]string, 0, len(tagSet))
+	for tag := range tagSet {
+		tags = append(tags, tag)
 	}
+	slices.Sort(tags)
 
 	typeParam := c.Query("type")
 	typeFilter := -1
@@ -426,15 +478,24 @@ func SearchChannels(c *gin.Context) {
 		}
 	}
 
-	if typeFilter >= 0 {
-		filtered := make([]*model.Channel, 0, len(channelData))
-		for _, ch := range channelData {
-			if ch.Type == typeFilter {
-				filtered = append(filtered, ch)
-			}
+	// Status tabs count every status within the other filters; type counts
+	// follow the selected status like the list endpoint does.
+	statusCounts := make(map[int]int64)
+	typeCounts := make(map[int64]int64)
+	filtered := make([]*model.Channel, 0, len(channelData))
+	for _, ch := range channelData {
+		if typeFilter < 0 || ch.Type == typeFilter {
+			statusCounts[ch.Status]++
 		}
-		channelData = filtered
+		if !channelMatchesStatusFilter(ch, statusFilter) {
+			continue
+		}
+		typeCounts[int64(ch.Type)]++
+		if typeFilter < 0 || ch.Type == typeFilter {
+			filtered = append(filtered, ch)
+		}
 	}
+	channelData = filtered
 
 	page, _ := strconv.Atoi(c.DefaultQuery("p", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -459,12 +520,24 @@ func SearchChannels(c *gin.Context) {
 		"success": true,
 		"message": "",
 		"data": gin.H{
-			"items":       pagedData,
-			"total":       total,
-			"type_counts": typeCounts,
+			"items":         pagedData,
+			"total":         total,
+			"type_counts":   typeCounts,
+			"status_counts": statusCounts,
+			"tags":          tags,
 		},
 	})
 	return
+}
+
+func channelTagNames(tags []*string) []string {
+	names := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		if tag != nil && *tag != "" {
+			names = append(names, *tag)
+		}
+	}
+	return names
 }
 
 func GetChannel(c *gin.Context) {

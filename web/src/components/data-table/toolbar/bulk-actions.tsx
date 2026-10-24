@@ -34,6 +34,10 @@ import { cn } from '@/lib/utils'
 type DataTableBulkActionsProps<TData> = {
   table: Table<TData>
   placement?: 'floating' | 'inline'
+  /** `bar` is the full-width dark strip of the design, labelled by `label`. */
+  variant?: 'default' | 'bar'
+  /** Selection summary shown at the start of the `bar` variant. */
+  label?: React.ReactNode
   entityName: string
   children: React.ReactNode
 }
@@ -52,6 +56,8 @@ export function DataTableBulkActions<TData>({
   table,
   entityName,
   placement = 'floating',
+  variant = 'default',
+  label,
   children,
 }: DataTableBulkActionsProps<TData>): React.ReactNode | null {
   const { t } = useTranslation()
@@ -151,6 +157,38 @@ export function DataTableBulkActions<TData>({
 
   if (selectedCount === 0) {
     return null
+  }
+
+  const liveRegion = (
+    <div
+      aria-live='polite'
+      aria-atomic='true'
+      className='sr-only'
+      role='status'
+    >
+      {announcement}
+    </div>
+  )
+
+  if (variant === 'bar') {
+    return (
+      <>
+        {liveRegion}
+        <div
+          ref={toolbarRef}
+          role='toolbar'
+          aria-label={t('Bulk actions for {{count}} selected records', {
+            count: selectedCount,
+          })}
+          tabIndex={-1}
+          onKeyDown={handleKeyDown}
+          className='bg-foreground text-background focus-visible:ring-ring/50 mb-2.5 flex flex-wrap items-center gap-2 rounded-[10px] px-3.5 py-2 text-[13px] focus-visible:ring-2 focus-visible:outline-none [&_[data-slot=button]]:border-[color-mix(in_srgb,var(--background)_30%,transparent)] [&_[data-slot=button]]:bg-transparent [&_[data-slot=button]]:text-inherit [&_[data-slot=button]:hover]:bg-[color-mix(in_srgb,var(--background)_12%,transparent)]'
+        >
+          <b className='mr-auto font-medium'>{label}</b>
+          {children}
+        </div>
+      </>
+    )
   }
 
   return (

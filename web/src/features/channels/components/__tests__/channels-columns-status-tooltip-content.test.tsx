@@ -33,7 +33,7 @@ import { ChannelsProvider } from '../channels-provider'
 function ExampleAutoDisabledStatusCell(props: { channel: Channel }) {
   const table = useReactTable({
     data: [props.channel],
-    columns: useChannelsColumns({ enableSelection: false }),
+    columns: useChannelsColumns(),
     getCoreRowModel: getCoreRowModel(),
   })
   const cell = table

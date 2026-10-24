@@ -163,6 +163,8 @@ export interface GetChannelsResponse {
     page: number
     page_size: number
     type_counts?: Record<string, number>
+    status_counts?: Record<string, number>
+    tags?: string[]
   }
 }
 
@@ -173,6 +175,8 @@ export interface SearchChannelsResponse {
     items: Channel[]
     total: number
     type_counts?: Record<string, number>
+    status_counts?: Record<string, number>
+    tags?: string[]
   }
 }
 
@@ -282,9 +286,10 @@ export type ChannelSortOrder = 'asc' | 'desc'
 export interface GetChannelsParams {
   p?: number
   page_size?: number
-  status?: string // 'enabled', 'disabled', or empty for all
+  status?: string // 'enabled', 'disabled', 'auto', 'manual', or empty for all
   type?: number
   group?: string
+  tag?: string
   id_sort?: boolean
   tag_mode?: boolean
   sort_by?: ChannelSortBy
@@ -297,6 +302,7 @@ export interface SearchChannelsParams {
   model?: string
   status?: string
   type?: number
+  tag?: string
   id_sort?: boolean
   tag_mode?: boolean
   sort_by?: ChannelSortBy

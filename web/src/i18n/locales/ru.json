@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "Для вызова API управления (/api/*), это не ключ API моделей",
     "Registration time": "Дата регистрации",
     "Linked accounts": "Связанные аккаунты",
-    "Change email": "Сменить"
+    "Change email": "Сменить",
+    "Upstream channel keys, models, weights and health.": "Ключи, модели, веса и состояние вышестоящих каналов.",
+    "Test all": "Проверить все",
+    "Update balances": "Обновить балансы",
+    "Add channel": "Добавить канал",
+    "Name, ID or model": "Имя, ID или модель",
+    "Selected {{count}} channels": "Выбрано каналов: {{count}}",
+    "Slow response": "Медленный ответ",
+    "Timeout": "Тайм-аут",
+    "Priority / Weight": "Приоритет / Вес",
+    "Used / Balance": "Использовано / Баланс",
+    "{{count}} channels total": "Всего каналов: {{count}}",
+    "Channel status enabled": "Включён"
   }
 }

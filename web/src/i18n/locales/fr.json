@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "Sert à appeler l'API de gestion (/api/*), ce n'est pas une clé d'API de modèle",
     "Registration time": "Date d'inscription",
     "Linked accounts": "Comptes liés",
-    "Change email": "Changer"
+    "Change email": "Changer",
+    "Upstream channel keys, models, weights and health.": "Clés, modèles, poids et santé des canaux en amont.",
+    "Test all": "Tout tester",
+    "Update balances": "Mettre à jour les soldes",
+    "Add channel": "Ajouter un canal",
+    "Name, ID or model": "Nom, ID ou modèle",
+    "Selected {{count}} channels": "{{count}} canaux sélectionnés",
+    "Slow response": "Réponse lente",
+    "Timeout": "Délai dépassé",
+    "Priority / Weight": "Priorité / Poids",
+    "Used / Balance": "Utilisé / Solde",
+    "{{count}} channels total": "{{count}} canaux au total",
+    "Channel status enabled": "Activé"
   }
 }

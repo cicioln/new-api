@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "用于调用管理接口（/api/*），不是模型调用密钥",
     "Registration time": "注册时间",
     "Linked accounts": "账号绑定",
-    "Change email": "更换"
+    "Change email": "更换",
+    "Upstream channel keys, models, weights and health.": "上游渠道的密钥、模型、权重与健康状态。",
+    "Test all": "测试全部",
+    "Update balances": "更新余额",
+    "Add channel": "添加渠道",
+    "Name, ID or model": "名称、ID 或模型",
+    "Selected {{count}} channels": "已选 {{count}} 个渠道",
+    "Slow response": "响应慢",
+    "Timeout": "超时",
+    "Priority / Weight": "优先级 / 权重",
+    "Used / Balance": "已用 / 余额",
+    "{{count}} channels total": "共 {{count}} 个渠道",
+    "Channel status enabled": "启用"
   }
 }

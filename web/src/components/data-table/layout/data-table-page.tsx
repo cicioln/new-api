@@ -228,6 +228,12 @@ export type DataTablePageProps<TData> = {
   afterTable?: React.ReactNode
 
   /**
+   * Content rendered between the toolbar and the table inside the framed
+   * desktop card, e.g. an inline bulk action bar.
+   */
+  beforeTable?: React.ReactNode
+
+  /**
    * Outer wrapper className (applied to the toolbar+table column).
    */
   className?: string
@@ -366,6 +372,7 @@ export function DataTablePage<TData>(props: DataTablePageProps<TData>) {
           {toolbarNode != null && (
             <div className='border-b px-3.5 py-3'>{toolbarNode}</div>
           )}
+          {props.beforeTable}
           {desktopNode}
           {props.afterTable}
           {props.showPagination !== false && (

@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "Dùng để gọi API quản trị (/api/*), không phải khóa API mô hình",
     "Registration time": "Thời gian đăng ký",
     "Linked accounts": "Tài khoản liên kết",
-    "Change email": "Đổi"
+    "Change email": "Đổi",
+    "Upstream channel keys, models, weights and health.": "Khóa, mô hình, trọng số và tình trạng của các kênh thượng nguồn.",
+    "Test all": "Kiểm tra tất cả",
+    "Update balances": "Cập nhật số dư",
+    "Add channel": "Thêm kênh",
+    "Name, ID or model": "Tên, ID hoặc mô hình",
+    "Selected {{count}} channels": "Đã chọn {{count}} kênh",
+    "Slow response": "Phản hồi chậm",
+    "Timeout": "Hết thời gian",
+    "Priority / Weight": "Ưu tiên / Trọng số",
+    "Used / Balance": "Đã dùng / Số dư",
+    "{{count}} channels total": "Tổng cộng {{count}} kênh",
+    "Channel status enabled": "Bật"
   }
 }

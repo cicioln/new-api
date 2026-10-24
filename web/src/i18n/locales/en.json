@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "Used to call the management API (/api/*), not a model API key",
     "Registration time": "Registration time",
     "Linked accounts": "Linked accounts",
-    "Change email": "Change email"
+    "Change email": "Change email",
+    "Upstream channel keys, models, weights and health.": "Upstream channel keys, models, weights and health.",
+    "Test all": "Test all",
+    "Update balances": "Update balances",
+    "Add channel": "Add channel",
+    "Name, ID or model": "Name, ID or model",
+    "Selected {{count}} channels": "Selected {{count}} channels",
+    "Slow response": "Slow response",
+    "Timeout": "Timeout",
+    "Priority / Weight": "Priority / Weight",
+    "Used / Balance": "Used / Balance",
+    "{{count}} channels total": "{{count}} channels total",
+    "Channel status enabled": "Enabled"
   }
 }

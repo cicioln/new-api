@@ -17,48 +17,43 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
-import { type Table } from '@tanstack/react-table'
-import { Power, PowerOff, Tag, Trash2 } from 'lucide-react'
+import type { Table } from '@tanstack/react-table'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
 import { Dialog } from '@/components/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
   ADMIN_PERMISSION_ACTIONS,
   ADMIN_PERMISSION_RESOURCES,
   hasPermission,
 } from '@/lib/admin-permissions'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
 import {
+  channelsQueryKeys,
   handleBatchDelete,
   handleBatchDisable,
   handleBatchEnable,
   handleBatchSetTag,
+  handleTestChannel,
 } from '../lib'
 import type { Channel } from '../types'
 
-interface DataTableBulkActionsProps<TData> {
-  table: Table<TData>
+interface DataTableBulkActionsProps {
+  table: Table<Channel>
 }
 
-export function DataTableBulkActions<TData>({
-  table,
-}: DataTableBulkActionsProps<TData>) {
+export function DataTableBulkActions(props: DataTableBulkActionsProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [showTagDialog, setShowTagDialog] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isTesting, setIsTesting] = useState(false)
   const [tagValue, setTagValue] = useState('')
   const currentUser = useAuthStore((s) => s.auth.user)
   const canEditSensitive = hasPermission(
@@ -67,151 +62,88 @@ export function DataTableBulkActions<TData>({
     ADMIN_PERMISSION_ACTIONS.SENSITIVE_WRITE
   )
 
-  const selectedRows = table.getFilteredSelectedRowModel().rows
-  const selectedIds = selectedRows.reduce<number[]>((ids, row) => {
-    const id = (row.original as Channel).id
+  const selectedChannels = props.table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original)
+  const selectedIds = selectedChannels.map((channel) => channel.id)
 
-    if (typeof id === 'number') {
-      ids.push(id)
+  const clearSelection = () => {
+    props.table.resetRowSelection()
+  }
+
+  const handleTestSelected = async () => {
+    setIsTesting(true)
+    try {
+      // One request at a time, like the per-row test, so upstreams are not flooded.
+      for (const channel of selectedChannels) {
+        await handleTestChannel(channel.id, { channelName: channel.name })
+      }
+      await queryClient.invalidateQueries({
+        queryKey: channelsQueryKeys.lists(),
+      })
+    } finally {
+      setIsTesting(false)
     }
-
-    return ids
-  }, [])
-
-  const handleClearSelection = () => {
-    table.resetRowSelection()
-  }
-
-  const handleEnableAll = () => {
-    handleBatchEnable(selectedIds, queryClient, handleClearSelection)
-  }
-
-  const handleDisableAll = () => {
-    handleBatchDisable(selectedIds, queryClient, handleClearSelection)
-  }
-
-  const handleDeleteAll = () => {
-    if (!canEditSensitive) return
-    handleBatchDelete(selectedIds, queryClient, () => {
-      setShowDeleteConfirm(false)
-      handleClearSelection()
-    })
-  }
-
-  const handleSetTag = () => {
-    handleBatchSetTag(selectedIds, tagValue || null, queryClient, () => {
-      setShowTagDialog(false)
-      setTagValue('')
-      handleClearSelection()
-    })
   }
 
   return (
     <>
-      <BulkActionsToolbar table={table} entityName='channel'>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant='outline'
-                size='icon'
-                onClick={handleEnableAll}
-                className='size-8'
-                aria-label={t('Enable selected channels')}
-                title={t('Enable selected channels')}
-              />
-            }
-          >
-            <Power />
-            <span className='sr-only'>{t('Enable selected channels')}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('Enable selected channels')}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant='outline'
-                size='icon'
-                onClick={handleDisableAll}
-                className='size-8'
-                aria-label={t('Disable selected channels')}
-                title={t('Disable selected channels')}
-              />
-            }
-          >
-            <PowerOff />
-            <span className='sr-only'>{t('Disable selected channels')}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('Disable selected channels')}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant='outline'
-                size='icon'
-                onClick={() => setShowTagDialog(true)}
-                className='size-8'
-                aria-label={t('Set tag for selected channels')}
-                title={t('Set tag for selected channels')}
-              />
-            }
-          >
-            <Tag />
-            <span className='sr-only'>
-              {t('Set tag for selected channels')}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('Set tag for selected channels')}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant='destructive'
-                size='icon'
-                onClick={() => {
-                  if (!canEditSensitive) return
-                  setShowDeleteConfirm(true)
-                }}
-                aria-disabled={!canEditSensitive}
-                className={cn(
-                  'size-8',
-                  !canEditSensitive && 'cursor-not-allowed opacity-50'
-                )}
-                aria-label={t('Delete selected channels')}
-                title={
-                  canEditSensitive
-                    ? t('Delete selected channels')
-                    : t('No permission to perform this action')
-                }
-              />
-            }
-          >
-            <Trash2 />
-            <span className='sr-only'>{t('Delete selected channels')}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              {canEditSensitive
-                ? t('Delete selected channels')
-                : t('No permission to perform this action')}
-            </p>
-          </TooltipContent>
-        </Tooltip>
+      <BulkActionsToolbar
+        table={props.table}
+        entityName='channel'
+        placement='inline'
+        variant='bar'
+        label={t('Selected {{count}} channels', { count: selectedIds.length })}
+      >
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() =>
+            handleBatchEnable(selectedIds, queryClient, clearSelection)
+          }
+        >
+          {t('Enable')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() =>
+            handleBatchDisable(selectedIds, queryClient, clearSelection)
+          }
+        >
+          {t('Disable')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => setShowTagDialog(true)}
+        >
+          {t('Set Tag')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          disabled={isTesting}
+          aria-busy={isTesting}
+          onClick={() => void handleTestSelected()}
+        >
+          {t('Test')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          disabled={!canEditSensitive}
+          title={
+            canEditSensitive
+              ? undefined
+              : t('No permission to perform this action')
+          }
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          {t('Delete')}
+        </Button>
       </BulkActionsToolbar>
 
-      {/* Set Tag Dialog */}
       <Dialog
         open={showTagDialog}
         onOpenChange={setShowTagDialog}
@@ -236,56 +168,52 @@ export function DataTableBulkActions<TData>({
             >
               {t('Cancel')}
             </Button>
-            <Button onClick={handleSetTag}>{t('Set Tag')}</Button>
+            <Button
+              onClick={() =>
+                handleBatchSetTag(
+                  selectedIds,
+                  tagValue || null,
+                  queryClient,
+                  () => {
+                    setShowTagDialog(false)
+                    setTagValue('')
+                    clearSelection()
+                  }
+                )
+              }
+            >
+              {t('Set Tag')}
+            </Button>
           </>
         }
       >
-        <div className='grid gap-4 py-4'>
-          <div className='grid gap-2'>
-            <Label htmlFor='tag'>{t('Tag')}</Label>
-            <Input
-              id='tag'
-              placeholder={t('Enter tag name (optional)')}
-              value={tagValue}
-              onChange={(e) => setTagValue(e.target.value)}
-            />
-          </div>
+        <div className='grid gap-2 py-4'>
+          <Label htmlFor='channel-bulk-tag'>{t('Tag')}</Label>
+          <Input
+            id='channel-bulk-tag'
+            placeholder={t('Enter tag name (optional)')}
+            value={tagValue}
+            onChange={(e) => setTagValue(e.target.value)}
+          />
         </div>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
+      <ConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         title={t('Delete Channels?')}
-        description={
-          <>
-            {t('Are you sure you want to delete')}
-            {selectedIds.length}{' '}
-            {t('channel(s)? This action cannot be undone.')}
-          </>
-        }
-        contentHeight='auto'
-        footer={
-          <>
-            <Button
-              variant='outline'
-              onClick={() => setShowDeleteConfirm(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={handleDeleteAll}
-              disabled={!canEditSensitive}
-            >
-              {t('Delete')}
-            </Button>
-          </>
-        }
-      >
-        {' '}
-      </Dialog>
+        desc={`${t('Are you sure you want to delete')}${selectedIds.length} ${t('channel(s)? This action cannot be undone.')}`}
+        confirmText={t('Delete')}
+        destructive
+        disabled={!canEditSensitive}
+        handleConfirm={() => {
+          if (!canEditSensitive) return
+          handleBatchDelete(selectedIds, queryClient, () => {
+            setShowDeleteConfirm(false)
+            clearSelection()
+          })
+        }}
+      />
     </>
   )
 }

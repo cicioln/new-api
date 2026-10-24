@@ -7459,6 +7459,18 @@
     "Used to call the management API (/api/*), not a model API key": "管理 API（/api/*）の呼び出し用で、モデル API キーではありません",
     "Registration time": "登録日時",
     "Linked accounts": "アカウント連携",
-    "Change email": "変更"
+    "Change email": "変更",
+    "Upstream channel keys, models, weights and health.": "上流チャネルのキー、モデル、重み、ヘルス状態。",
+    "Test all": "すべてテスト",
+    "Update balances": "残高を更新",
+    "Add channel": "チャネルを追加",
+    "Name, ID or model": "名前、ID またはモデル",
+    "Selected {{count}} channels": "{{count}} 件のチャネルを選択中",
+    "Slow response": "応答が遅い",
+    "Timeout": "タイムアウト",
+    "Priority / Weight": "優先度 / 重み",
+    "Used / Balance": "使用済み / 残高",
+    "{{count}} channels total": "全 {{count}} 件のチャネル",
+    "Channel status enabled": "有効"
   }
 }
