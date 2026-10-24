@@ -7417,6 +7417,7 @@
     "Retried": "Повторено",
     "First token / Total": "Первый токен / Всего",
     "{{total}} records total": "Всего записей: {{total}}",
-    "Embedding": "Эмбеддинг"
+    "Embedding": "Эмбеддинг",
+    "Failed · Refunded": "Ошибка · Возвращено"
   }
 }

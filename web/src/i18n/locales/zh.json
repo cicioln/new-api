@@ -7417,6 +7417,7 @@
     "Retried": "已重试",
     "First token / Total": "首字 / 总耗时",
     "{{total}} records total": "共 {{total}} 条",
-    "Embedding": "向量"
+    "Embedding": "向量",
+    "Failed · Refunded": "失败 · 已退款"
   }
 }

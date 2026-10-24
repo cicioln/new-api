@@ -31,6 +31,7 @@ import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
 import { resolveTaskDetailAccess } from '../../lib/task-details'
 import type { TaskLog } from '../../types'
 import { PluginAuthorLink } from '../plugin-author-link'
+import { TaskArtifactsCell } from '../task-artifacts'
 
 function DetailRow(props: {
   label: React.ReactNode
@@ -162,6 +163,10 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
               value={translateServerText(t, props.log.fail_reason)}
             />
           ) : null}
+          <DetailRow
+            label={t('Artifacts')}
+            value={<TaskArtifactsCell log={props.log} />}
+          />
         </DetailSection>
 
         {props.isAdmin ? (

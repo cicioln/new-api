@@ -7417,6 +7417,7 @@
     "Retried": "Réessayé",
     "First token / Total": "Premier jeton / Total",
     "{{total}} records total": "{{total}} enregistrements au total",
-    "Embedding": "Embedding"
+    "Embedding": "Embedding",
+    "Failed · Refunded": "Échec · Remboursé"
   }
 }

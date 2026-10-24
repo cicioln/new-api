@@ -312,7 +312,44 @@ export const TASK_ACTION_MAPPINGS: Record<string, StatusMapping> = {
     label: 'Video Remix',
     variant: 'blue',
   },
+  // Canonical names the task API returns after normalizing legacy actions.
+  image_to_video: { label: 'Image to Video', variant: 'blue' },
+  text_to_video: { label: 'Text to Video', variant: 'blue' },
+  first_tail_to_video: { label: 'First/Last Frame to Video', variant: 'blue' },
+  reference_to_video: { label: 'Reference Video', variant: 'blue' },
+  remix: { label: 'Video Remix', variant: 'blue' },
 }
+
+/**
+ * Status tabs of the task log page and the task statuses each one lists.
+ * The task API accepts a comma-separated status list.
+ */
+export const TASK_STATUS_TABS = [
+  { value: 'all', label: 'All', statuses: '', showCount: true },
+  {
+    value: 'running',
+    label: 'In Progress',
+    statuses: 'NOT_START,SUBMITTED,QUEUED,IN_PROGRESS',
+    showCount: true,
+  },
+  {
+    value: 'completed',
+    label: 'Completed',
+    statuses: 'SUCCESS',
+    showCount: false,
+  },
+  { value: 'failed', label: 'Failed', statuses: 'FAILURE', showCount: true },
+] as const
+
+export type TaskStatusTab = (typeof TASK_STATUS_TABS)[number]['value']
+
+/** Statuses of tasks that are still waiting for or running on the upstream. */
+export const RUNNING_TASK_STATUSES = new Set<string>(
+  TASK_STATUS_TABS[1].statuses.split(',')
+)
+
+/** Columns whose header and cells are right-aligned numbers in the design. */
+export const TASK_LOG_NUMERIC_COLUMNS = new Set(['duration', 'quota'])
 
 /**
  * Task status mappings

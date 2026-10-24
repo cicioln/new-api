@@ -16,266 +16,141 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ViewIcon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import type { ColumnDef } from '@tanstack/react-table'
-/* eslint-disable react-refresh/only-export-components */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { StatusBadge } from '@/components/status-badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
+import { Progress } from '@/components/ui/progress'
+import { CHANNEL_TYPES } from '@/features/channels/constants'
+import dayjs from '@/lib/dayjs'
 import { formatTimestampToDate } from '@/lib/format'
-import { translateServerText } from '@/lib/server-error-message'
-import { cn } from '@/lib/utils'
 
-import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
+import { RUNNING_TASK_STATUSES, TASK_STATUS } from '../../constants'
+import { taskActionMapper } from '../../lib/mappers'
 import type { TaskLog } from '../../types'
-import { TaskDetailsDialog } from '../dialogs/task-details-dialog'
-import { PluginAuthorLink } from '../plugin-author-link'
-import { TaskArtifactsCell } from '../task-artifacts'
-import { useUsageLogsContext } from '../usage-logs-provider'
-import {
-  createDurationColumn,
-  createChannelColumn,
-  createProgressColumn,
-} from './column-helpers'
+import { LogCostDisplay } from '../log-cost-display'
+import { TaskStatusTag } from './task-status-tag'
 
-function TaskDetailsCell(props: {
-  log: TaskLog
-  isAdmin: boolean
-  isRoot: boolean
-}) {
+const numericCellClass = 'font-mono! text-[12.5px]! tabular-nums'
+
+export function useTaskLogsColumns(): ColumnDef<TaskLog>[] {
   const { t } = useTranslation()
-  const [dialogOpen, setDialogOpen] = useState(false)
-
-  return (
-    <>
-      <div className='flex max-w-[220px] flex-col items-start gap-1'>
-        <button
-          type='button'
-          className='text-foreground inline-flex items-center gap-1 text-xs font-medium hover:underline'
-          onClick={() => setDialogOpen(true)}
-        >
-          <HugeiconsIcon
-            icon={ViewIcon}
-            className='size-3'
-            strokeWidth={2}
-            aria-hidden='true'
-          />
-          {t('View details')}
-        </button>
-        {props.log.fail_reason ? (
-          <span className='max-w-full truncate text-xs text-red-600 dark:text-red-400'>
-            {translateServerText(t, props.log.fail_reason)}
-          </span>
-        ) : null}
-      </div>
-      <TaskDetailsDialog
-        log={props.log}
-        isAdmin={props.isAdmin}
-        isRoot={props.isRoot}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-    </>
-  )
-}
-
-export function useTaskLogsColumns(
-  isAdmin: boolean,
-  isRoot: boolean
-): ColumnDef<TaskLog>[] {
-  const { t } = useTranslation()
-  return useMemo(() => {
-    const columns: ColumnDef<TaskLog>[] = [
+  return useMemo(
+    () => [
       {
         accessorKey: 'submit_time',
         header: t('Submit Time'),
-        cell: ({ row }) => {
-          const log = row.original
-          const submitTime = row.getValue('submit_time') as number
-
-          return (
-            <div className='flex min-w-0 flex-col gap-0.5'>
-              <span className='truncate font-mono text-xs tabular-nums'>
-                {formatTimestampToDate(submitTime, 'seconds')}
-              </span>
-              {log.finish_time ? (
-                <span className='text-muted-foreground/60 truncate font-mono text-[11px] tabular-nums'>
-                  {formatTimestampToDate(log.finish_time, 'seconds')}
-                </span>
-              ) : (
-                <span className='text-muted-foreground/50 text-[11px]'>-</span>
-              )}
-            </div>
-          )
-        },
-        size: 180,
+        cell: ({ row }) => (
+          <span
+            className='text-muted-foreground font-mono! text-xs!'
+            title={formatTimestampToDate(row.original.submit_time, 'seconds')}
+          >
+            {dayjs.unix(row.original.submit_time).format('MM-DD HH:mm')}
+          </span>
+        ),
       },
-    ]
-
-    if (isAdmin) {
-      columns.push(
-        createChannelColumn<TaskLog>({ headerLabel: t('Channel') }),
-        {
-          id: 'user',
-          header: t('User'),
-          accessorFn: (row) => row.username || row.user_id,
-          cell: function UserCell({ row }) {
-            const {
-              sensitiveVisible,
-              setSelectedUserId,
-              setUserInfoDialogOpen,
-            } = useUsageLogsContext()
-            const log = row.original
-            const displayName = log.username || String(log.user_id || '?')
-
-            return (
-              <button
-                type='button'
-                className='flex items-center gap-1.5 text-left'
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedUserId(log.user_id)
-                  setUserInfoDialogOpen(true)
-                }}
-              >
-                <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
-                  <AvatarFallback
-                    className={cn(
-                      'text-[11px] font-semibold',
-                      !sensitiveVisible && 'bg-muted text-muted-foreground'
-                    )}
-                    style={
-                      sensitiveVisible
-                        ? getUserAvatarStyle(displayName)
-                        : undefined
-                    }
-                  >
-                    {sensitiveVisible
-                      ? getUserAvatarFallback(displayName)
-                      : '•'}
-                  </AvatarFallback>
-                </Avatar>
-                <span className='text-muted-foreground truncate text-sm hover:underline'>
-                  {sensitiveVisible ? displayName : '••••'}
-                </span>
-              </button>
-            )
-          },
-        },
-        {
-          id: 'plugin',
-          header: t('Plugin'),
-          accessorFn: (row) => row.admin_info?.task_plugin?.key ?? '',
-          cell: ({ row }) => {
-            const plugin = row.original.admin_info?.task_plugin
-            if (!plugin) {
-              return <span className='text-muted-foreground/60 text-xs'>-</span>
-            }
-            return (
-              <div className='flex max-w-[170px] flex-col gap-0.5'>
-                <span className='truncate text-xs font-medium'>
-                  {plugin.name || plugin.key}
-                </span>
-                <span className='text-muted-foreground truncate font-mono text-[11px]'>
-                  {plugin.key}
-                  {plugin.version ? ` @ ${plugin.version}` : ''}
-                </span>
-                {plugin.author ? (
-                  <PluginAuthorLink
-                    author={plugin.author}
-                    showUrl
-                    className='text-muted-foreground text-[11px]'
-                  />
-                ) : null}
-              </div>
-            )
-          },
-        }
-      )
-    }
-
-    columns.push(
       {
         accessorKey: 'task_id',
         header: t('Task ID'),
         cell: ({ row }) => {
-          const log = row.original
-          const taskId = row.getValue('task_id') as string
-          if (!taskId) {
-            return <span className='text-muted-foreground/60 text-xs'>-</span>
-          }
+          const taskId = row.original.task_id
+          const shortId =
+            taskId.length > 14
+              ? `${taskId.slice(0, 9)}…${taskId.slice(-2)}`
+              : taskId
           return (
-            <div className='flex max-w-[170px] flex-col gap-0.5'>
-              <StatusBadge
-                label={taskId}
-                copyText={taskId}
-                variant='neutral'
-                size='sm'
-                className='border-border/60 bg-muted/30 !text-foreground max-w-full truncate rounded-md border px-1.5 py-0.5 font-mono'
-              />
-              <span className='text-muted-foreground/60 truncate text-[11px]'>
-                {t(log.platform)} · {t(taskActionMapper.getLabel(log.action))}
-              </span>
-            </div>
+            <span className='font-mono! text-xs!' title={taskId}>
+              {shortId || '—'}
+            </span>
           )
         },
         meta: { mobileTitle: true },
       },
-      createDurationColumn<TaskLog>({
-        submitTimeKey: 'submit_time',
-        finishTimeKey: 'finish_time',
-        unit: 'seconds',
-        headerLabel: t('Duration'),
-        warningThresholdSec: 300,
-      }),
+      {
+        accessorKey: 'platform',
+        header: t('Platform'),
+        cell: ({ row }) => {
+          const platform = row.original.platform
+          // Channel-backed tasks store the channel type number as platform.
+          const channelType =
+            CHANNEL_TYPES[Number(platform) as keyof typeof CHANNEL_TYPES]
+          return <span>{channelType ?? platform}</span>
+        },
+      },
+      {
+        accessorKey: 'action',
+        header: t('Type'),
+        cell: ({ row }) => (
+          <span className='text-muted-foreground'>
+            {t(
+              taskActionMapper.getLabel(
+                row.original.action,
+                row.original.action
+              )
+            )}
+          </span>
+        ),
+      },
       {
         accessorKey: 'status',
         header: t('Status'),
+        cell: ({ row }) => <TaskStatusTag log={row.original} />,
+      },
+      {
+        accessorKey: 'progress',
+        header: t('Progress'),
         cell: ({ row }) => {
-          const status = row.getValue('status') as string
+          const value = Math.min(
+            100,
+            Math.max(0, Number.parseFloat(row.original.progress ?? '') || 0)
+          )
           return (
-            <StatusBadge
-              label={t(
-                taskStatusMapper.getLabel(status, status || 'Submitting')
-              )}
-              variant={taskStatusMapper.getVariant(status)}
-              size='sm'
-              copyable={false}
-              className='-ml-1.5'
-            />
+            <div className='flex min-w-[120px] items-center gap-2'>
+              <Progress
+                value={value}
+                aria-label={t('Progress')}
+                className='flex-1 gap-0'
+              />
+              <span className='text-muted-foreground font-mono! text-[11.5px]!'>
+                {value}%
+              </span>
+            </div>
           )
         },
       },
-      createProgressColumn<TaskLog>({ headerLabel: t('Progress') }),
       {
-        id: 'artifacts',
-        header: t('Artifacts'),
-        cell: ({ row }) => (
-          <TaskArtifactsCell key={row.original.task_id} log={row.original} />
-        ),
-        size: 120,
-        maxSize: 140,
+        id: 'duration',
+        header: t('Duration'),
+        cell: ({ row }) => {
+          const log = row.original
+          // Running tasks show the time elapsed so far.
+          const end = RUNNING_TASK_STATUSES.has(log.status)
+            ? dayjs().unix()
+            : log.finish_time
+          const seconds = end ? end - log.submit_time : 0
+          // Failed tasks without a recorded run time show no duration.
+          const failedInstantly =
+            log.status === TASK_STATUS.FAILURE && seconds <= 0
+          if (!log.submit_time || !end || failedInstantly) {
+            return <span className={numericCellClass}>—</span>
+          }
+          const elapsed = Math.max(0, seconds)
+          const minutes = Math.floor(elapsed / 60)
+          const label =
+            minutes > 0
+              ? `${minutes}m ${String(elapsed % 60).padStart(2, '0')}s`
+              : `${elapsed}s`
+          return <span className={numericCellClass}>{label}</span>
+        },
       },
       {
-        accessorKey: 'fail_reason',
-        header: t('Details'),
+        accessorKey: 'quota',
+        header: t('Cost'),
         cell: ({ row }) => (
-          <TaskDetailsCell
-            key={row.original.task_id}
-            log={row.original}
-            isAdmin={isAdmin}
-            isRoot={isRoot}
-          />
+          <LogCostDisplay plain quota={row.original.quota} other={null} />
         ),
-        size: 220,
-        maxSize: 240,
-      }
-    )
-
-    return columns
-  }, [t, isAdmin, isRoot])
+      },
+    ],
+    [t]
+  )
 }

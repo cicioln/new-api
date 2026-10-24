@@ -257,32 +257,34 @@ export async function fetchLogsByCategory(
     return isAdmin ? await getAllLogs(params) : await getUserLogs(params)
   }
 
-  // For drawing and task logs
-  const baseParams = buildBaseParams({
-    page,
-    pageSize,
-    searchParams,
-    useMilliseconds: logCategory === 'drawing',
-  })
-
-  const paramsWithFilter = {
-    ...baseParams,
-    ...(logCategory === 'drawing'
-      ? { mj_id: searchParams.filter as string | undefined }
-      : {}),
-    ...(logCategory === 'task'
-      ? { task_id: searchParams.filter as string | undefined }
-      : {}),
-  }
-
   if (logCategory === 'drawing') {
+    const paramsWithFilter = {
+      ...buildBaseParams({
+        page,
+        pageSize,
+        searchParams,
+        useMilliseconds: true,
+      }),
+      mj_id: searchParams.filter as string | undefined,
+    }
     return isAdmin
       ? await getAllMidjourneyLogs(paramsWithFilter as GetMidjourneyLogsParams)
       : await getUserMidjourneyLogs(paramsWithFilter as GetMidjourneyLogsParams)
   }
 
-  // task logs
-  return isAdmin
-    ? await getAllTaskLogs(paramsWithFilter as GetTaskLogsParams)
-    : await getUserTaskLogs(paramsWithFilter as GetTaskLogsParams)
+  // The task page has no time filter, so without an explicit range in the
+  // URL it lists tasks of all time.
+  const params: GetTaskLogsParams = {
+    p: page,
+    page_size: pageSize,
+    ...(searchParams.channel
+      ? { channel_id: String(searchParams.channel) }
+      : {}),
+    ...(searchParams.filter ? { task_id: String(searchParams.filter) } : {}),
+    ...(searchParams.startTime || searchParams.endTime
+      ? buildTimeRangeParams(searchParams, false)
+      : {}),
+    ...(config.taskStatuses ? { status: config.taskStatuses } : {}),
+  }
+  return isAdmin ? await getAllTaskLogs(params) : await getUserTaskLogs(params)
 }

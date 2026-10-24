@@ -7417,6 +7417,7 @@
     "Retried": "Đã thử lại",
     "First token / Total": "Token đầu / Tổng",
     "{{total}} records total": "Tổng {{total}} bản ghi",
-    "Embedding": "Embedding"
+    "Embedding": "Embedding",
+    "Failed · Refunded": "Thất bại · Đã hoàn tiền"
   }
 }

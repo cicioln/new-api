@@ -7417,6 +7417,7 @@
     "Retried": "再試行済み",
     "First token / Total": "初回トークン / 合計",
     "{{total}} records total": "合計 {{total}} 件",
-    "Embedding": "埋め込み"
+    "Embedding": "埋め込み",
+    "Failed · Refunded": "失敗 · 返金済み"
   }
 }

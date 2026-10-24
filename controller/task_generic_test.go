@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -249,6 +250,29 @@ func TestTaskListsOmitPersistedSnapshot(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, exists)
 	assert.JSONEq(t, string(task.Data), string(stored.Data), "single-task lookups keep the snapshot")
+}
+
+// The task log tabs filter by status groups, so the list and count queries
+// accept a comma-separated status list as well as a single status.
+func TestTaskListsFilterByStatusList(t *testing.T) {
+	task := setupGenericTaskTest(t)
+	for i, status := range []model.TaskStatus{model.TaskStatusQueued, model.TaskStatusInProgress, model.TaskStatusFailure} {
+		require.NoError(t, model.DB.Create(&model.Task{
+			TaskID: fmt.Sprintf("task_status_%d", i), Platform: "document", UserId: task.UserId, ChannelId: 1,
+			Status: status, SubmitTime: int64(11 + i),
+		}).Error)
+	}
+
+	running := model.SyncTaskQueryParams{Status: "QUEUED,IN_PROGRESS"}
+	assert.Len(t, model.TaskGetAllTasks(0, 10, running), 2)
+	assert.EqualValues(t, 2, model.TaskCountAllTasks(running))
+	assert.Len(t, model.TaskGetAllUserTask(task.UserId, 0, 10, running), 2)
+	assert.EqualValues(t, 2, model.TaskCountAllUserTask(task.UserId, running))
+
+	failed := model.SyncTaskQueryParams{Status: model.TaskStatusFailure}
+	require.Len(t, model.TaskGetAllUserTask(task.UserId, 0, 10, failed), 1)
+	assert.EqualValues(t, 1, model.TaskCountAllTasks(failed))
+	assert.EqualValues(t, 4, model.TaskCountAllTasks(model.SyncTaskQueryParams{}))
 }
 
 func TestTaskArtifactAccessRequiresActiveOwner(t *testing.T) {

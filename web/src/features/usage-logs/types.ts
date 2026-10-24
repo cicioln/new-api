@@ -498,6 +498,8 @@ export interface GetTaskLogsParams {
   task_id?: string
   start_timestamp?: number
   end_timestamp?: number
+  /** One task status or a comma-separated list. */
+  status?: string
 }
 
 // ============================================================================
@@ -514,6 +516,8 @@ export interface FetchLogsConfig {
   pageSize: number
   searchParams: Record<string, unknown>
   columnFilters: Array<{ id: string; value: unknown }>
+  /** Status filter of task logs, one status or a comma-separated list. */
+  taskStatuses?: string
 }
 
 // ============================================================================

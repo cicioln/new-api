@@ -49,6 +49,8 @@ interface UsageLogsMobileListProps<TData> {
   emptyTitle?: string
   emptyDescription?: string
   logCategory: LogCategory
+  /** Opens the row's details; task cards are buttons when it is set. */
+  onRowClick?: (row: TData) => void
 }
 
 function UsageLogsMobileSkeleton(props: { separate: boolean }) {
@@ -179,11 +181,6 @@ function TaskLogsCard<TData>({
             primaryOnly={field.primaryOnly}
           />
         ))}
-        <SummaryField
-          label={t('Details')}
-          cell={cells.get('fail_reason')}
-          className='col-span-2 bg-transparent px-0 py-0'
-        />
       </div>
     </div>
   )
@@ -242,6 +239,7 @@ export function UsageLogsMobileList<TData>({
   emptyTitle,
   emptyDescription,
   logCategory,
+  onRowClick,
 }: UsageLogsMobileListProps<TData>) {
   const { t } = useTranslation()
 
@@ -306,7 +304,15 @@ export function UsageLogsMobileList<TData>({
                 cells={cells}
               />
             )}
-            {logCategory === 'task' && <TaskLogsCard cells={cells} />}
+            {logCategory === 'task' && (
+              <button
+                type='button'
+                className='block w-full text-left'
+                onClick={() => onRowClick?.(row.original)}
+              >
+                <TaskLogsCard cells={cells} />
+              </button>
+            )}
             {logCategory === 'drawing' && <DrawingLogsCard cells={cells} />}
           </div>
         )

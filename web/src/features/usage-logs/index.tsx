@@ -30,6 +30,7 @@ import { useSidebarConfig } from '@/hooks/use-sidebar-config'
 import { CommonLogsStats } from './components/common-logs-stats'
 import { ExportLogsDialog } from './components/dialogs/export-logs-dialog'
 import { UserInfoDialog } from './components/dialogs/user-info-dialog'
+import { TaskStatusTabs } from './components/task-status-tabs'
 import {
   UsageLogsProvider,
   useUsageLogsContext,
@@ -120,8 +121,10 @@ function UsageLogsContent() {
 
   const pageMeta =
     activeCategory === 'common' ? SECTION_META.common : SECTION_META.task
+  // The design task page uses status tabs; the drawing/task switcher only
+  // remains on the drawing logs page.
   const showTaskSwitcher =
-    activeCategory !== 'common' && visibleSections.length > 1
+    activeCategory === 'drawing' && visibleSections.length > 1
 
   return (
     <>
@@ -142,6 +145,7 @@ function UsageLogsContent() {
             {activeCategory === 'common' && !isMobile && (
               <CommonLogsStats variant='cards' />
             )}
+            {activeCategory === 'task' && <TaskStatusTabs />}
             {showTaskSwitcher && (
               <Tabs value={activeCategory} onValueChange={handleSectionChange}>
                 <TabsList className='max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto'>

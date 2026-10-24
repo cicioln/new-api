@@ -43,15 +43,18 @@ import {
   COMMON_LOG_NUMERIC_COLUMNS,
   DEFAULT_LOGS_DATA,
   LOG_TYPE_ALL_VALUE,
+  TASK_LOG_NUMERIC_COLUMNS,
+  TASK_STATUS_TABS,
 } from '../constants'
 import type { UsageLog } from '../data/schema'
 import { shouldShowBillingSource } from '../lib/billing-source'
 import { useColumnsByCategory } from '../lib/columns'
 import { parseLogOther } from '../lib/format'
 import { fetchLogsByCategory } from '../lib/utils'
-import type { LogCategory } from '../types'
+import type { LogCategory, TaskLog } from '../types'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
 import { DetailsDialog } from './dialogs/details-dialog'
+import { TaskDetailsDialog } from './dialogs/task-details-dialog'
 import { TaskLogsFilterBar } from './task-logs-filter-bar'
 import { UsageLogsMobileList } from './usage-logs-mobile-card'
 import { useLogsViewScope, type LogsViewAccess } from './usage-logs-provider'
@@ -66,8 +69,15 @@ const quotaSaturationRowTint = 'bg-amber-50/60 dark:bg-amber-950/25'
 // details columns only feed the mobile cards.
 const COMMON_DESKTOP_COLUMN_VISIBILITY = { is_stream: false, content: false }
 
-function getCommonColumnClassName(columnId: string) {
-  return COMMON_LOG_NUMERIC_COLUMNS.has(columnId) ? 'text-right' : ''
+// Drawing logs keep their own toolbar and roomier rows; common and task
+// tables right-align their numeric columns as in the design.
+function getColumnClassNameFor(logCategory: LogCategory, columnId: string) {
+  if (logCategory === 'drawing') return 'py-3.5'
+  const numeric =
+    logCategory === 'task'
+      ? TASK_LOG_NUMERIC_COLUMNS
+      : COMMON_LOG_NUMERIC_COLUMNS
+  return numeric.has(columnId) ? 'text-right' : ''
 }
 
 function getColumnVisibilityStorageKey(
@@ -95,11 +105,11 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const getColumnClassName = useCallback(
-    (columnId: string) =>
-      logCategory === 'common' ? getCommonColumnClassName(columnId) : 'py-3.5',
+    (columnId: string) => getColumnClassNameFor(logCategory, columnId),
     [logCategory]
   )
   const [detailLog, setDetailLog] = useState<UsageLog | null>(null)
+  const [detailTask, setDetailTask] = useState<TaskLog | null>(null)
   const {
     isAdminView: isAdmin,
     isRootView: isRoot,
@@ -107,6 +117,11 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   } = useLogsViewScope()
   const isMobile = useMediaQuery('(max-width: 640px)')
   const searchParams = route.useSearch()
+  const taskStatuses =
+    logCategory === 'task'
+      ? TASK_STATUS_TABS.find((tab) => tab.value === searchParams.status)
+          ?.statuses
+      : undefined
   const userId = useAuthStore((state) => state.auth.user?.id)
   const { data: showBillingSource = false } = useQuery({
     queryKey: ['usage-log-billing-source', isAdmin, userId],
@@ -189,6 +204,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
         pageSize: pagination.pageSize,
         searchParams,
         columnFilters,
+        taskStatuses,
       })
 
       if (!result?.success) {
@@ -240,22 +256,34 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
   })
 
   const isCommon = logCategory === 'common'
+  const isTask = logCategory === 'task'
+  const isDesignTable = isCommon || isTask
+  // The design task table has no toolbar; status tabs sit above the card.
+  let toolbar: React.ReactNode = (
+    <TaskLogsFilterBar table={table} logCategory='drawing' />
+  )
+  if (isCommon) toolbar = <CommonLogsFilterBar table={table} />
+  if (isTask) toolbar = undefined
+  const openDetails = (log: Record<string, unknown>) => {
+    if (isCommon) setDetailLog(log as unknown as UsageLog)
+    if (isTask) setDetailTask(log as unknown as TaskLog)
+  }
 
   return (
     <>
       <DataTablePage
         table={table}
-        compactPagination={isMobile && isCommon}
-        simplePagination={!isMobile && isCommon}
+        compactPagination={isMobile && isDesignTable}
+        simplePagination={!isMobile && isDesignTable}
         paginationTotalLabel={
-          isCommon
+          isDesignTable
             ? (total) =>
                 t('{{total}} records total', {
                   total: formatNumber(total, locale),
                 })
             : undefined
         }
-        getColumnClassName={isCommon ? getColumnClassName : undefined}
+        getColumnClassName={isDesignTable ? getColumnClassName : undefined}
         columns={columns as ColumnDef<Record<string, unknown>>[]}
         isLoading={isLoadingData}
         isFetching={isFetching}
@@ -264,10 +292,10 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
           'No usage logs available. Logs will appear here once API calls are made.'
         )}
         skeletonKeyPrefix='usage-log-skeleton'
-        applyHeaderSize={!isCommon}
-        fixedHeight={!isCommon || isMobile}
+        applyHeaderSize={!isDesignTable}
+        fixedHeight={!isDesignTable || isMobile}
         tableClassName={
-          isCommon
+          isDesignTable
             ? undefined
             : '[&_[data-slot=table]]:text-[13px] [&_[data-slot=table]_td]:text-[13px] [&_[data-slot=table]_td_*]:text-[13px] [&_[data-slot=table]_th]:text-[13px] [&_[data-slot=table]_th_*]:text-[13px]'
         }
@@ -276,15 +304,10 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
             table={table}
             isLoading={isLoadingData}
             logCategory={logCategory}
+            onRowClick={isTask ? openDetails : undefined}
           />
         }
-        toolbar={
-          isCommon ? (
-            <CommonLogsFilterBar table={table} />
-          ) : (
-            <TaskLogsFilterBar table={table} logCategory={logCategory} />
-          )
-        }
+        toolbar={toolbar}
         renderRow={(row) => {
           let tintClass = ''
           if (isCommon && isAdmin) {
@@ -302,14 +325,14 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
               row={row}
               className={cn(
                 'transition-colors',
-                isCommon && 'cursor-pointer',
+                isDesignTable && 'cursor-pointer',
                 tintClass
               )}
               getColumnClassName={getColumnClassName}
               cellRenderColumns={table.options.columns}
               onClick={
-                isCommon
-                  ? () => setDetailLog(row.original as unknown as UsageLog)
+                isDesignTable
+                  ? () => openDetails(row.original as Record<string, unknown>)
                   : undefined
               }
             />
@@ -324,6 +347,17 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
           open
           onOpenChange={(open) => {
             if (!open) setDetailLog(null)
+          }}
+        />
+      )}
+      {detailTask && (
+        <TaskDetailsDialog
+          log={detailTask}
+          isAdmin={isAdmin}
+          isRoot={isRoot}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDetailTask(null)
           }}
         />
       )}

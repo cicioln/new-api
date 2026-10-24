@@ -7417,6 +7417,7 @@
     "Retried": "Retried",
     "First token / Total": "First token / Total",
     "{{total}} records total": "{{total}} records total",
-    "Embedding": "Embedding"
+    "Embedding": "Embedding",
+    "Failed · Refunded": "Failed · Refunded"
   }
 }
