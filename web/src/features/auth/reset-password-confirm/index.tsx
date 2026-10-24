@@ -17,12 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useNavigate } from '@tanstack/react-router'
-import { CheckIcon, CopyIcon } from 'lucide-react'
+import { CircleCheck, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { CopyButton } from '@/components/copy-button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,15 +43,13 @@ export type ResetPasswordSearchParams = {
 
 type ResetPasswordConfirmProps = ResetPasswordSearchParams
 
-export function ResetPasswordConfirm({
-  email,
-  token,
-}: ResetPasswordConfirmProps) {
+export function ResetPasswordConfirm(props: ResetPasswordConfirmProps) {
   const { t } = useTranslation()
+  const email = props.email
+  const token = props.token
   const navigate = useNavigate()
   const [newPassword, setNewPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [copied, setCopied] = useState(false)
   const {
     secondsLeft,
     isActive,
@@ -95,82 +94,89 @@ export function ResetPasswordConfirm({
     }
   }
 
-  async function handleCopy() {
-    if (!newPassword) return
-
-    const copySuccess = await copyToClipboard(newPassword)
-    if (copySuccess) {
-      setCopied(true)
-      toast.success(
-        t('Password copied to clipboard: {{password}}', {
-          password: newPassword,
-        })
-      )
-      setTimeout(() => setCopied(false), 2000)
-    }
+  if (!isValidResetLink) {
+    return (
+      <AuthLayout>
+        <div className='w-full space-y-6'>
+          <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
+            {t('Reset password')}
+          </h2>
+          <Alert className='border-warning/40 bg-warning/10'>
+            <TriangleAlert aria-hidden='true' className='text-warning' />
+            <AlertTitle>{t('Link invalid or expired')}</AlertTitle>
+            <AlertDescription>
+              {t(
+                'Reset links expire after a short time and can only be used once. Please request a new one.'
+              )}
+            </AlertDescription>
+          </Alert>
+          <Button
+            className='w-full'
+            onClick={() => navigate({ to: '/forgot-password', replace: true })}
+          >
+            {t('Request again')}
+          </Button>
+          <Button
+            variant='link'
+            className='w-full'
+            onClick={() => navigate({ to: '/sign-in', replace: true })}
+          >
+            {t('Back to login')}
+          </Button>
+        </div>
+      </AuthLayout>
+    )
   }
 
   return (
     <AuthLayout>
-      <div className='w-full space-y-8'>
+      <div className='w-full space-y-6'>
         <div className='space-y-2'>
           <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
             {t('Reset password')}
           </h2>
           <p className='text-muted-foreground text-left text-sm sm:text-base'>
-            {newPassword
-              ? t('auth.resetPasswordConfirm.success')
-              : t('auth.resetPasswordConfirm.description')}
+            {t('auth.resetPasswordConfirm.description')}
           </p>
         </div>
 
         <div className='space-y-4'>
-          {!isValidResetLink && (
-            <Alert variant='destructive'>
-              <AlertDescription>
-                {t('Invalid reset link, please request a new password reset.')}
-              </AlertDescription>
-            </Alert>
-          )}
-
           <div className='space-y-2'>
             <Label htmlFor='email'>{t('Email')}</Label>
-            <Input
-              id='email'
-              type='email'
-              value={email || ''}
-              disabled
-              placeholder={t('Waiting for email...')}
-            />
+            <Input id='email' type='email' value={email} disabled />
           </div>
 
           {newPassword && (
-            <div className='space-y-2'>
-              <Label htmlFor='password'>{t('New password')}</Label>
-              <div className='flex gap-2'>
-                <Input
-                  id='password'
-                  value={newPassword}
-                  disabled
-                  className='font-mono'
-                />
-                <Button
-                  type='button'
-                  size='icon'
-                  variant='outline'
-                  onClick={handleCopy}
-                >
-                  {copied ? (
-                    <CheckIcon className='h-4 w-4' />
-                  ) : (
-                    <CopyIcon className='h-4 w-4' />
-                  )}
-                </Button>
+            <>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='password'>{t('New password')}</Label>
+                  <span className='text-primary text-xs'>
+                    {t('Password has been copied to clipboard')}
+                  </span>
+                </div>
+                <div className='flex gap-2'>
+                  <Input
+                    id='password'
+                    value={newPassword}
+                    readOnly
+                    className='font-mono'
+                  />
+                  <CopyButton
+                    value={newPassword}
+                    variant='outline'
+                    size='icon'
+                    aria-label={t('Copy password')}
+                  />
+                </div>
               </div>
-              <p className='text-muted-foreground text-xs'>
-                {t('Password has been copied to clipboard')}
-              </p>
-            </div>
+              <Alert>
+                <CircleCheck aria-hidden='true' className='text-success' />
+                <AlertDescription>
+                  {t('auth.resetPasswordConfirm.success')}
+                </AlertDescription>
+              </Alert>
+            </>
           )}
 
           <Button
@@ -180,9 +186,7 @@ export function ResetPasswordConfirm({
                 ? () => navigate({ to: '/sign-in', replace: true })
                 : handleSubmit
             }
-            disabled={
-              newPassword ? false : loading || isActive || !isValidResetLink
-            }
+            disabled={newPassword ? false : loading || isActive}
           >
             {newPassword && t('auth.resetPasswordConfirm.backToLogin')}
             {!newPassword &&

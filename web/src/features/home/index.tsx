@@ -26,7 +26,7 @@ import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { CTA, Features, Hero, HowItWorks, Stats } from './components'
+import { Features, GroupTable, Hero, QuickStart } from './components'
 import { useHomePageContent } from './hooks'
 
 export function Home() {
@@ -123,10 +123,11 @@ export function Home() {
   return (
     <PublicLayout showMainContainer={false}>
       <Hero isAuthenticated={isAuthenticated} />
-      <Stats />
-      <Features />
-      <HowItWorks />
-      <CTA isAuthenticated={isAuthenticated} />
+      <div className='mx-auto max-w-[1360px] px-4 pb-24 md:px-6'>
+        <QuickStart />
+        <GroupTable />
+        <Features />
+      </div>
       <Footer />
     </PublicLayout>
   )

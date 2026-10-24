@@ -59,5 +59,6 @@ export function useActiveChatKey(enabled: boolean) {
     enabled: enabled && Boolean(userId),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    meta: { errorToast: false },
   })
 }

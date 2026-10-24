@@ -16,8 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Building2, Home, Presentation } from 'lucide-react'
-import type { ComponentType } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -30,7 +28,6 @@ import {
 } from '@/components/ui/form'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { cn } from '@/lib/utils'
 
 import type { SetupFormValues, SetupUsageMode } from '../types'
 
@@ -42,83 +39,72 @@ const USAGE_MODE_OPTIONS: Array<{
   value: SetupUsageMode
   titleKey: string
   descriptionKey: string
-  icon: ComponentType<{ className?: string }>
 }> = [
   {
     value: 'external',
     titleKey: 'External operations',
     descriptionKey:
       'Serve multiple users or teams with billing and quota control.',
-    icon: Building2,
   },
   {
     value: 'self',
     titleKey: 'Personal use',
     descriptionKey:
       'Best for single-tenant deployments. Pricing and billing options stay hidden.',
-    icon: Home,
   },
   {
     value: 'demo',
     titleKey: 'Demo site',
     descriptionKey:
       'Showcase core capabilities with demo credentials and limited access.',
-    icon: Presentation,
   },
 ]
 
-export function UsageModeStep({ form }: UsageModeStepProps) {
+export function UsageModeStep(props: UsageModeStepProps) {
   const { t } = useTranslation()
 
   return (
     <FormField
-      control={form.control}
+      control={props.form.control}
       name='usageMode'
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>{t('How will you use the platform?')}</FormLabel>
+        <FormItem className='gap-0'>
+          <FormLabel className='text-base font-semibold'>
+            {t('How will you use the platform?')}
+          </FormLabel>
+          <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
+            {t('You can change this later in system settings.')}
+          </p>
           <FormControl>
             <RadioGroup
               value={field.value}
               onValueChange={(value) => {
-                form.clearErrors('usageMode')
+                props.form.clearErrors('usageMode')
                 field.onChange(value as SetupUsageMode)
               }}
-              className='grid gap-3 sm:grid-cols-3'
+              className='grid gap-2'
             >
-              {USAGE_MODE_OPTIONS.map(
-                ({ value, titleKey, descriptionKey, icon: Icon }) => {
-                  return (
-                    <Label
-                      key={value}
-                      htmlFor={`usage-mode-${value}`}
-                      className={cn(
-                        'hover:border-primary/40 focus-within:border-primary/50 has-data-[checked]:border-primary has-data-[checked]:ring-primary/20 group bg-card border-muted flex cursor-pointer flex-col gap-3 rounded-xl border p-4 font-normal transition-all has-data-[checked]:ring-2'
-                      )}
-                    >
-                      <div className='flex items-center gap-3'>
-                        <RadioGroupItem
-                          id={`usage-mode-${value}`}
-                          value={value}
-                          className='mt-1'
-                        />
-                        <div>
-                          <Label
-                            htmlFor={`usage-mode-${value}`}
-                            className='text-base leading-none font-semibold'
-                          >
-                            {t(titleKey)}
-                          </Label>
-                          <p className='text-muted-foreground mt-2 text-sm'>
-                            {t(descriptionKey)}
-                          </p>
-                        </div>
-                        <Icon className='text-muted-foreground/70 group-hover:text-primary group-focus-within:text-primary group-has-data-[checked]:text-primary ml-auto size-5 shrink-0 transition' />
-                      </div>
-                    </Label>
-                  )
-                }
-              )}
+              {USAGE_MODE_OPTIONS.map((option) => (
+                <Label
+                  key={option.value}
+                  htmlFor={`usage-mode-${option.value}`}
+                  className='bg-card has-data-[checked]:border-foreground has-data-[checked]:ring-muted flex cursor-pointer items-start gap-3 rounded-[10px] border px-3.5 py-3 font-normal transition-colors has-data-[checked]:ring-3'
+                >
+                  <RadioGroupItem
+                    id={`usage-mode-${option.value}`}
+                    value={option.value}
+                    className='mt-0.5'
+                  />
+                  <span>
+                    <span className='block text-sm font-medium'>
+                      {t(option.titleKey)}
+                    </span>
+                    <span className='text-muted-foreground text-[12.5px]'>
+                      {t(option.descriptionKey)}
+                    </span>
+                  </span>
+                </Label>
+              ))}
             </RadioGroup>
           </FormControl>
           <FormMessage />

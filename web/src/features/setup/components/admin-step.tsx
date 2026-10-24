@@ -38,88 +38,98 @@ interface AdminStepProps {
   rootInitialized?: boolean
 }
 
-export function AdminStep({ form, rootInitialized }: AdminStepProps) {
+export function AdminStep(props: AdminStepProps) {
   const { t } = useTranslation()
-  if (rootInitialized) {
-    return (
-      <Alert className='border-sky-200 bg-sky-50 dark:border-sky-900/60 dark:bg-sky-950/40'>
-        <AlertDescription className='flex items-start gap-2'>
-          <ShieldCheck className='mt-0.5 size-4 text-sky-500' />
-          {t(
-            'The administrator account is already initialized. You can keep your existing credentials and continue to the next step.'
-          )}
-        </AlertDescription>
-      </Alert>
-    )
-  }
+  const form = props.form
 
   return (
-    <div className='grid gap-4 sm:grid-cols-2'>
-      <FormField
-        control={form.control}
-        name='username'
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('Administrator username')}</FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                placeholder={t('Choose a username')}
-                autoComplete='username'
-                onChange={(event) => {
-                  form.clearErrors('username')
-                  field.onChange(event)
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+    <section>
+      <h2 className='text-base font-semibold'>
+        {t('Create administrator account')}
+      </h2>
+      <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
+        {t(
+          'This super administrator can manage system settings and all users.'
         )}
-      />
+      </p>
+      {props.rootInitialized ? (
+        <Alert>
+          <ShieldCheck aria-hidden='true' className='text-success' />
+          <AlertDescription>
+            {t(
+              'The administrator account is already initialized. You can keep your existing credentials and continue to the next step.'
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className='grid gap-x-3.5 gap-y-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='username'
+            render={({ field }) => (
+              <FormItem className='sm:col-span-2'>
+                <FormLabel>{t('Administrator username')}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder={t('Choose a username')}
+                    autoComplete='username'
+                    onChange={(event) => {
+                      form.clearErrors('username')
+                      field.onChange(event)
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={form.control}
-        name='password'
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>{t('Password')}</FormLabel>
-            <FormControl>
-              <PasswordInput
-                {...field}
-                placeholder={t('Set a secure password (min. 8 characters)')}
-                autoComplete='new-password'
-                onChange={(event) => {
-                  form.clearErrors('password')
-                  field.onChange(event)
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+          <FormField
+            control={form.control}
+            name='password'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Password')}</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    {...field}
+                    placeholder={t('Set a secure password (min. 8 characters)')}
+                    autoComplete='new-password'
+                    onChange={(event) => {
+                      form.clearErrors('password')
+                      field.onChange(event)
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-      <FormField
-        control={form.control}
-        name='confirmPassword'
-        render={({ field }) => (
-          <FormItem className='sm:col-span-2'>
-            <FormLabel>{t('Confirm password')}</FormLabel>
-            <FormControl>
-              <PasswordInput
-                {...field}
-                placeholder={t('Repeat the administrator password')}
-                autoComplete='new-password'
-                onChange={(event) => {
-                  form.clearErrors('confirmPassword')
-                  field.onChange(event)
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
+          <FormField
+            control={form.control}
+            name='confirmPassword'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Confirm password')}</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    {...field}
+                    placeholder={t('Repeat the administrator password')}
+                    autoComplete='new-password'
+                    onChange={(event) => {
+                      form.clearErrors('confirmPassword')
+                      field.onChange(event)
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
+    </section>
   )
 }

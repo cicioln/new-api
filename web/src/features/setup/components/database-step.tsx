@@ -16,11 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Database, HardDrive, Server } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { StatusBadge } from '@/components/status-badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 import type { SetupStatus } from '../types'
 
@@ -33,44 +31,44 @@ const DATABASE_META: Record<
   {
     label: string
     descriptionKey: string
+    badgeKey: string
     variant: 'info' | 'success' | 'warning'
   }
 > = {
   sqlite: {
     label: 'SQLite',
     descriptionKey:
-      'SQLite stores all data in a single file. Make sure that file is persisted when running in containers.',
+      'When running in containers or ephemeral environments, ensure the SQLite file is mapped to persistent storage to avoid data loss on restart.',
+    badgeKey: 'Persist your data file',
     variant: 'warning',
   },
   mysql: {
     label: 'MySQL',
     descriptionKey:
-      'MySQL is a production-ready relational database. Keep your credentials secure.',
+      'MySQL is production ready. Ensure automated backups and a dedicated user with the minimal required privileges are configured.',
+    badgeKey: 'MySQL detected',
     variant: 'success',
   },
   postgres: {
     label: 'PostgreSQL',
     descriptionKey:
-      'PostgreSQL offers advanced reliability and data integrity for production workloads.',
+      'PostgreSQL offers strong reliability guarantees. Double check your maintenance window and retention policies before going live.',
+    badgeKey: 'PostgreSQL detected',
     variant: 'success',
   },
 }
 
-function resolveDatabaseMeta(type?: string) {
-  if (!type) return null
-  const normalized = type.toLowerCase()
-  return (
-    DATABASE_META[normalized] ?? {
-      label: type,
-      descriptionKey: 'Custom database driver detected.',
-      variant: 'info' as const,
-    }
-  )
-}
-
-export function DatabaseStep({ status }: DatabaseStepProps) {
+export function DatabaseStep(props: DatabaseStepProps) {
   const { t } = useTranslation()
-  const meta = resolveDatabaseMeta(status?.database_type)
+  const type = props.status?.database_type
+  const meta = type
+    ? (DATABASE_META[type.toLowerCase()] ?? {
+        label: type,
+        descriptionKey: 'Custom database driver detected.',
+        badgeKey: 'Detected database',
+        variant: 'info' as const,
+      })
+    : null
   const electronApi =
     typeof window !== 'undefined'
       ? ((window as unknown as Record<string, unknown>)?.electron as
@@ -81,86 +79,55 @@ export function DatabaseStep({ status }: DatabaseStepProps) {
   const electronDataDir = electronApi?.dataDir as string | undefined
 
   return (
-    <div className='space-y-4'>
-      <div className='bg-card flex items-center justify-between rounded-lg border p-4'>
-        <div className='space-y-1'>
-          <p className='text-muted-foreground text-sm font-medium'>
-            {t('Detected database')}
-          </p>
-          <p className='text-foreground text-base font-semibold'>
+    <section>
+      <h2 className='text-base font-semibold'>{t('Detected database')}</h2>
+      <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
+        {t(
+          'The database is determined by the SQL_DSN environment variable; the wizard only confirms it.'
+        )}
+      </p>
+      <div className='divide-y'>
+        <div data-testid='setup-database-row' className='pb-3.5'>
+          <p className='flex flex-wrap items-center gap-2 text-[13.5px] font-medium'>
             {meta?.label ?? t('Unknown')}
+            {meta && (
+              <StatusBadge
+                label={t(meta.badgeKey)}
+                variant={meta.variant}
+                copyable={false}
+              />
+            )}
           </p>
-          <p className='text-muted-foreground text-sm'>
+          <p className='text-muted-foreground mt-0.5 text-[12.5px]'>
             {t(
               meta?.descriptionKey ??
                 'The setup wizard will use this database during initialization.'
             )}
           </p>
-        </div>
-        <StatusBadge
-          label={meta?.label ?? t('Unknown')}
-          variant={meta?.variant ?? 'info'}
-          className='cursor-default'
-          copyable={false}
-          icon={Database}
-        />
-      </div>
-
-      {status?.database_type === 'sqlite' && (
-        <Alert className='border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/40'>
-          <AlertTitle className='flex items-center gap-2'>
-            <HardDrive className='size-4 text-amber-500' />
-            {t('Persist your data file')}
-          </AlertTitle>
-          <AlertDescription>
-            <p>
+          {isElectron && electronDataDir && (
+            <p className='text-muted-foreground mt-1 font-mono text-xs'>
+              {t('Data directory:')} {electronDataDir}
+            </p>
+          )}
+          {isElectron && !electronDataDir && (
+            <p className='text-muted-foreground mt-1 text-xs'>
               {t(
-                'When running in containers or ephemeral environments, ensure the SQLite file is mapped to persistent storage to avoid data loss on restart.'
+                'Data is stored locally on this device. Use system backups to keep a safe copy.'
               )}
             </p>
-            {isElectron && electronDataDir && (
-              <p className='mt-3 rounded-md bg-amber-100/70 px-3 py-2 font-mono text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'>
-                {t('Data directory:')} {electronDataDir}
-              </p>
-            )}
-            {isElectron && !electronDataDir && (
-              <p className='text-muted-foreground mt-3 text-xs'>
-                {t(
-                  'Data is stored locally on this device. Use system backups to keep a safe copy.'
-                )}
-              </p>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {status?.database_type === 'mysql' && (
-        <Alert className='border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/40'>
-          <AlertTitle className='flex items-center gap-2'>
-            <Server className='size-4 text-emerald-500' />
-            {t('MySQL detected')}
-          </AlertTitle>
-          <AlertDescription>
+          )}
+        </div>
+        <div className='py-3.5'>
+          <p className='text-[13.5px] font-medium'>
+            {t('Supported databases')}
+          </p>
+          <p className='text-muted-foreground mt-0.5 text-[12.5px]'>
             {t(
-              'MySQL is production ready. Ensure automated backups and a dedicated user with the minimal required privileges are configured.'
+              'MySQL ≥ 5.7.8 · PostgreSQL ≥ 9.6. Set SQL_DSN and restart to switch.'
             )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {status?.database_type === 'postgres' && (
-        <Alert className='border-sky-200 bg-sky-50 dark:border-sky-900/60 dark:bg-sky-950/40'>
-          <AlertTitle className='flex items-center gap-2'>
-            <Server className='size-4 text-sky-500' />
-            {t('PostgreSQL detected')}
-          </AlertTitle>
-          <AlertDescription>
-            {t(
-              'PostgreSQL offers strong reliability guarantees. Double check your maintenance window and retention policies before going live.'
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
+          </p>
+        </div>
+      </div>
+    </section>
   )
 }

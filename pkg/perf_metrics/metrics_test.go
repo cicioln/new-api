@@ -319,6 +319,41 @@ func TestPerformanceAggregationAndFlush(t *testing.T) {
 				assert.Equal(t, history.RecentSuccessSeries["history-hot"], persisted.RecentSuccessSeries["history-hot"])
 			})
 
+			t.Run("group summary merges allowed groups within the window", func(t *testing.T) {
+				windowStart, _ := queryWindow(now, 1)
+				for _, row := range []model.PerfMetric{
+					{ModelName: "group-m1", Group: "home-a", BucketTs: windowStart, RequestCount: 10, SuccessCount: 9, TotalLatencyMs: 10000},
+					{ModelName: "group-m2", Group: "home-a", BucketTs: windowStart, RequestCount: 10, SuccessCount: 10, TotalLatencyMs: 30000},
+					{ModelName: "group-m1", Group: "home-a", BucketTs: windowStart - 3600, RequestCount: 100, TotalLatencyMs: 900000},
+					{ModelName: "group-m1", Group: "home-b", BucketTs: windowStart, RequestCount: 3, SuccessCount: 3, TotalLatencyMs: 1500},
+					{ModelName: "group-m1", Group: "home-hidden", BucketTs: windowStart, RequestCount: 5, SuccessCount: 5, TotalLatencyMs: 500},
+				} {
+					require.NoError(t, model.UpsertPerfMetric(&row))
+				}
+				hotFailure := &atomicBucket{}
+				hotFailure.add(Sample{LatencyMs: 500})
+				hotBuckets.Store(bucketKey{model: "group-m1", group: "home-b", bucketTs: windowStart}, hotFailure)
+				hotHidden := &atomicBucket{}
+				hotHidden.add(Sample{})
+				hotBuckets.Store(bucketKey{model: "group-m1", group: "home-hidden", bucketTs: windowStart}, hotHidden)
+				hotExpired := &atomicBucket{}
+				hotExpired.add(Sample{})
+				hotBuckets.Store(bucketKey{model: "group-m1", group: "home-a", bucketTs: windowStart - 3600}, hotExpired)
+
+				result, err := QueryGroupSummary(1, []string{"home-a", "home-b", "home-idle"})
+				require.NoError(t, err)
+				assert.Equal(t, windowStart, result.WindowStart)
+				assert.Equal(t, map[string]Summary{
+					"home-a": {SuccessRate: 95, AvgLatencyMs: 2000},
+					"home-b": {SuccessRate: 75, AvgLatencyMs: 500},
+				}, result.Groups)
+
+				denied, err := QueryGroupSummary(1, []string{})
+				require.NoError(t, err)
+				assert.Empty(t, denied.Groups)
+				assert.Equal(t, windowStart, denied.WindowStart)
+			})
+
 			t.Run("recent history stops at the 7 day boundary even with fewer than 24 samples", func(t *testing.T) {
 				historyStart, _ := queryWindow(now, 7*24)
 				for _, row := range []model.PerfMetric{

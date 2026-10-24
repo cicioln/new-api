@@ -26,38 +26,100 @@ type AuthLayoutProps = {
   children: React.ReactNode
 }
 
-export function AuthLayout({ children }: AuthLayoutProps) {
+// Decorative request log shown on the dark brand panel.
+const STREAM_ROWS = [
+  { path: '/v1/chat/completions', model: 'claude-opus-5-5', ms: '312ms' },
+  { path: '/v1/messages', model: 'claude-sonnet-5-5', ms: '188ms' },
+  { path: '/v1/chat/completions', model: 'gpt-5.2', ms: '241ms' },
+  { path: '/v1/embeddings', model: 'text-embedding-3', ms: '42ms' },
+  { path: '/v1beta/generateContent', model: 'gemini-3-pro', ms: '406ms' },
+  { path: '/v1/chat/completions', model: 'deepseek-v4', ms: '275ms' },
+  { path: '/v1/responses', model: 'gpt-5.2-codex', ms: '330ms' },
+] as const
+
+export function AuthLayout(props: AuthLayoutProps) {
   const { t } = useTranslation()
   const { systemName, logo, loading } = useSystemConfig()
 
   return (
-    <div className='relative grid h-svh max-w-none'>
-      <Link
-        to='/'
-        className='absolute top-4 left-4 z-10 flex items-center gap-2 transition-opacity hover:opacity-80 sm:top-8 sm:left-8'
-      >
-        <div className='relative h-8 w-8'>
-          {loading ? (
-            <Skeleton className='absolute inset-0 rounded-full' />
-          ) : (
-            <img
-              src={logo}
-              alt={t('Logo')}
-              className='h-8 w-8 rounded-full object-cover'
-            />
-          )}
+    <div className='grid min-h-svh lg:grid-cols-2'>
+      <aside className='relative hidden flex-col overflow-hidden border-r border-[#23252a] bg-[#141518] px-12 py-10 text-[#f2f1ec] lg:flex'>
+        <Link
+          to='/'
+          className='relative z-10 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80'
+        >
+          <AuthBrand logo={logo} systemName={systemName} loading={loading} />
+        </Link>
+        <div
+          aria-hidden
+          className='absolute inset-x-12 top-[120px] font-mono text-xs leading-loose opacity-50'
+        >
+          {STREAM_ROWS.map((row) => (
+            <div
+              key={`${row.path}-${row.model}`}
+              className='flex gap-3.5 overflow-hidden whitespace-nowrap'
+            >
+              <span className='text-[#3dd68c]'>200</span>
+              <span>POST</span>
+              <span>{row.path}</span>
+              <span>{row.model}</span>
+              <span>{row.ms}</span>
+            </div>
+          ))}
         </div>
-        {loading ? (
-          <Skeleton className='h-6 w-24' />
-        ) : (
-          <h1 className='text-xl font-medium'>{systemName}</h1>
-        )}
-      </Link>
-      <div className='container flex items-center pt-16 sm:pt-0'>
-        <div className='mx-auto flex w-full flex-col justify-center space-y-2 px-4 py-8 sm:w-[480px] sm:p-8'>
-          {children}
+        <blockquote className='relative z-10 mt-auto max-w-[440px] text-[26px] leading-snug font-medium tracking-tight'>
+          {t(
+            '“Delete the integration code for six vendors and keep one base_url.”'
+          )}
+        </blockquote>
+        <p className='relative z-10 mt-4 text-[13px] opacity-55'>
+          {t('Unified AI Gateway')}
+        </p>
+      </aside>
+
+      <div className='flex flex-col'>
+        <Link
+          to='/'
+          className='m-6 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden'
+        >
+          <AuthBrand logo={logo} systemName={systemName} loading={loading} />
+        </Link>
+        <div className='flex flex-1 items-center justify-center px-6 py-10'>
+          <div className='flex w-full max-w-[380px] flex-col space-y-2'>
+            {props.children}
+          </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function AuthBrand(props: {
+  logo: string
+  systemName: string
+  loading: boolean
+}) {
+  const { t } = useTranslation()
+  return (
+    <>
+      <div className='relative size-7'>
+        {props.loading ? (
+          <Skeleton className='absolute inset-0 rounded-md' />
+        ) : (
+          <img
+            src={props.logo}
+            alt={t('Logo')}
+            className='size-7 rounded-md object-cover'
+          />
+        )}
+      </div>
+      {props.loading ? (
+        <Skeleton className='h-5 w-24' />
+      ) : (
+        <span className='text-[15px] font-semibold tracking-tight'>
+          {props.systemName}
+        </span>
+      )}
+    </>
   )
 }

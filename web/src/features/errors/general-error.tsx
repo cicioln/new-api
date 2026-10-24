@@ -21,7 +21,8 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+
+import { ErrorFrame } from './error-frame'
 
 const FEEDBACK_URL = 'https://github.com/QuantumNous/new-api/issues'
 
@@ -78,22 +79,13 @@ export function GeneralError({
     : t('Please try again later.')
 
   return (
-    <div className={cn('h-svh w-full', className)}>
-      <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-        {!minimal && status !== undefined && (
-          <h1 className='text-[7rem] leading-tight font-bold'>{status}</h1>
-        )}
-        <span className='font-medium'>{title}</span>
-        <p className='text-muted-foreground text-center'>
-          {t('We apologize for the inconvenience.')} <br /> {description}
-        </p>
-        {!minimal && (
-          <p className='text-muted-foreground text-center text-sm'>
-            {t('If this keeps happening, please report it on GitHub Issues.')}
-          </p>
-        )}
-        {!minimal && (
-          <div className='mt-6 flex flex-wrap justify-center gap-4'>
+    <ErrorFrame
+      className={className}
+      code={!minimal ? status : undefined}
+      title={title}
+      actions={
+        !minimal && (
+          <>
             <Button variant='outline' onClick={() => history.go(-1)}>
               {t('Go Back')}
             </Button>
@@ -112,9 +104,18 @@ export function GeneralError({
             <Button onClick={() => navigate({ to: '/' })}>
               {t('Back to Home')}
             </Button>
-          </div>
-        )}
-      </div>
-    </div>
+          </>
+        )
+      }
+    >
+      <p className='text-muted-foreground text-center'>
+        {t('We apologize for the inconvenience.')} <br /> {description}
+      </p>
+      {!minimal && (
+        <p className='text-muted-foreground text-center text-sm'>
+          {t('If this keeps happening, please report it on GitHub Issues.')}
+        </p>
+      )}
+    </ErrorFrame>
   )
 }

@@ -16,16 +16,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Loader2 } from 'lucide-react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { KeyRound, TriangleAlert } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 
+import { StatusScreen } from '@/components/status-screen'
+import { Button } from '@/components/ui/button'
 import { useActiveChatKey } from '@/features/chat/hooks/use-active-chat-key'
 import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
 import { resolveChatUrl } from '@/features/chat/lib/chat-links'
-import { handleServerError } from '@/lib/handle-server-error'
+import { useStatus } from '@/hooks/use-status'
 
 export const Route = createFileRoute('/_authenticated/chat2link')({
   component: Chat2LinkPage,
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/_authenticated/chat2link')({
 
 function Chat2LinkPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const { loading: statusLoading } = useStatus()
   const { chatPresets, serverAddress } = useChatPresets()
 
   const firstWebPreset = useMemo(
@@ -46,24 +47,7 @@ function Chat2LinkPage() {
   )
 
   useEffect(() => {
-    if (!firstWebPreset) {
-      if (chatPresets.length > 0) {
-        toast.error(t('No available Web chat links'))
-      }
-      return
-    }
-
-    if (activeKey === undefined && !keyError) return
-
-    if (keyError || !activeKey) {
-      const message =
-        keyError instanceof Error
-          ? keyError.message
-          : t('No enabled tokens available')
-      handleServerError(keyError, message)
-      navigate({ to: '/keys' })
-      return
-    }
+    if (!firstWebPreset || !activeKey) return
 
     const url = resolveChatUrl({
       template: firstWebPreset.url,
@@ -74,22 +58,56 @@ function Chat2LinkPage() {
     if (url) {
       window.location.href = url
     }
-  }, [
-    firstWebPreset,
-    activeKey,
-    keyError,
-    serverAddress,
-    chatPresets.length,
-    navigate,
-    t,
-  ])
+  }, [firstWebPreset, activeKey, serverAddress])
+
+  if (!statusLoading && !firstWebPreset) {
+    return (
+      <StatusScreen
+        className='min-h-[70svh]'
+        tone='error'
+        icon={TriangleAlert}
+        title={t('No available Web chat links')}
+        description={t(
+          'The administrator has not configured a Web chat preset yet.'
+        )}
+        action={
+          <Button size='sm' render={<Link to='/dashboard' />}>
+            {t('Back to Dashboard')}
+          </Button>
+        }
+      />
+    )
+  }
+
+  if (keyError) {
+    return (
+      <StatusScreen
+        className='min-h-[70svh]'
+        tone='error'
+        icon={KeyRound}
+        title={t('No enabled tokens available')}
+        description={t(
+          'Create or enable an API key, then open the chat from here.'
+        )}
+        action={
+          <Button size='sm' render={<Link to='/keys' />}>
+            {t('Create API Key')}
+          </Button>
+        }
+      />
+    )
+  }
 
   return (
-    <div className='flex h-full flex-col items-center justify-center gap-3'>
-      <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
-      <p className='text-muted-foreground text-sm'>
-        {t('Redirecting to chat page...')}
-      </p>
-    </div>
+    <StatusScreen
+      className='min-h-[70svh]'
+      tone='pending'
+      title={
+        firstWebPreset
+          ? t('Opening {{name}}', { name: firstWebPreset.name })
+          : t('Redirecting to chat page...')
+      }
+      description={t('The chat will open with your API key in a moment.')}
+    />
   )
 }

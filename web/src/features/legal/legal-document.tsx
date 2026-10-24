@@ -17,13 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { FileWarning } from 'lucide-react'
+import { ExternalLink, FileWarning } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState } from '@/components/empty-state'
 import { PublicLayout } from '@/components/layout'
+import { Footer } from '@/components/layout/components/footer'
 import { RichContent } from '@/components/rich-content'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isHttpUrl, isLikelyHtml } from '@/lib/content-format'
 
@@ -36,16 +37,31 @@ type LegalDocumentProps = {
   emptyMessage: string
 }
 
-export function LegalDocument({
-  title,
-  queryKey,
-  fetchDocument,
-  emptyMessage,
-}: LegalDocumentProps) {
+type LegalFrameProps = {
+  children: React.ReactNode
+}
+
+function LegalFrame(props: LegalFrameProps) {
+  return (
+    <PublicLayout showMainContainer={false}>
+      <div className='mx-auto max-w-[1360px] px-4 pt-16 md:px-6'>
+        <article
+          data-testid='legal-article'
+          className='mx-auto max-w-[760px] pt-14 pb-24'
+        >
+          {props.children}
+        </article>
+      </div>
+      <Footer />
+    </PublicLayout>
+  )
+}
+
+export function LegalDocument(props: LegalDocumentProps) {
   const { t } = useTranslation()
   const { data, isLoading } = useQuery({
-    queryKey: [queryKey],
-    queryFn: fetchDocument,
+    queryKey: [props.queryKey],
+    queryFn: props.fetchDocument,
     staleTime: 10 * 60 * 1000,
   })
 
@@ -57,88 +73,71 @@ export function LegalDocument({
 
   if (isLoading) {
     return (
-      <PublicLayout>
-        <div className='mx-auto flex max-w-4xl flex-col gap-4 py-12'>
-          <Skeleton className='h-8 w-[45%]' />
+      <LegalFrame>
+        <div className='flex flex-col gap-4'>
+          <Skeleton className='h-9 w-[45%]' />
           <Skeleton className='h-4 w-full' />
           <Skeleton className='h-4 w-[90%]' />
           <Skeleton className='h-4 w-[80%]' />
         </div>
-      </PublicLayout>
+      </LegalFrame>
     )
   }
 
   if (!success || !hasContent) {
     return (
-      <PublicLayout>
-        <div className='mx-auto max-w-2xl py-12'>
-          <Card className='border-dashed'>
-            <CardHeader className='flex flex-row items-center gap-4'>
-              <div className='bg-muted rounded-lg p-2'>
-                <FileWarning className='text-muted-foreground h-5 w-5' />
-              </div>
-              <div className='space-y-1'>
-                <CardTitle className='text-lg font-semibold'>{title}</CardTitle>
-                <p className='text-muted-foreground text-sm'>
-                  {data?.message || emptyMessage}
-                </p>
-              </div>
-            </CardHeader>
-          </Card>
-        </div>
-      </PublicLayout>
+      <LegalFrame>
+        <EmptyState
+          icon={FileWarning}
+          title={props.title}
+          description={data?.message || props.emptyMessage}
+          bordered
+        />
+      </LegalFrame>
     )
   }
 
   if (isUrl) {
     return (
-      <PublicLayout>
-        <div className='mx-auto max-w-2xl py-12'>
-          <Card>
-            <CardHeader>
-              <CardTitle>{title}</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <p className='text-muted-foreground text-sm'>
-                {t(
-                  'The administrator configured an external link for this document.'
-                )}
-              </p>
-              <Button
-                render={
-                  <a
-                    href={rawContent}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  />
-                }
-              >
-                {t('View document')}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </PublicLayout>
+      <LegalFrame>
+        <h1 className='mb-3 text-[34px] font-semibold tracking-tight'>
+          {props.title}
+        </h1>
+        <p className='text-muted-foreground mb-6 text-[15px] leading-7'>
+          {t(
+            'The administrator configured an external link for this document.'
+          )}
+        </p>
+        <Button
+          render={
+            <a href={rawContent} target='_blank' rel='noopener noreferrer' />
+          }
+        >
+          {t('View document')}
+          <ExternalLink aria-hidden='true' />
+        </Button>
+      </LegalFrame>
+    )
+  }
+
+  if (contentIsHtml) {
+    return (
+      <LegalFrame>
+        <RichContent mode='html' htmlVariant='isolated' content={rawContent} />
+      </LegalFrame>
     )
   }
 
   return (
-    <PublicLayout showMainContainer={!contentIsHtml}>
-      {contentIsHtml ? (
-        <RichContent mode='html' htmlVariant='isolated' content={rawContent} />
-      ) : (
-        <div className='mx-auto max-w-4xl space-y-6 py-12'>
-          <div className='space-y-2'>
-            <h1 className='text-3xl font-semibold tracking-tight'>{title}</h1>
-          </div>
-
-          <RichContent
-            mode='markdown'
-            content={rawContent}
-            className='prose-neutral dark:prose-invert max-w-none'
-          />
-        </div>
-      )}
-    </PublicLayout>
+    <LegalFrame>
+      <h1 className='mb-3 text-[34px] font-semibold tracking-tight'>
+        {props.title}
+      </h1>
+      <RichContent
+        mode='markdown'
+        content={rawContent}
+        className='prose-neutral dark:prose-invert prose-h2:mt-8 prose-h2:mb-2 prose-h2:text-lg prose-p:text-[15px] prose-p:leading-[1.85] prose-li:text-[15px] max-w-none'
+      />
+    </LegalFrame>
   )
 }

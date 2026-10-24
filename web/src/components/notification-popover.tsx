@@ -21,7 +21,6 @@ import { Bell, Megaphone } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { RichContent } from '@/components/rich-content'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Empty,
@@ -290,83 +289,81 @@ function AnnouncementsContent({
 /**
  * Notification popover with Notice and Announcements tabs
  */
-export function NotificationPopover({
-  open,
-  onOpenChange,
-  unreadCount,
-  activeTab,
-  onTabChange,
-  notice,
-  announcements,
-  loading,
-  className,
-}: NotificationPopoverProps) {
+export function NotificationPopover(props: NotificationPopoverProps) {
   const { t } = useTranslation()
+  const unreadLabel =
+    props.unreadCount > 0
+      ? t('Notifications, {{count}} unread', { count: props.unreadCount })
+      : t('Notifications')
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={props.open} onOpenChange={props.onOpenChange}>
       <PopoverTrigger
         render={
           <Button
             variant='ghost'
             size='icon'
-            className={cn('relative size-9', className)}
-            aria-label={t('Notifications')}
+            className={cn('relative size-9', props.className)}
+            aria-label={unreadLabel}
           />
         }
       >
-        <Bell className='size-[1.2rem]' />
-        {unreadCount > 0 ? (
-          <Badge
-            variant='destructive'
-            className='absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center px-1 text-[10px] font-semibold tabular-nums'
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </Badge>
+        <Bell className='size-[1.1rem]' />
+        {props.unreadCount > 0 ? (
+          <span
+            data-testid='notification-unread-dot'
+            aria-hidden='true'
+            className='bg-destructive ring-background absolute top-2 right-2 size-2 rounded-full ring-2'
+          />
         ) : null}
       </PopoverTrigger>
 
       <PopoverContent
         align='end'
         sideOffset={8}
-        className='w-[min(26rem,calc(100vw-1rem))] gap-3 p-3'
+        className='w-[min(340px,calc(100vw-1rem))] gap-0 p-0'
       >
-        <PopoverHeader className='gap-1 px-1'>
-          <PopoverTitle>{t('System Announcements')}</PopoverTitle>
-          <p className='text-muted-foreground text-xs'>
-            {t('Latest platform updates and notices')}
-          </p>
-        </PopoverHeader>
-
         <Tabs
-          value={activeTab}
-          onValueChange={onTabChange as (value: string) => void}
+          value={props.activeTab}
+          onValueChange={props.onTabChange as (value: string) => void}
+          className='gap-0'
         >
-          <TabsList className='grid w-full grid-cols-2'>
-            <TabsTrigger value='notice' className='gap-1.5'>
-              <Bell className='size-3.5' />
-              {t('Notice')}
-            </TabsTrigger>
-            <TabsTrigger value='announcements' className='gap-1.5'>
-              <Megaphone className='size-3.5' />
-              {t('Timeline')}
-            </TabsTrigger>
-          </TabsList>
+          <PopoverHeader className='flex-row items-center justify-between border-b px-3.5 py-3'>
+            <PopoverTitle className='text-sm'>
+              {t('Notifications')}
+            </PopoverTitle>
+            <TabsList className='h-7'>
+              <TabsTrigger value='notice' className='px-2.5 text-xs'>
+                {t('Notice')}
+              </TabsTrigger>
+              <TabsTrigger value='announcements' className='px-2.5 text-xs'>
+                {t('Timeline')}
+              </TabsTrigger>
+            </TabsList>
+          </PopoverHeader>
 
-          <TabsContent value='notice' className='mt-2'>
-            <NoticeContent notice={notice} loading={loading} t={t} />
+          <TabsContent value='notice' className='p-3'>
+            <NoticeContent
+              notice={props.notice}
+              loading={props.loading}
+              t={t}
+            />
           </TabsContent>
 
-          <TabsContent value='announcements' className='mt-2'>
+          <TabsContent value='announcements' className='px-3 py-1.5'>
             <AnnouncementsContent
-              announcements={announcements}
-              loading={loading}
+              announcements={props.announcements}
+              loading={props.loading}
               t={t}
             />
           </TabsContent>
         </Tabs>
 
-        <div className='flex justify-end'>
-          <Button size='sm' onClick={() => onOpenChange(false)}>
+        <div className='flex justify-end border-t px-2.5 py-2'>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => props.onOpenChange(false)}
+          >
             {t('Close')}
           </Button>
         </div>

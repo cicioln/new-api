@@ -28,7 +28,6 @@ import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
 import { Header } from './header'
-import { SystemBrand } from './system-brand'
 import { TopNav } from './top-nav'
 
 /**
@@ -113,8 +112,7 @@ export function AppHeader({
 
   return (
     <Header>
-      <div className='@container/system-brand flex min-w-0 flex-1 items-center gap-1'>
-        <SystemBrand variant='inline' />
+      <div className='flex min-w-0 flex-1 items-center gap-1'>
         <SystemUpdateAction presentation='version' />
       </div>
 
@@ -130,7 +128,7 @@ export function AppHeader({
             </div>
           )}
           {showSearch && (
-            <Search className='w-8 flex-none [&>span]:hidden sm:[&>span]:inline' />
+            <Search className='h-[34px] w-9 flex-none sm:w-[280px] [&>span]:hidden sm:[&>span]:inline' />
           )}
           {showNotifications && (
             <NotificationPopover

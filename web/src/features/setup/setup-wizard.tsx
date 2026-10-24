@@ -26,14 +26,7 @@ import { toast } from 'sonner'
 import { ErrorState } from '@/components/error-state'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { LoadingState } from '@/components/loading-state'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Form } from '@/components/ui/form'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSystemConfig } from '@/hooks/use-system-config'
@@ -51,22 +44,10 @@ import { UsageModeStep } from './components/usage-mode-step'
 import type { SetupFormValues, SetupStatus } from './types'
 
 const STEPS = [
-  {
-    titleKey: 'Database check',
-    descriptionKey: 'Verify your database connection',
-  },
-  {
-    titleKey: 'Administrator account',
-    descriptionKey: 'Create credentials for the root user',
-  },
-  {
-    titleKey: 'Usage mode',
-    descriptionKey: 'Choose how the platform will operate',
-  },
-  {
-    titleKey: 'Review & initialize',
-    descriptionKey: 'Confirm settings and finish setup',
-  },
+  { titleKey: 'Database check' },
+  { titleKey: 'Administrator account' },
+  { titleKey: 'Usage mode' },
+  { titleKey: 'Review & initialize' },
 ]
 
 const DEFAULT_FORM_VALUES: SetupFormValues = {
@@ -283,120 +264,98 @@ export function SetupWizard() {
   }
 
   return (
-    <div className='bg-muted/40 relative min-h-svh py-10'>
-      <div className='absolute top-4 right-4 sm:top-6 sm:right-6'>
-        <LanguageSwitcher />
-      </div>
-      <div className='container mx-auto flex max-w-5xl flex-col gap-8 px-4 sm:px-6'>
-        <div className='flex flex-col items-center gap-3'>
-          <div className='relative h-12 w-12'>
+    <div className='bg-background grid min-h-svh place-items-center px-4 py-8'>
+      <Card className='w-full max-w-[640px] gap-0 overflow-hidden py-0'>
+        <header className='flex items-center justify-between gap-3 border-b px-6 py-[18px]'>
+          <div className='flex items-center gap-2.5'>
             {systemConfigLoading ? (
-              <Skeleton className='absolute inset-0 rounded-full' />
+              <Skeleton className='size-7 rounded-md' />
             ) : (
               <img
                 src={logo}
                 alt={t('System logo')}
-                className='h-12 w-12 rounded-full object-cover shadow-sm'
+                className='size-7 rounded-md object-cover'
               />
+            )}
+            {systemConfigLoading ? (
+              <Skeleton className='h-5 w-24' />
+            ) : (
+              <h1 className='text-[15px] font-semibold tracking-tight'>
+                {systemName}
+              </h1>
             )}
           </div>
-          {systemConfigLoading ? (
-            <Skeleton className='h-7 w-40' />
-          ) : (
-            <h1 className='text-2xl font-semibold tracking-tight'>
-              {t('Initialize')} {systemName}
-            </h1>
+          <div className='flex items-center gap-2'>
+            <span className='text-muted-foreground text-sm'>
+              {t('System setup wizard')}
+            </span>
+            <LanguageSwitcher />
+          </div>
+        </header>
+
+        <ol className='grid grid-cols-4 gap-2 px-6 pt-[18px]'>
+          {STEPS.map((step, index) => {
+            const isActive = currentStep === index
+            const isCompleted = currentStep > index
+            return (
+              <li
+                key={step.titleKey}
+                aria-current={isActive ? 'step' : undefined}
+                className={cn(
+                  'text-muted-foreground flex min-w-0 items-center gap-2 border-b-2 pb-3 text-[13px]',
+                  isActive && 'border-foreground text-foreground font-medium'
+                )}
+              >
+                <span
+                  className={cn(
+                    'bg-muted grid size-5 flex-none place-items-center rounded-full font-mono text-[11px]',
+                    isActive && 'bg-foreground text-background',
+                    isCompleted && 'bg-success text-white'
+                  )}
+                >
+                  {index + 1}
+                </span>
+                <span className='hidden truncate sm:inline'>
+                  {t(step.titleKey)}
+                </span>
+              </li>
+            )
+          })}
+        </ol>
+
+        <div className='min-h-[260px] p-6'>
+          {isLoading && <LoadingState message={t('Loading setup status…')} />}
+          {!isLoading && isError && (
+            <ErrorState
+              title={t('We could not load the setup status.')}
+              onRetry={() => refetch()}
+            />
           )}
-          <p className='text-muted-foreground text-center text-sm sm:text-base'>
-            {t(
-              'Follow the guided steps to prepare your workspace before the first login.'
-            )}
-          </p>
+          {!isLoading && !isError && (
+            <Form {...form}>
+              <form
+                className='space-y-6'
+                onSubmit={(event) => event.preventDefault()}
+              >
+                {currentStepComponent}
+              </form>
+            </Form>
+          )}
         </div>
 
-        <Card className='shadow-lg'>
-          <CardHeader className='space-y-2'>
-            <CardTitle className='text-xl font-semibold'>
-              {t('System setup wizard')}
-            </CardTitle>
-            <CardDescription>
-              {t('Complete these steps to finish the initial installation.')}
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className='space-y-6'>
-            <ol className='grid gap-3 sm:grid-cols-4'>
-              {STEPS.map((step, index) => {
-                const isActive = currentStep === index
-                const isCompleted = currentStep > index
-                return (
-                  <li
-                    key={step.titleKey}
-                    className={cn('rounded-xl border p-3', {
-                      'border-primary ring-primary/20 ring-2': isActive,
-                      'border-primary/40 bg-primary/5':
-                        !isActive && isCompleted,
-                      'border-muted bg-card': !isActive && !isCompleted,
-                    })}
-                  >
-                    <div className='flex items-start gap-3'>
-                      <span
-                        className={cn(
-                          'flex size-6 items-center justify-center rounded-md border text-xs font-semibold',
-                          isActive || isCompleted
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-muted-foreground/40 text-muted-foreground'
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                      <div className='space-y-1'>
-                        <p className='text-sm font-semibold'>
-                          {t(step.titleKey)}
-                        </p>
-                        <p className='text-muted-foreground text-xs'>
-                          {t(step.descriptionKey)}
-                        </p>
-                      </div>
-                    </div>
-                  </li>
-                )
-              })}
-            </ol>
-
-            {isLoading && <LoadingState message={t('Loading setup status…')} />}
-            {!isLoading && isError && (
-              <ErrorState
-                title={t('We could not load the setup status.')}
-                onRetry={() => refetch()}
-              />
-            )}
-            {!isLoading && !isError && (
-              <Form {...form}>
-                <form
-                  className='space-y-6'
-                  onSubmit={(event) => event.preventDefault()}
-                >
-                  {currentStepComponent}
-                </form>
-              </Form>
-            )}
-          </CardContent>
-
-          {!isLoading && !isError && (
-            <CardFooter className='w-full justify-end border-t'>
-              <StepNavigation
-                currentStep={currentStep}
-                totalSteps={STEPS.length}
-                onBack={handlePreviousStep}
-                onNext={handleNextStep}
-                onSubmit={handleSubmit}
-                isSubmitting={mutation.isPending}
-              />
-            </CardFooter>
-          )}
-        </Card>
-      </div>
+        {!isLoading && !isError && (
+          <footer className='bg-background border-t px-6 py-3.5'>
+            <StepNavigation
+              currentStep={currentStep}
+              totalSteps={STEPS.length}
+              onBack={handlePreviousStep}
+              onNext={handleNextStep}
+              onSubmit={handleSubmit}
+              isSubmitting={mutation.isPending}
+            />
+          </footer>
+        )}
+      </Card>
     </div>
   )
 }

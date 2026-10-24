@@ -309,6 +309,56 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 	}, nil
 }
 
+// GroupSummaryResult holds per-group aggregates across all models; groups
+// without traffic in the window are absent.
+type GroupSummaryResult struct {
+	WindowStart int64
+	WindowEnd   int64
+	Groups      map[string]Summary
+}
+
+// QueryGroupSummary aggregates every model per group for the allowed groups.
+// Groups without traffic in the window are absent from the result.
+func QueryGroupSummary(hours int, groups []string) (GroupSummaryResult, error) {
+	startTs, endTs := queryWindow(time.Now(), hours)
+	allowedGroups := allowedGroupSet(groups)
+
+	rows, err := model.GetPerfMetricsGroupSummary(startTs, endTs, groups)
+	if err != nil {
+		return GroupSummaryResult{}, err
+	}
+	totals := map[string]counters{}
+	for _, row := range rows {
+		mergeModelTotals(totals, row.Group, counters{
+			requestCount:   row.RequestCount,
+			successCount:   row.SuccessCount,
+			totalLatencyMs: row.TotalLatencyMs,
+		})
+	}
+
+	hotBuckets.Range(func(key, value any) bool {
+		k := key.(bucketKey)
+		if k.bucketTs < startTs || k.bucketTs > endTs {
+			return true
+		}
+		if allowedGroups != nil {
+			if _, ok := allowedGroups[k.group]; !ok {
+				return true
+			}
+		}
+		mergeModelTotals(totals, k.group, value.(*atomicBucket).snapshot())
+		return true
+	})
+
+	summaries := make(map[string]Summary, len(totals))
+	for group, total := range totals {
+		if summary := summarize(total); summary != nil {
+			summaries[group] = *summary
+		}
+	}
+	return GroupSummaryResult{WindowStart: startTs, WindowEnd: endTs, Groups: summaries}, nil
+}
+
 func mergeModelTotals(totals map[string]counters, modelName string, value counters) {
 	if value.requestCount == 0 {
 		return

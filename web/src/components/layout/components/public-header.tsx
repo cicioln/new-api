@@ -113,14 +113,14 @@ export function PublicHeader(props: PublicHeaderProps) {
   let authContent = (
     <Button
       size='sm'
-      className='h-8 rounded-lg px-3.5 text-xs font-medium'
+      className='h-8 rounded-full px-4 text-xs font-semibold'
       render={<Link to='/sign-in' />}
     >
       {t('Sign in')}
     </Button>
   )
   if (isAuthenticated) authContent = <ProfileDropdown />
-  if (loading) authContent = <Skeleton className='h-8 w-20 rounded-lg' />
+  if (loading) authContent = <Skeleton className='h-8 w-20 rounded-full' />
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -203,7 +203,9 @@ export function PublicHeader(props: PublicHeaderProps) {
         <div
           className={cn(
             'pointer-events-auto mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-            scrolled ? 'max-w-[52rem] px-3 pt-3' : 'max-w-7xl px-4 pt-0 md:px-6'
+            scrolled
+              ? 'max-w-[52rem] px-3 pt-3'
+              : 'max-w-[1360px] px-4 pt-0 md:px-6'
           )}
         >
           <nav
@@ -271,7 +273,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                     className={cn(
                       'min-w-0 truncate rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200',
                       isActive
-                        ? 'text-foreground'
+                        ? 'text-primary bg-primary/10'
                         : 'text-muted-foreground hover:text-foreground',
                       link.disabled && 'pointer-events-none opacity-50'
                     )}

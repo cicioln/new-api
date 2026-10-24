@@ -31,6 +31,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
+import { Kbd } from '@/components/ui/kbd'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
 import { useSidebarData } from '@/hooks/use-sidebar-data'
@@ -59,11 +60,18 @@ export function CommandMenu() {
   )
 
   return (
-    <CommandDialog modal open={open} onOpenChange={setOpen}>
+    <CommandDialog
+      modal
+      open={open}
+      onOpenChange={setOpen}
+      title={t('Command Palette')}
+      description={t('Search pages and run commands')}
+      className='top-[14vh] sm:max-w-[560px]'
+    >
       <Command>
         <CommandInput placeholder={t('Type a command or search...')} />
         <CommandList>
-          <ScrollArea className='h-72 pe-1'>
+          <ScrollArea className='h-[360px] pe-1'>
             <CommandEmpty>{t('No results found.')}</CommandEmpty>
             {navGroups.map((group) => (
               <CommandGroup key={group.id || group.title} heading={group.title}>
@@ -77,9 +85,17 @@ export function CommandMenu() {
                           runCommand(() => navigate({ to: navItem.url }))
                         }}
                       >
-                        <div className='flex size-4 items-center justify-center'>
-                          <ArrowRight className='text-muted-foreground/80 size-2' />
-                        </div>
+                        {navItem.icon ? (
+                          <navItem.icon
+                            aria-hidden='true'
+                            className='text-muted-foreground'
+                          />
+                        ) : (
+                          <ArrowRight
+                            aria-hidden='true'
+                            className='text-muted-foreground'
+                          />
+                        )}
                         {navItem.title}
                       </CommandItem>
                     )
@@ -92,9 +108,10 @@ export function CommandMenu() {
                         runCommand(() => navigate({ to: subItem.url }))
                       }}
                     >
-                      <div className='flex size-4 items-center justify-center'>
-                        <ArrowRight className='text-muted-foreground/80 size-2' />
-                      </div>
+                      <ArrowRight
+                        aria-hidden='true'
+                        className='text-muted-foreground'
+                      />
                       {navItem.title} <ChevronRight /> {subItem.title}
                     </CommandItem>
                   ))
@@ -102,7 +119,7 @@ export function CommandMenu() {
               </CommandGroup>
             ))}
             <CommandSeparator />
-            <CommandGroup heading='Theme'>
+            <CommandGroup heading={t('Theme')}>
               <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
                 <Sun /> <span>{t('Light')}</span>
               </CommandItem>
@@ -119,6 +136,21 @@ export function CommandMenu() {
             </CommandGroup>
           </ScrollArea>
         </CommandList>
+        <div className='text-muted-foreground flex gap-4 border-t px-3.5 py-2 text-xs'>
+          <span className='flex items-center gap-1'>
+            <Kbd>↑</Kbd>
+            <Kbd>↓</Kbd>
+            {t('Select')}
+          </span>
+          <span className='flex items-center gap-1'>
+            <Kbd>Enter</Kbd>
+            {t('Open')}
+          </span>
+          <span className='flex items-center gap-1'>
+            <Kbd>Esc</Kbd>
+            {t('Close')}
+          </span>
+        </div>
       </Command>
     </CommandDialog>
   )

@@ -19,13 +19,9 @@ For commercial licensing, please contact support@quantumnous.com
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/public-sans';
-/* Editorial serif (Lora) backing the `serif` font axis and the Anthropic
- * preset's default typography. See `--font-serif` in theme.css for the
- * full Latin + CJK fallback stack and `theme-presets.css` for the cascade
- * that activates it. Loaded globally so font-switching is instantaneous
- * with no FOUT once the variable is fetched. */
-@import '@fontsource-variable/lora';
+/* Geist + Geist Mono are bundled locally; no font CDN at runtime. */
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 
 @import './theme.css';
 @import './theme-presets.css';
@@ -111,10 +107,10 @@ For commercial licensing, please contact support@quantumnous.com
   }
   body {
     @apply bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar min-h-svh w-full;
-    /* Font is driven by the theme's font axis via `--font-body`
-     * (defined in theme.css, swapped by `[data-theme-font='...']` blocks
-     * in theme-presets.css). Defaults to the browser's sans-serif. */
     font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* Keep sticky headers stable while primitives lock body scrolling. */
@@ -554,6 +550,61 @@ For commercial licensing, please contact support@quantumnous.com
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+}
+
+/* ── Gateway visuals ──
+ * Hairline grid behind the landing topology, animated flow lines and a
+ * soft halo for status dots. Colors derive from theme tokens. */
+@utility line-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(
+    ellipse 60% 60% at 50% 40%,
+    #000 20%,
+    transparent 75%
+  );
+  opacity: 0.6;
+}
+
+/* Moving dashes along an SVG path; --flow-speed tunes per-line pacing. */
+@utility flow-dash {
+  stroke-dasharray: 6 14;
+  animation: flow-dash var(--flow-speed, 1.6s) linear infinite;
+}
+
+@utility status-halo {
+  box-shadow: 0 0 0 4px color-mix(in oklch, currentColor 18%, transparent);
+}
+
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes hub-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.2;
+  }
+}
+
+@utility hub-pulse {
+  animation: hub-pulse 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dash,
+  .hub-pulse {
+    animation: none !important;
   }
 }
 

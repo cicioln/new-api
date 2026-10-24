@@ -16,33 +16,45 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 
+import { ErrorFrame } from './error-frame'
+
 export function UnauthorisedError() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { history } = useRouter()
+  const redirect =
+    typeof window === 'undefined'
+      ? undefined
+      : `${window.location.pathname}${window.location.search}`
   return (
-    <div className='h-svh'>
-      <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-        <h1 className='text-[7rem] leading-tight font-bold'>401</h1>
-        <span className='font-medium'>{t('Unauthorized Access')}</span>
-        <p className='text-muted-foreground text-center'>
-          {t('Please log in with the appropriate credentials')} <br />{' '}
-          {t('to access this resource.')}
-        </p>
-        <div className='mt-6 flex gap-4'>
-          <Button variant='outline' onClick={() => history.go(-1)}>
-            {t('Go Back')}
+    <ErrorFrame
+      code={401}
+      title={t('Session expired')}
+      actions={
+        <>
+          <Button
+            size='sm'
+            onClick={() => navigate({ to: '/sign-in', search: { redirect } })}
+          >
+            {t('Sign in again')}
           </Button>
-          <Button onClick={() => navigate({ to: '/' })}>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => navigate({ to: '/' })}
+          >
             {t('Back to Home')}
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {t(
+        'For account security, you need to sign in again after a long period of inactivity or a password change on another device. You will return to this page after signing in.'
+      )}
+    </ErrorFrame>
   )
 }

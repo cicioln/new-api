@@ -965,11 +965,17 @@ function ChannelTestDialogContent({
         onOpenChange={handleDialogOpenChange}
         title={
           <span className='inline-flex max-w-full min-w-0 items-center gap-1.5'>
-            <span className='shrink-0'>{t('Test Channel Connection')}:</span>
+            <span className='shrink-0'>{t('Test Channel Connection')}</span>
+            <span aria-hidden='true' className='text-muted-foreground'>
+              ·
+            </span>
             <span className='min-w-0 truncate'>{currentRow.name}</span>
           </span>
         }
-        contentClassName='max-h-[min(90dvh,var(--dialog-available-height))] overflow-y-auto sm:max-w-4xl'
+        description={t(
+          'Send a minimal request with the selected model, record the latency and update the response time.'
+        )}
+        contentClassName='max-h-[min(90dvh,var(--dialog-available-height))] overflow-y-auto sm:max-w-[720px]'
         contentHeight='auto'
         bodyClassName='space-y-4'
         footer={

@@ -16,230 +16,370 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CherryStudio } from '@lobehub/icons'
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, BookOpen } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { CopyButton } from '@/components/copy-button'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { formatLatency } from '@/features/performance-metrics/lib/format'
 import { useStatus } from '@/hooks/use-status'
+import { useSystemConfig } from '@/hooks/use-system-config'
+import { cn } from '@/lib/utils'
 
-import { HeroTerminalDemo } from '../hero-terminal-demo'
+import { useHomeFlow, type HomeFlowGroup } from '../../hooks/use-home-flow'
+import {
+  getGroupHealth,
+  GROUP_HEALTH_DOT,
+  GROUP_HEALTH_TEXT,
+  type GroupHealth,
+} from './health'
 
 interface HeroProps {
   className?: string
   isAuthenticated?: boolean
 }
 
-// Stylized three-dots indicator representing "More"
-const MoreIcon = () => (
-  <svg
-    className='text-muted-foreground/60 group-hover:text-foreground size-6 shrink-0 transition-colors'
-    viewBox='0 0 24 24'
-    fill='none'
-    xmlns='http://www.w3.org/2000/svg'
-  >
-    <circle cx='6' cy='12' r='2' fill='currentColor' />
-    <circle cx='12' cy='12' r='2' fill='currentColor' />
-    <circle cx='18' cy='12' r='2' fill='currentColor' />
-  </svg>
-)
+const HEALTH_STROKE: Record<GroupHealth, string> = {
+  ok: 'stroke-success',
+  degraded: 'stroke-warning',
+  failing: 'stroke-destructive',
+  idle: 'stroke-subtle-foreground/50',
+}
+
+type FlowPath = { id: string; d: string; health?: GroupHealth; speed: number }
+
+/** Smooth horizontal S-curve between two points. */
+function curve(x1: number, y1: number, x2: number, y2: number) {
+  const mid = (x1 + x2) / 2
+  return `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
+}
 
 export function Hero(props: HeroProps) {
   const { t } = useTranslation()
   const { status } = useStatus()
-  const docsUrl =
-    (status?.docs_link as string | undefined) || 'https://docs.newapi.pro'
+  const { systemName, logo, loading: brandLoading } = useSystemConfig()
+  const flow = useHomeFlow()
 
-  const renderDocsButton = () => {
-    const isExternal = docsUrl.startsWith('http')
-    if (isExternal) {
-      return (
-        <Button
-          variant='outline'
-          className='group border-border/50 hover:border-border hover:bg-muted/50 inline-flex h-11 items-center gap-1.5 rounded-lg px-5 text-sm font-medium'
-          render={
-            <a href={docsUrl} target='_blank' rel='noopener noreferrer' />
-          }
-        >
-          <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
-          <span>{t('Docs')}</span>
-        </Button>
-      )
+  const origin =
+    (typeof status?.server_address === 'string' &&
+      status.server_address.trim().replace(/\/+$/, '')) ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+  const baseUrl = `${origin}/v1`
+
+  const sources = [
+    { label: t('Chat clients'), hint: 'Cherry Studio · LobeChat' },
+    { label: t('IDE plugins'), hint: 'Cursor · Claude Code' },
+    { label: t('SDK calls'), hint: 'OpenAI SDK · Dify · n8n' },
+  ]
+
+  // Anchors used to measure the SVG flow lines
+  const stageRef = useRef<HTMLDivElement>(null)
+  const hubRef = useRef<HTMLDivElement>(null)
+  const sourceRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const groupRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const [paths, setPaths] = useState<FlowPath[]>([])
+  const [size, setSize] = useState({ w: 0, h: 0 })
+
+  const groups = flow.groups
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    const hub = hubRef.current
+    if (!stage || !hub) return
+
+    const measure = () => {
+      const box = stage.getBoundingClientRect()
+      const hubBox = hub.getBoundingClientRect()
+      const center = (el: Element) => {
+        const r = el.getBoundingClientRect()
+        return {
+          x: r.left + r.width / 2 - box.left,
+          y: r.top + r.height / 2 - box.top,
+        }
+      }
+      const hubY = hubBox.top + hubBox.height / 2 - box.top
+      const hubLeft = hubBox.left - box.left
+      const hubRight = hubBox.right - box.left
+      const next: FlowPath[] = []
+
+      sourceRefs.current.forEach((el, i) => {
+        if (!el) return
+        const p = center(el)
+        next.push({
+          id: `source-${i}`,
+          d: curve(p.x + 6, p.y, hubLeft, hubY + (i - 1) * 14),
+          speed: 1.4 + i * 0.25,
+        })
+      })
+      groupRefs.current.slice(0, groups.length).forEach((el, i) => {
+        if (!el) return
+        const p = center(el)
+        const spread = groups.length > 1 ? i / (groups.length - 1) : 0.5
+        next.push({
+          id: `group-${groups[i].group}`,
+          d: curve(hubRight, hubY + (spread - 0.5) * 36, p.x - 6, p.y),
+          health: getGroupHealth(groups[i].successRate),
+          speed: 1.2 + (i % 4) * 0.3,
+        })
+      })
+      setSize({ w: box.width, h: box.height })
+      setPaths(next)
     }
-    return (
-      <Button
-        variant='outline'
-        className='group border-border/50 hover:border-border hover:bg-muted/50 inline-flex h-11 items-center gap-1.5 rounded-lg px-5 text-sm font-medium'
-        render={<Link to={docsUrl} />}
-      >
-        <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
-        <span>{t('Docs')}</span>
-      </Button>
-    )
-  }
+
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(stage)
+    return () => ro.disconnect()
+  }, [groups])
+
+  let stageNote = ''
+  if (flow.status === 'loading') stageNote = t('Loading...')
+  else if (flow.status === 'error') stageNote = t('Failed to load groups')
+  else if (flow.status === 'empty') stageNote = t('No groups available')
 
   return (
-    <section className='relative z-10 overflow-hidden px-6 pt-24 pb-16 md:pt-32 md:pb-24 lg:pt-36 lg:pb-28'>
-      {/* Radial gradient background */}
+    <section
+      className={cn(
+        'relative z-10 overflow-hidden px-4 pt-24 pb-4 md:px-6 md:pt-28 lg:pb-6',
+        props.className
+      )}
+    >
       <div
         aria-hidden
-        className='pointer-events-none absolute inset-0 -z-10 opacity-25 dark:opacity-[0.12]'
-        style={{
-          background: [
-            'radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.72 0.18 250 / 80%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 50% 40% at 80% 15%, oklch(0.65 0.15 200 / 60%) 0%, transparent 70%)',
-            'radial-gradient(ellipse 40% 35% at 40% 80%, oklch(0.70 0.12 280 / 40%) 0%, transparent 70%)',
-          ].join(', '),
-        }}
-      />
-      {/* Grid pattern */}
-      <div
-        aria-hidden
-        className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_30%,black_20%,transparent_100%)] bg-[size:4rem_4rem] opacity-[0.08]'
+        className='line-grid pointer-events-none absolute inset-0 -z-10'
       />
 
-      <div className='mx-auto grid max-w-6xl grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-8'>
-        {/* Left Column: Title, description, action buttons and application support */}
-        <div className='flex flex-col items-start text-left lg:col-span-6'>
-          {/* Top Pill Badge */}
-          <div
-            className='landing-animate-fade-up mb-5 inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-[11px] font-medium text-blue-600 opacity-0 shadow-xs dark:border-blue-400/20 dark:bg-blue-400/5 dark:text-blue-400'
-            style={{ animationDelay: '0ms' }}
-          >
-            <span className='relative flex size-1.5'>
-              <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75' />
-              <span className='relative inline-flex size-1.5 rounded-full bg-blue-500 dark:bg-blue-400' />
-            </span>
-            <span>{t('AI Application Infrastructure Foundation')}</span>
-          </div>
+      <div className='mx-auto max-w-[1360px]'>
+        {/* Topology stage */}
+        <div
+          ref={stageRef}
+          className='landing-animate-fade-up relative grid items-center gap-10 opacity-0 lg:min-h-[400px] lg:grid-cols-[12rem_minmax(0,1fr)_minmax(0,24rem)] lg:gap-6'
+        >
+          {size.w > 0 && (
+            <svg
+              aria-hidden
+              className='pointer-events-none absolute inset-0 hidden lg:block'
+              width={size.w}
+              height={size.h}
+              viewBox={`0 0 ${size.w} ${size.h}`}
+              fill='none'
+            >
+              {paths.map((p) => (
+                <g key={p.id}>
+                  <path d={p.d} className='stroke-border' strokeWidth={1.25} />
+                  <path
+                    d={p.d}
+                    className={cn(
+                      'flow-dash',
+                      p.health ? HEALTH_STROKE[p.health] : 'stroke-primary'
+                    )}
+                    strokeWidth={1.75}
+                    strokeLinecap='round'
+                    style={
+                      { '--flow-speed': `${p.speed}s` } as React.CSSProperties
+                    }
+                  />
+                </g>
+              ))}
+            </svg>
+          )}
 
-          <h1
-            className='landing-animate-fade-up text-[clamp(2.25rem,4.5vw,3.25rem)] leading-[1.15] font-bold tracking-tight'
-            style={{ animationDelay: '60ms' }}
-          >
-            {t('Unified API Gateway for')}
-            <br />
-            <span className='bg-gradient-to-r from-blue-400 via-violet-400 to-purple-500 bg-clip-text text-transparent'>
-              {t('Vast Range of AI Models')}
-            </span>
-          </h1>
-          <p
-            className='landing-animate-fade-up text-muted-foreground/80 mt-5 max-w-xl text-base leading-relaxed opacity-0 md:text-[15px]'
-            style={{ animationDelay: '120ms' }}
-          >
-            {t(
-              'Access a vast selection of models via a standard, unified API protocol. Power AI applications, manage digital assets, and connect the Future.'
-            )}
-          </p>
-
-          <div
-            className='landing-animate-fade-up mt-8 flex flex-wrap items-center gap-3 opacity-0'
-            style={{ animationDelay: '180ms' }}
-          >
-            {props.isAuthenticated ? (
-              <>
-                <Button
-                  className='group h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/dashboard' />}
-                >
-                  {t('Go to Dashboard')}
-                  <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
-                </Button>
-                {renderDocsButton()}
-              </>
-            ) : (
-              <>
-                <Button
-                  className='group h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/sign-up' />}
-                >
-                  {t('Get Started')}
-                  <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
-                </Button>
-                <Button
-                  variant='outline'
-                  className='border-border/50 hover:border-border hover:bg-muted/50 h-11 rounded-lg px-5 text-sm font-medium'
-                  render={<Link to='/pricing' />}
-                >
-                  {t('View Pricing')}
-                </Button>
-                {renderDocsButton()}
-              </>
-            )}
-          </div>
-
-          {/* Supported Apps (参考图二样式，进行卡片化和信息扩充设计，增加视觉高度) */}
-          <div
-            className='landing-animate-fade-up mt-10 w-full max-w-xl opacity-0'
-            style={{ animationDelay: '240ms' }}
-          >
-            <div className='mb-4 flex flex-col gap-1'>
-              <span className='text-muted-foreground/50 text-[10px] font-bold tracking-[0.15em] uppercase'>
-                {t('Supported Applications')}
-              </span>
-              <p className='text-muted-foreground/60 text-xs leading-relaxed'>
-                {t(
-                  'Supports one-click configuration and perfectly adapts to NewAPI multi-protocol configuration.'
-                )}
-              </p>
-            </div>
-            <div className='flex flex-wrap items-center gap-3'>
-              {/* Cherry Studio */}
-              <a
-                href='https://cherry-ai.com'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='group border-border/40 bg-muted/15 text-foreground/80 hover:border-border hover:bg-muted/30 hover:text-foreground flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'
+          {/* Sources */}
+          <ul className='relative hidden flex-col gap-16 lg:flex'>
+            {sources.map((source, i) => (
+              <li
+                key={source.label}
+                className='flex items-center justify-end gap-3 text-right'
               >
-                <CherryStudio.Color size={24} className='shrink-0' />
-                <span>Cherry Studio</span>
-              </a>
-
-              {/* CC Switch */}
-              <a
-                href='https://ccswitch.io'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='group border-border/40 bg-muted/15 text-foreground/80 hover:border-border hover:bg-muted/30 hover:text-foreground flex items-center gap-3 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'
-              >
-                <img
-                  src='https://ccswitch.io/favicon.png'
-                  alt='CC Switch'
-                  className='size-6 shrink-0 rounded-md object-contain'
-                  onError={(e) => {
-                    // Fallback to a styled text avatar if the remote favicon fails to load in sandbox or local environments
-                    e.currentTarget.style.display = 'none'
-                    const fallback = e.currentTarget.nextSibling as HTMLElement
-                    if (fallback) fallback.style.display = 'flex'
-                  }}
-                />
+                <div className='min-w-0'>
+                  <p className='text-sm font-semibold whitespace-nowrap'>
+                    {source.label}
+                  </p>
+                  <p className='text-subtle-foreground text-[11px] whitespace-nowrap'>
+                    {source.hint}
+                  </p>
+                </div>
                 <span
-                  style={{ display: 'none' }}
-                  className='size-6 shrink-0 items-center justify-center rounded-md bg-blue-500/10 text-[10px] font-bold text-blue-600 dark:bg-blue-400/10 dark:text-blue-400'
-                >
-                  CC
-                </span>
-                <span>CC Switch</span>
-              </a>
+                  ref={(el) => {
+                    sourceRefs.current[i] = el
+                  }}
+                  className='bg-background border-border size-3 shrink-0 rounded-full border-[1.5px]'
+                />
+              </li>
+            ))}
+          </ul>
 
-              {/* "更多" */}
-              <div className='group border-border/40 bg-muted/15 text-foreground/55 hover:border-border hover:bg-muted/30 hover:text-foreground flex cursor-default items-center gap-2.5 rounded-full border px-5 py-2.5 text-sm font-medium shadow-[0_1px_2.5px_rgba(0,0,0,0.01)] backdrop-blur-xs transition-all duration-300 hover:scale-[1.02]'>
-                <MoreIcon />
-                <span>{t('More Apps')}</span>
+          {/* Hub */}
+          <div className='relative flex flex-col items-center text-center'>
+            <div ref={hubRef} className='relative'>
+              <span
+                aria-hidden
+                className='hub-pulse border-primary/40 absolute -inset-4 rounded-[1.75rem] border'
+              />
+              <div className='bg-foreground relative flex size-[72px] items-center justify-center overflow-hidden rounded-[18px]'>
+                {brandLoading ? (
+                  <Skeleton className='size-full' />
+                ) : (
+                  <img
+                    src={logo}
+                    alt={t('Logo')}
+                    className='size-12 rounded-xl object-contain'
+                  />
+                )}
               </div>
+              <span
+                aria-hidden
+                className='bg-primary border-background absolute -right-2 -bottom-2 size-[22px] rounded-[7px] border-4'
+              />
             </div>
+            <h1 className='mt-7 text-3xl font-semibold tracking-tight md:text-4xl'>
+              {brandLoading ? <Skeleton className='h-9 w-40' /> : systemName}
+            </h1>
+            <p className='text-subtle-foreground mt-2 text-sm'>
+              {t('Unified AI Gateway')}
+            </p>
+            {stageNote && (
+              <p
+                className={cn(
+                  'mt-4 text-sm',
+                  flow.status === 'error'
+                    ? 'text-destructive'
+                    : 'text-subtle-foreground'
+                )}
+              >
+                {stageNote}
+              </p>
+            )}
           </div>
+
+          {/* Groups */}
+          <ul className='relative flex flex-col gap-3 lg:gap-2'>
+            {groups.map((g, i) => (
+              <GroupNode
+                key={g.group}
+                group={g}
+                noPerf={flow.noPerf}
+                dotRef={(el) => {
+                  groupRefs.current[i] = el
+                }}
+              />
+            ))}
+          </ul>
         </div>
 
-        {/* Right Column: Hero Terminal API Demo */}
+        {/* Base URL + CTAs */}
         <div
-          className='landing-animate-fade-up flex w-full justify-center opacity-0 lg:col-span-6'
-          style={{ animationDelay: '320ms' }}
+          className='landing-animate-fade-up mt-8 flex flex-col items-center gap-5 opacity-0'
+          style={{ animationDelay: '120ms' }}
         >
-          <HeroTerminalDemo className='mt-8 lg:mt-0' />
+          <div className='bg-card inline-flex max-w-full items-center gap-2.5 rounded-full border p-1.5 pr-2'>
+            <span className='bg-foreground text-background rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap'>
+              {t('OpenAI Compatible')}
+            </span>
+            <code className='truncate font-mono text-sm'>{baseUrl}</code>
+            <CopyButton
+              value={baseUrl}
+              size='icon'
+              className='size-7 rounded-full'
+              tooltip={t('Copy')}
+            />
+          </div>
+
+          <div className='flex flex-wrap items-center justify-center gap-3'>
+            <Button
+              className='group bg-foreground text-background hover:bg-foreground/90 h-10 px-5'
+              render={
+                <Link to={props.isAuthenticated ? '/dashboard' : '/sign-up'} />
+              }
+            >
+              {props.isAuthenticated ? t('Go to Dashboard') : t('Get Started')}
+              <ArrowRight className='ml-1 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
+            </Button>
+            <Button
+              variant='outline'
+              className='bg-card h-10 px-5'
+              render={<Link to='/pricing' />}
+            >
+              {t('View Pricing')}
+            </Button>
+          </div>
         </div>
       </div>
     </section>
+  )
+}
+
+function GroupNode(props: {
+  group: HomeFlowGroup
+  noPerf: boolean
+  dotRef: (el: HTMLSpanElement | null) => void
+}) {
+  const g = props.group
+  const health = getGroupHealth(g.successRate)
+  const extra = g.modelTotal - g.models.length
+
+  return (
+    <li>
+      <Link
+        to='/pricing'
+        search={{ group: g.group }}
+        className='bg-card/80 hover:bg-muted flex items-start gap-3 rounded-lg border px-3 py-2 transition-colors lg:border-transparent lg:bg-transparent lg:px-2 lg:py-1'
+      >
+        <span
+          ref={props.dotRef}
+          className={cn(
+            'status-halo mt-1.5 size-2.5 shrink-0 rounded-full',
+            GROUP_HEALTH_DOT[health]
+          )}
+        />
+        <div className='min-w-0 flex-1'>
+          <p className='flex items-baseline gap-1.5 text-[13px] font-semibold'>
+            <span className='truncate' title={g.group}>
+              {g.group}
+            </span>
+            <span
+              className={cn(
+                'font-mono text-[11px] font-normal',
+                g.ratio < 1 ? 'text-primary' : 'text-subtle-foreground'
+              )}
+            >
+              ×{g.ratio.toFixed(1)}
+            </span>
+          </p>
+          {g.models.length > 0 && (
+            <p className='text-muted-foreground truncate font-mono text-[11px]'>
+              {g.models.join(' · ')}
+              {extra > 0 && ` +${extra}`}
+            </p>
+          )}
+          <p className='text-subtle-foreground truncate font-mono text-[10.5px] tabular-nums'>
+            <GroupStats group={g} noPerf={props.noPerf} health={health} />
+          </p>
+        </div>
+      </Link>
+    </li>
+  )
+}
+
+function GroupStats(props: {
+  group: HomeFlowGroup
+  noPerf: boolean
+  health: GroupHealth
+}) {
+  const { t } = useTranslation()
+  const g = props.group
+  if (props.noPerf || g.successRate === null) return <>{t('No data')}</>
+  return (
+    <>
+      <span
+        className={props.health === 'ok' ? '' : GROUP_HEALTH_TEXT[props.health]}
+      >
+        1h {g.successRate.toFixed(1)}%
+      </span>
+      {g.avgLatencyMs !== null && ` · ${formatLatency(g.avgLatencyMs)}`}
+    </>
   )
 }
