@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createInstance } from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
 import { beforeEach, expect, it, vi } from 'vitest'
@@ -73,55 +74,92 @@ it('translates billing history statuses and updates them when the language chang
   }
 })
 
-it.each([
-  { priceRatio: 7.3, paid: '584', saved: '146', full: '146' },
-  { priceRatio: 0.000123, paid: '0.0098', saved: '0.0025', full: '0.0025' },
-])(
-  'translates recharge presets and minimum amount without changing precision at price ratio $priceRatio',
-  async ({ priceRatio, paid, saved, full }) => {
-    render(
-      <I18nextProvider i18n={i18n}>
-        <RechargeFormCard
-          topupInfo={{
-            enable_online_topup: true,
-            enable_stripe_topup: false,
-            pay_methods: [],
-            min_topup: 1,
-            stripe_min_topup: 1,
-            amount_options: [100, 20],
-            discount: {},
-          }}
-          presetAmounts={[{ value: 100, discount: 0.8 }, { value: 20 }]}
-          selectedPreset={null}
-          topupAmount={1}
-          paymentAmount={priceRatio}
-          priceRatio={priceRatio}
-          calculating={false}
-          paymentLoading={null}
-          redemptionCode=''
-          redeeming={false}
-          onSelectPreset={vi.fn()}
-          onTopupAmountChange={vi.fn()}
-          onPaymentMethodSelect={vi.fn()}
-          onRedemptionCodeChange={vi.fn()}
-          onRedeem={vi.fn()}
-        />
-      </I18nextProvider>
-    )
-    expect(screen.getByRole('button', { name: /^100 / })).toHaveTextContent(
-      `优惠 20%支付 ${paid} • 节省 ${saved}`
-    )
-    expect(screen.getByRole('button', { name: /^20 / })).toHaveTextContent(
-      `支付 ${full}`
-    )
-    expect(screen.getByPlaceholderText('最低 1')).toBeVisible()
-    await act(() => i18n.changeLanguage('en'))
-    expect(screen.getByRole('button', { name: /^100 / })).toHaveTextContent(
-      `20% OFFPay ${paid} • Save ${saved}`
-    )
-    expect(screen.getByRole('button', { name: /^20 / })).toHaveTextContent(
-      `Pay ${full}`
-    )
-    expect(screen.getByPlaceholderText('Minimum 1')).toBeVisible()
-  }
-)
+function renderRechargeCard(
+  overrides: Partial<Parameters<typeof RechargeFormCard>[0]> = {}
+) {
+  return render(
+    <I18nextProvider i18n={i18n}>
+      <RechargeFormCard
+        topupInfo={{
+          enable_online_topup: true,
+          enable_stripe_topup: false,
+          pay_methods: [
+            { name: '支付宝', type: 'alipay' },
+            { name: 'Stripe', type: 'stripe', min_topup: 50 },
+          ],
+          min_topup: 1,
+          stripe_min_topup: 1,
+          amount_options: [100, 20],
+          discount: {},
+        }}
+        presetAmounts={[{ value: 100, discount: 0.8 }, { value: 20 }]}
+        selectedPreset={null}
+        topupAmount={20}
+        paymentAmount={20}
+        calculating={false}
+        paymentLoading={null}
+        redemptionCode=''
+        redeeming={false}
+        onSelectPreset={vi.fn()}
+        onTopupAmountChange={vi.fn()}
+        onPaymentMethodSelect={vi.fn()}
+        onRedemptionCodeChange={vi.fn()}
+        onRedeem={vi.fn()}
+        {...overrides}
+      />
+    </I18nextProvider>
+  )
+}
+
+it('labels presets with the credited amount or bonus and translates them', async () => {
+  renderRechargeCard()
+  expect(screen.getByRole('button', { name: /^\$100\.00/ })).toHaveTextContent(
+    '$100.00赠送 20%'
+  )
+  expect(screen.getByRole('button', { name: /^\$20\.00/ })).toHaveTextContent(
+    '$20.00到账 $20.00'
+  )
+  expect(screen.getByRole('button', { name: /^自定义/ })).toHaveTextContent(
+    '自定义最低 $1.00'
+  )
+  await act(() => i18n.changeLanguage('en'))
+  expect(screen.getByRole('button', { name: /^\$100\.00/ })).toHaveTextContent(
+    '$100.00Bonus 20%'
+  )
+  expect(screen.getByRole('button', { name: /^\$20\.00/ })).toHaveTextContent(
+    '$20.00Credited $20.00'
+  )
+})
+
+it('reveals the custom amount input only after choosing the custom tile', async () => {
+  renderRechargeCard()
+  expect(screen.queryByPlaceholderText('最低 1')).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /^自定义/ }))
+  expect(screen.getByRole('button', { name: /^自定义/ })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  )
+  expect(screen.getByPlaceholderText('最低 1')).toBeVisible()
+})
+
+it('selects a payment method first and pays with it via the pay button', async () => {
+  const onPaymentMethodSelect = vi.fn()
+  renderRechargeCard({ onPaymentMethodSelect, topupAmount: 60 })
+  const alipay = screen.getByRole('button', { name: '支付宝' })
+  const stripe = screen.getByRole('button', { name: 'Stripe' })
+  expect(alipay).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.click(stripe)
+  expect(onPaymentMethodSelect).not.toHaveBeenCalled()
+  expect(stripe).toHaveAttribute('aria-pressed', 'true')
+  expect(alipay).toHaveAttribute('aria-pressed', 'false')
+  await userEvent.click(screen.getByRole('button', { name: '去支付' }))
+  expect(onPaymentMethodSelect).toHaveBeenCalledWith(
+    expect.objectContaining({ type: 'stripe' })
+  )
+})
+
+it('disables methods below their minimum and keeps the pay button in sync', () => {
+  renderRechargeCard({ topupAmount: 20 })
+  expect(screen.getByRole('button', { name: /^Stripe\. / })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '去支付' })).toBeEnabled()
+})

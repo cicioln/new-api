@@ -24,7 +24,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatQuota } from '@/lib/format'
 
 import type { UserWalletData } from '../types'
 
@@ -80,7 +79,7 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
                   {props.redemption.redeeming && (
                     <Loader2 className='animate-spin' />
                   )}
-                  {t('Redeem')}
+                  {t('Redeem code')}
                 </Button>
               </div>
               {props.redemption.topupLink && (
@@ -112,42 +111,25 @@ export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
 
       <h3 className='text-sm font-semibold'>{t('Referral link')}</h3>
       <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
-        {t(
-          'Earn rewards when users join through your referral link. Transfer accumulated rewards to your balance anytime.'
-        )}
+        {t('Earn 10% of the first top-up when a friend registers and tops up.')}
       </p>
       {props.loading ? (
         <Skeleton className='h-9 w-full' />
       ) : (
-        <div className='bg-muted flex items-center gap-2 rounded-md py-1 ps-2.5 pe-1'>
-          <span className='min-w-0 flex-1 truncate font-mono text-[12.5px]'>
+        <div className='bg-muted flex items-center justify-between gap-2 rounded-[6px] px-2 py-[3px]'>
+          <span className='min-w-0 truncate font-mono text-[12.5px]'>
             {props.affiliateLink}
           </span>
           <CopyButton
             value={props.affiliateLink}
-            className='size-7'
-            iconClassName='size-3.5'
+            variant='ghost'
+            className='text-muted-foreground size-5 shrink-0'
+            iconClassName='size-[13px]'
             tooltip={t('Copy referral link')}
             aria-label={t('Copy referral link')}
           />
         </div>
       )}
-      <dl className='mt-3.5 grid grid-cols-3 gap-2 text-center'>
-        {[
-          [t('Pending'), formatQuota(props.user?.aff_quota ?? 0)],
-          [t('Total Earned'), formatQuota(props.user?.aff_history_quota ?? 0)],
-          [t('Invites'), String(props.user?.aff_count ?? 0)],
-        ].map(([label, value]) => (
-          <div key={label} className='bg-muted/50 rounded-md px-2 py-2'>
-            <dt className='text-muted-foreground truncate text-[11px]'>
-              {label}
-            </dt>
-            <dd className='mt-0.5 truncate text-sm font-semibold tabular-nums'>
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
       {!complianceConfirmed && (
         <p className='text-muted-foreground mt-2 text-xs'>
           {t(

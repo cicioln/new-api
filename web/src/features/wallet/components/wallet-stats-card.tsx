@@ -22,9 +22,19 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber, formatQuota } from '@/lib/format'
+import { formatQuotaWithCurrency } from '@/lib/currency'
+import { formatNumber } from '@/lib/format'
 
 import type { UserWalletData } from '../types'
+
+function formatWalletAmount(quota: number): string {
+  return formatQuotaWithCurrency(quota, {
+    digitsLarge: 2,
+    digitsSmall: 2,
+    abbreviate: false,
+    minimumFractionDigits: 2,
+  })
+}
 
 interface WalletStatsCardProps {
   user: UserWalletData | null
@@ -47,11 +57,11 @@ function StatCard(props: {
       {props.loading ? (
         <Skeleton className='mt-1 h-9 w-32' />
       ) : (
-        <div className='truncate font-mono text-[30px] leading-tight font-semibold tracking-tight tabular-nums'>
+        <div className='truncate text-[30px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums'>
           {props.value}
         </div>
       )}
-      <p className='text-muted-foreground mt-1.5 text-[12.5px]'>
+      <p className='text-muted-foreground mt-1.5 mb-0 text-[12.5px]'>
         {props.detail}
       </p>
     </div>
@@ -67,13 +77,13 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
     <div className='grid grid-cols-1 gap-3.5 md:grid-cols-3'>
       <StatCard
         label={t('Current Balance')}
-        value={formatQuota(props.user?.quota ?? 0)}
+        value={formatWalletAmount(props.user?.quota ?? 0)}
         detail={t('Remaining quota')}
         loading={props.loading}
       />
       <StatCard
-        label={t('Total Usage')}
-        value={formatQuota(props.user?.used_quota ?? 0)}
+        label={t('Total spent')}
+        value={formatWalletAmount(props.user?.used_quota ?? 0)}
         detail={t('{{count}} requests in total', {
           count: formatNumber(props.user?.request_count ?? 0, locale),
         })}
@@ -81,10 +91,10 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
       />
       <StatCard
         label={t('Referral rewards')}
-        value={formatQuota(affQuota)}
+        value={formatWalletAmount(affQuota)}
         detail={
           <>
-            {t('Invited {{count}} users', {
+            {t('Invited {{count}} people', {
               count: props.user?.aff_count ?? 0,
             })}
             {props.onTransfer && affQuota > 0 && (
@@ -93,7 +103,7 @@ export function WalletStatsCard(props: WalletStatsCardProps) {
                 <Button
                   variant='link'
                   size='sm'
-                  className='h-auto p-0 text-[12.5px]'
+                  className='text-primary h-auto p-0 text-[12.5px] font-normal'
                   onClick={props.onTransfer}
                   disabled={props.transferDisabled}
                 >

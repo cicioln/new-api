@@ -18,21 +18,26 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
-import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrencyFromUSD } from '@/lib/currency'
-import { formatNumber } from '@/lib/format'
+import {
+  formatCurrencyFromUSD,
+  formatLocalCurrencyAmount,
+} from '@/lib/currency'
+import dayjs from '@/lib/dayjs'
+import { cn } from '@/lib/utils'
 
 import { useBillingHistory } from '../hooks/use-billing-history'
-import {
-  formatTimestamp,
-  getPaymentMethodName,
-  getStatusConfig,
-} from '../lib/billing'
+import { formatTimestamp, getPaymentMethodName } from '../lib/billing'
 
 const RECENT_TOPUP_LIMIT = 5
 const SKELETON_ROWS = ['a', 'b', 'c']
+const AMOUNT_FORMAT = {
+  digitsLarge: 2,
+  digitsSmall: 2,
+  abbreviate: false,
+  minimumFractionDigits: 2,
+}
 
 /** The latest top-up orders inline on the wallet page; the full list stays in the history dialog. */
 export function TopupRecordsCard(props: { onOpenAll: () => void }) {
@@ -63,7 +68,7 @@ export function TopupRecordsCard(props: { onOpenAll: () => void }) {
             <tr className='bg-background text-muted-foreground border-y text-left text-xs [&>th]:px-[18px] [&>th]:py-2.5 [&>th]:font-medium [&>th]:whitespace-nowrap'>
               <th>{t('Time')}</th>
               <th>{t('Order No.')}</th>
-              <th>{t('Payment Method')}</th>
+              <th>{t('Top-up method')}</th>
               <th className='text-right'>{t('Paid')}</th>
               <th className='text-right'>{t('Credited')}</th>
               <th>{t('Status')}</th>
@@ -90,33 +95,43 @@ export function TopupRecordsCard(props: { onOpenAll: () => void }) {
               </tr>
             )}
             {history.records.map((record) => {
-              const status = getStatusConfig(record.status)
+              const isCredited = record.status === 'success'
               return (
                 <tr
                   key={record.id}
                   className='hover:bg-muted/50 transition-colors'
                 >
-                  <td className='text-muted-foreground font-mono text-xs'>
-                    {formatTimestamp(record.create_time)}
+                  <td
+                    className='text-muted-foreground font-mono text-xs'
+                    title={formatTimestamp(record.create_time)}
+                  >
+                    {dayjs.unix(record.create_time).format('MM-DD HH:mm')}
                   </td>
-                  <td className='font-mono text-[12.5px]'>{record.trade_no}</td>
+                  <td className='font-mono text-xs'>{record.trade_no}</td>
                   <td>{getPaymentMethodName(record.payment_method, t)}</td>
                   <td className='text-right font-mono text-[12.5px] tabular-nums'>
-                    {formatNumber(record.money)}
+                    {formatLocalCurrencyAmount(record.money, AMOUNT_FORMAT)}
                   </td>
                   <td className='text-right font-mono text-[12.5px] tabular-nums'>
-                    {formatCurrencyFromUSD(record.amount, {
-                      digitsLarge: 2,
-                      digitsSmall: 2,
-                      abbreviate: false,
-                    })}
+                    {record.amount
+                      ? formatCurrencyFromUSD(record.amount, AMOUNT_FORMAT)
+                      : '—'}
                   </td>
                   <td>
-                    <StatusBadge
-                      label={t(status.label)}
-                      variant={status.variant}
-                      copyable={false}
-                    />
+                    <span
+                      className={cn(
+                        'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-xs font-medium whitespace-nowrap',
+                        isCredited
+                          ? 'bg-success/12 text-success'
+                          : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      <span
+                        aria-hidden
+                        className='size-1.5 rounded-full bg-current'
+                      />
+                      {isCredited ? t('Top-up credited') : t('Order closed')}
+                    </span>
                   </td>
                 </tr>
               )

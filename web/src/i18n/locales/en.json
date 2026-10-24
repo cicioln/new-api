@@ -7424,6 +7424,17 @@
     "Object": "Object",
     "Blocked": "Blocked",
     "Export failed": "Export failed",
-    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Sign-in, key, top-up and settings changes and other sensitive operations."
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Sign-in, key, top-up and settings changes and other sensitive operations.",
+    "Total spent": "Total spent",
+    "Invited {{count}} people": "Invited {{count}} people",
+    "Bonus {{percent}}%": "Bonus {{percent}}%",
+    "Credited {{amount}}": "Credited {{amount}}",
+    "Payment method (only channels configured by the administrator are shown)": "Payment method (only channels configured by the administrator are shown)",
+    "Go to pay": "Go to pay",
+    "Redeem code": "Redeem code",
+    "Earn 10% of the first top-up when a friend registers and tops up.": "Earn 10% of the first top-up when a friend registers and tops up.",
+    "Top-up method": "Top-up method",
+    "Top-up credited": "Top-up credited",
+    "Order closed": "Order closed"
   }
 }

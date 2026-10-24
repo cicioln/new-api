@@ -7424,6 +7424,17 @@
     "Object": "对象",
     "Blocked": "已拦截",
     "Export failed": "导出失败",
-    "Sign-in, key, top-up and settings changes and other sensitive operations.": "登录、密钥、充值与设置变更等敏感操作记录。"
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "登录、密钥、充值与设置变更等敏感操作记录。",
+    "Total spent": "累计消耗",
+    "Invited {{count}} people": "已邀请 {{count}} 人",
+    "Bonus {{percent}}%": "赠送 {{percent}}%",
+    "Credited {{amount}}": "到账 {{amount}}",
+    "Payment method (only channels configured by the administrator are shown)": "支付方式（只显示后台已配置的支付渠道）",
+    "Go to pay": "去支付",
+    "Redeem code": "兑换",
+    "Earn 10% of the first top-up when a friend registers and tops up.": "好友注册并充值后，你获得其首充 10% 的奖励。",
+    "Top-up method": "方式",
+    "Top-up credited": "已到账",
+    "Order closed": "已关闭"
   }
 }

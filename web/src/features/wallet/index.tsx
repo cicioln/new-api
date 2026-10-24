@@ -301,7 +301,7 @@ export function Wallet(props: WalletProps) {
               }
             />
 
-            <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start'>
+            <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-start'>
               <div id='wallet-add-funds' className='min-w-0 scroll-mt-4'>
                 <RechargeFormCard
                   topupInfo={topupInfo}
@@ -322,7 +322,6 @@ export function Wallet(props: WalletProps) {
                   loading={topupLoading}
                   priceRatio={(status?.price as number) || 1}
                   usdExchangeRate={effectiveUsdExchangeRate}
-                  onOpenBilling={() => setBillingDialogOpen(true)}
                   creemProducts={topupInfo?.creem_products}
                   enableCreemTopup={topupInfo?.enable_creem_topup}
                   onCreemProductSelect={handleCreemProductSelect}

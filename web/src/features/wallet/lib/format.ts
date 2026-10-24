@@ -75,6 +75,18 @@ export function getDiscountLabel(discount: number, t: TFunction): string {
 }
 
 /**
+ * Get bonus label for display (e.g., "Bonus 25%"). Paying `discount` of the
+ * price credits the full amount, so the bonus is relative to what was paid.
+ */
+export function getBonusLabel(discount: number, t: TFunction): string {
+  if (discount >= DEFAULT_DISCOUNT_RATE || discount <= 0) {
+    return ''
+  }
+  const bonus = Math.round((1 - discount) * 100)
+  return t('Bonus {{percent}}%', { percent: bonus })
+}
+
+/**
  * Calculate pricing details for a preset amount
  */
 export function calculatePresetPricing(

@@ -77,7 +77,7 @@ it('redeems the entered code from the redemption card', async () => {
     'X'
   )
   expect(onCodeChange).toHaveBeenCalledWith('CODEX')
-  await userEvent.click(screen.getByRole('button', { name: 'Redeem' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Redeem code' }))
   expect(onRedeem).toHaveBeenCalledOnce()
   expect(screen.getByText('https://example.com/register?aff=abc')).toBeVisible()
 })
@@ -132,7 +132,7 @@ it('lists the latest own top-up orders and links to the full history', async () 
 
   const row = (await screen.findByText('order-1')).closest('tr')
   if (!row) throw new Error('row missing')
-  expect(within(row).getByText('Success')).toBeVisible()
+  expect(within(row).getByText('Top-up credited')).toBeVisible()
   expect(String(get.mock.calls[0][0])).toContain('/api/user/topup/self')
   await userEvent.click(screen.getByRole('button', { name: /View all/ }))
   expect(onOpenAll).toHaveBeenCalledOnce()
@@ -147,4 +147,17 @@ it('shows an empty state without top-up orders', async () => {
   expect(
     screen.queryByRole('button', { name: /View all/ })
   ).not.toBeInTheDocument()
+})
+
+it('shows wallet amounts with two decimals and the invite count', () => {
+  render(
+    <WalletStatsCard
+      user={{ ...user, quota: 64200000, used_quota: 500000 }}
+      onTransfer={vi.fn()}
+    />
+  )
+  expect(screen.getByText('$128.40')).toBeVisible()
+  expect(screen.getByText('Total spent')).toBeVisible()
+  expect(screen.getAllByText('$1.00')).toHaveLength(2)
+  expect(screen.getByText(/Invited 3 people/)).toBeVisible()
 })

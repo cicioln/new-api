@@ -7424,6 +7424,17 @@
     "Object": "対象",
     "Blocked": "ブロック済み",
     "Export failed": "エクスポートに失敗しました",
-    "Sign-in, key, top-up and settings changes and other sensitive operations.": "ログイン、キー、チャージ、設定変更などの重要な操作の記録。"
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "ログイン、キー、チャージ、設定変更などの重要な操作の記録。",
+    "Total spent": "累計消費",
+    "Invited {{count}} people": "{{count}} 人を招待済み",
+    "Bonus {{percent}}%": "{{percent}}% ボーナス",
+    "Credited {{amount}}": "入金 {{amount}}",
+    "Payment method (only channels configured by the administrator are shown)": "支払い方法（管理者が設定した決済チャネルのみ表示）",
+    "Go to pay": "支払いへ進む",
+    "Redeem code": "引き換え",
+    "Earn 10% of the first top-up when a friend registers and tops up.": "友達が登録してチャージすると、初回チャージの 10% を獲得できます。",
+    "Top-up method": "方法",
+    "Top-up credited": "入金済み",
+    "Order closed": "クローズ"
   }
 }

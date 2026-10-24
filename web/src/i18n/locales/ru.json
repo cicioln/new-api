@@ -7424,6 +7424,17 @@
     "Object": "Объект",
     "Blocked": "Заблокировано",
     "Export failed": "Не удалось экспортировать",
-    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Входы, ключи, пополнения, изменения настроек и другие важные операции."
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Входы, ключи, пополнения, изменения настроек и другие важные операции.",
+    "Total spent": "Всего потрачено",
+    "Invited {{count}} people": "Приглашено: {{count}}",
+    "Bonus {{percent}}%": "Бонус {{percent}}%",
+    "Credited {{amount}}": "Зачислено {{amount}}",
+    "Payment method (only channels configured by the administrator are shown)": "Способ оплаты (показаны только каналы, настроенные администратором)",
+    "Go to pay": "Перейти к оплате",
+    "Redeem code": "Погасить",
+    "Earn 10% of the first top-up when a friend registers and tops up.": "Получайте 10% от первого пополнения, когда друг зарегистрируется и пополнит баланс.",
+    "Top-up method": "Способ",
+    "Top-up credited": "Зачислено",
+    "Order closed": "Закрыт"
   }
 }
