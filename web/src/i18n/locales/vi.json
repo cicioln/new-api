@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "Mỗi khóa có thể đặt hạn mức, mô hình được phép và thời hạn riêng.",
     "API endpoint": "Địa chỉ API",
     "Compatible with OpenAI / Claude / Gemini SDKs": "Tương thích SDK OpenAI / Claude / Gemini",
-    "Copy address": "Sao chép địa chỉ"
+    "Copy address": "Sao chép địa chỉ",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "Mô hình, token, độ trễ và chi phí của từng yêu cầu. Quản trị viên xem được tất cả người dùng.",
+    "Submission and completion status of drawing, video, music and other async tasks.": "Trạng thái gửi và hoàn thành các tác vụ bất đồng bộ như vẽ, video, nhạc.",
+    "Spend in range": "Chi tiêu trong phạm vi",
+    "Balance, top-up, redemption codes and referral rewards.": "Số dư, nạp tiền, mã đổi và thưởng giới thiệu.",
+    "{{count}} requests in total": "Tổng {{count}} yêu cầu",
+    "Referral rewards": "Thưởng giới thiệu",
+    "Online top-up": "Nạp tiền trực tuyến",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "Số tiền tính theo giá nạp và dùng được ngay khi thanh toán về.",
+    "Redemption code": "Mã đổi",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "Nhập mã do quản trị viên cấp, hạn mức sẽ cộng vào số dư.",
+    "Referral link": "Liên kết giới thiệu",
+    "Top-up records": "Lịch sử nạp tiền",
+    "View all": "Xem tất cả",
+    "Order No.": "Mã đơn",
+    "Paid": "Đã trả",
+    "Credited": "Đã cộng",
+    "No top-up records yet": "Chưa có lịch sử nạp tiền",
+    "Account information, group and preferences.": "Thông tin tài khoản, nhóm và tùy chọn.",
+    "Password, two-factor authentication, passkeys and access tokens.": "Mật khẩu, xác thực hai lớp, passkey và token truy cập."
   }
 }

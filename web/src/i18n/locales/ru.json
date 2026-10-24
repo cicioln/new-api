@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "Для каждого ключа можно задать квоту, доступные модели и срок действия.",
     "API endpoint": "Адрес API",
     "Compatible with OpenAI / Claude / Gemini SDKs": "Совместим с SDK OpenAI / Claude / Gemini",
-    "Copy address": "Копировать адрес"
+    "Copy address": "Копировать адрес",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "Модель, токены, задержка и стоимость каждого запроса. Администраторы видят всех пользователей.",
+    "Submission and completion status of drawing, video, music and other async tasks.": "Отправка и статус выполнения асинхронных задач: изображения, видео, музыка и др.",
+    "Spend in range": "Расход за период",
+    "Balance, top-up, redemption codes and referral rewards.": "Баланс, пополнение, коды активации и реферальные бонусы.",
+    "{{count}} requests in total": "Всего запросов: {{count}}",
+    "Referral rewards": "Реферальные бонусы",
+    "Online top-up": "Онлайн-пополнение",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "Сумма считается по цене пополнения и доступна сразу после оплаты.",
+    "Redemption code": "Код активации",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "Введите код от администратора — квота будет зачислена на баланс.",
+    "Referral link": "Реферальная ссылка",
+    "Top-up records": "История пополнений",
+    "View all": "Показать все",
+    "Order No.": "№ заказа",
+    "Paid": "Оплачено",
+    "Credited": "Зачислено",
+    "No top-up records yet": "Пополнений пока нет",
+    "Account information, group and preferences.": "Данные аккаунта, группа и настройки.",
+    "Password, two-factor authentication, passkeys and access tokens.": "Пароль, двухфакторная аутентификация, passkey и токены доступа."
   }
 }

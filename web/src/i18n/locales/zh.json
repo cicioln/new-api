@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "每个密钥可单独设置额度、可用模型和过期时间。",
     "API endpoint": "接入地址",
     "Compatible with OpenAI / Claude / Gemini SDKs": "兼容 OpenAI / Claude / Gemini SDK",
-    "Copy address": "复制地址"
+    "Copy address": "复制地址",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "每条请求的模型、Token、耗时与扣费。管理员可查看全部用户。",
+    "Submission and completion status of drawing, video, music and other async tasks.": "绘图、视频、音乐等异步任务的提交与完成状态。",
+    "Spend in range": "筛选范围消耗",
+    "Balance, top-up, redemption codes and referral rewards.": "余额、充值、兑换码与邀请奖励。",
+    "{{count}} requests in total": "共 {{count}} 次请求",
+    "Referral rewards": "邀请奖励",
+    "Online top-up": "在线充值",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "金额按「充值价」口径计算，到账后立即可用。",
+    "Redemption code": "兑换码",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "输入管理员发放的兑换码，额度直接计入余额。",
+    "Referral link": "邀请链接",
+    "Top-up records": "充值记录",
+    "View all": "查看全部",
+    "Order No.": "订单号",
+    "Paid": "金额",
+    "Credited": "到账",
+    "No top-up records yet": "暂无充值记录",
+    "Account information, group and preferences.": "账户信息、分组与偏好设置。",
+    "Password, two-factor authentication, passkeys and access tokens.": "密码、两步验证、Passkey 与访问令牌。"
   }
 }

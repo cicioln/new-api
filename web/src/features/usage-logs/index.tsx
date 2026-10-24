@@ -24,8 +24,10 @@ import { SectionPageLayout } from '@/components/layout'
 import type { NavGroup } from '@/components/layout/types'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CacheStatsDialog } from '@/features/system-settings/general/channel-affinity/cache-stats-dialog'
+import { useMediaQuery } from '@/hooks'
 import { useSidebarConfig } from '@/hooks/use-sidebar-config'
 
+import { CommonLogsStats } from './components/common-logs-stats'
 import { UserInfoDialog } from './components/dialogs/user-info-dialog'
 import {
   type LogsViewScope,
@@ -43,15 +45,24 @@ import {
 const route = getRouteApi('/_authenticated/usage-logs/$section')
 const TASK_LOG_SECTIONS = ['drawing', 'task'] as const
 
-const SECTION_META: Record<UsageLogsSectionId, { titleKey: string }> = {
+const SECTION_META: Record<
+  UsageLogsSectionId,
+  { titleKey: string; descriptionKey: string }
+> = {
   common: {
     titleKey: 'Common Logs',
+    descriptionKey:
+      'Model, tokens, latency and cost of every request. Administrators can view all users.',
   },
   drawing: {
     titleKey: 'Drawing Logs',
+    descriptionKey:
+      'Submission and completion status of drawing, video, music and other async tasks.',
   },
   task: {
     titleKey: 'Task Logs',
+    descriptionKey:
+      'Submission and completion status of drawing, video, music and other async tasks.',
   },
 }
 
@@ -72,6 +83,7 @@ function UsageLogsContent() {
     setAffinityDialogOpen,
   } = useUsageLogsContext()
   const { canManageScope, viewScope, setViewScope } = useLogsViewScope()
+  const isMobile = useMediaQuery('(max-width: 640px)')
   const tabNavGroups = useMemo<NavGroup[]>(
     () => [
       {
@@ -128,6 +140,9 @@ function UsageLogsContent() {
         <SectionPageLayout.Title>
           {t(pageMeta.titleKey)}
         </SectionPageLayout.Title>
+        <SectionPageLayout.Description>
+          {t(pageMeta.descriptionKey)}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Actions>
           {canManageScope && (
             <Tabs value={viewScope} onValueChange={handleViewScopeChange}>
@@ -139,7 +154,10 @@ function UsageLogsContent() {
           )}
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
-          <div className='flex h-full min-h-0 flex-col gap-4'>
+          <div className='flex h-full min-h-0 flex-col gap-3.5'>
+            {activeCategory === 'common' && !isMobile && (
+              <CommonLogsStats variant='cards' />
+            )}
             {showTaskSwitcher && (
               <Tabs value={activeCategory} onValueChange={handleSectionChange}>
                 <TabsList className='max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto'>

@@ -48,7 +48,19 @@ function StatBadge(props: {
   )
 }
 
-export function CommonLogsStats() {
+function StatCard(props: { label: string; value: string | number }) {
+  return (
+    <div className='bg-card rounded-lg border px-[18px] pt-[18px] pb-4'>
+      <div className='text-muted-foreground text-[12.5px]'>{props.label}</div>
+      <div className='mt-1.5 truncate text-[28px] leading-tight font-semibold tracking-tight tabular-nums'>
+        {props.value}
+      </div>
+    </div>
+  )
+}
+
+/** Badges sit inside the toolbar on mobile; desktop shows design KPI cards above the table. */
+export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
   const { t } = useTranslation()
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
@@ -76,6 +88,29 @@ export function CommonLogsStats() {
     placeholderData: (previousData) => previousData,
   })
 
+  const quotaDisplay = sensitiveVisible
+    ? formatLogQuota(stats?.quota || 0)
+    : '••••'
+
+  if (props.variant === 'cards') {
+    if (isLoading) {
+      return (
+        <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-3'>
+          {['quota', 'rpm', 'tpm'].map((key) => (
+            <Skeleton key={key} className='h-[94px] rounded-lg' />
+          ))}
+        </div>
+      )
+    }
+    return (
+      <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-3'>
+        <StatCard label={t('Spend in range')} value={quotaDisplay} />
+        <StatCard label={t('RPM')} value={stats?.rpm || 0} />
+        <StatCard label={t('TPM')} value={stats?.tpm || 0} />
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className='flex items-center gap-2'>
@@ -90,7 +125,7 @@ export function CommonLogsStats() {
     <div className='flex flex-wrap items-center gap-2'>
       <StatBadge
         label={t('Usage')}
-        value={sensitiveVisible ? formatLogQuota(stats?.quota || 0) : '••••'}
+        value={quotaDisplay}
         accent='bg-sky-500/70'
       />
       <StatBadge

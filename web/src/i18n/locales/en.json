@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "Each key can have its own quota, allowed models and expiry.",
     "API endpoint": "API endpoint",
     "Compatible with OpenAI / Claude / Gemini SDKs": "Compatible with OpenAI / Claude / Gemini SDKs",
-    "Copy address": "Copy address"
+    "Copy address": "Copy address",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "Model, tokens, latency and cost of every request. Administrators can view all users.",
+    "Submission and completion status of drawing, video, music and other async tasks.": "Submission and completion status of drawing, video, music and other async tasks.",
+    "Spend in range": "Spend in range",
+    "Balance, top-up, redemption codes and referral rewards.": "Balance, top-up, redemption codes and referral rewards.",
+    "{{count}} requests in total": "{{count}} requests in total",
+    "Referral rewards": "Referral rewards",
+    "Online top-up": "Online top-up",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "Amounts follow the top-up price and are available as soon as payment arrives.",
+    "Redemption code": "Redemption code",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "Enter a code issued by the administrator; the quota is added to your balance.",
+    "Referral link": "Referral link",
+    "Top-up records": "Top-up records",
+    "View all": "View all",
+    "Order No.": "Order No.",
+    "Paid": "Paid",
+    "Credited": "Credited",
+    "No top-up records yet": "No top-up records yet",
+    "Account information, group and preferences.": "Account information, group and preferences.",
+    "Password, two-factor authentication, passkeys and access tokens.": "Password, two-factor authentication, passkeys and access tokens."
   }
 }

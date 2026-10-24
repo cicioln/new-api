@@ -16,13 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Share2 } from 'lucide-react'
+import { ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { IconBadge } from '@/components/ui/icon-badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatQuota } from '@/lib/format'
@@ -32,105 +31,130 @@ import type { UserWalletData } from '../types'
 interface AffiliateRewardsCardProps {
   user: UserWalletData | null
   affiliateLink: string
-  onTransfer: () => void
   complianceConfirmed?: boolean
   loading?: boolean
+  redemption?: {
+    enabled: boolean
+    code: string
+    onCodeChange: (code: string) => void
+    onRedeem: () => void
+    redeeming: boolean
+    topupLink?: string
+  }
 }
 
-export function AffiliateRewardsCard({
-  user,
-  affiliateLink,
-  onTransfer,
-  complianceConfirmed = true,
-  loading,
-}: AffiliateRewardsCardProps) {
+/** Redemption code form plus the referral link, side by side with the top-up card. */
+export function AffiliateRewardsCard(props: AffiliateRewardsCardProps) {
   const { t } = useTranslation()
-  if (loading) {
-    return (
-      <Card data-card-hover='false' className='bg-muted/20 py-0'>
-        <CardContent className='grid gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(220px,1fr)_minmax(220px,0.72fr)_minmax(320px,1.15fr)] lg:items-center'>
-          <div>
-            <Skeleton className='h-5 w-32' />
-            <Skeleton className='mt-2 h-4 w-48' />
-          </div>
-          <Skeleton className='h-14 rounded-lg' />
-          <Skeleton className='h-10 rounded-lg' />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const hasRewards = (user?.aff_quota ?? 0) > 0
+  const complianceConfirmed = props.complianceConfirmed !== false
 
   return (
-    <Card data-card-hover='false' className='bg-muted/20 py-0'>
-      <CardContent className='grid gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[minmax(200px,1fr)_minmax(180px,0.65fr)_minmax(280px,1fr)] lg:items-center'>
-        <div className='flex min-w-0 items-center gap-2.5'>
-          <IconBadge tone='chart-3'>
-            <Share2 />
-          </IconBadge>
-          <div className='min-w-0'>
-            <h3 className='truncate text-sm font-semibold'>
-              {t('Referral Program')}
-            </h3>
-            <p className='text-muted-foreground line-clamp-1 text-xs'>
-              {t(
-                'Earn rewards when users join through your referral link. Transfer accumulated rewards to your balance anytime.'
+    <section className='bg-card min-w-0 rounded-lg border p-[18px]'>
+      {props.redemption && (
+        <div className='mb-[22px]'>
+          <h3 className='text-sm font-semibold'>{t('Redemption code')}</h3>
+          <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
+            {t(
+              'Enter a code issued by the administrator; the quota is added to your balance.'
+            )}
+          </p>
+          {props.redemption.enabled ? (
+            <>
+              <div className='flex gap-2'>
+                <Input
+                  id='redemption-code'
+                  aria-label={t('Redemption code')}
+                  value={props.redemption.code}
+                  onChange={(e) =>
+                    props.redemption?.onCodeChange(e.target.value)
+                  }
+                  placeholder='xxxx-xxxx-xxxx-xxxx'
+                  className='h-10 min-w-0 flex-1'
+                />
+                <Button
+                  variant='outline'
+                  className='h-10 px-4'
+                  onClick={props.redemption.onRedeem}
+                  disabled={props.redemption.redeeming}
+                >
+                  {props.redemption.redeeming && (
+                    <Loader2 className='animate-spin' />
+                  )}
+                  {t('Redeem')}
+                </Button>
+              </div>
+              {props.redemption.topupLink && (
+                <p className='text-muted-foreground mt-2 text-xs'>
+                  {t('Need a redemption code?')}{' '}
+                  <a
+                    href={props.redemption.topupLink}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='inline-flex items-center gap-1 underline-offset-4 hover:underline'
+                  >
+                    {t('Get one here')}
+                    <ExternalLink className='size-3' />
+                  </a>
+                </p>
               )}
-            </p>
-          </div>
+            </>
+          ) : (
+            <Alert>
+              <AlertDescription>
+                {t(
+                  'Redemption codes are disabled until the administrator confirms compliance terms.'
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
+      )}
 
-        <div className='grid grid-cols-3 gap-1.5 text-center'>
-          {[
-            [t('Pending'), formatQuota(user?.aff_quota ?? 0)],
-            [t('Total Earned'), formatQuota(user?.aff_history_quota ?? 0)],
-            [t('Invites'), String(user?.aff_count ?? 0)],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <div className='text-muted-foreground truncate text-[10px] font-medium tracking-wider uppercase'>
-                {label}
-              </div>
-              <div className='mt-0.5 truncate text-sm font-semibold tabular-nums'>
-                {value}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className='flex items-center gap-2'>
-          <Input
-            value={affiliateLink}
-            readOnly
-            className='border-muted bg-background/70 h-9 min-w-0 flex-1 font-mono text-xs'
-          />
+      <h3 className='text-sm font-semibold'>{t('Referral link')}</h3>
+      <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
+        {t(
+          'Earn rewards when users join through your referral link. Transfer accumulated rewards to your balance anytime.'
+        )}
+      </p>
+      {props.loading ? (
+        <Skeleton className='h-9 w-full' />
+      ) : (
+        <div className='bg-muted flex items-center gap-2 rounded-md py-1 ps-2.5 pe-1'>
+          <span className='min-w-0 flex-1 truncate font-mono text-[12.5px]'>
+            {props.affiliateLink}
+          </span>
           <CopyButton
-            value={affiliateLink}
-            variant='outline'
-            className='bg-background size-9 shrink-0'
-            iconClassName='size-4'
+            value={props.affiliateLink}
+            className='size-7'
+            iconClassName='size-3.5'
             tooltip={t('Copy referral link')}
             aria-label={t('Copy referral link')}
           />
-          {hasRewards && (
-            <Button
-              onClick={onTransfer}
-              disabled={!complianceConfirmed}
-              className='h-9 shrink-0 px-3'
-              size='sm'
-            >
-              {t('Transfer to Balance')}
-            </Button>
-          )}
         </div>
-        {!complianceConfirmed ? (
-          <p className='text-muted-foreground text-xs lg:col-span-3'>
-            {t(
-              'Referral reward transfer is disabled until the administrator confirms compliance terms.'
-            )}
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
+      )}
+      <dl className='mt-3.5 grid grid-cols-3 gap-2 text-center'>
+        {[
+          [t('Pending'), formatQuota(props.user?.aff_quota ?? 0)],
+          [t('Total Earned'), formatQuota(props.user?.aff_history_quota ?? 0)],
+          [t('Invites'), String(props.user?.aff_count ?? 0)],
+        ].map(([label, value]) => (
+          <div key={label} className='bg-muted/50 rounded-md px-2 py-2'>
+            <dt className='text-muted-foreground truncate text-[11px]'>
+              {label}
+            </dt>
+            <dd className='mt-0.5 truncate text-sm font-semibold tabular-nums'>
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {!complianceConfirmed && (
+        <p className='text-muted-foreground mt-2 text-xs'>
+          {t(
+            'Referral reward transfer is disabled until the administrator confirms compliance terms.'
+          )}
+        </p>
+      )}
+    </section>
   )
 }

@@ -73,7 +73,7 @@ export function Security() {
     )
   } else {
     content = (
-      <div className='grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.46fr)] xl:items-start'>
+      <div className='grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.46fr)] xl:items-start'>
         <div className='min-w-0 space-y-4 sm:space-y-6'>
           <section
             aria-labelledby='security-authentication'
@@ -141,8 +141,11 @@ export function Security() {
       <SectionPageLayout.Title>
         {t('Security & Access')}
       </SectionPageLayout.Title>
+      <SectionPageLayout.Description>
+        {t('Password, two-factor authentication, passkeys and access tokens.')}
+      </SectionPageLayout.Description>
       <SectionPageLayout.Content>
-        <div className='mx-auto w-full max-w-7xl'>{content}</div>
+        <div className='w-full'>{content}</div>
       </SectionPageLayout.Content>
     </SectionPageLayout>
   )

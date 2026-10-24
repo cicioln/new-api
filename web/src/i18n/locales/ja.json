@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "キーごとにクォータ、利用可能なモデル、有効期限を設定できます。",
     "API endpoint": "API エンドポイント",
     "Compatible with OpenAI / Claude / Gemini SDKs": "OpenAI / Claude / Gemini SDK に対応",
-    "Copy address": "アドレスをコピー"
+    "Copy address": "アドレスをコピー",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "各リクエストのモデル、Token、所要時間、課金額。管理者は全ユーザーを表示できます。",
+    "Submission and completion status of drawing, video, music and other async tasks.": "画像・動画・音楽などの非同期タスクの送信と完了状況。",
+    "Spend in range": "範囲内の消費",
+    "Balance, top-up, redemption codes and referral rewards.": "残高、チャージ、引き換えコード、紹介報酬。",
+    "{{count}} requests in total": "合計 {{count}} 回のリクエスト",
+    "Referral rewards": "紹介報酬",
+    "Online top-up": "オンラインチャージ",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "金額はチャージ価格で計算され、入金後すぐに利用できます。",
+    "Redemption code": "引き換えコード",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "管理者が発行したコードを入力すると、クォータが残高に加算されます。",
+    "Referral link": "紹介リンク",
+    "Top-up records": "チャージ履歴",
+    "View all": "すべて表示",
+    "Order No.": "注文番号",
+    "Paid": "支払額",
+    "Credited": "入金額",
+    "No top-up records yet": "チャージ履歴はまだありません",
+    "Account information, group and preferences.": "アカウント情報、グループ、各種設定。",
+    "Password, two-factor authentication, passkeys and access tokens.": "パスワード、2 段階認証、パスキー、アクセストークン。"
   }
 }

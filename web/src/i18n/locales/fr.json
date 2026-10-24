@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "Chaque clé peut avoir son propre quota, ses modèles autorisés et son expiration.",
     "API endpoint": "Point d'accès API",
     "Compatible with OpenAI / Claude / Gemini SDKs": "Compatible avec les SDK OpenAI / Claude / Gemini",
-    "Copy address": "Copier l'adresse"
+    "Copy address": "Copier l'adresse",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "Modèle, tokens, latence et coût de chaque requête. Les administrateurs voient tous les utilisateurs.",
+    "Submission and completion status of drawing, video, music and other async tasks.": "Soumission et état d'achèvement des tâches asynchrones (images, vidéo, musique…).",
+    "Spend in range": "Dépense sur la période",
+    "Balance, top-up, redemption codes and referral rewards.": "Solde, recharge, codes d'échange et récompenses de parrainage.",
+    "{{count}} requests in total": "{{count}} requêtes au total",
+    "Referral rewards": "Récompenses de parrainage",
+    "Online top-up": "Recharge en ligne",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "Les montants suivent le prix de recharge et sont disponibles dès réception du paiement.",
+    "Redemption code": "Code d'échange",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "Saisissez un code fourni par l'administrateur ; le quota est ajouté à votre solde.",
+    "Referral link": "Lien de parrainage",
+    "Top-up records": "Historique des recharges",
+    "View all": "Tout voir",
+    "Order No.": "N° de commande",
+    "Paid": "Payé",
+    "Credited": "Crédité",
+    "No top-up records yet": "Aucune recharge pour l'instant",
+    "Account information, group and preferences.": "Informations du compte, groupe et préférences.",
+    "Password, two-factor authentication, passkeys and access tokens.": "Mot de passe, double authentification, passkeys et jetons d'accès."
   }
 }

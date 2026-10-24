@@ -63,30 +63,25 @@ export function TitledCard({
   return (
     <Card
       data-card-hover={disableHoverEffect ? 'false' : undefined}
-      className={cn('gap-0 overflow-hidden py-0', className)}
+      className={cn('gap-0 overflow-hidden rounded-lg py-0', className)}
     >
-      <CardHeader
-        className={cn('border-b p-3 !pb-3 sm:p-5 sm:!pb-5', headerClassName)}
-      >
+      <CardHeader className={cn('px-[18px] pt-[18px] !pb-0', headerClassName)}>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='flex min-w-0 items-center gap-3'>
             {icon != null && (
-              <IconBadge size='title' tone={iconTone} className={iconClassName}>
+              <IconBadge size='sm' tone={iconTone} className={iconClassName}>
                 {icon}
               </IconBadge>
             )}
             <div className='min-w-0'>
               <CardTitle
-                className={cn(
-                  'text-lg tracking-tight sm:text-xl',
-                  titleClassName
-                )}
+                className={cn('text-sm font-semibold', titleClassName)}
               >
                 {title}
               </CardTitle>
               {description != null && (
                 <CardDescription
-                  className={cn('text-xs sm:text-sm', descriptionClassName)}
+                  className={cn('mt-0.5 text-[12.5px]', descriptionClassName)}
                 >
                   {description}
                 </CardDescription>
@@ -98,7 +93,7 @@ export function TitledCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className={cn('p-3 sm:p-5', contentClassName)}>
+      <CardContent className={cn('p-[18px] pt-3.5', contentClassName)}>
         {children}
       </CardContent>
     </Card>

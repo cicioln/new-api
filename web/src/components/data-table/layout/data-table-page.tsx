@@ -343,7 +343,7 @@ export function DataTablePage<TData>(props: DataTablePageProps<TData>) {
   const framed =
     !showMobile &&
     !(cardViewActive && viewMode === DATA_TABLE_VIEW_MODES.CARD) &&
-    props.paginationInFooter === undefined
+    props.paginationInFooter !== false
 
   if (framed) {
     const fixedHeight = props.fixedHeight !== false
@@ -588,7 +588,7 @@ function renderDesktop<TData>(
       pinnedColumns={props.pinnedColumns}
       containerClassName={cn(
         fixedHeight && 'min-h-0 flex-1',
-        props.paginationInFooter === undefined && 'rounded-none border-0',
+        props.paginationInFooter !== false && 'rounded-none border-0',
         'transition-opacity duration-150',
         isFetchingOnly && 'pointer-events-none opacity-60',
         props.tableClassName

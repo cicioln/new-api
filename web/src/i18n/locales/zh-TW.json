@@ -7359,6 +7359,25 @@
     "Each key can have its own quota, allowed models and expiry.": "每個金鑰可單獨設定額度、可用模型和到期時間。",
     "API endpoint": "接入位址",
     "Compatible with OpenAI / Claude / Gemini SDKs": "相容 OpenAI / Claude / Gemini SDK",
-    "Copy address": "複製位址"
+    "Copy address": "複製位址",
+    "Model, tokens, latency and cost of every request. Administrators can view all users.": "每筆請求的模型、Token、耗時與扣費。管理員可查看全部使用者。",
+    "Submission and completion status of drawing, video, music and other async tasks.": "繪圖、影片、音樂等非同步任務的提交與完成狀態。",
+    "Spend in range": "篩選範圍消耗",
+    "Balance, top-up, redemption codes and referral rewards.": "餘額、儲值、兌換碼與邀請獎勵。",
+    "{{count}} requests in total": "共 {{count}} 次請求",
+    "Referral rewards": "邀請獎勵",
+    "Online top-up": "線上儲值",
+    "Amounts follow the top-up price and are available as soon as payment arrives.": "金額按「儲值價」計算，到帳後立即可用。",
+    "Redemption code": "兌換碼",
+    "Enter a code issued by the administrator; the quota is added to your balance.": "輸入管理員發放的兌換碼，額度直接計入餘額。",
+    "Referral link": "邀請連結",
+    "Top-up records": "儲值紀錄",
+    "View all": "查看全部",
+    "Order No.": "訂單號",
+    "Paid": "金額",
+    "Credited": "到帳",
+    "No top-up records yet": "暫無儲值紀錄",
+    "Account information, group and preferences.": "帳戶資訊、分組與偏好設定。",
+    "Password, two-factor authentication, passkeys and access tokens.": "密碼、兩步驟驗證、Passkey 與存取權杖。"
   }
 }

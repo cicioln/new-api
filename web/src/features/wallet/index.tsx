@@ -31,6 +31,7 @@ import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialo
 import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
+import { TopupRecordsCard } from './components/topup-records-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
 import { DEFAULT_DISCOUNT_RATE, PAYMENT_TYPES } from './constants'
 import {
@@ -286,18 +287,22 @@ export function Wallet(props: WalletProps) {
     <>
       <SectionPageLayout>
         <SectionPageLayout.Title>{t('Wallet')}</SectionPageLayout.Title>
+        <SectionPageLayout.Description>
+          {t('Balance, top-up, redemption codes and referral rewards.')}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Content>
-          <div className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-5'>
-            <WalletStatsCard user={user} loading={userLoading} />
-
-            <div
-              className={
-                showSubscriptionPanel
-                  ? 'grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] xl:items-start'
-                  : 'grid gap-4'
+          <div className='flex w-full flex-col gap-3.5'>
+            <WalletStatsCard
+              user={user}
+              loading={userLoading}
+              onTransfer={() => setTransferDialogOpen(true)}
+              transferDisabled={
+                topupInfo?.payment_compliance_confirmed === false
               }
-            >
-              <div id='wallet-add-funds' className='scroll-mt-4'>
+            />
+
+            <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start'>
+              <div id='wallet-add-funds' className='min-w-0 scroll-mt-4'>
                 <RechargeFormCard
                   topupInfo={topupInfo}
                   presetAmounts={presetAmounts}
@@ -328,9 +333,33 @@ export function Wallet(props: WalletProps) {
                   enableWaffoPancakeTopup={
                     topupInfo?.enable_waffo_pancake_topup
                   }
+                  hideRedemption
                 />
               </div>
 
+              <AffiliateRewardsCard
+                user={user}
+                affiliateLink={affiliateLink}
+                complianceConfirmed={
+                  topupInfo?.payment_compliance_confirmed !== false
+                }
+                loading={affiliateLoading}
+                redemption={
+                  topupLoading
+                    ? undefined
+                    : {
+                        enabled: topupInfo?.enable_redemption !== false,
+                        code: redemptionCode,
+                        onCodeChange: setRedemptionCode,
+                        onRedeem: handleRedeem,
+                        redeeming,
+                        topupLink: topupInfo?.topup_link,
+                      }
+                }
+              />
+            </div>
+
+            <div className={showSubscriptionPanel ? undefined : 'hidden'}>
               <SubscriptionPlansCard
                 topupInfo={topupInfo}
                 onAvailabilityChange={handleSubscriptionAvailabilityChange}
@@ -339,15 +368,7 @@ export function Wallet(props: WalletProps) {
               />
             </div>
 
-            <AffiliateRewardsCard
-              user={user}
-              affiliateLink={affiliateLink}
-              onTransfer={() => setTransferDialogOpen(true)}
-              complianceConfirmed={
-                topupInfo?.payment_compliance_confirmed !== false
-              }
-              loading={affiliateLoading}
-            />
+            <TopupRecordsCard onOpenAll={() => setBillingDialogOpen(true)} />
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>

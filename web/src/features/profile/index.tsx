@@ -16,11 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Main } from '@/components/layout'
-import {
-  CardStaggerContainer,
-  CardStaggerItem,
-} from '@/components/page-transition'
+import { useTranslation } from 'react-i18next'
+
+import { SectionPageLayout } from '@/components/layout'
 import { useStatus } from '@/hooks/use-status'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -32,6 +30,7 @@ import { SidebarModulesCard } from './components/sidebar-modules-card'
 import { useProfile } from './hooks'
 
 export function Profile() {
+  const { t } = useTranslation()
   const { profile, loading, refreshProfile } = useProfile()
   const { status } = useStatus()
   const permissions = useAuthStore((s) => s.auth.user?.permissions)
@@ -44,41 +43,41 @@ export function Profile() {
   const canConfigureSidebar = permissions?.sidebar_settings !== false
 
   return (
-    <Main>
-      <div className='min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-4 sm:py-6'>
-        <CardStaggerContainer className='mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-6'>
-          <CardStaggerItem>
+    <SectionPageLayout>
+      <SectionPageLayout.Title>{t('Profile')}</SectionPageLayout.Title>
+      <SectionPageLayout.Description>
+        {t('Account information, group and preferences.')}
+      </SectionPageLayout.Description>
+      <SectionPageLayout.Content>
+        <div className='flex flex-col gap-3.5'>
+          <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-start'>
             <ProfileHeader profile={profile} loading={loading} />
-          </CardStaggerItem>
-
-          <CardStaggerItem>
-            <div className='grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.46fr)] xl:items-start'>
-              <div className='space-y-4 sm:space-y-6'>
-                <ProfileSettingsCard
-                  profile={profile}
-                  loading={loading}
-                  onProfileUpdate={refreshProfile}
-                />
-                <LanguagePreferencesCard
-                  profile={profile}
-                  onProfileUpdate={refreshProfile}
-                />
-              </div>
-
-              <div className='space-y-4 sm:space-y-6 xl:sticky xl:top-6'>
-                {checkinEnabled && (
-                  <CheckinCalendarCard
-                    checkinEnabled={checkinEnabled}
-                    turnstileEnabled={turnstileEnabled}
-                    turnstileSiteKey={turnstileSiteKey}
-                  />
-                )}
-                {canConfigureSidebar && <SidebarModulesCard />}
-              </div>
+            <div className='min-w-0 space-y-3.5'>
+              <ProfileSettingsCard
+                profile={profile}
+                loading={loading}
+                onProfileUpdate={refreshProfile}
+              />
+              <LanguagePreferencesCard
+                profile={profile}
+                onProfileUpdate={refreshProfile}
+              />
             </div>
-          </CardStaggerItem>
-        </CardStaggerContainer>
-      </div>
-    </Main>
+          </div>
+          {(checkinEnabled || canConfigureSidebar) && (
+            <div className='grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-start'>
+              {checkinEnabled && (
+                <CheckinCalendarCard
+                  checkinEnabled={checkinEnabled}
+                  turnstileEnabled={turnstileEnabled}
+                  turnstileSiteKey={turnstileSiteKey}
+                />
+              )}
+              {canConfigureSidebar && <SidebarModulesCard />}
+            </div>
+          )}
+        </div>
+      </SectionPageLayout.Content>
+    </SectionPageLayout>
   )
 }

@@ -41,11 +41,13 @@ interface UseBillingHistoryOptions {
   initialPage?: number
   /** Initial page size */
   initialPageSize?: number
+  /** Only the current user's orders, even for administrators */
+  selfOnly?: boolean
 }
 
 export function useBillingHistory(options: UseBillingHistoryOptions = {}) {
   const { initialPage = 1, initialPageSize = 10 } = options
-  const isAdmin = useIsAdmin()
+  const isAdmin = useIsAdmin() && !options.selfOnly
 
   const [records, setRecords] = useState<TopupRecord[]>([])
   const [total, setTotal] = useState(0)

@@ -297,7 +297,8 @@ export function CommonLogsFilterBar<TData>(
     'Only used to find historical logs. New records are available in Audit Logs.'
   )
 
-  const statsBar = <CommonLogsStats />
+  // Desktop shows the stats as KPI cards above the table instead.
+  const statsBar = isMobile ? <CommonLogsStats /> : null
   const sensitiveToggle = (
     <Tooltip>
       <TooltipTrigger
