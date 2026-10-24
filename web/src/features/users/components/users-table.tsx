@@ -22,30 +22,23 @@ import type { OnChangeFn, SortingState } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  DISABLED_ROW_DESKTOP,
-  DISABLED_ROW_MOBILE,
-  DataTablePage,
-  useDataTable,
-} from '@/components/data-table'
+import { DataTablePage, useDataTable } from '@/components/data-table'
 import { useMediaQuery } from '@/hooks'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import {
   createServerError,
   requireServerSuccess,
 } from '@/lib/server-error-message'
 
 import { getGroups, getUsers, searchUsers } from '../api'
-import {
-  USER_STATUS,
-  getUserStatusOptions,
-  getUserRoleOptions,
-  isUserDeleted,
-} from '../constants'
-import type { User, UserSortBy } from '../types'
-import { DataTableBulkActions } from './data-table-bulk-actions'
+import { getUserStatusOptions, getUserRoleOptions } from '../constants'
+import type { UserSortBy } from '../types'
 import { useUsersColumns } from './users-columns'
 import { useUsers } from './users-provider'
+
+const USER_NUMERIC_COLUMNS = new Set(['request_count', 'aff_count'])
 
 const route = getRouteApi('/_authenticated/users/')
 
@@ -58,12 +51,9 @@ const USER_SORTABLE_COLUMNS = new Set<UserSortBy>([
   'last_login_at',
 ])
 
-function isDisabledUserRow(user: User) {
-  return isUserDeleted(user) || user.status === USER_STATUS.DISABLED
-}
-
 export function UsersTable() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const columns = useUsersColumns()
   const { refreshTrigger } = useUsers()
   const isMobile = useMediaQuery('(max-width: 640px)')
@@ -185,7 +175,6 @@ export function UsersTable() {
   const { table } = useDataTable({
     data: users,
     columns,
-    enableRowSelection: true,
     columnFilters,
     globalFilter,
     pagination,
@@ -226,14 +215,25 @@ export function UsersTable() {
       )}
       skeletonKeyPrefix='users-skeleton'
       applyHeaderSize
+      fixedHeight={false}
+      simplePagination
+      paginationTotalLabel={(total) =>
+        t('{{count}} users total', {
+          count: formatNumber(total, locale),
+        })
+      }
       toolbarProps={{
-        searchPlaceholder: t('Filter by username, name or email...'),
+        searchPlaceholder: t('Username, email or ID'),
         searchDebounceMs: 500,
+        hideViewOptions: true,
         filters: [
           {
-            columnId: 'status',
-            title: t('Status'),
-            options: getUserStatusOptions(t),
+            columnId: 'group',
+            title: t('Group'),
+            options: (groupsData?.data ?? []).map((group) => ({
+              label: group,
+              value: group,
+            })),
             singleSelect: true,
           },
           {
@@ -243,21 +243,16 @@ export function UsersTable() {
             singleSelect: true,
           },
           {
-            columnId: 'group',
-            title: t('User Group'),
-            options: (groupsData?.data ?? []).map((group) => ({
-              label: group,
-              value: group,
-            })),
+            columnId: 'status',
+            title: t('Status'),
+            options: getUserStatusOptions(t),
             singleSelect: true,
           },
         ],
       }}
-      getRowClassName={(row, { isMobile }) => {
-        if (!isDisabledUserRow(row.original)) return undefined
-        return isMobile ? DISABLED_ROW_MOBILE : DISABLED_ROW_DESKTOP
-      }}
-      bulkActions={<DataTableBulkActions table={table} />}
+      getColumnClassName={(columnId) =>
+        USER_NUMERIC_COLUMNS.has(columnId) ? 'text-right' : undefined
+      }
     />
   )
 }

@@ -7481,6 +7481,12 @@
     "Billing per call": "回数",
     "Listed": "公開",
     "List {{name}} in model square": "{{name}} をモデル広場に公開",
-    "{{count}} models total": "全 {{count}} 件のモデル"
+    "{{count}} models total": "全 {{count}} 件のモデル",
+    "Regular user": "一般ユーザー",
+    "Banned": "凍結済み",
+    "Normal": "正常",
+    "Username, email or ID": "ユーザー名、メールまたは ID",
+    "{{count}} users total": "全 {{count}} ユーザー",
+    "User groups, roles, quota and status.": "ユーザーのグループ、ロール、クォータと状態。"
   }
 }

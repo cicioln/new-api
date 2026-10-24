@@ -20,284 +20,162 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { ActivityTimeCell } from '@/components/activity-time-cell'
-import { BadgeCell } from '@/components/data-table'
-import { GroupBadge } from '@/components/group-badge'
-import { LongText } from '@/components/long-text'
-import { StatusBadge } from '@/components/status-badge'
-import { TableId } from '@/components/table-id'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { getCurrencyDisplay } from '@/lib/currency'
-import { formatQuota } from '@/lib/format'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import {
-  USER_STATUS,
-  USER_STATUSES,
-  USER_ROLES,
-  isUserDeleted,
-} from '../constants'
+import { USER_ROLE, USER_STATUS, isUserDeleted } from '../constants'
 import type { User } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
 import { UserQuotaCell } from './user-quota-cell'
 
+const tagClass =
+  'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-[12px]! font-medium whitespace-nowrap'
+const numericCellClass = 'font-mono! text-[12.5px]! tabular-nums'
+
+function getRoleLabelKey(role: number) {
+  if (role >= USER_ROLE.ROOT) return 'Super Admin'
+  if (role >= USER_ROLE.ADMIN) return 'Admin'
+  return 'Regular user'
+}
+
 export function useUsersColumns(): ColumnDef<User>[] {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const currencyConfig = useSystemConfigStore((state) => state.config.currency)
-  const { meta: currency } = getCurrencyDisplay()
-  const quotaUnit = currency.kind === 'tokens' ? t('Tokens') : currency.symbol
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   return useMemo<ColumnDef<User>[]>(
     () => [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            indeterminate={table.getIsSomePageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label={t('Select all')}
-            className='translate-y-[2px]'
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label={t('Select row')}
-            className='translate-y-[2px]'
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-      },
-      {
         accessorKey: 'id',
         header: t('ID'),
-        cell: ({ row }) => {
-          return (
-            <TableId
-              value={row.getValue('id') as number}
-              className='w-[60px] [font-family:inherit] text-sm'
-            />
-          )
-        },
-        size: 80,
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className='text-muted-foreground font-mono! text-[12.5px]!'>
+            {row.original.id}
+          </span>
+        ),
+        size: 64,
         meta: { mobileOrder: 10 },
       },
       {
         accessorKey: 'username',
-        header: t('Username'),
+        header: t('User'),
+        enableSorting: false,
+        enableHiding: false,
         cell: ({ row }) => {
-          const username = row.getValue('username') as string
-          const displayName = row.original.display_name
-          const remark = row.original.remark
-
+          const user = row.original
           return (
-            <div className='flex min-w-[160px] flex-col gap-1'>
-              <div className='flex items-center gap-2'>
-                <LongText className='max-w-[140px] text-sm font-normal'>
-                  {username}
-                </LongText>
-                {remark && (
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <StatusBadge
-                          variant='success'
-                          copyable={false}
-                          className='font-normal'
-                        />
-                      }
-                    >
-                      <LongText className='max-w-[80px]'>{remark}</LongText>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className='text-xs'>{remark}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-              {displayName && displayName !== username && (
-                <div
-                  data-table-text='secondary'
-                  className='text-muted-foreground max-w-[180px] text-xs font-normal'
-                >
-                  <LongText>{displayName}</LongText>
-                </div>
-              )}
-            </div>
+            <span className='whitespace-nowrap'>
+              <b className='font-medium!'>
+                {user.display_name || user.username}
+              </b>{' '}
+              <span className='text-muted-foreground'>{user.username}</span>
+            </span>
           )
         },
-        enableHiding: false,
-        size: 220,
         meta: { mobileTitle: true },
       },
       {
-        accessorKey: 'status',
-        header: t('Status'),
-        cell: ({ row }) => {
-          const user = row.original
-          const requestCount = user.request_count
-
-          const statusConfig = isUserDeleted(user)
-            ? USER_STATUSES[USER_STATUS.DELETED]
-            : USER_STATUSES[user.status as keyof typeof USER_STATUSES]
-
-          if (!statusConfig) {
-            return null
-          }
-
-          return (
-            <Tooltip>
-              <TooltipTrigger render={<div className='-ml-1.5 cursor-help' />}>
-                <StatusBadge
-                  label={t(statusConfig.labelKey)}
-                  variant={
-                    isUserDeleted(user) ? 'neutral' : statusConfig.variant
-                  }
-                  copyable={false}
-                  className='font-normal'
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className='text-xs'>
-                  {t('Requests:')} {requestCount.toLocaleString()}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          )
-        },
-        filterFn: (row, id, value) => {
-          return value.includes(String(row.getValue(id)))
-        },
-        enableSorting: false,
-        size: 120,
-        meta: { mobileBadge: true },
-      },
-      {
-        id: 'quota',
-        accessorKey: 'quota',
-        header: `${t('Available Balance')} (${quotaUnit})`,
-        cell: ({ row }) => {
-          const user = row.original
-          return <UserQuotaCell remaining={user.quota} used={user.used_quota} />
-        },
-        size: 180,
-        minSize: 160,
-        meta: { mobileOrder: 40 },
-      },
-      {
         accessorKey: 'group',
-        header: t('User Group'),
-        cell: ({ row }) => {
-          const group = row.getValue('group') as string
-          return (
-            <BadgeCell>
-              <GroupBadge group={group} className='font-normal' />
-            </BadgeCell>
-          )
-        },
-        filterFn: (row, id, value) => {
-          const group = String(
-            row.getValue(id) || t('User Group')
-          ).toLowerCase()
-          const searchValue = String(value).toLowerCase()
-          return group.includes(searchValue)
-        },
-        size: 140,
+        header: t('Group'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className={cn(tagClass, 'bg-muted text-muted-foreground')}>
+            {row.original.group || 'default'}
+          </span>
+        ),
         meta: { mobileOrder: 30 },
       },
       {
         accessorKey: 'role',
         header: t('Role'),
-        cell: ({ row }) => {
-          const roleValue = row.getValue('role') as number
-          const roleConfig = USER_ROLES[roleValue as keyof typeof USER_ROLES]
-
-          if (!roleConfig) {
-            return null
-          }
-
-          return <span className='text-sm'>{t(roleConfig.labelKey)}</span>
-        },
-        filterFn: (row, id, value) => {
-          return value.includes(String(row.getValue(id)))
-        },
         enableSorting: false,
-        size: 120,
+        cell: ({ row }) => (
+          <span className='whitespace-nowrap'>
+            {t(getRoleLabelKey(row.original.role))}
+          </span>
+        ),
         meta: { mobileOrder: 20 },
       },
       {
-        id: 'invite_info',
-        header: t('Invite Info'),
+        accessorKey: 'status',
+        header: t('Status'),
+        enableSorting: false,
         cell: ({ row }) => {
           const user = row.original
-          const affCount = user.aff_count || 0
-          const affHistoryQuota = user.aff_history_quota || 0
-          const inviterId = user.inviter_id || 0
-
-          if (affCount === 0 && affHistoryQuota === 0 && inviterId === 0) {
-            return <span className='text-muted-foreground text-sm'>—</span>
-          }
-
+          const active =
+            !isUserDeleted(user) && user.status === USER_STATUS.ENABLED
           return (
-            <div
-              data-table-text='secondary'
-              className='min-w-0 space-y-1 text-xs font-normal'
+            <span
+              className={cn(
+                tagClass,
+                active
+                  ? 'bg-success/12 text-success'
+                  : 'bg-muted text-muted-foreground'
+              )}
             >
-              {(affCount > 0 || affHistoryQuota !== 0) && (
-                <LongText>
-                  {t('Invited {{count}} users', { count: affCount })} ·{' '}
-                  {t('Earnings')}:{' '}
-                  <span className='tabular-nums'>
-                    {formatQuota(affHistoryQuota)}
-                  </span>
-                </LongText>
+              {active && (
+                <span
+                  className='size-1.5 rounded-full bg-current'
+                  aria-hidden='true'
+                />
               )}
-              {inviterId > 0 && (
-                <LongText className='text-muted-foreground'>
-                  {t('Inviter ID: {{id}}', { id: inviterId })}
-                </LongText>
-              )}
-            </div>
+              {t(active ? 'Normal' : 'Banned')}
+            </span>
           )
         },
-        size: 240,
-        enableSorting: false,
-        meta: { mobileHidden: true },
+        meta: { mobileBadge: true },
       },
       {
-        accessorKey: 'created_at',
-        header: t('Time'),
+        id: 'quota',
+        accessorKey: 'quota',
+        header: t('Quota usage'),
+        enableSorting: false,
         cell: ({ row }) => (
-          <ActivityTimeCell
-            createdAt={row.original.created_at ?? 0}
-            lastAt={row.original.last_login_at ?? 0}
-            lastLabel={t('Last Login')}
-            format='absolute'
+          <UserQuotaCell
+            remaining={row.original.quota}
+            used={row.original.used_quota}
           />
         ),
-        size: 260,
-        minSize: 240,
+        meta: { mobileOrder: 40 },
+      },
+      {
+        accessorKey: 'request_count',
+        header: t('Requests'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className={numericCellClass}>
+            {formatNumber(row.original.request_count, locale)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'aff_count',
+        header: t('Invites'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className={numericCellClass}>
+            {formatNumber(row.original.aff_count || 0, locale)}
+          </span>
+        ),
         meta: { mobileHidden: true },
       },
       {
         id: 'actions',
-        header: () => t('Actions'),
-        cell: ({ row }) => <DataTableRowActions row={row} />,
-        meta: { pinned: 'right' as const },
+        header: () => <span className='sr-only'>{t('Actions')}</span>,
+        enableSorting: false,
+        enableHiding: false,
+        size: 44,
+        cell: ({ row }) => (
+          <div className='-my-1.5'>
+            <DataTableRowActions row={row} />
+          </div>
+        ),
       },
     ],
-    // formatQuota reads the currency configuration from the store.
+    // The quota cell reads the currency configuration from the store.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, quotaUnit, currencyConfig]
+    [t, locale, currencyConfig]
   )
 }

@@ -7481,6 +7481,12 @@
     "Billing per call": "Par appel",
     "Listed": "Publié",
     "List {{name}} in model square": "Publier {{name}} sur la place des modèles",
-    "{{count}} models total": "{{count}} modèles au total"
+    "{{count}} models total": "{{count}} modèles au total",
+    "Regular user": "Utilisateur standard",
+    "Banned": "Banni",
+    "Normal": "Normal",
+    "Username, email or ID": "Nom d'utilisateur, e-mail ou ID",
+    "{{count}} users total": "{{count}} utilisateurs au total",
+    "User groups, roles, quota and status.": "Groupes, rôles, quotas et statut des utilisateurs."
   }
 }

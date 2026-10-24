@@ -7481,6 +7481,12 @@
     "Billing per call": "За вызов",
     "Listed": "Опубликовано",
     "List {{name}} in model square": "Опубликовать {{name}} на витрине моделей",
-    "{{count}} models total": "Всего моделей: {{count}}"
+    "{{count}} models total": "Всего моделей: {{count}}",
+    "Regular user": "Обычный пользователь",
+    "Banned": "Заблокирован",
+    "Normal": "Активен",
+    "Username, email or ID": "Имя пользователя, email или ID",
+    "{{count}} users total": "Всего пользователей: {{count}}",
+    "User groups, roles, quota and status.": "Группы, роли, квоты и статус пользователей."
   }
 }

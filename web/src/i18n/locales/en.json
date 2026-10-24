@@ -7481,6 +7481,12 @@
     "Billing per call": "Per call",
     "Listed": "Listed",
     "List {{name}} in model square": "List {{name}} in model square",
-    "{{count}} models total": "{{count}} models total"
+    "{{count}} models total": "{{count}} models total",
+    "Regular user": "Regular user",
+    "Banned": "Banned",
+    "Normal": "Normal",
+    "Username, email or ID": "Username, email or ID",
+    "{{count}} users total": "{{count}} users total",
+    "User groups, roles, quota and status.": "User groups, roles, quota and status."
   }
 }

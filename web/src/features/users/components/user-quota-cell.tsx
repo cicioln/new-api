@@ -19,7 +19,6 @@ For commercial licensing, please contact support@quantumnous.com
 import { useTranslation } from 'react-i18next'
 
 import { QuotaDetailsPopover } from '@/components/quota-details-popover'
-import { StatusBadge } from '@/components/status-badge'
 import { formatQuotaWithCurrency, getCurrencyDisplay } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -29,59 +28,57 @@ type UserQuotaCellProps = {
   used: number
 }
 
+// Share of the total grant (used + remaining) that has been consumed.
+function getUsedPercent(remaining: number, used: number) {
+  const total = Math.max(remaining, 0) + Math.max(used, 0)
+  if (total <= 0) return 0
+  return Math.min(100, Math.round((Math.max(used, 0) / total) * 100))
+}
+
 export function UserQuotaCell(props: UserQuotaCellProps) {
   const { t } = useTranslation()
   useSystemConfigStore((state) => state.config.currency)
 
   const { meta: currency } = getCurrencyDisplay()
   const quotaUnit = currency.kind === 'tokens' ? t('Tokens') : currency.symbol
-  const hasQuota = props.remaining !== 0 || props.used !== 0
   const formattedRemaining = formatQuotaWithCurrency(props.remaining, {
     showSymbol: false,
   })
   const formattedUsed = formatQuotaWithCurrency(props.used, {
     showSymbol: false,
   })
+  const percent = getUsedPercent(props.remaining, props.used)
 
   return (
     <QuotaDetailsPopover
       title={`${t('Quota')} (${quotaUnit})`}
-      triggerLabel={
-        hasQuota
-          ? `${t('Available Balance')} ${formattedRemaining}; ${t('Used amount')} ${formattedUsed}`
-          : t('No Quota')
-      }
+      triggerLabel={`${t('Used percentage')} ${percent}%`}
       details={[
         { label: t('Available Balance'), value: formattedRemaining },
         { label: t('Total Used'), value: formattedUsed },
       ]}
     >
-      {hasQuota ? (
-        <span className='grid min-w-0 grid-cols-1 gap-y-1 text-sm tabular-nums'>
+      <span className='flex w-full min-w-[120px] items-center gap-2'>
+        <span
+          role='progressbar'
+          aria-valuenow={percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={t('Used percentage')}
+          className='bg-muted h-1 flex-1 overflow-hidden rounded-full'
+        >
           <span
             className={cn(
-              props.remaining < 0 && 'text-destructive',
-              props.remaining === 0 && 'text-muted-foreground'
+              'block h-full rounded-full',
+              percent > 90 ? 'bg-destructive' : 'bg-primary'
             )}
-          >
-            {formattedRemaining}
-          </span>
-          <span
-            data-table-text='secondary'
-            className='text-muted-foreground flex items-baseline gap-1 text-xs font-normal'
-          >
-            <span>{t('Used amount')}</span>
-            <span>{formattedUsed}</span>
-          </span>
+            style={{ width: `${percent}%` }}
+          />
         </span>
-      ) : (
-        <StatusBadge
-          label={t('No Quota')}
-          variant='neutral'
-          copyable={false}
-          className='-ml-1.5 font-normal'
-        />
-      )}
+        <small className='text-subtle-foreground font-mono! text-[11.5px]! tabular-nums'>
+          {percent}%
+        </small>
+      </span>
     </QuotaDetailsPopover>
   )
 }

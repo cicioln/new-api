@@ -7481,6 +7481,12 @@
     "Billing per call": "Theo lượt",
     "Listed": "Hiển thị",
     "List {{name}} in model square": "Hiển thị {{name}} trên chợ mô hình",
-    "{{count}} models total": "Tổng {{count}} mô hình"
+    "{{count}} models total": "Tổng {{count}} mô hình",
+    "Regular user": "Người dùng thường",
+    "Banned": "Đã cấm",
+    "Normal": "Bình thường",
+    "Username, email or ID": "Tên người dùng, email hoặc ID",
+    "{{count}} users total": "Tổng cộng {{count}} người dùng",
+    "User groups, roles, quota and status.": "Nhóm, vai trò, hạn mức và trạng thái người dùng."
   }
 }

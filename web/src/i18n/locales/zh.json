@@ -7481,6 +7481,12 @@
     "Billing per call": "按次",
     "Listed": "上架",
     "List {{name}} in model square": "在模型广场上架 {{name}}",
-    "{{count}} models total": "共 {{count}} 个模型"
+    "{{count}} models total": "共 {{count}} 个模型",
+    "Regular user": "普通用户",
+    "Banned": "已封禁",
+    "Normal": "正常",
+    "Username, email or ID": "用户名、邮箱或 ID",
+    "{{count}} users total": "共 {{count}} 位用户",
+    "User groups, roles, quota and status.": "用户分组、角色、额度与状态。"
   }
 }

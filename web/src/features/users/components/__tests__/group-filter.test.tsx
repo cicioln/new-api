@@ -107,15 +107,14 @@ async function renderUsers(initialEntry = '/users/') {
       <RouterProvider router={router} />
     </QueryClientProvider>
   )
-  await screen.findByText('premium-user')
+  await screen.findAllByText('premium-user')
   return { get, router }
 }
 
-// The User Group column header is a sort menu with the same name; the
-// filter chip is the one that opens a dialog.
+// The Group filter chip is the button that opens a dialog.
 function getGroupFilterTrigger() {
   const trigger = screen
-    .getAllByRole('button', { name: /^User Group/ })
+    .getAllByRole('button', { name: /^Group/ })
     .find((button) => button.getAttribute('aria-haspopup') === 'dialog')
   expect(trigger).toBeDefined()
   return trigger as HTMLElement
