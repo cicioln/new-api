@@ -76,6 +76,14 @@ describe('check-in calendar', () => {
     expect(days[0]).toHaveTextContent('1')
   })
 
+  it('starts weeks on Monday so 2026-10-01 falls in the Thursday column', async () => {
+    renderCard(false, [])
+
+    const grid = await screen.findByTestId('checkin-grid')
+    const cells = [...grid.children].slice(7)
+    expect(cells.findIndex((cell) => cell.textContent === '1')).toBe(3)
+  })
+
   it('marks checked-in days and today separately', async () => {
     renderCard(false, ['2026-10-01', '2026-10-22'])
 
@@ -91,7 +99,10 @@ describe('check-in calendar', () => {
     renderCard(true, ['2026-10-22', '2026-10-23'])
 
     expect(await screen.findByText('2 days')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Checked in' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Checked in today' })
+    ).toBeDisabled()
+    expect(screen.getByText('9 times')).toBeVisible()
   })
 
   it('keeps the check-in button enabled before checking in today', async () => {

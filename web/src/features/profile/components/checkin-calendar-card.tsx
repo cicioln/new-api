@@ -17,7 +17,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -25,7 +24,6 @@ import { toast } from 'sonner'
 import { Dialog } from '@/components/dialog'
 import { Turnstile } from '@/components/turnstile'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Tooltip,
@@ -54,7 +52,8 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
   const turnstileEnabled = props.turnstileEnabled
   const turnstileSiteKey = props.turnstileSiteKey
   const { t, i18n } = useTranslation()
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  // The design shows the current month only.
+  const [currentMonth] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
@@ -148,18 +147,6 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
     [refetch, shouldTriggerTurnstile, t, turnstileSiteKey]
   )
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-    )
-  }
-
-  const handleNextMonth = () => {
-    setCurrentMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-    )
-  }
-
   // Build calendar grid
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear()
@@ -167,7 +154,8 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
-    const startDayOfWeek = firstDay.getDay() // 0 = Sunday
+    // Weeks start on Monday: Sunday (0) moves to the last column.
+    const startDayOfWeek = (firstDay.getDay() + 6) % 7
 
     const days: Array<{ date: Date; isCurrentMonth: boolean }> = []
 
@@ -195,10 +183,10 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
 
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: 'narrow' })
-  // 2023-01-01 is a Sunday; the grid starts on Sunday.
+  // 2023-01-02 is a Monday; the grid starts on Monday.
   const weekDays = Array.from({ length: 7 }, (_, index) => ({
     id: `weekday-${index}`,
-    label: weekdayFormat.format(new Date(2023, 0, 1 + index)),
+    label: weekdayFormat.format(new Date(2023, 0, 2 + index)),
   }))
 
   if (!checkinEnabled) {
@@ -207,7 +195,7 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
 
   if (isLoading) {
     return (
-      <Card data-card-hover='false' className='gap-0 p-5'>
+      <section className='bg-card rounded-lg border p-[18px]'>
         <div>
           <div className='flex items-start justify-between gap-4'>
             <div className='flex items-center gap-3'>
@@ -220,7 +208,7 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
             <Skeleton className='h-9 w-28 rounded-md' />
           </div>
         </div>
-      </Card>
+      </section>
     )
   }
 
@@ -228,7 +216,7 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
   if (checkinLoading) {
     checkinButtonLabel = t('Loading...')
   } else if (checkedToday) {
-    checkinButtonLabel = t('Checked in')
+    checkinButtonLabel = t('Checked in today')
   }
 
   const monthCheckins = checkinData?.stats?.records?.length ?? 0
@@ -265,35 +253,24 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
         </div>
       </Dialog>
 
-      <Card data-card-hover='false' className='gap-0 p-5'>
+      <section
+        aria-labelledby='profile-checkin'
+        className='bg-card min-w-0 rounded-lg border p-[18px]'
+      >
         <div className='flex items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold'>{t('Daily Check-in')}</h3>
-          <div className='flex items-center gap-0.5'>
-            <Button
-              variant='ghost'
-              size='icon-sm'
-              aria-label={t('Previous month')}
-              onClick={handlePrevMonth}
-            >
-              <ChevronLeft aria-hidden='true' />
-            </Button>
-            <span className='text-muted-foreground font-mono text-xs tabular-nums'>
-              {dayjs(currentMonth).format('YYYY-MM')}
-            </span>
-            <Button
-              variant='ghost'
-              size='icon-sm'
-              aria-label={t('Next month')}
-              onClick={handleNextMonth}
-            >
-              <ChevronRight aria-hidden='true' />
-            </Button>
-          </div>
+          <h3 id='profile-checkin' className='text-sm font-semibold'>
+            {t('Daily Check-in')}
+          </h3>
+          <span className='text-muted-foreground text-xs'>
+            {dayjs(currentMonth).format('YYYY-MM')}
+          </span>
         </div>
         <p className='text-muted-foreground mt-0.5 text-[12.5px]'>
           {checkedToday && todayAward !== undefined
             ? `${t('Today')} +${formatQuotaWithCurrency(todayAward)}`
-            : t('Check in daily to receive random quota rewards')}
+            : t(
+                'Check in once a day to receive a random quota reward added directly to your balance.'
+              )}
         </p>
 
         <div data-testid='checkin-grid' className='mt-3 grid grid-cols-7 gap-1'>
@@ -360,7 +337,9 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
               {t('Total check-ins')}
             </dt>
             <dd className='font-mono text-sm font-medium tabular-nums'>
-              {checkinData?.stats?.total_checkins || 0}
+              {t('{{count}} times', {
+                count: checkinData?.stats?.total_checkins || 0,
+              })}
             </dd>
           </div>
           <div className='bg-muted rounded-lg px-2.5 py-2'>
@@ -380,10 +359,7 @@ export function CheckinCalendarCard(props: CheckinCalendarCardProps) {
         >
           {checkinButtonLabel}
         </Button>
-        <p className='text-muted-foreground mt-2 text-center text-[11px]'>
-          {t('Rewards will be added directly to your balance')}
-        </p>
-      </Card>
+      </section>
     </TooltipProvider>
   )
 }

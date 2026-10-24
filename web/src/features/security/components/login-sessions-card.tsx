@@ -16,8 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Logout01Icon, SmartPhone01Icon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
@@ -25,22 +23,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   getLoginSessions,
@@ -48,15 +30,17 @@ import {
   revokeOtherLoginSessions,
 } from '@/features/profile/api'
 import { clearAuthenticatedClientState } from '@/lib/api'
+import dayjs from '@/lib/dayjs'
 import { handleServerError } from '@/lib/handle-server-error'
 import { createServerError } from '@/lib/server-error-message'
 import type { LoginSession } from '@/stores/auth-store'
 
 import { LoginSessionDialogs } from './login-session-dialogs'
-import { LoginSessionItem } from './login-session-item'
+import { loginMethodLabel, sessionDevice } from './login-session-utils'
 
 const sessionQueryKey = ['profile', 'login-sessions'] as const
 
+/** Recent sign-ins of the account as a table, with sign-out actions. */
 export function LoginSessionsCard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -119,86 +103,122 @@ export function LoginSessionsCard() {
 
   const sessions = sessionsQuery.data ?? []
   const hasOtherSessions = sessions.some((session) => !session.current)
-  let sessionsContent: ReactNode
+  const maxTouchPoints =
+    typeof navigator !== 'undefined' ? navigator.maxTouchPoints : 0
+  let rows: ReactNode
   if (sessionsQuery.isLoading) {
-    sessionsContent = (
-      <div className='flex flex-col gap-3'>
-        <Skeleton className='h-20 w-full' />
-        <Skeleton className='h-20 w-full' />
-      </div>
+    rows = (
+      <tr>
+        <td colSpan={5}>
+          <Skeleton className='h-4 w-full' />
+        </td>
+      </tr>
     )
   } else if (sessionsQuery.isError) {
-    sessionsContent = (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant='icon'>
-            <HugeiconsIcon icon={SmartPhone01Icon} strokeWidth={2} />
-          </EmptyMedia>
-          <EmptyTitle>{t('Unable to load login sessions')}</EmptyTitle>
-          <EmptyDescription>
-            {t('Refresh the list and try again.')}
-          </EmptyDescription>
-        </EmptyHeader>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={() => sessionsQuery.refetch()}
-        >
-          {t('Retry')}
-        </Button>
-      </Empty>
+    rows = (
+      <tr>
+        <td colSpan={5} className='py-10 text-center'>
+          <p className='text-sm font-medium'>
+            {t('Unable to load login sessions')}
+          </p>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='mt-3'
+            onClick={() => sessionsQuery.refetch()}
+          >
+            {t('Retry')}
+          </Button>
+        </td>
+      </tr>
     )
   } else if (sessions.length === 0) {
-    sessionsContent = (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant='icon'>
-            <HugeiconsIcon icon={SmartPhone01Icon} strokeWidth={2} />
-          </EmptyMedia>
-          <EmptyTitle>{t('No active login sessions')}</EmptyTitle>
-        </EmptyHeader>
-      </Empty>
+    rows = (
+      <tr>
+        <td
+          colSpan={5}
+          className='text-muted-foreground py-10 text-center text-sm'
+        >
+          {t('No active login sessions')}
+        </td>
+      </tr>
     )
   } else {
-    sessionsContent = (
-      <div className='flex flex-col'>
-        {sessions.map((session, index) => (
-          <div key={session.sid}>
-            {index > 0 && <Separator />}
-            <LoginSessionItem session={session} onRevoke={setRevokeTarget} />
-          </div>
-        ))}
-      </div>
-    )
+    rows = sessions.map((session) => (
+      <tr key={session.sid} className='hover:bg-muted/50 transition-colors'>
+        <td className='text-muted-foreground font-mono text-xs'>
+          {dayjs.unix(session.created_at).format('MM-DD HH:mm')}
+        </td>
+        <td>{loginMethodLabel(session.login_method, t)}</td>
+        <td className='font-mono text-xs'>{session.ip || t('Unknown')}</td>
+        <td>
+          {sessionDevice(
+            session.user_agent,
+            t('Unknown device'),
+            t('Browser'),
+            session.current ? maxTouchPoints : 0
+          )}
+          {session.current && (
+            <span className='text-muted-foreground ml-1.5 text-xs'>
+              · {t('Current')}
+            </span>
+          )}
+        </td>
+        <td className='text-right'>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            onClick={() => setRevokeTarget(session)}
+          >
+            {session.current ? t('Sign out') : t('Revoke')}
+          </Button>
+        </td>
+      </tr>
+    ))
   }
 
   return (
     <>
-      <Card data-card-hover='false'>
-        <CardHeader>
-          <CardTitle>{t('Login sessions')}</CardTitle>
-          <CardDescription>
-            {t('Review and sign out devices currently using your account.')}
-          </CardDescription>
-          <CardAction>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              disabled={!hasOtherSessions || revokeOthersMutation.isPending}
-              onClick={() => setConfirmOthers(true)}
-            >
-              <HugeiconsIcon
-                icon={Logout01Icon}
-                data-icon='inline-start'
-                strokeWidth={2}
-              />
-              {t('Sign out other sessions')}
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>{sessionsContent}</CardContent>
-      </Card>
+      <section
+        aria-labelledby='security-recent-logins'
+        className='bg-card overflow-hidden rounded-lg border'
+      >
+        <div className='flex items-center justify-between gap-3 px-[18px] pt-4 pb-3'>
+          <h3 id='security-recent-logins' className='text-sm font-semibold'>
+            {t('Recent logins')}
+          </h3>
+          <Button
+            type='button'
+            variant='link'
+            size='sm'
+            className='text-muted-foreground h-auto p-0 text-xs'
+            disabled={!hasOtherSessions || revokeOthersMutation.isPending}
+            onClick={() => setConfirmOthers(true)}
+          >
+            {t('Sign out other sessions')}
+          </Button>
+        </div>
+        <div className='overflow-x-auto'>
+          <table className='w-full border-collapse text-[13px]'>
+            <thead>
+              <tr className='bg-background text-muted-foreground border-y text-left text-xs [&>th]:px-[18px] [&>th]:py-2.5 [&>th]:font-medium [&>th]:whitespace-nowrap'>
+                <th>{t('Time')}</th>
+                <th>{t('Login method')}</th>
+                <th>{t('IP')}</th>
+                <th>{t('Device')}</th>
+                <th>
+                  <span className='sr-only'>{t('Actions')}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className='[&_td]:px-[18px] [&_td]:py-[11px] [&_td]:whitespace-nowrap [&>tr]:border-b [&>tr:last-child]:border-0'>
+              {rows}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <LoginSessionDialogs
         revokeTarget={revokeTarget}

@@ -37,7 +37,7 @@ import type {
   AccessTokenItem,
   AccessTokenList,
 } from '../../api'
-import { AccessTokensCard } from '../access-tokens-card'
+import { AccessTokensPanel } from '../access-tokens-panel'
 
 const NOW = Math.floor(Date.now() / 1000)
 
@@ -180,7 +180,7 @@ function renderCard() {
   })
   render(
     <QueryClientProvider client={client}>
-      <AccessTokensCard />
+      <AccessTokensPanel />
       <Toaster />
     </QueryClientProvider>
   )

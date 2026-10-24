@@ -155,71 +155,57 @@ async function renderPage(path = '/security') {
   return { ...rendered, router }
 }
 
-describe('security page migration', () => {
-  it('places account management on the left and verification and privacy on the right', async () => {
+describe('security page layout', () => {
+  it('lists password, 2FA, Passkey, access token and deletion rows in one card', async () => {
     await renderPage()
-    const login = await screen.findByRole('region', {
-      name: 'Login & Authentication',
+    const card = await screen.findByRole('region', {
+      name: 'Security & Access',
     })
     expect(
-      screen
-        .getAllByRole('region')
-        .map((region) => within(region).getAllByRole('heading')[0].textContent)
+      await within(card).findByRole('heading', {
+        name: /Two-factor authentication \(TOTP\)/,
+      })
+    ).toBeVisible()
+    expect(
+      await within(card).findByRole('heading', { name: /Passkey/ })
+    ).toBeVisible()
+    expect(
+      within(card)
+        .getAllByRole('heading')
+        .map((heading) => heading.textContent)
     ).toEqual([
-      'Login & Authentication',
-      'Sessions & Access',
-      'Account Actions',
-      'Privacy',
+      'Login password',
+      'Two-factor authentication (TOTP)Not enabled',
+      'PasskeyNot enabled',
+      'System access token',
+      'Delete Account',
     ])
     expect(
-      within(login).getByRole('button', { name: 'Change Password' })
+      within(card).getByRole('button', { name: 'Change Password' })
     ).toBeVisible()
-    expect(within(login).getByText('Account Bindings')).toBeVisible()
-    const verification = screen.getByRole('complementary', {
-      name: 'Security verification',
-    })
-    expect(await within(verification).findByText('Passkey Login')).toBeVisible()
+    expect(within(card).getByRole('button', { name: 'Manage' })).toBeVisible()
+    expect(screen.queryByText('Account Bindings')).not.toBeInTheDocument()
+  })
+
+  it('shows recent logins as a table with time, method, IP and device columns', async () => {
+    await renderPage()
+    const logins = await screen.findByRole('region', { name: 'Recent logins' })
     expect(
-      await within(verification).findByText('Two-Factor Authentication')
-    ).toBeVisible()
+      within(logins)
+        .getAllByRole('columnheader')
+        .map((header) => header.textContent)
+    ).toEqual(['Time', 'Login method', 'IP', 'Device', 'Actions'])
     expect(
-      within(verification).getByRole('switch', { name: 'Record IP Address' })
-    ).toBeVisible()
-    expect(verification).toHaveClass('xl:sticky', 'xl:top-0')
-    expect(verification.parentElement).toHaveClass(
-      'grid',
-      'xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.46fr)]'
-    )
-    const access = screen.getByRole('region', { name: 'Sessions & Access' })
-    expect(within(access).getByText('Access tokens')).toBeVisible()
-    expect(
-      await within(access).findByText('No active login sessions')
-    ).toBeVisible()
-    expect(
-      screen.getByRole('switch', { name: 'Record IP Address' })
-    ).toBeVisible()
-    expect(
-      within(screen.getByRole('region', { name: 'Account Actions' })).getByRole(
-        'button',
-        { name: 'Delete Account' }
-      )
+      await within(logins).findByText('No active login sessions')
     ).toBeVisible()
   })
 
-  it('built-in and custom bindings share one compact responsive grid', async () => {
+  it('Manage opens access token management in a sheet', async () => {
+    const user = userEvent.setup()
     await renderPage()
-    const bindings = await screen.findByRole('list', {
-      name: 'Account Bindings',
-    })
-    expect(within(bindings).getAllByRole('listitem')).toHaveLength(5)
-    expect(within(bindings).getByText('Gitea')).toBeVisible()
-    expect(bindings).toHaveClass(
-      'grid-cols-1',
-      'sm:grid-cols-2',
-      'lg:grid-cols-3',
-      'gap-2'
-    )
-    expect(screen.queryByText('Custom OAuth')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Manage' }))
+    const sheet = await screen.findByRole('dialog', { name: 'Access tokens' })
+    expect(await within(sheet).findByText('No access tokens')).toBeVisible()
   })
 
   it('the password action opens the existing dialog by keyboard and Escape closes it', async () => {
@@ -243,23 +229,41 @@ describe('security page migration', () => {
     )
   })
 
-  it('Profile retains preferences and no longer mounts security controls or requests', async () => {
+  it('Profile shows account bindings and basic info without security requests', async () => {
     await renderPage('/profile')
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: 'Save Settings' })
-      ).toBeVisible()
-    )
+    const bindings = await screen.findByRole('list', {
+      name: 'Account Bindings',
+    })
+    expect(within(bindings).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(bindings).getByText('Gitea')).toBeVisible()
+    expect(screen.getByLabelText('Username')).toHaveAttribute('readonly')
+    expect(screen.getByLabelText('Display name')).toHaveValue('Alice')
     expect(
       screen.queryByRole('button', { name: 'Change Password' })
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('Account Bindings')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('switch', { name: 'Record IP Address' })
     ).not.toBeInTheDocument()
     expect(api.get).not.toHaveBeenCalledWith('/api/user/passkey')
     expect(api.get).not.toHaveBeenCalledWith('/api/user/2fa/status')
     expect(api.get).not.toHaveBeenCalledWith('/api/user/sessions')
+  })
+
+  it('saving a changed display name sends only display_name', async () => {
+    const put = vi
+      .spyOn(api, 'put')
+      .mockResolvedValue({ data: { success: true } })
+    const user = userEvent.setup()
+    await renderPage('/profile')
+    const save = await screen.findByRole('button', { name: 'Save' })
+    const input = screen.getByLabelText('Display name')
+    await user.clear(input)
+    await user.type(input, 'Alice W')
+    await user.click(save)
+    await waitFor(() =>
+      expect(put).toHaveBeenCalledWith(
+        '/api/user/self',
+        { display_name: 'Alice W' },
+        expect.anything()
+      )
+    )
   })
 
   it('a failed profile load offers retry before exposing account actions', async () => {

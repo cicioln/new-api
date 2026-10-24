@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Mail, Shield, Send, Link2, Unlink } from 'lucide-react'
+import { Shield, Send, Link2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -28,7 +28,6 @@ import {
   IconDiscord,
 } from '@/assets/brand-icons'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import { createOAuthAuthorization } from '@/features/auth/api'
 import {
@@ -58,8 +57,8 @@ import {
 } from '@/lib/secure-verification'
 
 import { useAccountSecurity } from '../hooks/use-account-security'
-import { EmailBindDialog } from './dialogs/email-bind-dialog'
 import { WeChatBindDialog } from './dialogs/wechat-bind-dialog'
+import { SecurityRow } from './security-row'
 
 // ============================================================================
 // Account Bindings Tab Component
@@ -70,7 +69,7 @@ interface AccountBindingsProps {
   onUpdate: () => void
 }
 
-type DialogKey = 'email' | 'wechat'
+type DialogKey = 'wechat'
 
 type PreparedOAuthBinding = AccountSecurityResult & {
   provider: string
@@ -231,15 +230,6 @@ export function AccountBindings({ profile, onUpdate }: AccountBindingsProps) {
 
   const bindings: BindingItem[] = [
     {
-      id: 'email',
-      label: t('Email'),
-      icon: Mail,
-      value: profile.email,
-      isBound: Boolean(profile.email),
-      isEnabled: true,
-      onBind: () => dialogs.open('email'),
-    },
-    {
       id: 'wechat',
       label: t('WeChat'),
       icon: IconWeChat,
@@ -315,125 +305,80 @@ export function AccountBindings({ profile, onUpdate }: AccountBindingsProps) {
     },
   ].filter((binding) => binding.isEnabled)
 
+  const empty = bindings.length === 0 && !customProviders?.length
+
   return (
     <>
-      <ul
-        aria-label={t('Account Bindings')}
-        className='grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3'
-      >
-        {bindings.map((binding) => {
-          let actionLabel = t('Bind')
-          if (binding.isBound && binding.id === 'email') {
-            actionLabel = t('Change')
-          } else if (binding.isBound) {
-            actionLabel = t('Bound')
-          }
-
-          return (
-            <li
+      {empty ? (
+        <p className='text-muted-foreground px-5 py-4 text-center text-[13px]'>
+          {t('No third-party sign-in method is enabled')}
+        </p>
+      ) : (
+        <ul aria-label={t('Account Bindings')}>
+          {bindings.map((binding) => (
+            <SecurityRow
               key={binding.id}
-              className='flex min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2'
-            >
-              <div className='flex min-w-0 items-center gap-2'>
-                <div className='bg-muted shrink-0 rounded-md p-1.5'>
-                  <binding.icon className='h-4 w-4' />
-                </div>
-                <div className='min-w-0'>
-                  <div className='flex items-center gap-1.5'>
-                    <p
-                      className='truncate text-sm font-medium'
-                      title={binding.label}
-                    >
-                      {binding.label}
-                    </p>
-                    {binding.isBound && (
-                      <StatusBadge
-                        label={t('Bound')}
-                        variant='success'
-                        copyable={false}
-                      />
-                    )}
-                  </div>
-                  <p className='text-muted-foreground truncate text-xs'>
-                    {binding.value || t('Not bound')}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-7 shrink-0 px-2.5 text-xs'
-                onClick={binding.onBind}
-                disabled={
-                  bindingsLocked || (binding.isBound && binding.id !== 'email')
-                }
-              >
-                {actionLabel}
-              </Button>
-            </li>
-          )
-        })}
-        {customProviders?.map((provider) => {
-          const binding = customBindingsByProviderId.get(provider.id)
-          const isBound = !!binding
-          return (
-            <li
-              key={provider.id}
-              className='flex min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2'
-            >
-              <div className='flex min-w-0 items-center gap-2'>
-                <div className='bg-muted shrink-0 rounded-md p-1.5'>
-                  <Link2 className='h-4 w-4' />
-                </div>
-                <div className='min-w-0'>
-                  <div className='flex items-center gap-1.5'>
-                    <p
-                      className='truncate text-sm font-medium'
-                      title={provider.name}
-                    >
-                      {provider.name}
-                    </p>
-                    {isBound && (
-                      <StatusBadge
-                        label={t('Bound')}
-                        variant='success'
-                        copyable={false}
-                      />
-                    )}
-                  </div>
-                  <p className='text-muted-foreground truncate text-xs'>
-                    {isBound
-                      ? binding?.provider_user_id || t('Bound')
-                      : t('Not bound')}
-                  </p>
-                </div>
-              </div>
-              {isBound ? (
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='text-destructive h-7 shrink-0 px-2.5 text-xs'
-                  onClick={() => setUnbindTarget(binding)}
-                  disabled={bindingsLocked}
-                >
-                  <Unlink className='mr-1 h-3 w-3' />
-                  {t('Unbind')}
-                </Button>
-              ) : (
+              as='li'
+              icon={<binding.icon />}
+              title={binding.label}
+              description={
+                binding.isBound
+                  ? t('Bound {{value}}', { value: binding.value ?? '' }).trim()
+                  : t('Not bound')
+              }
+              actions={
                 <Button
                   variant='outline'
                   size='sm'
-                  className='h-7 shrink-0 px-2.5 text-xs'
-                  onClick={() => void handleBindCustomOAuth(provider)}
-                  disabled={bindingsLocked}
+                  onClick={binding.onBind}
+                  disabled={bindingsLocked || binding.isBound}
                 >
-                  {t('Bind')}
+                  {binding.isBound ? t('Bound') : t('Bind')}
                 </Button>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+              }
+            />
+          ))}
+          {customProviders?.map((provider) => {
+            const binding = customBindingsByProviderId.get(provider.id)
+            return (
+              <SecurityRow
+                key={provider.id}
+                as='li'
+                icon={<Link2 />}
+                title={provider.name}
+                description={
+                  binding
+                    ? t('Bound {{value}}', {
+                        value: binding.provider_user_id ?? '',
+                      }).trim()
+                    : t('Not bound')
+                }
+                actions={
+                  binding ? (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setUnbindTarget(binding)}
+                      disabled={bindingsLocked}
+                    >
+                      {t('Unbind')}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => void handleBindCustomOAuth(provider)}
+                      disabled={bindingsLocked}
+                    >
+                      {t('Bind')}
+                    </Button>
+                  )
+                }
+              />
+            )
+          })}
+        </ul>
+      )}
 
       {security.showVerification && (
         <SecureVerificationDialog {...security.verificationDialogProps} />
@@ -465,16 +410,6 @@ export function AccountBindings({ profile, onUpdate }: AccountBindingsProps) {
         destructive
         handleConfirm={handleUnbindCustom}
         isLoading={unbinding}
-      />
-
-      {/* Email Bind Dialog */}
-      <EmailBindDialog
-        open={dialogs.isOpen('email')}
-        onOpenChange={(open) =>
-          open ? dialogs.open('email') : dialogs.close('email')
-        }
-        currentEmail={profile.email}
-        onSuccess={onUpdate}
       />
 
       {/* WeChat Bind Dialog */}

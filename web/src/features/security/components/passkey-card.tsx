@@ -16,32 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { AlertTriangle, KeyRound, Loader2, ShieldAlert } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { StatusBadge } from '@/components/status-badge'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { IconBadge } from '@/components/ui/icon-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePasskeyManagement } from '@/features/auth/passkey'
 import {
@@ -53,32 +34,25 @@ import { formatTimestampRelative } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
 import { AuthOperationError } from '@/lib/secure-verification'
 
+import { SecurityRow, SecurityTag } from './security-row'
+
 interface PasskeyCardProps {
   loading: boolean
 }
 
-export function PasskeyCard({ loading: pageLoading }: PasskeyCardProps) {
+/** Passkey row of the security list. */
+export function PasskeyCard(props: PasskeyCardProps) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const {
-    status,
-    statusError,
-    fetchStatus,
-    loading,
-    registering,
-    removing,
-    supported,
-    enabled,
-    lastUsed,
-    register,
-    remove,
-  } = usePasskeyManagement()
-
+  const passkey = usePasskeyManagement()
   const verification = useSecureVerification()
+  const register = passkey.register
+  const remove = passkey.remove
+  const busy = passkey.registering || passkey.removing || verification.isActive
 
   const handleRegister = useCallback(async () => {
-    if (registering || removing || verification.isActive) return
+    if (busy) return
     const proof = await verification.requestVerification({
       scope: 'passkey.register',
     })
@@ -90,10 +64,10 @@ export function PasskeyCard({ loading: pageLoading }: PasskeyCardProps) {
       const failure = AuthOperationError.from(error)
       if (failure.code !== 'AUTH_CANCELLED') handleServerError(failure)
     }
-  }, [register, registering, removing, t, verification])
+  }, [busy, register, t, verification])
 
   const handleRemove = useCallback(async () => {
-    if (registering || removing || verification.isActive) return
+    if (busy) return
     setConfirmOpen(false)
     const proof = await verification.requestVerification({
       scope: 'passkey.delete',
@@ -106,188 +80,101 @@ export function PasskeyCard({ loading: pageLoading }: PasskeyCardProps) {
       const failure = AuthOperationError.from(error)
       if (failure.code !== 'AUTH_CANCELLED') handleServerError(failure)
     }
-  }, [registering, remove, removing, t, verification])
+  }, [busy, remove, t, verification])
 
-  if (pageLoading || loading) {
+  if (props.loading || passkey.loading) {
     return (
-      <Card data-card-hover='false' className='gap-0 overflow-hidden py-0'>
-        <CardHeader className='p-3 sm:p-5'>
-          <Skeleton className='h-6 w-48' />
-          <Skeleton className='mt-2 h-4 w-64' />
-        </CardHeader>
-        <CardContent className='p-3 sm:p-5'>
-          <Skeleton className='h-20 w-full' />
-        </CardContent>
-      </Card>
+      <SecurityRow
+        title={t('Passkey')}
+        description={<Skeleton className='mt-1 h-3.5 w-56' />}
+      />
     )
   }
 
-  if (statusError) {
+  if (passkey.statusError) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('Passkey Login')}</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-3'>
-          <p role='alert'>{t(statusError)}</p>
-          <Button onClick={() => void fetchStatus()}>{t('Retry')}</Button>
-        </CardContent>
-      </Card>
+      <SecurityRow
+        title={t('Passkey')}
+        description={<span role='alert'>{t(passkey.statusError)}</span>}
+        actions={
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => void passkey.fetchStatus()}
+          >
+            {t('Retry')}
+          </Button>
+        }
+      />
     )
   }
 
-  const formattedLastUsed =
-    lastUsed && !Number.isNaN(Date.parse(lastUsed))
-      ? formatTimestampRelative(Date.parse(lastUsed), 'milliseconds', locale)
-      : t('Not used yet')
+  let description = t('Use Passkey to sign in without entering your password.')
+  if (passkey.enabled) {
+    const lastUsed =
+      passkey.lastUsed && !Number.isNaN(Date.parse(passkey.lastUsed))
+        ? formatTimestampRelative(
+            Date.parse(passkey.lastUsed),
+            'milliseconds',
+            locale
+          )
+        : t('Not used yet')
+    description = `${t('Last used:')} ${lastUsed}`
+  } else if (!passkey.supported) {
+    description = t('Passkey not supported on this device')
+  }
 
-  const showUnsupportedNotice = !supported && !enabled
-  let backupStatus: {
-    label: string
-    variant: 'success' | 'warning' | 'neutral'
-  } | null = null
-
-  if (status?.backup_eligible !== undefined) {
-    backupStatus = {
-      label: t('No backup'),
-      variant: 'neutral',
-    }
-
-    if (status.backup_eligible) {
-      backupStatus = {
-        label: status.backup_state ? t('Backed up') : t('Not backed up'),
-        variant: status.backup_state ? 'success' : 'warning',
-      }
-    }
+  let actions = (
+    <Button
+      size='sm'
+      onClick={handleRegister}
+      disabled={!passkey.supported || busy}
+    >
+      {passkey.registering && <Loader2 className='animate-spin' />}
+      {t('Add Passkey')}
+    </Button>
+  )
+  if (passkey.enabled) {
+    actions = (
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => setConfirmOpen(true)}
+        disabled={busy}
+      >
+        {passkey.removing && <Loader2 className='animate-spin' />}
+        {t('Remove Passkey')}
+      </Button>
+    )
   }
 
   return (
-    <>
-      <Card data-card-hover='false' className='gap-0 overflow-hidden py-0'>
-        <CardHeader className='p-3 sm:p-5'>
-          <CardTitle className='text-lg tracking-tight sm:text-xl'>
-            {t('Passkey Login')}
-          </CardTitle>
-          <CardDescription className='text-xs sm:text-sm'>
-            {t('Use Passkey to sign in without entering your password.')}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className='p-3 sm:p-5'>
-          <div className='space-y-6'>
-            <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between xl:flex-col 2xl:flex-row'>
-              <div className='flex items-start gap-4'>
-                <IconBadge tone='info' size='sm'>
-                  <KeyRound />
-                </IconBadge>
-                <div className='space-y-1'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <p className='font-medium'>{t('Passkey Authentication')}</p>
-                    <StatusBadge
-                      label={enabled ? t('Enabled') : t('Disabled')}
-                      variant={enabled ? 'success' : 'neutral'}
-                      showDot
-                      copyable={false}
-                    />
-                    {backupStatus && (
-                      <StatusBadge
-                        label={backupStatus.label}
-                        variant={backupStatus.variant}
-                        showDot
-                        copyable={false}
-                      />
-                    )}
-                  </div>
-                  <p className='text-muted-foreground text-sm'>
-                    {t('Last used:')} {formattedLastUsed}
-                  </p>
-                </div>
-              </div>
-
-              {!enabled && (
-                <Button
-                  className='w-full sm:w-auto xl:w-full 2xl:w-auto'
-                  onClick={handleRegister}
-                  disabled={!supported || registering || verification.isActive}
-                >
-                  {registering && (
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  )}
-                  {t('Enable Passkey')}
-                </Button>
-              )}
-            </div>
-
-            {enabled && (
-              <div className='flex flex-col gap-3 border-t pt-6 sm:flex-row xl:flex-col 2xl:flex-row'>
-                <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                  <AlertDialogTrigger
-                    render={
-                      <Button
-                        variant='destructive'
-                        className='flex-1'
-                        disabled={removing}
-                      />
-                    }
-                  >
-                    {removing ? (
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    ) : (
-                      <AlertTriangle className='mr-2 h-4 w-4' />
-                    )}
-                    {t('Remove Passkey')}
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {t('Remove Passkey?')}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t(
-                          'Removing Passkey will require you to sign in with your password next time. You can re-register anytime.'
-                        )}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel disabled={removing}>
-                        {t('Cancel')}
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        variant='destructive'
-                        disabled={removing}
-                        onClick={(event) => {
-                          event.preventDefault()
-                          handleRemove()
-                        }}
-                      >
-                        {t('Remove')}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-
-            {showUnsupportedNotice && (
-              <div className='bg-muted/60 text-muted-foreground flex items-start gap-3 rounded-md p-4 text-sm'>
-                <ShieldAlert className='mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500' />
-                <div>
-                  <p className='text-foreground font-medium'>
-                    {t('Passkey not supported on this device')}
-                  </p>
-                  <p>
-                    {t(
-                      'Use a compatible browser or device with biometric authentication or a security key to register a Passkey.'
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
+    <SecurityRow
+      title={
+        <>
+          {t('Passkey')}
+          <SecurityTag
+            label={passkey.enabled ? t('Enabled') : t('Not enabled')}
+            active={passkey.enabled}
+          />
+        </>
+      }
+      description={description}
+      actions={actions}
+    >
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('Remove Passkey?')}
+        desc={t(
+          'Removing Passkey will require you to sign in with your password next time. You can re-register anytime.'
+        )}
+        confirmText={t('Remove')}
+        destructive
+        isLoading={passkey.removing}
+        handleConfirm={() => void handleRemove()}
+      />
       <SecureVerificationDialog {...verification.dialogProps} />
-    </>
+    </SecurityRow>
   )
 }

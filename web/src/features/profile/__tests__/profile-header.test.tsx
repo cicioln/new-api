@@ -41,18 +41,26 @@ const profile = {
 it('shows the display name as the heading with the account facts listed below', () => {
   render(<ProfileHeader profile={profile} loading={false} />)
   expect(screen.getByRole('heading', { name: 'Alice' })).toBeVisible()
-  expect(screen.getByText('User ID 1024')).toBeVisible()
+  expect(screen.getByText(/· ID 1024/)).toBeVisible()
+  expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual([
+    'Group',
+    'Role',
+    'Email',
+    'Registration time',
+    'Inviter',
+  ])
   expect(screen.getByText('vip')).toBeVisible()
 })
 
-it('falls back to a dash for missing email and registration date', () => {
+it('falls back to a dash for missing email, registration date and inviter', () => {
   render(<ProfileHeader profile={profile} loading={false} />)
   const terms = screen.getAllByRole('term').map((term) => term.textContent)
   const values = screen
     .getAllByRole('definition')
     .map((value) => value.textContent)
-  expect(values[terms.indexOf('Email')]).toBe('-')
-  expect(values[terms.indexOf('Registered')]).toBe('-')
+  expect(values[terms.indexOf('Email')]).toBe('—')
+  expect(values[terms.indexOf('Registration time')]).toBe('—')
+  expect(values[terms.indexOf('Inviter')]).toBe('—')
 })
 
 it('renders nothing once loading finishes without a profile', () => {

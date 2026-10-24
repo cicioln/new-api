@@ -118,7 +118,7 @@ it.each(['2fa', 'passkey'] as const)(
       )
     )
     const enable = await screen.findByRole('button', {
-      name: factor === '2fa' ? 'Enable' : 'Enable Passkey',
+      name: factor === '2fa' ? 'Enable' : 'Add Passkey',
     })
     await waitFor(() => expect(enable).toBeEnabled())
     await user.click(enable)
@@ -459,7 +459,7 @@ it('reports registration failure without treating a successful password check as
   const failure = vi.spyOn(toast, 'error')
   const user = userEvent.setup()
   render(<PasskeyCard loading={false} />)
-  const enable = await screen.findByRole('button', { name: 'Enable Passkey' })
+  const enable = await screen.findByRole('button', { name: 'Add Passkey' })
   await waitFor(() => expect(enable).toBeEnabled())
   await user.click(enable)
   await user.type(

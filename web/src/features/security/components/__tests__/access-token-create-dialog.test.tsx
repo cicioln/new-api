@@ -36,7 +36,7 @@ import type {
   AccessTokenInput,
   AccessTokenList,
 } from '../../api'
-import { AccessTokensCard } from '../access-tokens-card'
+import { AccessTokensPanel } from '../access-tokens-panel'
 
 const personalGroup: AccessTokenCatalog['groups'][number] = {
   group: 'personal',
@@ -164,7 +164,7 @@ function renderCard() {
   })
   render(
     <QueryClientProvider client={client}>
-      <AccessTokensCard />
+      <AccessTokensPanel />
       <Toaster />
     </QueryClientProvider>
   )
