@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, renderHook } from '@testing-library/react'
+import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -26,6 +26,7 @@ import {
   parseSidebarModulesAdmin,
   serializeSidebarModulesAdmin,
 } from '@/features/system-settings/maintenance/config'
+import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { useSidebarConfig } from '../use-sidebar-config'
@@ -37,15 +38,30 @@ beforeEach(() => {
     setItem: () => undefined,
     removeItem: () => undefined,
   })
+  vi.spyOn(api, 'get').mockImplementation(async (url) => {
+    if (url === '/api/token/?p=1&size=1') {
+      return { data: { success: true, data: { items: [], total: 8 } } }
+    }
+    if (url === '/api/channel') {
+      return { data: { success: true, data: { items: [], total: 12 } } }
+    }
+    throw new Error(`Unexpected request: ${url}`)
+  })
 })
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   useAuthStore.getState().auth.reset()
 })
 
-function sidebarFor(admin?: object, user?: object, canConfigure = true) {
+function sidebarFor(
+  admin?: object,
+  user?: object,
+  canConfigure = true,
+  role = 1
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -55,7 +71,7 @@ function sidebarFor(admin?: object, user?: object, canConfigure = true) {
   useAuthStore.getState().auth.setUser({
     id: 1,
     username: 'alice',
-    role: 1,
+    role,
     permissions: { sidebar_settings: canConfigure },
     sidebar_modules: user ? JSON.stringify(user) : '',
   })
@@ -178,5 +194,67 @@ describe('audit log sidebar entry', () => {
       .map((item) => item.title)
     expect(titles).not.toContain('Usage Logs')
     expect(titles).toContain('Audit Logs')
+  })
+})
+
+describe('sidebar group layout', () => {
+  it('default modules list the console items first without a group title, then Conversation, Personal and Manage', () => {
+    const { result } = sidebarFor()
+    expect(
+      result.current.map((group) => [
+        group.title,
+        group.items.map((item) => item.title),
+      ])
+    ).toEqual([
+      [
+        '',
+        [
+          'Overview',
+          'Dashboard',
+          'API Keys',
+          'Usage Logs',
+          'Audit Logs',
+          'Task Logs',
+        ],
+      ],
+      ['Conversation', ['Chat', 'Playground']],
+      ['Personal', ['Wallet', 'Profile', 'Security & Access']],
+      [
+        'Manage',
+        [
+          'Channels',
+          'Models',
+          'Users',
+          'Redemption Codes',
+          'Subscriptions',
+          'System Info',
+          'Task Plugins',
+          'System Settings',
+        ],
+      ],
+    ])
+  })
+})
+
+describe('sidebar count badges', () => {
+  function badgeOf(
+    groups: ReturnType<typeof useSidebarData>['navGroups'],
+    title: string
+  ) {
+    return groups
+      .flatMap((group) => group.items)
+      .find((item) => item.title === title)?.badge
+  }
+
+  it('admins see the API key and channel totals next to their entries', async () => {
+    const { result } = sidebarFor(undefined, undefined, true, 10)
+    await waitFor(() => expect(badgeOf(result.current, 'Channels')).toBe('12'))
+    expect(badgeOf(result.current, 'API Keys')).toBe('8')
+  })
+
+  it('regular users see the API key total and never request channels', async () => {
+    const { result } = sidebarFor()
+    await waitFor(() => expect(badgeOf(result.current, 'API Keys')).toBe('8'))
+    expect(api.get).not.toHaveBeenCalledWith('/api/channel', expect.anything())
   })
 })

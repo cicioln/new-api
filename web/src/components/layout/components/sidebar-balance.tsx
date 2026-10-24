@@ -41,8 +41,8 @@ export function SidebarBalance() {
   const percent = total > 0 ? Math.round((remain / total) * 100) : 0
 
   return (
-    <div className='bg-card mx-2 mb-2 rounded-[10px] border p-3.5'>
-      <p className='text-subtle-foreground text-xs'>{t('Balance')}</p>
+    <div className='bg-card mt-5 rounded-[10px] border p-3.5'>
+      <p className='text-subtle-foreground text-xs'>{t('Account balance')}</p>
       <p className='mt-0.5 mb-2.5 text-[22px] font-semibold tracking-tight tabular-nums'>
         {formatQuota(remain)}
       </p>
@@ -57,7 +57,7 @@ export function SidebarBalance() {
         <div className='bg-primary h-full' style={{ width: `${percent}%` }} />
       </div>
       <Button
-        variant='outline'
+        variant='accent'
         size='sm'
         className='w-full'
         render={<Link to='/wallet' onClick={() => setOpenMobile(false)} />}

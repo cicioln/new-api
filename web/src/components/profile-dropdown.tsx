@@ -49,7 +49,7 @@ export function ProfileDropdown() {
   const isSuperAdmin = user?.role === ROLE.SUPER_ADMIN
   const isWalletVisible = useIsSidebarModuleVisible('/wallet')
   const isSecurityVisible = useIsSidebarModuleVisible('/security')
-  const avatarName = user?.username || displayName
+  const avatarName = displayName || user?.username || ''
   const avatarFallback = getUserAvatarFallback(avatarName)
   const avatarFallbackStyle = useMemo(
     () => getUserAvatarStyle(avatarName),
@@ -60,16 +60,15 @@ export function ProfileDropdown() {
     <>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
-          render={<Button variant='ghost' className='relative size-6 p-0' />}
+          render={
+            <Button
+              variant='ghost'
+              className='bg-foreground text-background hover:bg-foreground/88 hover:text-background size-8 rounded-full p-0 text-[13px] font-semibold'
+              aria-label={t('Account menu')}
+            />
+          }
         >
-          <Avatar className='size-6'>
-            <AvatarFallback
-              className={`${avatarFallbackClassName} text-[11px]`}
-              style={avatarFallbackStyle}
-            >
-              {avatarFallback}
-            </AvatarFallback>
-          </Avatar>
+          {avatarFallback}
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end' sideOffset={8} className='w-56'>
           <div className='flex items-center gap-2 px-1.5 py-1.5'>

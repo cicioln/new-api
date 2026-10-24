@@ -224,9 +224,26 @@ export function ChatPresetsItem({ item }: { item: NavChatPresets }) {
 
   const normalizedHref = normalizeHref(href)
 
-  // Don't render if no visible presets
+  // Without presets the entry stays visible and opens the chat landing page.
   if (visiblePresets.length === 0) {
-    return null
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          isActive={normalizedHref === '/chat2link'}
+          tooltip={item.title}
+          render={
+            <Link
+              to='/chat2link'
+              preload={isMobile ? false : undefined}
+              onClick={() => setOpenMobile(false)}
+            />
+          }
+        >
+          {item.icon && <item.icon className='shrink-0' />}
+          <span className='min-w-0 flex-1 truncate'>{item.title}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
   }
 
   // Collapsed state on non-mobile - render dropdown menu

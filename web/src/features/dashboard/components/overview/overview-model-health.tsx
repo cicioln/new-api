@@ -31,6 +31,12 @@ const HEALTH_HOURS = 24
 const HEALTH_MODEL_LIMIT = 6
 const SKELETON_ROWS = ['a', 'b', 'c', 'd', 'e']
 
+/** The panel shows one decimal, e.g. 99.9%. */
+function formatHealthPct(rate: number): string {
+  if (!Number.isFinite(rate)) return '—'
+  return `${rate.toFixed(1)}%`
+}
+
 /** One cell per hour: green when healthy, amber when degraded, red when failing, muted without traffic. */
 function getCellClass(rate: number | undefined): string {
   if (rate === undefined) return 'bg-muted'
@@ -70,7 +76,7 @@ function HealthRow(props: { model: PerfModelSummary; hourStarts: number[] }) {
         })}
       </div>
       <span className='text-muted-foreground text-right font-mono text-xs'>
-        {formatUptimePct(props.model.success_rate)}
+        {formatHealthPct(props.model.success_rate)}
       </span>
     </li>
   )
@@ -93,8 +99,10 @@ export function OverviewModelHealth(props: {
   return (
     <section className='bg-card min-w-0 rounded-lg border'>
       <div className='flex items-center justify-between px-[18px] pt-4'>
-        <h3 className='text-sm font-semibold'>{t('Model health')}</h3>
-        <span className='text-muted-foreground text-xs'>
+        <h3 className='text-sm leading-[1.55] font-semibold'>
+          {t('Channel availability')}
+        </h3>
+        <span className='text-subtle-foreground text-xs'>
           {t('Last 24 hours')}
         </span>
       </div>

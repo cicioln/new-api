@@ -115,6 +115,8 @@ export interface ToolSurchargeItem {
 }
 
 export interface LogOtherData {
+  /** Upstream HTTP status recorded on error logs. */
+  status_code?: number
   admin_info?: {
     request_policy?: PolicyEvent[]
     is_multi_key?: boolean
@@ -285,6 +287,9 @@ export interface LogStatistics {
   quota: number
   rpm: number
   tpm: number
+  /** Present on servers that report token sums with the stat. */
+  prompt_tokens?: number
+  completion_tokens?: number
 }
 
 // ============================================================================

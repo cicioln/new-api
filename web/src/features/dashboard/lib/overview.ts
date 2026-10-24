@@ -23,11 +23,42 @@ export type OverviewPeriod = '24h' | '7d' | '30d'
 
 export const OVERVIEW_PERIODS: Record<
   OverviewPeriod,
-  { labelKey: string; bucket: 'hour' | 'day'; buckets: number }
+  {
+    labelKey: string
+    /** Name of the period before, used inside the header sentence. */
+    previousKey: string
+    /** Comparison suffix shown after a KPI change. */
+    compareKey: string
+    bucket: 'hour' | 'day'
+    /** Units per bucket, e.g. 12 hours for the half-day buckets of 7 days. */
+    bucketSize: number
+    buckets: number
+  }
 > = {
-  '24h': { labelKey: '24 hours', bucket: 'hour', buckets: 24 },
-  '7d': { labelKey: '7 days', bucket: 'day', buckets: 7 },
-  '30d': { labelKey: '30 days', bucket: 'day', buckets: 30 },
+  '24h': {
+    labelKey: '24 hours',
+    previousKey: 'yesterday',
+    compareKey: 'vs yesterday',
+    bucket: 'hour',
+    bucketSize: 1,
+    buckets: 24,
+  },
+  '7d': {
+    labelKey: '7 days',
+    previousKey: 'last week',
+    compareKey: 'vs last week',
+    bucket: 'hour',
+    bucketSize: 12,
+    buckets: 14,
+  },
+  '30d': {
+    labelKey: '30 days',
+    previousKey: 'last month',
+    compareKey: 'vs last month',
+    bucket: 'day',
+    bucketSize: 1,
+    buckets: 30,
+  },
 }
 
 export const OVERVIEW_PERIOD_IDS = Object.keys(
@@ -66,22 +97,28 @@ export interface OverviewAggregate {
 }
 
 /**
- * Hourly buckets for the last 24 hours, otherwise local calendar days ending
- * today. The previous period has the same number of buckets right before.
+ * Hourly buckets for the last 24 hours, half days for 7 days and local
+ * calendar days for 30 days, each ending with the bucket that holds now.
+ * The previous period has the same number of buckets right before.
  */
 export function buildOverviewWindow(
   period: OverviewPeriod,
   nowSeconds: number
 ): OverviewWindow {
   const config = OVERVIEW_PERIODS[period]
-  const last = dayjs(nowSeconds * 1000).startOf(config.bucket)
-  const first = last.subtract(config.buckets - 1, config.bucket)
+  const hour = dayjs(nowSeconds * 1000).startOf(config.bucket)
+  const last =
+    config.bucket === 'hour'
+      ? hour.subtract(hour.hour() % config.bucketSize, 'hour')
+      : hour
+  const span = config.buckets * config.bucketSize
+  const first = last.subtract(span - config.bucketSize, config.bucket)
   const bucketStarts = Array.from({ length: config.buckets }, (_, index) =>
-    first.add(index, config.bucket).unix()
+    first.add(index * config.bucketSize, config.bucket).unix()
   )
 
   return {
-    previousStart: first.subtract(config.buckets, config.bucket).unix(),
+    previousStart: first.subtract(span, config.bucket).unix(),
     start: first.unix(),
     end: nowSeconds,
     bucketStarts,
@@ -148,6 +185,30 @@ export function aggregateOverview(
       (a, b) => b.quota - a.quota || b.count - a.count
     ),
   }
+}
+
+/** Count timestamps (seconds) into the buckets of the current period. */
+export function countByBucket(
+  timestamps: number[],
+  window: OverviewWindow
+): number[] {
+  const counts = window.bucketStarts.map(() => 0)
+  for (const timestamp of timestamps) {
+    if (timestamp < window.start || timestamp > window.end) continue
+    const bucket = findBucket(window.bucketStarts, timestamp)
+    if (bucket >= 0) counts[bucket] += 1
+  }
+  return counts
+}
+
+/** Share of successful calls in percent, or null when nothing was called. */
+export function getSuccessRate(
+  succeeded: number,
+  failed: number
+): number | null {
+  const total = succeeded + failed
+  if (total <= 0) return null
+  return (succeeded / total) * 100
 }
 
 /** Percentage change from the previous period, or null without a baseline. */

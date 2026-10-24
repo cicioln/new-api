@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
 import { RadioGroup } from '@base-ui/react/radio-group'
-import { Monitor, MoonStar, Palette, Sun } from 'lucide-react'
+import { Monitor, MoonStar, Sun } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -62,11 +62,12 @@ export function ConfigDrawer() {
           <Button
             size='icon'
             variant='ghost'
+            className='bg-card hover:bg-muted [&_svg]:text-muted-foreground relative size-[34px] rounded-lg border'
             aria-label={t('Open theme settings')}
           />
         }
       >
-        <Palette className='size-[1.1rem]' aria-hidden='true' />
+        <Sun className='size-4' aria-hidden='true' />
       </PopoverTrigger>
       <PopoverContent align='end' className='w-72 gap-3 p-3'>
         <PopoverHeader>

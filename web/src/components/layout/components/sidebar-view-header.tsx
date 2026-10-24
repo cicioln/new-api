@@ -46,7 +46,7 @@ export function SidebarViewHeader(props: SidebarViewHeaderProps) {
   const { isMobile, setOpenMobile } = useSidebar()
 
   return (
-    <SidebarHeader className='border-sidebar-border border-b px-2 py-2'>
+    <SidebarHeader className='mb-1 p-0'>
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton

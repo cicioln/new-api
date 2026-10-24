@@ -302,17 +302,20 @@ export function NotificationPopover(props: NotificationPopoverProps) {
           <Button
             variant='ghost'
             size='icon'
-            className={cn('relative size-9', props.className)}
+            className={cn(
+              'bg-card hover:bg-muted relative size-[34px] rounded-lg border [&_svg]:text-muted-foreground',
+              props.className
+            )}
             aria-label={unreadLabel}
           />
         }
       >
-        <Bell className='size-[1.1rem]' />
+        <Bell className='size-4' />
         {props.unreadCount > 0 ? (
           <span
             data-testid='notification-unread-dot'
             aria-hidden='true'
-            className='bg-destructive ring-background absolute top-2 right-2 size-2 rounded-full ring-2'
+            className='bg-primary ring-card absolute top-1.5 right-[7px] size-[7px] rounded-full ring-[1.5px]'
           />
         ) : null}
       </PopoverTrigger>

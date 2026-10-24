@@ -20,7 +20,6 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { type ReactNode, useState, useEffect } from 'react'
 
-import { Badge } from '@/components/ui/badge'
 import {
   Collapsible,
   CollapsibleContent,
@@ -65,11 +64,9 @@ export function NavGroup({ title, items }: NavGroupProps) {
   const href = useLocation({ select: (location) => location.href })
 
   return (
-    <SidebarGroup className='px-2 py-1'>
-      <SidebarGroupLabel className='text-muted-foreground/70 px-2 text-[11px] font-medium tracking-wider uppercase'>
-        {title}
-      </SidebarGroupLabel>
-      <SidebarMenu>
+    <SidebarGroup className='p-0'>
+      {title && <SidebarGroupLabel>{title}</SidebarGroupLabel>}
+      <SidebarMenu className='gap-0'>
         {items.map((item) => {
           const key = `${item.title}-${item.url || item.type}`
 
@@ -114,7 +111,11 @@ export function NavGroup({ title, items }: NavGroupProps) {
  * Navigation badge component
  */
 function NavBadge({ children }: { children: ReactNode }) {
-  return <Badge className='shrink-0 px-1 py-0 text-xs'>{children}</Badge>
+  return (
+    <span className='text-subtle-foreground ms-auto shrink-0 font-mono text-[11px]'>
+      {children}
+    </span>
+  )
 }
 
 /**

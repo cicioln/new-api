@@ -18,13 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-} from '@/components/ui/sidebar'
+import { Sidebar, SidebarContent, SidebarRail } from '@/components/ui/sidebar'
 import { useLayout } from '@/context/layout-provider'
 import { useSidebarView } from '@/hooks/use-sidebar-view'
 import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
@@ -32,6 +26,7 @@ import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
 import { NavGroup } from './nav-group'
 import { SidebarBalance } from './sidebar-balance'
 import { SidebarViewHeader } from './sidebar-view-header'
+import { SidebarWorkspace } from './sidebar-workspace'
 import { SystemBrand } from './system-brand'
 
 /**
@@ -58,12 +53,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
-      <SidebarHeader className='px-2 pt-3.5 pb-1'>
+      <SidebarContent className='px-3 py-3.5 group-data-[collapsible=icon]:px-1.5'>
         <SystemBrand />
-      </SidebarHeader>
-      {view && <SidebarViewHeader view={view} />}
-
-      <SidebarContent className='py-2'>
+        <SidebarWorkspace />
+        {view && <SidebarViewHeader view={view} />}
         <AnimatePresence mode='wait' initial={false}>
           <motion.div
             key={key}
@@ -80,11 +73,8 @@ export function AppSidebar() {
             ))}
           </motion.div>
         </AnimatePresence>
-      </SidebarContent>
-
-      <SidebarFooter className='p-0'>
         <SidebarBalance />
-      </SidebarFooter>
+      </SidebarContent>
 
       <SidebarRail />
     </Sidebar>

@@ -16,137 +16,76 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useLocation } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+
 import { ConfigDrawer } from '@/components/config-drawer'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
-import { SystemUpdateAction } from '@/features/system-update/system-update-action'
 import { useNotifications } from '@/hooks/use-notifications'
-import { useTopNavLinks } from '@/hooks/use-top-nav-links'
+import { useSidebarView } from '@/hooks/use-sidebar-view'
 
-import { defaultTopNavLinks } from '../config/top-nav.config'
-import type { TopNavLink } from '../types'
+import { checkIsActive } from '../lib/url-utils'
 import { Header } from './header'
-import { TopNav } from './top-nav'
 
 /**
- * General application Header component
- * Integrates navigation bar, search, configuration and profile functions
- *
- * @example
- * // Basic usage
- * <AppHeader />
- *
- * @example
- * // Custom navigation links
- * <AppHeader navLinks={customLinks} />
- *
- * @example
- * // Hide navigation bar and search box
- * <AppHeader showTopNav={false} showSearch={false} />
- *
- * @example
- * // Fully customize left and right content
- * <AppHeader
- *   leftContent={<CustomLeft />}
- *   rightContent={<CustomRight />}
- * />
+ * Console top bar: breadcrumb for the current page, command search,
+ * language, notifications, appearance and the account menu.
  */
-type AppHeaderProps = {
-  /**
-   * Custom navigation links, uses default global navigation or dynamically generated from backend if not provided
-   */
-  navLinks?: TopNavLink[]
-  /**
-   * Whether to show top navigation bar
-   * @default true
-   */
-  showTopNav?: boolean
-  /**
-   * Left content, overrides TopNav if provided
-   */
-  leftContent?: React.ReactNode
-  /**
-   * Whether to show search box
-   * @default true
-   */
-  showSearch?: boolean
-  /**
-   * Custom right content, overrides default right content if provided
-   */
-  rightContent?: React.ReactNode
-  /**
-   * Whether to show notification button
-   * @default true
-   */
-  showNotifications?: boolean
-  /**
-   * Whether to show config drawer
-   * @default true
-   */
-  showConfigDrawer?: boolean
-  /**
-   * Whether to show profile dropdown
-   * @default true
-   */
-  showProfileDropdown?: boolean
-}
-
-export function AppHeader({
-  navLinks = defaultTopNavLinks,
-  showTopNav = true,
-  leftContent,
-  showSearch = true,
-  rightContent,
-  showNotifications = true,
-  showConfigDrawer = true,
-  showProfileDropdown = true,
-}: AppHeaderProps) {
-  // Prioritize dynamically generated links from backend
-  const dynamicLinks = useTopNavLinks()
-  const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
-
-  // Notifications hook
+export function AppHeader() {
+  const { t } = useTranslation()
+  const href = useLocation({ select: (location) => location.href })
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const { navGroups } = useSidebarView()
   const notifications = useNotifications()
+
+  let crumb = ''
+  for (const group of navGroups) {
+    const active = group.items.find((item) => checkIsActive(href, item))
+    if (active) {
+      crumb = active.title
+      break
+    }
+  }
+  if (!crumb && pathname.startsWith('/chat')) crumb = t('Chat')
 
   return (
     <Header>
-      <div className='flex min-w-0 flex-1 items-center gap-1'>
-        <SystemUpdateAction presentation='version' />
+      <nav
+        aria-label={t('Breadcrumb')}
+        className='text-subtle-foreground hidden min-w-0 truncate text-[13px] sm:block'
+      >
+        {t('Console')}
+        {crumb && (
+          <>
+            {' / '}
+            <b className='text-foreground font-medium'>{crumb}</b>
+          </>
+        )}
+      </nav>
+      <b className='min-w-0 truncate text-sm font-medium sm:hidden'>{crumb}</b>
+
+      <div className='ms-auto flex min-w-0 items-center gap-2 sm:gap-4'>
+        <Search
+          className='hidden sm:flex'
+          placeholder={t('Search pages, models, keys')}
+        />
+        <LanguageSwitcher />
+        <NotificationPopover
+          open={notifications.popoverOpen}
+          onOpenChange={notifications.setPopoverOpen}
+          unreadCount={notifications.unreadCount}
+          activeTab={notifications.activeTab}
+          onTabChange={notifications.setActiveTab}
+          notice={notifications.notice}
+          announcements={notifications.announcements}
+          loading={notifications.loading}
+        />
+        <ConfigDrawer />
+        <ProfileDropdown />
       </div>
-
-      {leftContent ? (
-        <div className='ms-2 flex items-center'>{leftContent}</div>
-      ) : null}
-
-      {rightContent ?? (
-        <div className='ms-auto flex shrink-0 items-center gap-1 sm:gap-2'>
-          {showTopNav && (
-            <div className='me-1 hidden lg:block'>
-              <TopNav links={links} />
-            </div>
-          )}
-          {showSearch && (
-            <Search className='h-[34px] w-9 flex-none sm:w-[280px] [&>span]:hidden sm:[&>span]:inline' />
-          )}
-          {showNotifications && (
-            <NotificationPopover
-              open={notifications.popoverOpen}
-              onOpenChange={notifications.setPopoverOpen}
-              unreadCount={notifications.unreadCount}
-              activeTab={notifications.activeTab}
-              onTabChange={notifications.setActiveTab}
-              notice={notifications.notice}
-              announcements={notifications.announcements}
-              loading={notifications.loading}
-            />
-          )}
-          <LanguageSwitcher />
-          {showConfigDrawer && <ConfigDrawer />}
-          {showProfileDropdown && <ProfileDropdown />}
-        </div>
-      )}
     </Header>
   )
 }

@@ -23,10 +23,18 @@ import { getUserQuotaDates } from '@/features/dashboard/api'
 import {
   aggregateOverview,
   buildOverviewWindow,
+  countByBucket,
   type OverviewPeriod,
+  type OverviewWindow,
 } from '@/features/dashboard/lib/overview'
 import { getPerfMetricsSummary } from '@/features/performance-metrics/api'
+import { getUserLogs, getUserLogStats } from '@/features/usage-logs/api'
+import { LOG_TYPE_ENUM } from '@/features/usage-logs/constants'
+import type { UsageLog } from '@/features/usage-logs/data/schema'
 import { requireServerSuccess } from '@/lib/server-error-message'
+
+/** The largest page the log API returns; failures beyond it only count in totals. */
+const FAILURE_SAMPLE_SIZE = 100
 
 const PERIOD_HOURS: Record<OverviewPeriod, number> = {
   '24h': 24,
@@ -87,4 +95,75 @@ export function usePerfSummary(hours: number) {
 
 export function getPeriodHours(period: OverviewPeriod): number {
   return PERIOD_HOURS[period]
+}
+
+/**
+ * Failed calls (error logs) in the selected period and the one before it.
+ * The per-bucket series is built from the latest page of failures.
+ */
+export function useOverviewFailures(window: OverviewWindow) {
+  const query = useQuery({
+    queryKey: ['dashboard', 'overview', 'failures', window.start, window.end],
+    queryFn: async () => {
+      const [current, previous] = await Promise.all([
+        getUserLogs({
+          p: 1,
+          page_size: FAILURE_SAMPLE_SIZE,
+          type: LOG_TYPE_ENUM.ERROR,
+          start_timestamp: window.start,
+          end_timestamp: window.end,
+        }),
+        getUserLogs({
+          p: 1,
+          page_size: 1,
+          type: LOG_TYPE_ENUM.ERROR,
+          start_timestamp: window.previousStart,
+          end_timestamp: window.start - 1,
+        }),
+      ])
+      const currentData = requireServerSuccess(current).data
+      const items = (currentData?.items ?? []) as UsageLog[]
+      return {
+        current: currentData?.total ?? 0,
+        previous: requireServerSuccess(previous).data?.total ?? 0,
+        timestamps: items.map((log) => log.created_at),
+      }
+    },
+    staleTime: 60 * 1000,
+    meta: { errorToast: false },
+  })
+
+  const series = useMemo(
+    () => countByBucket(query.data?.timestamps ?? [], window),
+    [query.data, window]
+  )
+
+  return {
+    current: query.data?.current ?? 0,
+    previous: query.data?.previous ?? 0,
+    series,
+    loading: query.isLoading,
+  }
+}
+
+/** Prompt and completion token sums for the selected period. */
+export function useOverviewTokenSplit(window: OverviewWindow) {
+  return useQuery({
+    queryKey: ['dashboard', 'overview', 'token-split', window.start],
+    queryFn: async () => {
+      const stat = requireServerSuccess(
+        await getUserLogStats({
+          type: LOG_TYPE_ENUM.CONSUME,
+          start_timestamp: window.start,
+          end_timestamp: window.end,
+        })
+      ).data
+      if (stat?.prompt_tokens == null || stat.completion_tokens == null) {
+        return null
+      }
+      return { input: stat.prompt_tokens, output: stat.completion_tokens }
+    },
+    staleTime: 60 * 1000,
+    meta: { errorToast: false },
+  })
 }

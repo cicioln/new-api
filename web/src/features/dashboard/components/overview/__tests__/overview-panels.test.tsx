@@ -23,12 +23,19 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth-store'
+import { useNotificationStore } from '@/stores/notification-store'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { OverviewDashboard } from '../overview-dashboard'
@@ -37,6 +44,9 @@ const periodKey = 'dashboard_overview_period'
 let client: QueryClient
 let dataRequests: Array<Record<string, unknown>>
 let logItems: Array<Record<string, unknown>>
+let failureTotal: number
+let tokenStat: Record<string, number>
+let notice: string
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -53,6 +63,9 @@ beforeEach(() => {
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   dataRequests = []
   logItems = []
+  failureTotal = 0
+  tokenStat = { quota: 0, rpm: 0, tpm: 0 }
+  notice = ''
   vi.spyOn(api, 'get').mockImplementation(async (url, config) => {
     switch (url) {
       case '/api/token/?p=1&size=10':
@@ -84,9 +97,23 @@ beforeEach(() => {
             },
           },
         }
+      case '/api/notice':
+        return { data: { success: true, data: notice } }
       default:
-        throw new Error(`Unexpected request: ${url}`)
+        break
     }
+    if (String(url).startsWith('/api/log/self/stat?')) {
+      return { data: { success: true, data: tokenStat } }
+    }
+    if (
+      String(url).startsWith('/api/log/self?p=1&page_size=') &&
+      String(url).includes('type=5')
+    ) {
+      return {
+        data: { success: true, data: { items: [], total: failureTotal } },
+      }
+    }
+    throw new Error(`Unexpected request: ${url}`)
   })
 })
 
@@ -95,6 +122,7 @@ afterEach(() => {
   client.clear()
   vi.restoreAllMocks()
   useAuthStore.setState(useAuthStore.getInitialState(), true)
+  useNotificationStore.setState(useNotificationStore.getInitialState(), true)
   window.localStorage.clear()
 })
 
@@ -144,13 +172,51 @@ describe('overview period switch', () => {
 })
 
 describe('overview panels', () => {
-  it('shows the server success rate and per-model health rows', async () => {
+  it('shows per-model availability rows with one decimal', async () => {
     await renderOverview()
-    expect(await screen.findByText('98.5')).toBeVisible()
-    expect(await screen.findByText('98.50%')).toBeVisible()
+    expect(
+      await screen.findByRole('heading', { name: 'Channel availability' })
+    ).toBeVisible()
+    expect(await screen.findByText('98.5%')).toBeVisible()
   })
 
-  it('lists only API calls in recent requests and marks errors as failed', async () => {
+  it('counts failed calls from error logs under the success rate', async () => {
+    failureTotal = 3
+    await renderOverview()
+    expect(
+      await screen.findByText('3 failures retried automatically')
+    ).toBeVisible()
+  })
+
+  it('splits token usage into input and output when the stat reports them', async () => {
+    tokenStat = { ...tokenStat, prompt_tokens: 1200, completion_tokens: 300 }
+    await renderOverview()
+    expect(await screen.findByText(/Input 1\.2K · Output 300/)).toBeVisible()
+  })
+
+  it('shows the system notice once and hides it for the day after muting', async () => {
+    const user = userEvent.setup()
+    notice = 'Database upgrade tonight'
+    const first = await renderOverview()
+    const dialog = await screen.findByRole('dialog', { name: 'System Notice' })
+    expect(
+      await within(dialog).findByText('Database upgrade tonight')
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(dialog).getByRole('button', { name: "Don't show again today" })
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    )
+    first.unmount()
+
+    await renderOverview()
+    await screen.findByRole('heading', { name: 'Request trend' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('lists only API calls in recent requests with their HTTP status', async () => {
     logItems = [
       {
         id: 1,
@@ -173,6 +239,7 @@ describe('overview panels', () => {
         content: '',
         model_name: 'broken-model',
         token_name: 'App',
+        other: JSON.stringify({ status_code: 429 }),
       },
       {
         id: 3,
@@ -188,7 +255,8 @@ describe('overview panels', () => {
     if (!table) throw new Error('recent requests table missing')
     const rows = within(table).getAllByRole('row').slice(1)
     expect(rows).toHaveLength(2)
-    expect(within(rows[1]).getByText('Failed')).toBeVisible()
+    expect(within(rows[0]).getByText('200')).toBeVisible()
+    expect(within(rows[1]).getByText('429')).toBeVisible()
     expect(screen.queryByText('top-up-row')).not.toBeInTheDocument()
   })
 

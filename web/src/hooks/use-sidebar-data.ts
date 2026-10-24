@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -17,22 +18,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import {
-  Activity,
   Box,
+  CalendarDays,
+  ChartNoAxesColumn,
   ClipboardList,
-  CreditCard,
-  FileText,
-  FlaskConical,
+  Cog,
+  Gift,
+  House,
+  Info,
   Key,
-  LayoutDashboard,
-  ListTodo,
+  List,
   MessageSquare,
-  PlugZap,
-  Radio,
-  ServerCog,
-  Settings,
+  Plug,
+  Route,
   ShieldCheck,
-  Ticket,
+  SquareCheck,
+  Terminal,
   User,
   Users,
   Wallet,
@@ -40,7 +41,17 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { getChannels } from '@/features/channels/api'
+import { getApiKeys } from '@/features/keys/api'
 import { ROLE } from '@/lib/roles'
+import { useAuthStore } from '@/stores/auth-store'
+
+const BADGE_STALE_TIME = 60 * 1000
+
+/** Show a count next to a nav entry only once it is known. */
+function toBadge(total: number | undefined): string | undefined {
+  return total == null ? undefined : String(total)
+}
 
 /**
  * Root navigation groups for the application sidebar.
@@ -50,48 +61,48 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const role = useAuthStore((state) => state.auth.user?.role ?? 0)
+  const keyTotal = useQuery({
+    queryKey: ['sidebar', 'badge', 'keys'],
+    queryFn: async () => (await getApiKeys({ p: 1, size: 1 })).data?.total,
+    staleTime: BADGE_STALE_TIME,
+    meta: { errorToast: false },
+  })
+  const channelTotal = useQuery({
+    queryKey: ['sidebar', 'badge', 'channels'],
+    queryFn: async () =>
+      (await getChannels({ p: 1, page_size: 1 })).data?.total,
+    enabled: role >= ROLE.ADMIN,
+    staleTime: BADGE_STALE_TIME,
+    meta: { errorToast: false },
+  })
 
   return {
     navGroups: [
       {
-        id: 'chat',
-        title: t('Chat'),
-        items: [
-          {
-            title: t('Playground'),
-            url: '/playground',
-            icon: FlaskConical,
-          },
-          {
-            title: t('Chat'),
-            icon: MessageSquare,
-            type: 'chat-presets',
-          },
-        ],
-      },
-      {
         id: 'general',
-        title: t('General'),
+        title: '',
         items: [
           {
             title: t('Overview'),
             url: '/dashboard/overview',
-            icon: Activity,
+            icon: House,
           },
           {
             title: t('Dashboard'),
             url: '/dashboard/models',
-            icon: LayoutDashboard,
+            icon: ChartNoAxesColumn,
           },
           {
             title: t('API Keys'),
             url: '/keys',
             icon: Key,
+            badge: toBadge(keyTotal.data),
           },
           {
             title: t('Usage Logs'),
             url: '/usage-logs/common',
-            icon: FileText,
+            icon: List,
           },
           {
             title: t('Audit Logs'),
@@ -103,7 +114,23 @@ export function useSidebarData(): SidebarData {
             url: '/usage-logs/task',
             activeUrls: ['/usage-logs/drawing'],
             configUrls: ['/usage-logs/drawing', '/usage-logs/task'],
-            icon: ListTodo,
+            icon: SquareCheck,
+          },
+        ],
+      },
+      {
+        id: 'chat',
+        title: t('Conversation'),
+        items: [
+          {
+            title: t('Chat'),
+            icon: MessageSquare,
+            type: 'chat-presets',
+          },
+          {
+            title: t('Playground'),
+            url: '/playground',
+            icon: Terminal,
           },
         ],
       },
@@ -130,12 +157,13 @@ export function useSidebarData(): SidebarData {
       },
       {
         id: 'admin',
-        title: t('Admin'),
+        title: t('Manage'),
         items: [
           {
             title: t('Channels'),
             url: '/channels',
-            icon: Radio,
+            icon: Route,
+            badge: toBadge(channelTotal.data),
           },
           {
             title: t('Models'),
@@ -150,30 +178,30 @@ export function useSidebarData(): SidebarData {
           {
             title: t('Redemption Codes'),
             url: '/redemption-codes',
-            icon: Ticket,
+            icon: Gift,
           },
           {
             title: t('Subscriptions'),
             url: '/subscriptions',
-            icon: CreditCard,
+            icon: CalendarDays,
           },
           {
             title: t('System Info'),
             url: '/system-info',
-            icon: ServerCog,
+            icon: Info,
             requiredRole: ROLE.SUPER_ADMIN,
           },
           {
             title: t('Task Plugins'),
             url: '/task-plugins',
-            icon: PlugZap,
+            icon: Plug,
             requiredRole: ROLE.SUPER_ADMIN,
           },
           {
             title: t('System Settings'),
             url: '/system-settings/site',
             activeUrls: ['/system-settings'],
-            icon: Settings,
+            icon: Cog,
             requiredRole: ROLE.SUPER_ADMIN,
           },
         ],

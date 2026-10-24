@@ -19,21 +19,15 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar'
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { cn } from '@/lib/utils'
 
 type SystemBrandProps = {
   defaultName?: string
-  defaultVersion?: string
   /**
    * Visual layout:
-   * - 'sidebar': stacked card style (used inside the sidebar header).
+   * - 'sidebar': logo row at the top of the console sidebar.
    * - 'inline': compact horizontal pill (used inside the top app bar).
    */
   variant?: 'sidebar' | 'inline'
@@ -41,9 +35,7 @@ type SystemBrandProps = {
 
 /**
  * System brand component
- * Displays current system logo + name.
- * - inline: compact pill in the top app bar; clicking navigates to home (/)
- * - sidebar: stacked card in the sidebar header (display only)
+ * Displays current system logo + name; clicking navigates to home (/).
  */
 export function SystemBrand(props: SystemBrandProps) {
   const { t } = useTranslation()
@@ -52,8 +44,6 @@ export function SystemBrand(props: SystemBrandProps) {
 
   const variant = props.variant ?? 'sidebar'
   const name = status?.system_name || props.defaultName || 'New API'
-  const version =
-    status?.version || props.defaultVersion || t('Unknown version')
 
   if (variant === 'inline') {
     return (
@@ -78,26 +68,19 @@ export function SystemBrand(props: SystemBrandProps) {
   }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          size='lg'
-          className='hover:text-sidebar-foreground active:text-sidebar-foreground cursor-default hover:bg-transparent active:bg-transparent'
-          render={<div />}
-        >
-          <div className='flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg'>
-            <img
-              src={logo}
-              alt={t('Logo')}
-              className='size-full rounded-lg object-cover'
-            />
-          </div>
-          <div className='grid flex-1 text-start text-sm leading-tight group-data-[collapsible=icon]:hidden'>
-            <span className='truncate font-semibold'>{name}</span>
-            <span className='truncate text-xs'>{version}</span>
-          </div>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
+    <Link
+      to='/'
+      aria-label={t('Go to home')}
+      className='focus-visible:ring-ring/40 flex min-w-0 items-center gap-2.5 rounded-md px-2 pt-1 pb-3.5 text-base font-bold tracking-[-.01em] outline-none group-data-[collapsible=icon]:px-0 focus-visible:ring-2'
+    >
+      <img
+        src={logo}
+        alt={t('Logo')}
+        className='size-[26px] shrink-0 rounded-[7px] object-cover'
+      />
+      <span className='truncate group-data-[collapsible=icon]:hidden'>
+        {name}
+      </span>
+    </Link>
   )
 }

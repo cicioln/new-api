@@ -101,11 +101,11 @@ export function SectionPageLayout(props: SectionPageLayoutProps) {
                   : 'min-w-0 flex-1'
               }
             >
-              <h2 className='truncate text-xl font-semibold tracking-tight sm:text-2xl'>
+              <h2 className='truncate text-xl leading-[1.55] font-[650] tracking-[-0.02em] sm:text-2xl sm:leading-[1.55]'>
                 {title}
               </h2>
               {description != null && (
-                <p className='text-muted-foreground mt-0.5 text-sm'>
+                <p className='text-muted-foreground mt-0.5 text-sm leading-[1.55]'>
                   {description}
                 </p>
               )}

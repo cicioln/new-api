@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getUserLogs } from '@/features/usage-logs/api'
 import { LOG_TYPE_ENUM } from '@/features/usage-logs/constants'
 import type { UsageLog } from '@/features/usage-logs/data/schema'
+import { parseLogOther } from '@/features/usage-logs/lib/format'
 import { toIntlLocale } from '@/i18n/languages'
 import dayjs from '@/lib/dayjs'
 import { formatLogQuota, formatNumber, formatUseTime } from '@/lib/format'
@@ -33,20 +34,25 @@ import { cn } from '@/lib/utils'
 const RECENT_REQUEST_LIMIT = 6
 const SKELETON_ROWS = ['a', 'b', 'c', 'd']
 
+/** HTTP status tag: 200 for a billed call, the upstream code for a failed one. */
 function RequestStatus(props: { log: UsageLog }) {
   const { t } = useTranslation()
   const failed = props.log.type === LOG_TYPE_ENUM.ERROR
+  const other = failed ? parseLogOther(props.log.other) : null
+  const code = other?.status_code ?? (failed ? 500 : 200)
+  // Channel switches are only recorded for admins; without them no retry is claimed.
+  const retried = (other?.admin_info?.use_channel?.length ?? 0) > 1
+  let label = String(code)
+  if (failed && retried) label = t('{{code}} retried', { code })
   return (
     <span
       className={cn(
         'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-xs font-medium',
-        failed
-          ? 'bg-destructive/10 text-destructive'
-          : 'bg-success/10 text-success'
+        failed ? 'bg-warning/12 text-warning' : 'bg-success/12 text-success'
       )}
     >
       <span className='size-1.5 rounded-full bg-current' aria-hidden='true' />
-      {failed ? t('Failed') : t('Success')}
+      {label}
     </span>
   )
 }
@@ -71,27 +77,29 @@ export function OverviewRecentRequests() {
   )
 
   return (
-    <section className='bg-card min-w-0 overflow-hidden rounded-lg border'>
+    <section className='bg-card rounded-lg border max-[999px]:min-w-0'>
       <div className='flex items-center justify-between px-[18px] pt-4 pb-3'>
-        <h3 className='text-sm font-semibold'>{t('Recent requests')}</h3>
+        <h3 className='text-sm leading-[1.55] font-semibold'>
+          {t('Recent requests')}
+        </h3>
         <Link
           to='/usage-logs/$section'
           params={{ section: 'common' }}
-          className='text-muted-foreground hover:text-foreground text-xs'
+          className='text-subtle-foreground hover:text-foreground text-xs'
         >
           {t('View all logs')} →
         </Link>
       </div>
-      <div className='overflow-x-auto'>
+      <div className='overflow-x-auto rounded-b-lg'>
         <table className='w-full border-collapse text-[13px]'>
           <thead>
-            <tr className='bg-background text-muted-foreground border-y text-left text-xs [&>th]:px-[18px] [&>th]:py-2.5 [&>th]:font-medium [&>th]:whitespace-nowrap'>
+            <tr className='bg-background text-subtle-foreground border-y text-left text-xs [&>th]:px-[18px] [&>th]:py-2.5 [&>th]:font-medium [&>th]:whitespace-nowrap'>
               <th>{t('Time')}</th>
               <th>{t('Model')}</th>
-              <th>{t('API Key')}</th>
+              <th>{t('Key')}</th>
               <th>{t('Status')}</th>
               <th className='text-right'>{t('Tokens')}</th>
-              <th className='text-right'>{t('Latency')}</th>
+              <th className='text-right'>{t('Duration')}</th>
               <th className='text-right'>{t('Cost')}</th>
             </tr>
           </thead>
@@ -116,7 +124,7 @@ export function OverviewRecentRequests() {
             )}
             {logs.map((log) => (
               <tr key={log.id} className='hover:bg-muted/50 transition-colors'>
-                <td className='text-muted-foreground font-mono text-xs'>
+                <td className='text-subtle-foreground font-mono text-xs'>
                   {dayjs(log.created_at * 1000).format('HH:mm:ss')}
                 </td>
                 <td className='font-mono text-[12.5px]'>
@@ -133,7 +141,9 @@ export function OverviewRecentRequests() {
                   )}
                 </td>
                 <td className='text-right font-mono text-[12.5px] tabular-nums'>
-                  {formatUseTime(log.use_time)}
+                  {log.use_time < 60
+                    ? `${log.use_time.toFixed(2)}s`
+                    : formatUseTime(log.use_time)}
                 </td>
                 <td className='text-right font-mono text-[12.5px] tabular-nums'>
                   {formatLogQuota(log.quota)}

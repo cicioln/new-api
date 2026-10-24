@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Languages, Check } from 'lucide-react'
+import { Check, Globe } from 'lucide-react'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -39,6 +39,9 @@ export function LanguageSwitcher() {
   const { i18n, t } = useTranslation()
   const user = useAuthStore((s) => s.auth.user)
   const currentLanguage = normalizeInterfaceLanguage(i18n.language)
+  const currentLabel =
+    INTERFACE_LANGUAGE_OPTIONS.find((lang) => lang.code === currentLanguage)
+      ?.label ?? INTERFACE_LANGUAGE_OPTIONS[0].label
   const handleChangeLanguage = useCallback(
     async (code: string) => {
       await i18n.changeLanguage(code)
@@ -56,10 +59,16 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        render={<Button variant='ghost' size='icon' className='h-9 w-9' />}
+        render={
+          <Button
+            variant='ghost'
+            className='text-muted-foreground h-[30px] gap-1.5 rounded-[7px] px-2 text-[13px] font-normal'
+            aria-label={t('Change language')}
+          />
+        }
       >
-        <Languages className='size-[1.2rem]' />
-        <span className='sr-only'>{t('Change language')}</span>
+        <Globe className='size-4 stroke-[1.7]' aria-hidden='true' />
+        <span className='hidden sm:inline'>{currentLabel}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         {INTERFACE_LANGUAGE_OPTIONS.map((lang) => (

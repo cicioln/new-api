@@ -16,8 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { ChevronRight } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   foldModelShare,
@@ -27,17 +34,19 @@ import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatQuota } from '@/lib/format'
 
 const MODEL_SHARE_LIMIT = 5
+/** Fixed palette for the top models; the second bar follows the ink color. */
 const MODEL_BAR_CLASSES = [
-  'bg-chart-1',
+  'bg-[#D97757]',
   'bg-foreground',
-  'bg-chart-3',
-  'bg-chart-2',
-  'bg-chart-5',
+  'bg-[#4285F4]',
+  'bg-[#4D6BFE]',
+  'bg-[#615CED]',
 ]
+const OTHER_BAR_CLASS = 'bg-[#B9B6AD] dark:bg-[#5A5D66]'
 const SKELETON_ROWS = ['a', 'b', 'c', 'd', 'e']
 
 function ShareRow(props: {
-  name: string
+  name: ReactNode
   quota: number
   total: number
   barClassName: string
@@ -45,12 +54,12 @@ function ShareRow(props: {
 }) {
   const percent = props.total > 0 ? (props.quota / props.total) * 100 : 0
   return (
-    <li>
+    <>
       <div className='mb-1.5 flex justify-between gap-3 text-[13px]'>
-        <b className='min-w-0 truncate font-mono text-[12.5px] font-medium'>
+        <b className='flex min-w-0 items-center gap-1 truncate font-mono text-[12.5px] font-medium'>
           {props.name}
         </b>
-        <span className='text-muted-foreground shrink-0 font-mono text-xs'>
+        <span className='text-subtle-foreground shrink-0 font-mono text-xs'>
           {formatQuota(props.quota)} ·{' '}
           {formatNumber(Math.round(percent), props.locale)}%
         </span>
@@ -61,7 +70,7 @@ function ShareRow(props: {
           style={{ width: `${percent}%` }}
         />
       </div>
-    </li>
+    </>
   )
 }
 
@@ -73,14 +82,15 @@ export function OverviewModelShare(props: {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const share = foldModelShare(props.models, MODEL_SHARE_LIMIT)
+  const rest = props.models.slice(MODEL_SHARE_LIMIT)
 
   return (
     <section className='bg-card min-w-0 rounded-lg border'>
       <div className='flex items-center justify-between px-[18px] pt-4'>
-        <h3 className='text-sm font-semibold'>
+        <h3 className='text-sm leading-[1.55] font-semibold'>
           {t('Model usage distribution')}
         </h3>
-        <span className='text-muted-foreground text-xs'>{t('By spend')}</span>
+        <span className='text-subtle-foreground text-xs'>{t('By spend')}</span>
       </div>
       {props.loading && (
         <ul className='flex flex-col gap-3.5 px-[18px] pt-3.5 pb-[18px]'>
@@ -100,23 +110,57 @@ export function OverviewModelShare(props: {
       {!props.loading && share.items.length > 0 && (
         <ul className='flex flex-col gap-3.5 px-[18px] pt-3.5 pb-[18px]'>
           {share.items.map((model, index) => (
-            <ShareRow
-              key={model.modelName}
-              name={model.modelName}
-              quota={model.quota}
-              total={props.totalQuota}
-              barClassName={MODEL_BAR_CLASSES[index] ?? 'bg-neutral'}
-              locale={locale}
-            />
+            <li key={model.modelName}>
+              <ShareRow
+                name={model.modelName}
+                quota={model.quota}
+                total={props.totalQuota}
+                barClassName={MODEL_BAR_CLASSES[index] ?? OTHER_BAR_CLASS}
+                locale={locale}
+              />
+            </li>
           ))}
           {share.otherCount > 0 && (
-            <ShareRow
-              name={t('{{count}} other models', { count: share.otherCount })}
-              quota={share.other}
-              total={props.totalQuota}
-              barClassName='bg-neutral'
-              locale={locale}
-            />
+            <Collapsible render={<li />}>
+              <CollapsibleTrigger className='group/other w-full cursor-pointer text-left'>
+                <ShareRow
+                  name={
+                    <>
+                      <span className='truncate'>
+                        {t('{{count}} other models', {
+                          count: share.otherCount,
+                        })}
+                      </span>
+                      <ChevronRight
+                        className='text-subtle-foreground size-3.5 shrink-0 transition-transform group-data-[panel-open]/other:rotate-90'
+                        aria-hidden='true'
+                      />
+                    </>
+                  }
+                  quota={share.other}
+                  total={props.totalQuota}
+                  barClassName={OTHER_BAR_CLASS}
+                  locale={locale}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ul className='flex flex-col gap-1.5 pt-3'>
+                  {rest.map((model) => (
+                    <li
+                      key={model.modelName}
+                      className='flex justify-between gap-3 text-xs'
+                    >
+                      <span className='min-w-0 truncate font-mono'>
+                        {model.modelName}
+                      </span>
+                      <span className='text-subtle-foreground shrink-0 font-mono'>
+                        {formatQuota(model.quota)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </ul>
       )}

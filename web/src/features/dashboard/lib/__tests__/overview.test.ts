@@ -38,9 +38,12 @@ describe('buildOverviewWindow', () => {
     expect(window.start - window.previousStart).toBe(24 * 3600)
   })
 
-  it('uses local calendar days ending today for 7d', () => {
+  it('uses 14 half-day buckets ending in the current half day for 7d', () => {
     const window = buildOverviewWindow('7d', now)
-    expect(window.bucketStarts).toHaveLength(7)
+    expect(window.bucketStarts).toHaveLength(14)
+    expect(window.bucketStarts.at(-1)).toBe(
+      new Date('2026-10-24T12:00:00').getTime() / 1000
+    )
     expect(window.start).toBe(new Date('2026-10-18T00:00:00').getTime() / 1000)
     expect(window.previousStart).toBe(
       new Date('2026-10-11T00:00:00').getTime() / 1000
@@ -82,7 +85,9 @@ describe('aggregateOverview', () => {
 
     expect(result.previous).toEqual({ count: 4, quota: 40, tokens: 400 })
     expect(result.current).toEqual({ count: 5, quota: 40, tokens: 400 })
-    expect(result.series.count).toEqual([2, 0, 0, 0, 0, 0, 3])
+    expect(result.series.count).toEqual([
+      2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    ])
     expect(result.models.map((model) => model.modelName)).toEqual(['b', 'a'])
   })
 

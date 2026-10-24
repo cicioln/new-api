@@ -22,17 +22,21 @@ import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   getPeriodChange,
+  getSuccessRate,
   OVERVIEW_PERIODS,
   type OverviewAggregate,
   type OverviewPeriod,
 } from '@/features/dashboard/lib/overview'
-import type { PerformanceSummary } from '@/features/performance-metrics/types'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatCompactNumber, formatNumber, formatQuota } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
+/** Token amounts always use K/M/B units, e.g. 14.6M, in every language. */
+const TOKEN_LOCALE = 'en-US'
 const SPARK_WIDTH = 200
 const SPARK_HEIGHT = 34
+/** Splits "¥86.72" or "14.6M" into sign, number and unit. */
+const SPLIT_VALUE = /^([^\d-]*)(-?[\d.,\s]*\d)(\D*)$/
 
 /** Filled line used under each KPI value; the area keeps a faint tint of the line color. */
 function Sparkline(props: { values: number[]; className: string }) {
@@ -73,21 +77,49 @@ function Sparkline(props: { values: number[]; className: string }) {
   )
 }
 
-function ChangeText(props: { change: number | null }) {
-  const { t, i18n } = useTranslation()
+/** A formatted value whose currency sign and unit use the small, muted style. */
+function SplitValue(props: { text: string }) {
+  const match = SPLIT_VALUE.exec(props.text)
+  if (!match) return props.text
+  const sign = match[1].trim()
+  const unit = match[3].trim()
+  return (
+    <>
+      {sign && (
+        <small className='text-subtle-foreground me-1 text-sm font-medium'>
+          {sign}
+        </small>
+      )}
+      {match[2].trim()}
+      {unit && (
+        <small className='text-subtle-foreground text-sm font-medium'>
+          {unit}
+        </small>
+      )}
+    </>
+  )
+}
+
+function ChangeText(props: { change: number | null; suffix: ReactNode }) {
+  const { i18n } = useTranslation()
   if (props.change === null) {
-    return <span>{t('No previous data')}</span>
+    return <span>{props.suffix}</span>
   }
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const up = props.change >= 0
+  // Changes always keep one decimal, e.g. 12.4% or 0.3%.
+  const percent = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Math.abs(props.change))
   return (
     <>
       <span
         className={cn('font-medium', up ? 'text-success' : 'text-destructive')}
       >
-        {up ? '↑' : '↓'} {formatNumber(Math.abs(props.change), locale)}%
+        {up ? '↑' : '↓'} {percent}%
       </span>
-      {t('vs previous period')}
+      {props.suffix}
     </>
   )
 }
@@ -103,22 +135,22 @@ function KpiCard(props: {
 }) {
   return (
     <div className='bg-card rounded-lg border px-[18px] pt-[18px] pb-3.5'>
-      <div className='text-muted-foreground flex items-center justify-between text-[12.5px]'>
+      <div className='text-subtle-foreground flex items-center justify-between text-[12.5px]'>
         <span>{props.label}</span>
         {props.tag != null && (
-          <span className='bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-medium'>
+          <span className='bg-primary/12 text-primary inline-flex h-[22px] items-center rounded-md px-2 text-xs font-medium'>
             {props.tag}
           </span>
         )}
       </div>
       {props.loading ? (
-        <Skeleton className='mt-2 mb-1.5 h-8 w-28' />
+        <Skeleton className='mt-[11px] mb-[9px] h-8 w-28' />
       ) : (
-        <div className='mt-1.5 mb-1 truncate text-[28px] leading-tight font-semibold tracking-tight tabular-nums'>
+        <div className='mt-1.5 mb-1 truncate text-[28px] leading-[1.55] font-semibold tracking-[-.03em] tabular-nums'>
           {props.value}
         </div>
       )}
-      <div className='text-muted-foreground flex min-h-[18px] items-center gap-1.5 text-xs'>
+      <div className='text-subtle-foreground flex min-h-[18px] items-center gap-1.5 text-xs'>
         {props.detail}
       </div>
       <Sparkline values={props.spark} className={props.sparkClassName} />
@@ -130,23 +162,54 @@ export function OverviewKpis(props: {
   period: OverviewPeriod
   aggregate: OverviewAggregate
   loading: boolean
-  performance?: PerformanceSummary | null
-  performanceLoading: boolean
+  failures: { current: number; previous: number; series: number[] }
+  failuresLoading: boolean
+  tokenSplit?: { input: number; output: number } | null
 }) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const current = props.aggregate.current
   const previous = props.aggregate.previous
-  const successRate = props.performance?.success_rate
+  const compare = t(OVERVIEW_PERIODS[props.period].compareKey)
+  const successRate = getSuccessRate(current.count, props.failures.current)
+  const previousRate = getSuccessRate(previous.count, props.failures.previous)
+  const rateChange =
+    successRate === null || previousRate === null
+      ? null
+      : successRate - previousRate
+  // Buckets without traffic count as healthy so the line only dips on failures.
+  const rateSeries = props.aggregate.series.count.map(
+    (count, index) =>
+      getSuccessRate(count, props.failures.series[index] ?? 0) ?? 100
+  )
+
+  let tokenDetail: ReactNode = (
+    <ChangeText
+      change={getPeriodChange(current.tokens, previous.tokens)}
+      suffix={compare}
+    />
+  )
+  if (props.tokenSplit) {
+    tokenDetail = (
+      <span>
+        {t('Input')} {formatCompactNumber(props.tokenSplit.input, TOKEN_LOCALE)}{' '}
+        · {t('Output')}{' '}
+        {formatCompactNumber(props.tokenSplit.output, TOKEN_LOCALE)}
+      </span>
+    )
+  }
 
   return (
-    <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4'>
+    <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4'>
       <KpiCard
-        label={t('Requests')}
+        label={t('Request count')}
         tag={t(OVERVIEW_PERIODS[props.period].labelKey)}
         value={formatNumber(current.count, locale)}
         detail={
-          <ChangeText change={getPeriodChange(current.count, previous.count)} />
+          <ChangeText
+            change={getPeriodChange(current.count, previous.count)}
+            suffix={compare}
+          />
         }
         spark={props.aggregate.series.count}
         sparkClassName='text-primary'
@@ -154,9 +217,12 @@ export function OverviewKpis(props: {
       />
       <KpiCard
         label={t('Spend')}
-        value={formatQuota(current.quota)}
+        value={<SplitValue text={formatQuota(current.quota)} />}
         detail={
-          <ChangeText change={getPeriodChange(current.quota, previous.quota)} />
+          <ChangeText
+            change={getPeriodChange(current.quota, previous.quota)}
+            suffix={compare}
+          />
         }
         spark={props.aggregate.series.quota}
         sparkClassName='text-foreground'
@@ -164,12 +230,12 @@ export function OverviewKpis(props: {
       />
       <KpiCard
         label={t('Token usage')}
-        value={formatCompactNumber(current.tokens, locale)}
-        detail={
-          <ChangeText
-            change={getPeriodChange(current.tokens, previous.tokens)}
+        value={
+          <SplitValue
+            text={formatCompactNumber(current.tokens, TOKEN_LOCALE)}
           />
         }
+        detail={tokenDetail}
         spark={props.aggregate.series.tokens}
         sparkClassName='text-foreground'
         loading={props.loading}
@@ -177,21 +243,28 @@ export function OverviewKpis(props: {
       <KpiCard
         label={t('Success rate')}
         value={
-          successRate == null ? (
+          successRate === null ? (
             '—'
           ) : (
             <>
               {formatNumber(successRate, locale)}
-              <small className='text-muted-foreground text-sm font-medium'>
+              <small className='text-subtle-foreground text-sm font-medium'>
                 %
               </small>
             </>
           )
         }
-        detail={<span>{t('All gateway traffic in this period')}</span>}
-        spark={[]}
+        detail={
+          <ChangeText
+            change={rateChange}
+            suffix={t('{{count}} failures retried automatically', {
+              count: props.failures.current,
+            })}
+          />
+        }
+        spark={rateSeries}
         sparkClassName='text-success'
-        loading={props.performanceLoading}
+        loading={props.loading || props.failuresLoading}
       />
     </div>
   )
