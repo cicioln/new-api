@@ -7471,6 +7471,16 @@
     "Priority / Weight": "Priority / Weight",
     "Used / Balance": "Used / Balance",
     "{{count}} channels total": "{{count}} channels total",
-    "Channel status enabled": "Enabled"
+    "Channel status enabled": "Enabled",
+    "Ratio settings": "Ratio settings",
+    "Unconfigured pricing": "Unconfigured pricing",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "Model metadata, vendors and listing status. The model square shows what is configured here.",
+    "Sync upstream": "Sync upstream",
+    "Channel count": "Channels",
+    "Billing metered": "Metered",
+    "Billing per call": "Per call",
+    "Listed": "Listed",
+    "List {{name}} in model square": "List {{name}} in model square",
+    "{{count}} models total": "{{count}} models total"
   }
 }

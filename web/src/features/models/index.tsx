@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -25,19 +25,30 @@ import { useTranslation } from 'react-i18next'
 import { SectionPageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
-import { listDeployments } from './api'
+import {
+  getDeploymentSettings,
+  getModels,
+  getVendors,
+  listDeployments,
+} from './api'
 import { DeploymentAccessGuard } from './components/deployment-access-guard'
 import { DeploymentsTable } from './components/deployments-table'
 import { CreateDeploymentDrawer } from './components/dialogs/create-deployment-drawer'
+import {
+  ModelPricingSettings,
+  useUnpricedModelCount,
+} from './components/model-pricing-settings'
 import { ModelsDialogs } from './components/models-dialogs'
 import { ModelsPrimaryButtons } from './components/models-primary-buttons'
 import { ModelsProvider, useModels } from './components/models-provider'
 import { ModelsTable } from './components/models-table'
 import { VendorsTable } from './components/vendors-table'
 import { useModelDeploymentSettings } from './hooks/use-model-deployment-settings'
-import { deploymentsQueryKeys } from './lib'
+import { deploymentsQueryKeys, modelsQueryKeys, vendorsQueryKeys } from './lib'
 import {
   type ModelsSectionId,
   MODELS_DEFAULT_SECTION,
@@ -46,23 +57,41 @@ import {
 
 const route = getRouteApi('/_authenticated/models/$section')
 
-const SECTION_META: Record<
-  ModelsSectionId,
-  { titleKey: string; tabKey: string }
-> = {
-  metadata: {
-    titleKey: 'Model management',
-    tabKey: 'Models',
-  },
-  vendors: { titleKey: 'Vendor management', tabKey: 'Vendors' },
-  deployments: {
-    titleKey: 'Deployments',
-    tabKey: 'Deployments',
-  },
+const SECTION_TABS: Record<ModelsSectionId, string> = {
+  metadata: 'Models',
+  vendors: 'Vendors',
+  pricing: 'Ratio settings',
+  unpriced: 'Unconfigured pricing',
+  deployments: 'Deployments',
+}
+
+function useSectionCounts(): Partial<Record<ModelsSectionId, number>> {
+  const params = { include_channel_models: true, p: 1, page_size: 20 }
+  const models = useQuery({
+    queryKey: modelsQueryKeys.list(params),
+    queryFn: async () => requireServerSuccess(await getModels(params)),
+  })
+  const vendors = useQuery({
+    queryKey: vendorsQueryKeys.list(),
+    queryFn: async () =>
+      requireServerSuccess(await getVendors({ page_size: 1000 })),
+  })
+  return {
+    metadata: models.data?.data?.total,
+    vendors: vendors.data?.data?.total,
+    unpriced: useUnpricedModelCount(),
+  }
 }
 
 function ModelsContent() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const counts = useSectionCounts()
+  const deploymentQuery = useQuery({
+    queryKey: ['deployment-settings'],
+    queryFn: getDeploymentSettings,
+    staleTime: 5 * 60 * 1000,
+  })
   const navigate = useNavigate({ from: '/models/$section' })
   const { tabCategory, setTabCategory, setOpen, setCurrentVendor } = useModels()
   const params = route.useParams()
@@ -90,8 +119,6 @@ function ModelsContent() {
     [navigate]
   )
 
-  const meta = SECTION_META[activeSection] ?? SECTION_META.metadata
-
   let actions = <ModelsPrimaryButtons />
   let content = <ModelsTable />
   if (activeSection === 'vendors') {
@@ -108,6 +135,13 @@ function ModelsContent() {
       </Button>
     )
     content = <VendorsTable />
+  } else if (activeSection === 'pricing' || activeSection === 'unpriced') {
+    content = (
+      <ModelPricingSettings
+        key={activeSection}
+        variant={activeSection === 'unpriced' ? 'unset' : 'all'}
+      />
+    )
   } else if (activeSection === 'deployments') {
     actions = (
       <Button onClick={() => setCreateDeploymentOpen(true)} size='sm'>
@@ -120,22 +154,43 @@ function ModelsContent() {
 
   return (
     <>
-      <SectionPageLayout
-        fixedContent
-        stackActionsOnMobile={activeSection === 'metadata'}
-      >
-        <SectionPageLayout.Title>{t(meta.titleKey)}</SectionPageLayout.Title>
+      <SectionPageLayout fixedContent>
+        <SectionPageLayout.Title>{t('Models')}</SectionPageLayout.Title>
+        <SectionPageLayout.Description>
+          {t(
+            'Model metadata, vendors and listing status. The model square shows what is configured here.'
+          )}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Actions>{actions}</SectionPageLayout.Actions>
         <SectionPageLayout.Content>
-          <div className='flex h-full min-h-0 flex-col gap-4'>
+          <div className='flex h-full min-h-0 flex-col gap-[18px]'>
             <Tabs value={activeSection} onValueChange={handleSectionChange}>
-              <TabsList className='max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto'>
-                {MODELS_SECTION_IDS.map((section) => (
-                  <TabsTrigger key={section} value={section}>
-                    {t(SECTION_META[section].tabKey)}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+              <div className='overflow-x-auto border-b'>
+                <TabsList
+                  variant='line'
+                  className='min-w-max justify-start gap-0.5 p-0 group-data-horizontal/tabs:h-auto'
+                >
+                  {MODELS_SECTION_IDS.filter(
+                    (section) =>
+                      section !== 'deployments' ||
+                      activeSection === 'deployments' ||
+                      deploymentQuery.data?.data?.enabled === true
+                  ).map((section) => (
+                    <TabsTrigger
+                      key={section}
+                      value={section}
+                      className='text-muted-foreground data-active:text-foreground flex-none gap-1 px-3 py-[9px] text-[13.5px] font-normal group-data-horizontal/tabs:after:bottom-[-1px] data-active:font-medium'
+                    >
+                      {t(SECTION_TABS[section])}
+                      {counts[section] !== undefined && (
+                        <span className='text-muted-foreground font-mono text-[11.5px]'>
+                          {formatNumber(counts[section], locale)}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
             </Tabs>
             <div className='min-h-0 flex-1'>{content}</div>
           </div>

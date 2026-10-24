@@ -7471,6 +7471,16 @@
     "Priority / Weight": "優先度 / 重み",
     "Used / Balance": "使用済み / 残高",
     "{{count}} channels total": "全 {{count}} 件のチャネル",
-    "Channel status enabled": "有効"
+    "Channel status enabled": "有効",
+    "Ratio settings": "倍率設定",
+    "Unconfigured pricing": "価格未設定",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "モデルのメタデータ、ベンダー、公開状態。モデル広場の表示内容はここで設定します。",
+    "Sync upstream": "上流と同期",
+    "Channel count": "チャネル数",
+    "Billing metered": "従量",
+    "Billing per call": "回数",
+    "Listed": "公開",
+    "List {{name}} in model square": "{{name}} をモデル広場に公開",
+    "{{count}} models total": "全 {{count}} 件のモデル"
   }
 }

@@ -7471,6 +7471,16 @@
     "Priority / Weight": "Priorité / Poids",
     "Used / Balance": "Utilisé / Solde",
     "{{count}} channels total": "{{count}} canaux au total",
-    "Channel status enabled": "Activé"
+    "Channel status enabled": "Activé",
+    "Ratio settings": "Ratios",
+    "Unconfigured pricing": "Prix non configurés",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "Métadonnées, fournisseurs et publication des modèles. La place des modèles affiche ce qui est configuré ici.",
+    "Sync upstream": "Synchroniser l’amont",
+    "Channel count": "Canaux",
+    "Billing metered": "À l’usage",
+    "Billing per call": "Par appel",
+    "Listed": "Publié",
+    "List {{name}} in model square": "Publier {{name}} sur la place des modèles",
+    "{{count}} models total": "{{count}} modèles au total"
   }
 }

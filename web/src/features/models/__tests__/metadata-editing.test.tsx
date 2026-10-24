@@ -68,6 +68,14 @@ function renderModelActions(currentModel: Model = model, role = 100) {
   return client
 }
 
+async function chooseAction(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string
+) {
+  await user.click(screen.getByRole('button', { name: 'Open menu' }))
+  await user.click(await screen.findByRole('menuitem', { name }))
+}
+
 describe('model pricing entry', () => {
   it('saves pricing and opens connections for a channel model without creating metadata', async () => {
     const channelModel = { ...model, id: 0, model_name: 'channel-only' }
@@ -102,11 +110,14 @@ describe('model pricing entry', () => {
     })
     const client = renderModelActions(channelModel)
     const user = userEvent.setup()
-    expect(screen.getByRole('button', { name: 'Add metadata' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Open menu' }))
     expect(
-      screen.queryByRole('button', { name: 'Open menu' })
+      await screen.findByRole('menuitem', { name: 'Add metadata' })
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('menuitem', { name: 'Delete' })
     ).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Pricing' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Pricing' }))
     expect(screen.getByRole('tab', { name: 'Pricing' })).not.toHaveAttribute(
       'aria-disabled',
       'true'
@@ -174,7 +185,7 @@ describe('model pricing entry', () => {
     })
     const client = renderModelActions()
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Pricing' }))
+    await chooseAction(user, 'Pricing')
     expect(screen.getByRole('tab', { name: 'Pricing' })).toHaveAttribute(
       'aria-selected',
       'true'
@@ -207,7 +218,7 @@ describe('model pricing entry', () => {
       ).toHaveClass('sm:max-w-[1280px]')
     }
     await user.click(screen.getByRole('button', { name: 'Close' }))
-    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    await chooseAction(user, 'Edit')
     expect(await screen.findByLabelText('Description')).toHaveValue('Original')
     expect(screen.getByRole('tab', { name: 'Model metadata' })).toHaveAttribute(
       'aria-selected',
@@ -216,14 +227,15 @@ describe('model pricing entry', () => {
     client.clear()
   })
 
-  it('does not expose a pricing shortcut to an ordinary administrator', () => {
+  it('does not expose a pricing shortcut to an ordinary administrator', async () => {
     vi.spyOn(api, 'get').mockResolvedValue({
       data: { success: true, data: { items: [] } },
     })
     const client = renderModelActions(model, 10)
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    expect(await screen.findByRole('menuitem', { name: 'Edit' })).toBeVisible()
     expect(
-      screen.queryByRole('button', { name: 'Pricing' })
+      screen.queryByRole('menuitem', { name: 'Pricing' })
     ).not.toBeInTheDocument()
     client.clear()
   })
@@ -261,7 +273,7 @@ describe('model pricing entry', () => {
     })
     const client = renderModelActions(matchedModel)
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Pricing' }))
+    await chooseAction(user, 'Pricing')
     await user.click(
       await screen.findByRole('combobox', { name: 'Select model' })
     )

@@ -26,6 +26,8 @@ import type { NameRule, ModelStatus, SyncSource } from './types'
 
 export const DEFAULT_PAGE_SIZE = 20
 
+export const MODEL_NUMERIC_COLUMNS = new Set(['channel_count'])
+
 // ============================================================================
 // Name Rule Options
 // ============================================================================

@@ -7471,6 +7471,16 @@
     "Priority / Weight": "Приоритет / Вес",
     "Used / Balance": "Использовано / Баланс",
     "{{count}} channels total": "Всего каналов: {{count}}",
-    "Channel status enabled": "Включён"
+    "Channel status enabled": "Включён",
+    "Ratio settings": "Коэффициенты",
+    "Unconfigured pricing": "Без цены",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "Метаданные моделей, поставщики и статус публикации. Витрина моделей показывает то, что настроено здесь.",
+    "Sync upstream": "Синхронизировать",
+    "Channel count": "Каналы",
+    "Billing metered": "По объёму",
+    "Billing per call": "За вызов",
+    "Listed": "Опубликовано",
+    "List {{name}} in model square": "Опубликовать {{name}} на витрине моделей",
+    "{{count}} models total": "Всего моделей: {{count}}"
   }
 }

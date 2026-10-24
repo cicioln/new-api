@@ -20,7 +20,11 @@ import type { TFunction } from 'i18next'
 
 import { formatTimestampToDate } from '@/lib/format'
 
-import { getNameRuleConfig, getQuotaTypeConfig } from '../constants'
+import {
+  ENDPOINT_TEMPLATES,
+  getNameRuleConfig,
+  getQuotaTypeConfig,
+} from '../constants'
 import type { NameRule, Model } from '../types'
 
 // ============================================================================
@@ -115,6 +119,33 @@ export function formatEndpointsDisplay(
   }
 
   return []
+}
+
+/**
+ * Request paths a model is served on: custom endpoints first, then the
+ * endpoint types reported by its channels.
+ */
+export function getModelEndpointPaths(model: {
+  endpoints?: string
+  supported_endpoints?: string[]
+}): string[] {
+  const parsed = parseEndpoints(model.endpoints)
+  const custom =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? Object.entries(parsed).map(([type, value]) => {
+          const path = (value as { path?: unknown } | null)?.path
+          return typeof path === 'string' && path
+            ? path
+            : (ENDPOINT_TEMPLATES[type]?.path ?? type)
+        })
+      : []
+  const types = model.supported_endpoints ?? []
+  return [
+    ...new Set([
+      ...custom,
+      ...types.map((type) => ENDPOINT_TEMPLATES[type]?.path ?? type),
+    ]),
+  ]
 }
 
 // ============================================================================

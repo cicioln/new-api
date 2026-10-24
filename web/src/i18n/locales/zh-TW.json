@@ -7471,6 +7471,16 @@
     "Priority / Weight": "優先級 / 權重",
     "Used / Balance": "已用 / 餘額",
     "{{count}} channels total": "共 {{count}} 個渠道",
-    "Channel status enabled": "啟用"
+    "Channel status enabled": "啟用",
+    "Ratio settings": "倍率設定",
+    "Unconfigured pricing": "未配置價格",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "模型中繼資料、供應商與上架狀態，模型廣場展示的內容來自這裡。",
+    "Sync upstream": "同步上游",
+    "Channel count": "渠道數",
+    "Billing metered": "按量",
+    "Billing per call": "按次",
+    "Listed": "上架",
+    "List {{name}} in model square": "在模型廣場上架 {{name}}",
+    "{{count}} models total": "共 {{count}} 個模型"
   }
 }

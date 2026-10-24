@@ -7471,6 +7471,16 @@
     "Priority / Weight": "Ưu tiên / Trọng số",
     "Used / Balance": "Đã dùng / Số dư",
     "{{count}} channels total": "Tổng cộng {{count}} kênh",
-    "Channel status enabled": "Bật"
+    "Channel status enabled": "Bật",
+    "Ratio settings": "Cài đặt hệ số",
+    "Unconfigured pricing": "Chưa cấu hình giá",
+    "Model metadata, vendors and listing status. The model square shows what is configured here.": "Siêu dữ liệu mô hình, nhà cung cấp và trạng thái hiển thị. Chợ mô hình hiển thị nội dung được cấu hình tại đây.",
+    "Sync upstream": "Đồng bộ thượng nguồn",
+    "Channel count": "Số kênh",
+    "Billing metered": "Theo lượng",
+    "Billing per call": "Theo lượt",
+    "Listed": "Hiển thị",
+    "List {{name}} in model square": "Hiển thị {{name}} trên chợ mô hình",
+    "{{count}} models total": "Tổng {{count}} mô hình"
   }
 }

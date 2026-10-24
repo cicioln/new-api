@@ -33,6 +33,16 @@ const MODELS_SECTIONS = [
     build: () => null,
   },
   {
+    id: 'pricing',
+    titleKey: 'Ratio settings',
+    build: () => null,
+  },
+  {
+    id: 'unpriced',
+    titleKey: 'Unconfigured pricing',
+    build: () => null,
+  },
+  {
     id: 'deployments',
     titleKey: 'Deployments',
     build: () => null, // Content is rendered directly in the page component
