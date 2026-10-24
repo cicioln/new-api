@@ -7487,6 +7487,13 @@
     "Normal": "正常",
     "Username, email or ID": "ユーザー名、メールまたは ID",
     "{{count}} users total": "全 {{count}} ユーザー",
-    "User groups, roles, quota and status.": "ユーザーのグループ、ロール、クォータと状態。"
+    "User groups, roles, quota and status.": "ユーザーのグループ、ロール、クォータと状態。",
+    "Export unused": "未使用をエクスポート",
+    "Batch generate": "一括生成",
+    "Name or redemption code": "名前または引き換えコード",
+    "{{count}} codes total": "全 {{count}} 件のコード",
+    "Generate quota redemption codes in bulk with optional expiry.": "クォータ引き換えコードを一括生成し、有効期限も設定できます。",
+    "No unused codes to export": "エクスポートできる未使用コードはありません",
+    "Exported {{count}} codes": "{{count}} 件のコードをエクスポートしました"
   }
 }

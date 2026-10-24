@@ -7487,6 +7487,13 @@
     "Normal": "Bình thường",
     "Username, email or ID": "Tên người dùng, email hoặc ID",
     "{{count}} users total": "Tổng cộng {{count}} người dùng",
-    "User groups, roles, quota and status.": "Nhóm, vai trò, hạn mức và trạng thái người dùng."
+    "User groups, roles, quota and status.": "Nhóm, vai trò, hạn mức và trạng thái người dùng.",
+    "Export unused": "Xuất mã chưa dùng",
+    "Batch generate": "Tạo hàng loạt",
+    "Name or redemption code": "Tên hoặc mã đổi thưởng",
+    "{{count}} codes total": "Tổng cộng {{count}} mã",
+    "Generate quota redemption codes in bulk with optional expiry.": "Tạo hàng loạt mã đổi hạn mức, có thể đặt thời hạn.",
+    "No unused codes to export": "Không có mã chưa dùng để xuất",
+    "Exported {{count}} codes": "Đã xuất {{count}} mã"
   }
 }

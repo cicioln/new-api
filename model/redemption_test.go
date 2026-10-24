@@ -78,6 +78,13 @@ func TestSearchRedemptionsFiltersAndPaginates(t *testing.T) {
 			wantIds:   []int{5},
 		},
 		{
+			name:      "keyword matches exact code",
+			keyword:   "00000000000000000000000000000004",
+			num:       10,
+			wantTotal: 1,
+			wantIds:   []int{4},
+		},
+		{
 			name:      "pagination keeps unpaged total",
 			startIdx:  1,
 			num:       2,
@@ -207,4 +214,27 @@ func TestRedeemConcurrentSingleSuccess(t *testing.T) {
 	var user User
 	require.NoError(t, DB.First(&user, "id = ?", userId).Error)
 	assert.Equal(t, 300, user.Quota, "quota must be credited exactly once")
+}
+
+func TestRedemptionListIncludesRedeemerUsername(t *testing.T) {
+	userId, key := setupRedeemFixture(t, 100)
+	require.NoError(t, DB.Model(&Redemption{}).Where(commonKeyCol+" = ?", key).Updates(map[string]any{
+		"status":       common.RedemptionCodeStatusUsed,
+		"used_user_id": userId,
+	}).Error)
+	require.NoError(t, DB.Create(&Redemption{Name: "unused", Key: "10000000000000000000000000000002", Status: common.RedemptionCodeStatusEnabled}).Error)
+
+	rows, total, err := GetAllRedemptions(0, 10)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	usernames := map[string]string{}
+	for _, row := range rows {
+		usernames[row.Name] = row.UsedUsername
+	}
+	assert.Equal(t, map[string]string{"redeem-test": "redeem-user", "unused": ""}, usernames)
+
+	rows, _, err = SearchRedemptions("redeem", "", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "redeem-user", rows[0].UsedUsername)
 }

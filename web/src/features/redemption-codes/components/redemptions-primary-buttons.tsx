@@ -16,85 +16,98 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
+import { formatQuota } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
 
-import { deleteInvalidRedemptions } from '../api'
-import { ERROR_MESSAGES } from '../constants'
+import { searchRedemptions } from '../api'
+import { ERROR_MESSAGES, REDEMPTION_STATUS } from '../constants'
+import type { Redemption } from '../types'
 import { useRedemptions } from './redemptions-provider'
+
+const EXPORT_PAGE_SIZE = 100
+
+async function fetchUnusedRedemptions(): Promise<Redemption[]> {
+  const items: Redemption[] = []
+  for (let page = 1; ; page++) {
+    const result = await searchRedemptions({
+      status: String(REDEMPTION_STATUS.ENABLED),
+      p: page,
+      page_size: EXPORT_PAGE_SIZE,
+    })
+    if (!result.success) throw result
+    const pageItems = result.data?.items ?? []
+    items.push(...pageItems)
+    if (
+      pageItems.length < EXPORT_PAGE_SIZE ||
+      items.length >= (result.data?.total ?? 0)
+    ) {
+      return items
+    }
+  }
+}
+
+function downloadRedemptions(items: Redemption[]) {
+  const content = `${items
+    .map((item) =>
+      [item.name, item.key, formatQuota(item.quota)]
+        .map((value) => value.replaceAll(/[\t\r\n]+/g, ' '))
+        .join('\t')
+    )
+    .join('\n')}\n`
+  const url = URL.createObjectURL(
+    new Blob([content], { type: 'text/plain;charset=utf-8' })
+  )
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `redemption-codes-unused-${Date.now()}.txt`
+  document.body.append(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
 
 export function RedemptionsPrimaryButtons() {
   const { t } = useTranslation()
-  const { setOpen, triggerRefresh } = useRedemptions()
-  const [showDeleteInvalidConfirm, setShowDeleteInvalidConfirm] =
-    useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const { setOpen } = useRedemptions()
+  const [isExporting, setIsExporting] = useState(false)
 
-  const handleDeleteInvalid = async () => {
-    setIsDeleting(true)
+  const handleExport = async () => {
+    setIsExporting(true)
     try {
-      const result = await deleteInvalidRedemptions()
-      if (result.success) {
-        const count = result.data || 0
-        toast.success(
-          t('Successfully deleted {{count}} invalid redemption codes', {
-            count,
-          })
-        )
-        triggerRefresh()
-        setShowDeleteInvalidConfirm(false)
-      } else {
-        handleServerError(result, t(ERROR_MESSAGES.DELETE_INVALID_FAILED))
+      const items = await fetchUnusedRedemptions()
+      if (items.length === 0) {
+        toast.info(t('No unused codes to export'))
+        return
       }
+      downloadRedemptions(items)
+      toast.success(t('Exported {{count}} codes', { count: items.length }))
+    } catch (error) {
+      handleServerError(error, t(ERROR_MESSAGES.LOAD_FAILED))
     } finally {
-      setIsDeleting(false)
+      setIsExporting(false)
     }
   }
 
   return (
-    <>
-      <div className='flex flex-wrap gap-2'>
-        <Button
-          size='sm'
-          variant='outline'
-          onClick={() => setShowDeleteInvalidConfirm(true)}
-        >
-          <Trash2 className='text-destructive h-4 w-4' />
-          {t('Delete Invalid')}
-        </Button>
-        <Button size='sm' onClick={() => setOpen('create')}>
-          <Plus className='h-4 w-4' />
-          {t('Create Code')}
-        </Button>
-      </div>
-
-      <ConfirmDialog
-        destructive
-        open={showDeleteInvalidConfirm}
-        onOpenChange={setShowDeleteInvalidConfirm}
-        handleConfirm={handleDeleteInvalid}
-        isLoading={isDeleting}
-        className='max-w-md'
-        title={t('Delete Invalid Redemption Codes?')}
-        desc={
-          <>
-            <Trans
-              t={t}
-              i18nKey='This will delete all <strong>used</strong>, <strong>disabled</strong>, and <strong>expired</strong> redemption codes.'
-              components={{ strong: <strong /> }}
-            />
-            <br />
-            {t('This action cannot be undone.')}
-          </>
-        }
-        confirmText={t('Delete Invalid')}
-      />
-    </>
+    <div className='flex flex-wrap gap-2'>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={handleExport}
+        disabled={isExporting}
+      >
+        {t('Export unused')}
+      </Button>
+      <Button size='sm' onClick={() => setOpen('create')}>
+        <Plus aria-hidden='true' />
+        {t('Batch generate')}
+      </Button>
+    </div>
   )
 }

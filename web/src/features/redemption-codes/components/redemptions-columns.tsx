@@ -17,246 +17,126 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { ColumnDef } from '@tanstack/react-table'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { MaskedValueDisplay } from '@/components/masked-value-display'
-import { StatusBadge } from '@/components/status-badge'
-import { TableId } from '@/components/table-id'
-import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { formatQuota, formatTimestampToDate } from '@/lib/format'
+import dayjs from '@/lib/dayjs'
+import { formatQuota } from '@/lib/format'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import { REDEMPTION_FILTER_EXPIRED, REDEMPTION_STATUSES } from '../constants'
-import { isRedemptionExpired, isTimestampExpired } from '../lib'
+import { REDEMPTION_FILTER_EXPIRED } from '../constants'
+import { isRedemptionExpired } from '../lib'
 import type { Redemption } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
+import { RedemptionCodeCell } from './redemption-code-cell'
+import { RedemptionStatusTag } from './redemption-status-tag'
 
 export function useRedemptionsColumns(): ColumnDef<Redemption>[] {
   const { t } = useTranslation()
-  return [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={table.getIsSomePageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label={t('Select all')}
-          className='translate-y-[2px]'
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label={t('Select row')}
-          className='translate-y-[2px]'
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      size: 40,
-    },
-    {
-      accessorKey: 'id',
-      header: t('ID'),
-      meta: { mobileHidden: true },
-      cell: ({ row }) => {
-        return (
-          <TableId value={row.getValue('id') as number} className='w-[60px]' />
-        )
+  const currencyConfig = useSystemConfigStore((state) => state.config.currency)
+  return useMemo<ColumnDef<Redemption>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: t('ID'),
+        enableSorting: false,
+        meta: { mobileHidden: true },
+        cell: ({ row }) => (
+          <span className='text-muted-foreground font-mono! text-[12.5px]!'>
+            {row.original.id}
+          </span>
+        ),
+        size: 64,
       },
-      size: 80,
-    },
-    {
-      accessorKey: 'name',
-      header: t('Name'),
-      meta: { mobileTitle: true },
-      cell: ({ row }) => (
-        <span className='font-medium'>{row.getValue('name')}</span>
-      ),
-      size: 180,
-    },
-    {
-      accessorKey: 'status',
-      header: t('Status'),
-      meta: { mobileBadge: true },
-      cell: ({ row }) => {
-        const redemption = row.original
-        const statusValue = row.getValue('status') as number
-
-        // Check if expired
-        if (isRedemptionExpired(redemption.expired_time, statusValue)) {
-          return (
-            <StatusBadge
-              label={t('Expired')}
-              variant='warning'
-              copyable={false}
-              className='-ml-1.5'
-            />
-          )
-        }
-
-        const statusConfig = REDEMPTION_STATUSES[statusValue]
-
-        if (!statusConfig) {
-          return null
-        }
-
-        return (
-          <StatusBadge
-            label={t(statusConfig.labelKey)}
-            variant={statusConfig.variant}
-            copyable={false}
-            className='-ml-1.5'
-          />
-        )
+      {
+        accessorKey: 'name',
+        header: t('Name'),
+        enableSorting: false,
+        meta: { mobileTitle: true },
+        cell: ({ row }) => (
+          <span className='whitespace-nowrap'>{row.original.name}</span>
+        ),
       },
-      filterFn: (row, id, value) => {
-        const redemption = row.original
-        const statusValue = row.getValue(id) as number
-
-        // Check if expired status is being filtered
-        if (value.includes(REDEMPTION_FILTER_EXPIRED)) {
-          if (isRedemptionExpired(redemption.expired_time, statusValue)) {
+      {
+        id: 'code',
+        accessorKey: 'key',
+        header: t('Redemption Code'),
+        enableSorting: false,
+        cell: ({ row }) => <RedemptionCodeCell code={row.original.key} />,
+      },
+      {
+        accessorKey: 'quota',
+        header: t('Quota'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <span className='font-mono! text-[12.5px]! tabular-nums'>
+            {formatQuota(row.original.quota)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('Status'),
+        enableSorting: false,
+        meta: { mobileBadge: true },
+        cell: ({ row }) => <RedemptionStatusTag redemption={row.original} />,
+        filterFn: (row, id, value) => {
+          const redemption = row.original
+          const statusValue = row.getValue(id) as number
+          if (
+            value.includes(REDEMPTION_FILTER_EXPIRED) &&
+            isRedemptionExpired(redemption.expired_time, statusValue)
+          ) {
             return true
           }
-        }
-
-        // Check regular status
-        return value.includes(String(statusValue))
+          return value.includes(String(statusValue))
+        },
       },
-      size: 120,
-    },
-    {
-      id: 'code',
-      accessorKey: 'key',
-      header: t('Redemption Code'),
-      cell: function CodeCell({ row }) {
-        const redemption = row.original
-        const key = redemption.key
-        const maskedKey = `${key.slice(0, 8)}${'*'.repeat(16)}${key.slice(-8)}`
-
-        return (
-          <MaskedValueDisplay
-            label={t('Full Code')}
-            fullValue={key}
-            maskedValue={maskedKey}
-            copyTooltip={t('Copy code')}
-            copyAriaLabel={t('Copy redemption code')}
-          />
-        )
-      },
-      enableSorting: false,
-      size: 320,
-    },
-    {
-      accessorKey: 'quota',
-      header: t('Quota'),
-      cell: ({ row }) => {
-        const quota = row.getValue('quota') as number
-        return (
-          <StatusBadge
-            label={formatQuota(quota)}
-            variant='neutral'
-            copyable={false}
-            className='-ml-1.5'
-          />
-        )
-      },
-      size: 120,
-    },
-    {
-      accessorKey: 'created_time',
-      header: t('Created'),
-      meta: { mobileHidden: true },
-      cell: ({ row }) => {
-        return (
-          <div className='min-w-[160px] font-mono text-sm'>
-            {formatTimestampToDate(row.getValue('created_time'))}
-          </div>
-        )
-      },
-      size: 180,
-    },
-    {
-      accessorKey: 'expired_time',
-      header: t('Expires'),
-      meta: { mobileHidden: true },
-      cell: ({ row }) => {
-        const expiredTime = row.getValue('expired_time') as number
-        if (expiredTime === 0) {
+      {
+        accessorKey: 'used_user_id',
+        header: t('Redeemed By'),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const redemption = row.original
+          if (redemption.used_user_id === 0) return '—'
           return (
-            <StatusBadge
-              label={t('Never')}
-              variant='neutral'
-              copyable={false}
-              className='-ml-1.5'
-            />
+            <span className='whitespace-nowrap'>
+              {redemption.used_username ||
+                t('User {{id}}', { id: redemption.used_user_id })}
+            </span>
           )
-        }
-        const isExpired = isTimestampExpired(expiredTime)
-        return (
-          <div
-            className={`min-w-[160px] font-mono text-sm ${isExpired ? 'text-destructive' : ''}`}
-          >
-            {formatTimestampToDate(expiredTime)}
+        },
+      },
+      {
+        accessorKey: 'expired_time',
+        header: t('Expiration Time'),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const expiredTime = row.original.expired_time
+          return (
+            <span className='text-muted-foreground whitespace-nowrap'>
+              {expiredTime === 0
+                ? t('Never expires')
+                : dayjs(expiredTime * 1000).format('YYYY-MM-DD')}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <span className='sr-only'>{t('Actions')}</span>,
+        enableSorting: false,
+        enableHiding: false,
+        size: 44,
+        cell: ({ row }) => (
+          <div className='-my-1.5'>
+            <DataTableRowActions row={row} />
           </div>
-        )
+        ),
       },
-      size: 180,
-    },
-    {
-      accessorKey: 'used_user_id',
-      header: t('Redeemed By'),
-      meta: { mobileHidden: true },
-      cell: ({ row }) => {
-        const userId = row.getValue('used_user_id') as number
-        const redemption = row.original
-
-        if (userId === 0) {
-          return <span className='text-muted-foreground text-sm'>-</span>
-        }
-
-        return (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <StatusBadge
-                  label={t('User {{id}}', { id: userId })}
-                  variant='neutral'
-                  copyable={false}
-                  className='cursor-help'
-                />
-              }
-            ></TooltipTrigger>
-            <TooltipContent>
-              <div className='space-y-1 text-xs'>
-                <div>
-                  {t('User ID:')} {userId}
-                </div>
-                {redemption.redeemed_time > 0 && (
-                  <div>
-                    {t('Redeemed:')}{' '}
-                    {formatTimestampToDate(redemption.redeemed_time)}
-                  </div>
-                )}
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        )
-      },
-      size: 140,
-    },
-    {
-      id: 'actions',
-      header: () => t('Actions'),
-      cell: ({ row }) => <DataTableRowActions row={row} />,
-      meta: { pinned: 'right' as const },
-    },
-  ]
+    ],
+    // Quota formatting reads the currency configuration from the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, currencyConfig]
+  )
 }

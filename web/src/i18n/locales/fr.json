@@ -7487,6 +7487,13 @@
     "Normal": "Normal",
     "Username, email or ID": "Nom d'utilisateur, e-mail ou ID",
     "{{count}} users total": "{{count}} utilisateurs au total",
-    "User groups, roles, quota and status.": "Groupes, rôles, quotas et statut des utilisateurs."
+    "User groups, roles, quota and status.": "Groupes, rôles, quotas et statut des utilisateurs.",
+    "Export unused": "Exporter les codes inutilisés",
+    "Batch generate": "Générer en lot",
+    "Name or redemption code": "Nom ou code d'échange",
+    "{{count}} codes total": "{{count}} codes au total",
+    "Generate quota redemption codes in bulk with optional expiry.": "Générez des codes d'échange de quota en lot, avec expiration facultative.",
+    "No unused codes to export": "Aucun code inutilisé à exporter",
+    "Exported {{count}} codes": "{{count}} codes exportés"
   }
 }

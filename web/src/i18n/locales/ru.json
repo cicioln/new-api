@@ -7487,6 +7487,13 @@
     "Normal": "Активен",
     "Username, email or ID": "Имя пользователя, email или ID",
     "{{count}} users total": "Всего пользователей: {{count}}",
-    "User groups, roles, quota and status.": "Группы, роли, квоты и статус пользователей."
+    "User groups, roles, quota and status.": "Группы, роли, квоты и статус пользователей.",
+    "Export unused": "Экспорт неиспользованных",
+    "Batch generate": "Массовая генерация",
+    "Name or redemption code": "Название или код погашения",
+    "{{count}} codes total": "Всего кодов: {{count}}",
+    "Generate quota redemption codes in bulk with optional expiry.": "Массовая генерация кодов погашения квоты с необязательным сроком действия.",
+    "No unused codes to export": "Нет неиспользованных кодов для экспорта",
+    "Exported {{count}} codes": "Экспортировано кодов: {{count}}"
   }
 }

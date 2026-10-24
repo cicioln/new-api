@@ -7487,6 +7487,13 @@
     "Normal": "正常",
     "Username, email or ID": "用户名、邮箱或 ID",
     "{{count}} users total": "共 {{count}} 位用户",
-    "User groups, roles, quota and status.": "用户分组、角色、额度与状态。"
+    "User groups, roles, quota and status.": "用户分组、角色、额度与状态。",
+    "Export unused": "导出未使用",
+    "Batch generate": "批量生成",
+    "Name or redemption code": "名称或兑换码",
+    "{{count}} codes total": "共 {{count}} 个兑换码",
+    "Generate quota redemption codes in bulk with optional expiry.": "批量生成额度兑换码，可设置有效期。",
+    "No unused codes to export": "没有可导出的未使用兑换码",
+    "Exported {{count}} codes": "已导出 {{count}} 个兑换码"
   }
 }

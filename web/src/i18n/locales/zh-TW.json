@@ -7487,6 +7487,13 @@
     "Normal": "正常",
     "Username, email or ID": "使用者名稱、電子郵件或 ID",
     "{{count}} users total": "共 {{count}} 位使用者",
-    "User groups, roles, quota and status.": "使用者分組、角色、額度與狀態。"
+    "User groups, roles, quota and status.": "使用者分組、角色、額度與狀態。",
+    "Export unused": "匯出未使用",
+    "Batch generate": "批次產生",
+    "Name or redemption code": "名稱或兌換碼",
+    "{{count}} codes total": "共 {{count}} 個兌換碼",
+    "Generate quota redemption codes in bulk with optional expiry.": "批次產生額度兌換碼，可設定有效期限。",
+    "No unused codes to export": "沒有可匯出的未使用兌換碼",
+    "Exported {{count}} codes": "已匯出 {{count}} 個兌換碼"
   }
 }

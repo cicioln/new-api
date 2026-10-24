@@ -33,6 +33,9 @@ export function Redemptions() {
         <SectionPageLayout.Title>
           {t('Redemption Codes')}
         </SectionPageLayout.Title>
+        <SectionPageLayout.Description>
+          {t('Generate quota redemption codes in bulk with optional expiry.')}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Actions>
           <RedemptionsPrimaryButtons />
         </SectionPageLayout.Actions>

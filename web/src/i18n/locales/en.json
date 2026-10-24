@@ -7487,6 +7487,13 @@
     "Normal": "Normal",
     "Username, email or ID": "Username, email or ID",
     "{{count}} users total": "{{count}} users total",
-    "User groups, roles, quota and status.": "User groups, roles, quota and status."
+    "User groups, roles, quota and status.": "User groups, roles, quota and status.",
+    "Export unused": "Export unused",
+    "Batch generate": "Batch generate",
+    "Name or redemption code": "Name or redemption code",
+    "{{count}} codes total": "{{count}} codes total",
+    "Generate quota redemption codes in bulk with optional expiry.": "Generate quota redemption codes in bulk with optional expiry.",
+    "No unused codes to export": "No unused codes to export",
+    "Exported {{count}} codes": "Exported {{count}} codes"
   }
 }

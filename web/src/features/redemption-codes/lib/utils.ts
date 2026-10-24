@@ -43,3 +43,11 @@ export function isRedemptionExpired(
 ): boolean {
   return status === 1 && isTimestampExpired(expired_time)
 }
+
+/**
+ * Mask a redemption code for list display, keeping the first and last 4 chars
+ */
+export function maskRedemptionCode(code: string): string {
+  if (code.length <= 8) return code
+  return `${code.slice(0, 4)}-•••-${code.slice(-4)}`
+}

@@ -21,40 +21,24 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  DISABLED_ROW_DESKTOP,
-  DISABLED_ROW_MOBILE,
-  DataTablePage,
-  useDataTable,
-} from '@/components/data-table'
+import { DataTablePage, useDataTable } from '@/components/data-table'
 import { useMediaQuery } from '@/hooks'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { createServerError } from '@/lib/server-error-message'
 
 import { getRedemptions, searchRedemptions } from '../api'
-import {
-  ERROR_MESSAGES,
-  REDEMPTION_STATUS,
-  getRedemptionStatusOptions,
-} from '../constants'
-import { isRedemptionExpired } from '../lib'
-import type { Redemption } from '../types'
-import { DataTableBulkActions } from './data-table-bulk-actions'
+import { ERROR_MESSAGES, getRedemptionStatusOptions } from '../constants'
 import { useRedemptionsColumns } from './redemptions-columns'
 import { RedemptionsMobileList } from './redemptions-mobile-list'
 import { useRedemptions } from './redemptions-provider'
 
 const route = getRouteApi('/_authenticated/redemption-codes/')
 
-function isDisabledRedemptionRow(redemption: Redemption) {
-  return (
-    redemption.status !== REDEMPTION_STATUS.ENABLED ||
-    isRedemptionExpired(redemption.expired_time, redemption.status)
-  )
-}
-
 export function RedemptionsTable() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const columns = useRedemptionsColumns()
   const { refreshTrigger } = useRedemptions()
   const isMobile = useMediaQuery('(max-width: 640px)')
@@ -131,7 +115,6 @@ export function RedemptionsTable() {
   const { table } = useDataTable({
     data: redemptions,
     columns,
-    enableRowSelection: true,
     getRowId: (row) => String(row.id),
     columnFilters,
     globalFilter,
@@ -169,9 +152,15 @@ export function RedemptionsTable() {
       )}
       skeletonKeyPrefix='redemptions-skeleton'
       applyHeaderSize
+      fixedHeight={false}
+      simplePagination
+      paginationTotalLabel={(total) =>
+        t('{{count}} codes total', { count: formatNumber(total, locale) })
+      }
       toolbarProps={{
-        searchPlaceholder: t('Filter by name or ID...'),
+        searchPlaceholder: t('Name or redemption code'),
         searchDebounceMs: 500,
+        hideViewOptions: true,
         filters: [
           {
             columnId: 'status',
@@ -182,11 +171,9 @@ export function RedemptionsTable() {
         ],
       }}
       mobile={<RedemptionsMobileList table={table} isLoading={isLoading} />}
-      getRowClassName={(row, { isMobile }) => {
-        if (!isDisabledRedemptionRow(row.original)) return undefined
-        return isMobile ? DISABLED_ROW_MOBILE : DISABLED_ROW_DESKTOP
-      }}
-      bulkActions={<DataTableBulkActions table={table} />}
+      getColumnClassName={(columnId) =>
+        columnId === 'quota' ? 'text-right' : undefined
+      }
     />
   )
 }

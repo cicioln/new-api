@@ -21,6 +21,7 @@ type Redemption struct {
 	RedeemedTime int64          `json:"redeemed_time" gorm:"bigint"`
 	Count        int            `json:"count" gorm:"-:all"` // only for api request
 	UsedUserId   int            `json:"used_user_id"`
+	UsedUsername string         `json:"used_username" gorm:"-:all"` // only for api response
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 	ExpiredTime  int64          `json:"expired_time" gorm:"bigint"` // 过期时间，0 表示不过期
 }
@@ -56,7 +57,35 @@ func GetAllRedemptions(startIdx int, num int) (redemptions []*Redemption, total 
 		return nil, 0, err
 	}
 
+	fillRedemptionUsernames(redemptions)
 	return redemptions, total, nil
+}
+
+// fillRedemptionUsernames resolves the redeemer usernames shown in the admin list.
+func fillRedemptionUsernames(redemptions []*Redemption) {
+	ids := make([]int, 0, len(redemptions))
+	for _, redemption := range redemptions {
+		if redemption.UsedUserId != 0 {
+			ids = append(ids, redemption.UsedUserId)
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+	var users []struct {
+		Id       int
+		Username string
+	}
+	if err := DB.Model(&User{}).Unscoped().Select("id", "username").Where("id IN ?", ids).Find(&users).Error; err != nil {
+		return
+	}
+	usernames := make(map[int]string, len(users))
+	for _, user := range users {
+		usernames[user.Id] = user.Username
+	}
+	for _, redemption := range redemptions {
+		redemption.UsedUsername = usernames[redemption.UsedUserId]
+	}
 }
 
 func SearchRedemptions(keyword string, status string, startIdx int, num int) (redemptions []*Redemption, total int64, err error) {
@@ -74,9 +103,9 @@ func SearchRedemptions(keyword string, status string, startIdx int, num int) (re
 
 	if keyword != "" {
 		if id, err := strconv.Atoi(keyword); err == nil {
-			query = query.Where("id = ? OR name LIKE ?", id, keyword+"%")
+			query = query.Where("id = ? OR name LIKE ? OR "+commonKeyCol+" = ?", id, keyword+"%", keyword)
 		} else {
-			query = query.Where("name LIKE ?", keyword+"%")
+			query = query.Where("name LIKE ? OR "+commonKeyCol+" = ?", keyword+"%", keyword)
 		}
 	}
 
@@ -120,6 +149,7 @@ func SearchRedemptions(keyword string, status string, startIdx int, num int) (re
 		return nil, 0, err
 	}
 
+	fillRedemptionUsernames(redemptions)
 	return redemptions, total, nil
 }
 
