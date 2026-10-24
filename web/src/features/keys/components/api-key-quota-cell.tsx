@@ -87,28 +87,59 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
     })
   }
 
+  const popoverTitle = `${t('Quota')} (${quotaUnit})`
+  const popoverDescription = props.apiKey.unlimited_quota
+    ? t(
+        'This API key has no quota limit. Requests still require available wallet or subscription quota.'
+      )
+    : t(
+        'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
+      )
+
+  if (props.variant !== 'card') {
+    const usedPercentage = hasProgress ? 100 - percentage : 0
+    const unitPrefix = currency.kind === 'tokens' ? '' : `${currency.symbol} `
+    return (
+      <QuotaDetailsPopover
+        title={popoverTitle}
+        triggerLabel={triggerLabel}
+        details={details}
+        description={popoverDescription}
+        className='w-[120px]'
+        afterTrigger={
+          <Progress
+            value={usedPercentage}
+            aria-label={t('Used percentage')}
+            className={cn(
+              'mt-1 w-full [&_[data-slot=progress-indicator]]:bg-current',
+              usedPercentage > 90 ? 'text-destructive' : 'text-foreground'
+            )}
+          />
+        }
+      >
+        <span
+          data-slot='api-key-quota-values'
+          className={cn(
+            'text-subtle-foreground block min-w-0 truncate font-mono! text-[11.5px]!',
+            !props.apiKey.unlimited_quota && remaining < 0 && 'text-destructive'
+          )}
+        >
+          {props.apiKey.unlimited_quota
+            ? t('Unlimited quota')
+            : `${unitPrefix}${formattedUsed} / ${formattedTotal}`}
+        </span>
+      </QuotaDetailsPopover>
+    )
+  }
+
   return (
     <QuotaDetailsPopover
-      title={`${t('Quota')} (${quotaUnit})`}
-      triggerLabel={
-        props.variant === 'card'
-          ? `${t('Quota')} (${quotaUnit}); ${triggerLabel}`
-          : triggerLabel
-      }
+      title={popoverTitle}
+      triggerLabel={`${t('Quota')} (${quotaUnit}); ${triggerLabel}`}
       details={details}
-      description={
-        props.apiKey.unlimited_quota
-          ? t(
-              'This API key has no quota limit. Requests still require available wallet or subscription quota.'
-            )
-          : t(
-              'Total = used + remaining. It is not an initial allocation or a periodic budget; changing the remaining quota changes the total and percentage.'
-            )
-      }
-      className={
-        props.variant === 'card' ? 'space-y-2.5' : 'max-w-45 space-y-1.5'
-      }
-      triggerClassName={props.variant === 'card' ? 'py-0' : undefined}
+      description={popoverDescription}
+      className='space-y-2.5'
+      triggerClassName='py-0'
       afterTrigger={
         !props.apiKey.unlimited_quota && (
           <Progress
@@ -124,25 +155,15 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
     >
       <span
         data-slot='api-key-quota-values'
-        className={cn(
-          'grid w-full min-w-0 items-baseline gap-x-2 gap-y-1 text-sm',
-          props.variant === 'card'
-            ? 'grid-cols-[auto_minmax(0,1fr)]'
-            : 'grid-cols-2'
-        )}
+        className='grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-2 gap-y-1 text-sm'
       >
-        {props.variant === 'card' && (
-          <span className='text-muted-foreground'>
-            {t('Remaining')}
-            <span className='ml-1'>({quotaUnit})</span>
-          </span>
-        )}
+        <span className='text-muted-foreground'>
+          {t('Remaining')}
+          <span className='ml-1'>({quotaUnit})</span>
+        </span>
         <span
           className={cn(
-            'min-w-0 truncate',
-            props.variant === 'card'
-              ? 'text-right text-sm leading-5 font-normal'
-              : 'text-left font-medium',
+            'min-w-0 truncate text-right text-sm leading-5 font-normal',
             !props.apiKey.unlimited_quota && 'tabular-nums',
             !props.apiKey.unlimited_quota &&
               remaining < 0 &&
@@ -154,15 +175,8 @@ export function ApiKeyQuotaCell(props: ApiKeyQuotaCellProps) {
         >
           {props.apiKey.unlimited_quota ? t('Unlimited') : formattedRemaining}
         </span>
-        {props.variant === 'card' && (
-          <span className='text-muted-foreground'>{t('Used amount')}</span>
-        )}
-        <span
-          className={cn(
-            'text-muted-foreground min-w-0 truncate text-right tabular-nums',
-            props.variant === 'card' && 'text-sm leading-5 font-normal'
-          )}
-        >
+        <span className='text-muted-foreground'>{t('Used amount')}</span>
+        <span className='text-muted-foreground min-w-0 truncate text-right text-sm leading-5 font-normal tabular-nums'>
           {formattedUsed}
         </span>
       </span>

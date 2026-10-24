@@ -16,12 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Check, Copy, Loader2 } from 'lucide-react'
+import { Check, Copy, Eye, Loader2 } from 'lucide-react'
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BadgeCell } from '@/components/data-table'
-import { MaskedValueTrigger } from '@/components/masked-value-display'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,7 +53,7 @@ export function ApiKeyCell({ apiKey }: { apiKey: ApiKey }) {
   const isLoading = !!loadingKeys[apiKey.id]
   const resolvedFullKey = resolvedKeys[apiKey.id]
   const isCopied = copiedKeyId === apiKey.id
-  const maskedKey = `sk-${apiKey.key}`
+  const maskedKey = `sk-••••${apiKey.key.slice(-4)}`
 
   const handlePopoverOpen = useCallback(
     (open: boolean) => {
@@ -74,21 +73,34 @@ export function ApiKeyCell({ apiKey }: { apiKey: ApiKey }) {
     if (ok) markKeyCopied(apiKey.id)
   }, [resolvedFullKey, resolveRealKey, apiKey.id, markKeyCopied])
 
-  let copyIcon = <Copy className='size-3.5' />
+  let copyIcon = <Copy className='size-[13px]' />
   let copyTooltip = t('Copy API key')
   if (isLoading) {
-    copyIcon = <Loader2 className='size-3.5 animate-spin' />
+    copyIcon = <Loader2 className='size-[13px] animate-spin' />
     copyTooltip = t('Loading...')
   } else if (isCopied) {
-    copyIcon = <Check className='size-3.5 text-green-600' />
+    copyIcon = <Check className='text-success size-[13px]' />
     copyTooltip = t('Copied!')
   }
 
   return (
-    <div className='flex max-w-full min-w-0 items-center'>
+    <span
+      data-slot='api-key-value'
+      className='bg-muted inline-flex max-w-full min-w-0 items-center gap-2 rounded-md px-2 py-[3px] font-mono! text-[12.5px]!'
+    >
+      <span className='truncate'>{maskedKey}</span>
       <Popover open={popoverOpen} onOpenChange={handlePopoverOpen}>
-        <PopoverTrigger render={<MaskedValueTrigger />}>
-          <span className='truncate'>{maskedKey}</span>
+        <PopoverTrigger
+          render={
+            <Button
+              variant='ghost'
+              size='icon-xs'
+              aria-label={t('Reveal key')}
+              className='text-subtle-foreground hover:text-foreground size-auto shrink-0 p-0 hover:bg-transparent aria-expanded:bg-transparent'
+            />
+          }
+        >
+          <Eye className='size-[13px]' aria-hidden='true' />
         </PopoverTrigger>
         <PopoverContent
           className='w-auto max-w-[min(90vw,28rem)]'
@@ -106,7 +118,7 @@ export function ApiKeyCell({ apiKey }: { apiKey: ApiKey }) {
             ) : (
               <input
                 readOnly
-                value={resolvedFullKey || maskedKey}
+                value={resolvedFullKey || `sk-${apiKey.key}`}
                 autoFocus
                 onFocus={(e) => e.target.select()}
                 className='bg-muted/50 w-full min-w-[280px] rounded-md border px-3 py-2 font-mono text-xs outline-none'
@@ -120,10 +132,11 @@ export function ApiKeyCell({ apiKey }: { apiKey: ApiKey }) {
           render={
             <Button
               variant='ghost'
-              size='icon'
-              className='size-7 shrink-0'
+              size='icon-xs'
+              aria-label={copyTooltip}
               onClick={handleCopy}
               disabled={isLoading}
+              className='text-subtle-foreground hover:text-foreground size-auto shrink-0 p-0 hover:bg-transparent'
             />
           }
         >
@@ -131,7 +144,7 @@ export function ApiKeyCell({ apiKey }: { apiKey: ApiKey }) {
         </TooltipTrigger>
         <TooltipContent>{copyTooltip}</TooltipContent>
       </Tooltip>
-    </div>
+    </span>
   )
 }
 

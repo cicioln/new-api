@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type StatusBadgeProps } from '@/components/status-badge'
+import type { StatusBadgeProps } from '@/components/status-badge'
 
 // ============================================================================
 // API Key Status Configuration
@@ -38,7 +38,7 @@ export const API_KEY_STATUSES: Record<
   }
 > = {
   [API_KEY_STATUS.ENABLED]: {
-    label: 'Enabled',
+    label: 'Key status enabled',
     variant: 'success',
     value: API_KEY_STATUS.ENABLED,
   },
@@ -49,7 +49,7 @@ export const API_KEY_STATUSES: Record<
   },
   [API_KEY_STATUS.EXPIRED]: {
     label: 'Expired',
-    variant: 'warning',
+    variant: 'danger',
     value: API_KEY_STATUS.EXPIRED,
   },
   [API_KEY_STATUS.EXHAUSTED]: {
@@ -58,6 +58,22 @@ export const API_KEY_STATUSES: Record<
     value: API_KEY_STATUS.EXHAUSTED,
   },
 } as const
+
+/** Share of the total quota at which an enabled key is shown as running low. */
+export const API_KEY_LOW_QUOTA_RATIO = 0.9
+
+/** Client-side expiry filter values for the keys list. */
+export const API_KEY_EXPIRY_FILTER = {
+  NEVER: 'never',
+  SCHEDULED: 'scheduled',
+  EXPIRED: 'expired',
+} as const
+
+export const API_KEY_EXPIRY_FILTER_OPTIONS = [
+  { label: 'Never expires', value: API_KEY_EXPIRY_FILTER.NEVER },
+  { label: 'Has expiry date', value: API_KEY_EXPIRY_FILTER.SCHEDULED },
+  { label: 'Expired', value: API_KEY_EXPIRY_FILTER.EXPIRED },
+]
 
 export const API_KEY_STATUS_OPTIONS = Object.values(API_KEY_STATUSES).map(
   (config) => ({

@@ -16,105 +16,97 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ChevronDown, Globe, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { CopyButton } from '@/components/copy-button'
-import { LoadingState } from '@/components/loading-state'
 import { Button } from '@/components/ui/button'
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTitle,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { useApiInfo } from '@/features/dashboard/hooks/use-status-data'
-import { useStatus } from '@/hooks/use-status'
+import { downloadCsv, toCsvLine } from '@/features/usage-logs/lib/export'
+import { formatQuotaWithCurrency } from '@/lib/currency'
+import { formatTimestampToDate } from '@/lib/format'
+import { handleServerError } from '@/lib/handle-server-error'
+import { createServerError } from '@/lib/server-error-message'
 
+import { getApiKeys } from '../api'
+import { API_KEY_STATUSES, ERROR_MESSAGES } from '../constants'
+import type { ApiKey } from '../types'
 import { useApiKeys } from './api-keys-provider'
+
+const EXPORT_PAGE_SIZE = 100
 
 export function ApiKeysPrimaryButtons() {
   const { t } = useTranslation()
   const { setOpen } = useApiKeys()
-  const { status, loading } = useStatus()
-  const { items } = useApiInfo()
-  const serverAddress =
-    (typeof status?.server_address === 'string' &&
-      status.server_address.trim()) ||
-    ''
-  const addresses = items.length
-    ? items
-    : [
-        {
-          url: serverAddress || window.location.origin,
-          route: serverAddress ? t('Default API address') : t('Current domain'),
-          description: '',
-        },
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const keys: ApiKey[] = []
+      for (let page = 1; ; page++) {
+        const result = await getApiKeys({ p: page, size: EXPORT_PAGE_SIZE })
+        if (!result.success) {
+          throw createServerError(result, t(ERROR_MESSAGES.LOAD_FAILED))
+        }
+        const items = result.data?.items ?? []
+        keys.push(...items)
+        if (items.length < EXPORT_PAGE_SIZE) break
+        if (keys.length >= (result.data?.total ?? 0)) break
+      }
+      const header = [
+        t('Name'),
+        t('API Key'),
+        t('Status'),
+        t('Group'),
+        t('Used amount'),
+        t('Remaining'),
+        t('Models'),
+        t('Expiration Time'),
+        t('Last Used'),
       ]
+      const rows = keys.map((key) => {
+        const status = API_KEY_STATUSES[key.status]
+        return [
+          key.name,
+          `sk-${key.key}`,
+          status ? t(status.label) : String(key.status),
+          key.group || '',
+          formatQuotaWithCurrency(key.used_quota),
+          key.unlimited_quota
+            ? t('Unlimited quota')
+            : formatQuotaWithCurrency(key.remain_quota),
+          key.model_limits_enabled ? key.model_limits || '' : t('All'),
+          key.expired_time === -1
+            ? t('Never expires')
+            : formatTimestampToDate(key.expired_time),
+          formatTimestampToDate(key.accessed_time),
+        ]
+      })
+      downloadCsv(
+        'api-keys.csv',
+        [header, ...rows].map((cells) => toCsvLine(cells))
+      )
+    } catch (error) {
+      handleServerError(error, t(ERROR_MESSAGES.UNEXPECTED))
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className='flex flex-wrap gap-2'>
-      <Popover>
-        <PopoverTrigger render={<Button variant='outline' size='sm' />}>
-          <Globe aria-hidden='true' />
-          {t('API Addresses')}
-          <ChevronDown aria-hidden='true' />
-        </PopoverTrigger>
-        <PopoverContent
-          align='end'
-          className='max-h-[min(28rem,var(--available-height))] w-96 max-w-[calc(100vw-2rem)] overflow-y-auto'
-        >
-          <PopoverTitle>{t('API Addresses')}</PopoverTitle>
-          {loading ? (
-            <LoadingState inline size='sm' message={t('Loading...')} />
-          ) : (
-            <ItemGroup>
-              {addresses.map((address) => (
-                <Item
-                  key={address.url}
-                  role='listitem'
-                  variant='muted'
-                  size='xs'
-                  className='flex-nowrap items-start'
-                >
-                  <ItemContent className='min-w-0 gap-1'>
-                    <ItemTitle className='line-clamp-none break-all'>
-                      {address.route}
-                    </ItemTitle>
-                    <code className='text-xs break-all select-text'>
-                      {address.url}
-                    </code>
-                    {address.description && (
-                      <ItemDescription className='line-clamp-none break-words'>
-                        {address.description}
-                      </ItemDescription>
-                    )}
-                  </ItemContent>
-                  <ItemActions>
-                    <CopyButton
-                      value={address.url}
-                      size='sm'
-                      tooltip={t('Copy API URL')}
-                      aria-label={`${t('Copy API URL')}: ${address.url}`}
-                    />
-                  </ItemActions>
-                </Item>
-              ))}
-            </ItemGroup>
-          )}
-        </PopoverContent>
-      </Popover>
+      <Button
+        variant='outline'
+        size='sm'
+        onClick={handleExport}
+        disabled={exporting}
+      >
+        {exporting && <Loader2 className='animate-spin' aria-hidden='true' />}
+        {t('Export')}
+      </Button>
       <Button size='sm' onClick={() => setOpen('create')}>
-        <Plus className='h-4 w-4' />
-        {t('Create API Key')}
+        <Plus aria-hidden='true' />
+        {t('New key')}
       </Button>
     </div>
   )

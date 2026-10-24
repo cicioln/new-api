@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} đã thử lại",
     "Don't show again today": "Không hiển thị lại hôm nay",
     "Got it": "Đã hiểu",
-    "Channel availability": "Độ khả dụng kênh"
+    "Channel availability": "Độ khả dụng kênh",
+    "Quota running low": "Sắp hết hạn mức",
+    "Has expiry date": "Có ngày hết hạn",
+    "Unlimited quota": "Hạn mức không giới hạn",
+    "Quota usage": "Mức sử dụng hạn mức",
+    "Available models": "Mô hình khả dụng",
+    "{{count}} keys total": "Tổng cộng {{count}} khóa",
+    "Search name or key…": "Tìm theo tên hoặc khóa…",
+    "Used percentage": "Tỷ lệ đã dùng",
+    "Key status enabled": "Bật"
   }
 }

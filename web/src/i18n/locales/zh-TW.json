@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} 已重試",
     "Don't show again today": "今日不再顯示",
     "Got it": "知道了",
-    "Channel availability": "渠道健康度"
+    "Channel availability": "渠道健康度",
+    "Quota running low": "額度將盡",
+    "Has expiry date": "有到期時間",
+    "Unlimited quota": "無限額度",
+    "Quota usage": "額度使用",
+    "Available models": "可用模型",
+    "{{count}} keys total": "共 {{count}} 個金鑰",
+    "Search name or key…": "搜尋名稱或金鑰…",
+    "Used percentage": "已用比例",
+    "Key status enabled": "啟用"
   }
 }

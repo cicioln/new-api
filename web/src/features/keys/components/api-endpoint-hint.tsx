@@ -48,7 +48,7 @@ export function ApiEndpointHint() {
         value={endpoint}
         variant='outline'
         size='sm'
-        className='px-2.5'
+        hideIcon
         tooltip={t('Copy API URL')}
         aria-label={`${t('Copy API URL')}: ${endpoint}`}
       >

@@ -39,6 +39,10 @@ import { cn, getPageNumbers } from '@/lib/utils'
 type DataTablePaginationProps<TData> = {
   table: Table<TData>
   compact?: boolean
+  /** Total count on the left, text previous/next buttons on the right. */
+  simple?: boolean
+  /** Replaces the default "Total: N" text in compact and simple modes. */
+  totalLabel?: (total: number) => string
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100] as const
@@ -50,6 +54,8 @@ const PAGE_SIZE_SELECT_ITEMS = PAGE_SIZE_OPTIONS.map((pageSize) => ({
 export function DataTablePagination<TData>({
   table,
   compact = false,
+  simple = false,
+  totalLabel,
 }: DataTablePaginationProps<TData>) {
   const { t } = useTranslation()
   const pagination = table.getState().pagination
@@ -63,6 +69,39 @@ export function DataTablePagination<TData>({
     key: page === '...' ? `gap-after-${pageNumbers[index - 1]}` : String(page),
   }))
 
+  const totalText = totalLabel
+    ? totalLabel(totalRows)
+    : `${t('Total:')} ${totalRows.toLocaleString()}`
+
+  if (simple) {
+    return (
+      <nav
+        aria-label={t('Page')}
+        className='flex w-full min-w-0 flex-wrap items-center justify-between gap-2'
+      >
+        <span className='min-w-0 [overflow-wrap:anywhere]'>{totalText}</span>
+        <div className='flex items-center gap-1'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            {t('Previous page')}
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            {t('Next page')}
+          </Button>
+        </div>
+      </nav>
+    )
+  }
+
   if (compact) {
     return (
       <nav
@@ -70,7 +109,7 @@ export function DataTablePagination<TData>({
         className='flex w-full min-w-0 flex-wrap items-center justify-between gap-2 text-sm'
       >
         <span className='text-muted-foreground min-w-0 [overflow-wrap:anywhere]'>
-          {t('Total:')} {totalRows.toLocaleString()}
+          {totalText}
         </span>
         <div className='flex items-center gap-2'>
           <Button

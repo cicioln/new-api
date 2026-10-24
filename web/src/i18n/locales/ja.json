@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} 再試行済み",
     "Don't show again today": "今日は表示しない",
     "Got it": "了解",
-    "Channel availability": "チャネル稼働率"
+    "Channel availability": "チャネル稼働率",
+    "Quota running low": "残りわずか",
+    "Has expiry date": "有効期限あり",
+    "Unlimited quota": "無制限",
+    "Quota usage": "使用量",
+    "Available models": "利用可能なモデル",
+    "{{count}} keys total": "全 {{count}} 件のキー",
+    "Search name or key…": "名前またはキーを検索…",
+    "Used percentage": "使用率",
+    "Key status enabled": "有効"
   }
 }

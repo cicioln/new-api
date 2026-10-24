@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} retried",
     "Don't show again today": "Don't show again today",
     "Got it": "Got it",
-    "Channel availability": "Channel availability"
+    "Channel availability": "Channel availability",
+    "Quota running low": "Quota running low",
+    "Has expiry date": "Has expiry date",
+    "Unlimited quota": "Unlimited quota",
+    "Quota usage": "Quota usage",
+    "Available models": "Available models",
+    "{{count}} keys total": "{{count}} keys total",
+    "Search name or key…": "Search name or key…",
+    "Used percentage": "Used percentage",
+    "Key status enabled": "Key status enabled"
   }
 }

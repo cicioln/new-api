@@ -20,7 +20,10 @@ import { createFileRoute } from '@tanstack/react-router'
 import z from 'zod'
 
 import { ApiKeys } from '@/features/keys'
-import { API_KEY_STATUS_OPTIONS } from '@/features/keys/constants'
+import {
+  API_KEY_EXPIRY_FILTER_OPTIONS,
+  API_KEY_STATUS_OPTIONS,
+} from '@/features/keys/constants'
 
 const apiKeySearchSchema = z.object({
   page: z.number().optional().catch(1),
@@ -29,8 +32,12 @@ const apiKeySearchSchema = z.object({
     .array(z.enum(API_KEY_STATUS_OPTIONS.map((s) => s.value as `${number}`)))
     .optional()
     .catch([]),
+  group: z.array(z.string()).optional().catch([]),
+  expiry: z
+    .array(z.enum(API_KEY_EXPIRY_FILTER_OPTIONS.map((o) => o.value)))
+    .optional()
+    .catch([]),
   filter: z.string().optional().catch(''),
-  token: z.string().optional().catch(''),
 })
 
 export const Route = createFileRoute('/_authenticated/keys/')({

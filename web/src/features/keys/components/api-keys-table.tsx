@@ -20,14 +20,12 @@ import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { flexRender, type Table as TanstackTable } from '@tanstack/react-table'
 import { Database } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
-  DISABLED_ROW_DESKTOP,
   DISABLED_ROW_MOBILE,
   DataTablePage,
-  useDebouncedColumnFilter,
   useDataTable,
 } from '@/components/data-table'
 import { StatusBadge } from '@/components/status-badge'
@@ -38,7 +36,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import { createServerError } from '@/lib/server-error-message'
@@ -46,9 +43,9 @@ import { cn } from '@/lib/utils'
 
 import { getApiKeys, searchApiKeys } from '../api'
 import {
+  API_KEY_EXPIRY_FILTER_OPTIONS,
   API_KEY_STATUS,
   API_KEY_STATUS_OPTIONS,
-  API_KEY_STATUSES,
   ERROR_MESSAGES,
 } from '../constants'
 import type { ApiKey } from '../types'
@@ -59,13 +56,11 @@ import {
   ModelLimitsCell,
   IpRestrictionsCell,
 } from './api-keys-cells'
-import { useApiKeysColumns } from './api-keys-columns'
+import { getApiKeyDisplayStatus, useApiKeysColumns } from './api-keys-columns'
 import { useApiKeys } from './api-keys-provider'
-import { DataTableBulkActions } from './data-table-bulk-actions'
 import { DataTableRowActions } from './data-table-row-actions'
 
 const route = getRouteApi('/_authenticated/keys/')
-const API_KEYS_COLUMN_VISIBILITY_STORAGE_KEY = 'api-keys:column-visibility'
 const API_KEYS_MOBILE_SKELETON_IDS = Array.from(
   { length: 5 },
   (_, index) => `api-key-mobile-skeleton-${index + 1}`
@@ -136,7 +131,7 @@ function ApiKeysMobileList({
     <div className='min-w-0 space-y-3'>
       {rows.map((row) => {
         const apiKey = row.original
-        const statusConfig = API_KEY_STATUSES[apiKey.status]
+        const status = getApiKeyDisplayStatus(apiKey, now)
         const groupCell = row
           .getAllCells()
           .find((cell) => cell.column.id === 'group')
@@ -158,10 +153,9 @@ function ApiKeysMobileList({
                   {apiKey.name}
                 </div>
               </div>
-              {statusConfig && (
+              {status && (
                 <StatusBadge
-                  label={t(statusConfig.label)}
-                  variant={statusConfig.variant}
+                  label={t(status.label)}
                   copyable={false}
                   className='shrink-0 px-0 text-xs font-normal'
                 />
@@ -244,20 +238,15 @@ export function ApiKeysTable() {
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [
       { columnId: 'status', searchKey: 'status', type: 'array' },
-      { columnId: '_tokenSearch', searchKey: 'token', type: 'string' },
+      { columnId: 'group', searchKey: 'group', type: 'array' },
+      { columnId: 'expired_time', searchKey: 'expiry', type: 'array' },
     ],
   })
 
-  const {
-    value: tokenFilter,
-    inputValue: tokenFilterInput,
-    setInputValue: setTokenFilterInput,
-  } = useDebouncedColumnFilter({
-    columnFilters,
-    columnId: '_tokenSearch',
-    onColumnFiltersChange,
-  })
-  const shouldSearch = Boolean(globalFilter?.trim() || tokenFilter.trim())
+  // One box searches both names and keys; "sk-" input is matched as a key.
+  const searchText = globalFilter?.trim() ?? ''
+  const isKeySearch = searchText.startsWith('sk-')
+  const shouldSearch = Boolean(searchText)
 
   // Fetch data with React Query
   // eslint-disable-next-line @tanstack/query/exhaustive-deps
@@ -266,15 +255,14 @@ export function ApiKeysTable() {
       'keys',
       pagination.pageIndex + 1,
       pagination.pageSize,
-      globalFilter,
-      tokenFilter,
+      searchText,
       refreshTrigger,
     ],
     queryFn: async () => {
       const result = shouldSearch
         ? await searchApiKeys({
-            keyword: globalFilter,
-            token: tokenFilter,
+            keyword: isKeySearch ? '' : searchText,
+            token: isKeySearch ? searchText : '',
             p: pagination.pageIndex + 1,
             size: pagination.pageSize,
           })
@@ -302,14 +290,14 @@ export function ApiKeysTable() {
     placeholderData: (previousData) => previousData,
   })
 
-  const apiKeys = data?.items || []
+  const apiKeys = useMemo(() => data?.items ?? [], [data])
 
   const { table } = useDataTable({
     data: apiKeys,
     columns,
-    enableRowSelection: true,
     columnFilters,
-    columnVisibilityStorageKey: API_KEYS_COLUMN_VISIBILITY_STORAGE_KEY,
+    columnVisibilityStorageKey: false,
+    enableSorting: false,
     globalFilter,
     pagination,
     globalFilterFn: () => true,
@@ -321,22 +309,13 @@ export function ApiKeysTable() {
     ensurePageInRange,
   })
 
-  const columnVisibility = table.getState().columnVisibility
-  useEffect(() => {
-    // Restore the dates hidden by the previous default when adopting the combined time column.
-    if (
-      columnVisibility.activity_time === undefined &&
-      columnVisibility.created_time === false &&
-      columnVisibility.accessed_time === false &&
-      columnVisibility.expired_time === false
-    ) {
-      table.setColumnVisibility((previous) => ({
-        ...previous,
-        activity_time: true,
-        expired_time: true,
-      }))
-    }
-  }, [columnVisibility, table])
+  const groupOptions = useMemo(
+    () =>
+      [...new Set(apiKeys.map((key) => key.group?.trim() || ''))].map(
+        (group) => ({ label: group || t('Follow user group'), value: group })
+      ),
+    [apiKeys, t]
+  )
 
   return (
     <DataTablePage
@@ -349,19 +328,14 @@ export function ApiKeysTable() {
         'No API keys available. Create your first API key to get started.'
       )}
       skeletonKeyPrefix='api-keys-skeleton'
-      applyHeaderSize
+      simplePagination
+      paginationTotalLabel={(total) =>
+        t('{{count}} keys total', { count: total })
+      }
       toolbarProps={{
-        searchPlaceholder: t('Filter by name...'),
+        searchPlaceholder: t('Search name or key…'),
         searchDebounceMs: 500,
-        additionalSearch: (
-          <Input
-            placeholder={t('Filter by API key...')}
-            aria-label={t('Filter by API key...')}
-            value={tokenFilterInput}
-            onChange={(e) => setTokenFilterInput(e.target.value)}
-            className='w-full sm:w-50 lg:w-60'
-          />
-        ),
+        hideViewOptions: true,
         filters: [
           {
             columnId: 'status',
@@ -369,15 +343,21 @@ export function ApiKeysTable() {
             options: API_KEY_STATUS_OPTIONS,
             singleSelect: true,
           },
+          {
+            columnId: 'group',
+            title: t('Group'),
+            options: groupOptions,
+          },
+          {
+            columnId: 'expired_time',
+            title: t('Expiration Time'),
+            options: API_KEY_EXPIRY_FILTER_OPTIONS,
+          },
         ],
       }}
       mobile={
         <ApiKeysMobileList table={table} isLoading={isLoading} now={now} />
       }
-      getRowClassName={(row) =>
-        isDisabledApiKeyRow(row.original) ? DISABLED_ROW_DESKTOP : undefined
-      }
-      bulkActions={<DataTableBulkActions table={table} />}
     />
   )
 }

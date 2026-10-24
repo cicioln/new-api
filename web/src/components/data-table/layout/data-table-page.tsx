@@ -209,6 +209,12 @@ export type DataTablePageProps<TData> = {
   /** Minimal previous/next pagination for narrow feature layouts. */
   compactPagination?: boolean
 
+  /** Total count with text previous/next buttons, as in the design pager. */
+  simplePagination?: boolean
+
+  /** Replaces the default "Total: N" text of compact or simple pagination. */
+  paginationTotalLabel?: (total: number) => string
+
   /**
    * Render pagination via `PageFooterPortal` (sticks to page footer).
    * Defaults to `true`. Set `false` to render inline below the table.
@@ -367,6 +373,8 @@ export function DataTablePage<TData>(props: DataTablePageProps<TData>) {
               <DataTablePagination
                 table={props.table}
                 compact={props.compactPagination}
+                simple={props.simplePagination}
+                totalLabel={props.paginationTotalLabel}
               />
             </div>
           )}
@@ -437,6 +445,8 @@ function renderPagination<TData>(
     <DataTablePagination
       table={props.table}
       compact={props.compactPagination}
+      simple={props.simplePagination}
+      totalLabel={props.paginationTotalLabel}
     />
   )
 

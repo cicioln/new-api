@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} повторено",
     "Don't show again today": "Не показывать сегодня",
     "Got it": "Понятно",
-    "Channel availability": "Доступность каналов"
+    "Channel availability": "Доступность каналов",
+    "Quota running low": "Квота заканчивается",
+    "Has expiry date": "Со сроком действия",
+    "Unlimited quota": "Безлимитная квота",
+    "Quota usage": "Использование квоты",
+    "Available models": "Доступные модели",
+    "{{count}} keys total": "Всего ключей: {{count}}",
+    "Search name or key…": "Поиск по имени или ключу…",
+    "Used percentage": "Доля использования",
+    "Key status enabled": "Включён"
   }
 }

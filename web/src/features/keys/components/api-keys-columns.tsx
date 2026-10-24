@@ -16,223 +16,198 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { StatusBadge } from '@/components/status-badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { useMediaQuery } from '@/hooks'
 import { toIntlLocale } from '@/i18n/languages'
-import { getUserGroups } from '@/lib/api'
-import { getCurrencyDisplay } from '@/lib/currency'
-import { requireServerSuccess } from '@/lib/server-error-message'
-import { useSystemConfigStore } from '@/stores/system-config-store'
+import dayjs from '@/lib/dayjs'
+import { cn } from '@/lib/utils'
 
-import { API_KEY_STATUSES } from '../constants'
+import {
+  API_KEY_EXPIRY_FILTER,
+  API_KEY_LOW_QUOTA_RATIO,
+  API_KEY_STATUS,
+  API_KEY_STATUSES,
+} from '../constants'
 import type { ApiKey } from '../types'
-import { ApiKeyGroupCell } from './api-key-group-cell'
 import { ApiKeyQuotaCell } from './api-key-quota-cell'
-import {
-  ApiKeyActivityCell,
-  ApiKeyTimestampCell,
-} from './api-key-timestamp-cell'
-import {
-  ApiKeyCell,
-  IpRestrictionsCell,
-  ModelLimitsCell,
-} from './api-keys-cells'
+import { ApiKeyTimestampCell } from './api-key-timestamp-cell'
+import { ApiKeyCell } from './api-keys-cells'
 import { DataTableRowActions } from './data-table-row-actions'
 
-const EMPTY_GROUP_RATIOS: Record<string, number | string> = {}
+const STATUS_PILL_CLASSES: Record<string, string> = {
+  success: 'bg-success/12 text-success',
+  warning: 'bg-warning/12 text-warning',
+  danger: 'bg-destructive/10 text-destructive',
+  neutral: 'bg-muted text-muted-foreground',
+}
 
-function useGroupRatios(): Record<string, number | string> {
-  const { data } = useQuery({
-    queryKey: ['user-groups'],
-    queryFn: async () => requireServerSuccess(await getUserGroups()),
-    staleTime: 0,
-    select: (res) => {
-      if (!res.success || !res.data) return {}
-      const ratios: Record<string, number | string> = {}
-      for (const [group, info] of Object.entries(res.data)) {
-        if (typeof info.ratio === 'number' || typeof info.ratio === 'string') {
-          ratios[group] = info.ratio
-        }
-      }
-      return ratios
-    },
-  })
-
-  return data ?? EMPTY_GROUP_RATIOS
+/** The status shown in the list: enabled keys close to their limit read as running low. */
+export function getApiKeyDisplayStatus(apiKey: ApiKey, now: number) {
+  if (
+    apiKey.status === API_KEY_STATUS.ENABLED &&
+    apiKey.expired_time !== -1 &&
+    apiKey.expired_time * 1000 <= now
+  ) {
+    return { label: 'Expired', className: 'bg-destructive/10 text-destructive' }
+  }
+  const total = apiKey.used_quota + apiKey.remain_quota
+  if (
+    apiKey.status === API_KEY_STATUS.ENABLED &&
+    !apiKey.unlimited_quota &&
+    total > 0 &&
+    apiKey.used_quota / total >= API_KEY_LOW_QUOTA_RATIO
+  ) {
+    return {
+      label: 'Quota running low',
+      className: 'bg-warning/12 text-warning',
+    }
+  }
+  const config = API_KEY_STATUSES[apiKey.status]
+  if (!config) return null
+  return {
+    label: config.label,
+    className: STATUS_PILL_CLASSES[config.variant ?? 'neutral'],
+  }
 }
 
 export function useApiKeysColumns(now: number): ColumnDef<ApiKey>[] {
   const { t, i18n } = useTranslation()
-  useSystemConfigStore((state) => state.config.currency)
-  const { meta: currency } = getCurrencyDisplay()
-  const quotaUnit = currency.kind === 'tokens' ? t('Tokens') : currency.symbol
-  const groupRatios = useGroupRatios()
-  const shouldReduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const justNowLabel = t('Just now')
   return useMemo<ColumnDef<ApiKey>[]>(
     () => [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            indeterminate={table.getIsSomePageRowsSelected()}
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label={t('Select all')}
-            className='translate-y-[2px]'
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label={t('Select row')}
-            className='translate-y-[2px]'
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-      },
-      {
         accessorKey: 'name',
         header: t('Name'),
         cell: ({ row }) => (
-          <span className='font-medium'>{row.getValue('name')}</span>
+          <span className='font-medium!'>{row.getValue('name')}</span>
         ),
-        size: 180,
         meta: { mobileTitle: true },
+      },
+      {
+        id: 'key',
+        accessorKey: 'key',
+        header: t('Key'),
+        cell: ({ row }) => <ApiKeyCell apiKey={row.original} />,
       },
       {
         accessorKey: 'status',
         header: t('Status'),
         cell: ({ row }) => {
-          const statusConfig =
-            API_KEY_STATUSES[row.getValue('status') as number]
-          if (!statusConfig) return null
+          const status = getApiKeyDisplayStatus(row.original, now)
+          if (!status) return null
           return (
-            <StatusBadge
-              label={t(statusConfig.label)}
-              variant={statusConfig.variant}
-              copyable={false}
-              className='-ml-1.5'
-            />
+            <span
+              className={cn(
+                'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-xs! font-medium! whitespace-nowrap',
+                status.className
+              )}
+            >
+              <span
+                className='size-1.5 rounded-full bg-current'
+                aria-hidden='true'
+              />
+              {t(status.label)}
+            </span>
           )
         },
         filterFn: (row, id, value) => value.includes(String(row.getValue(id))),
-        size: 120,
         meta: { mobileBadge: true },
-      },
-      {
-        id: 'key',
-        accessorKey: 'key',
-        header: t('API Key'),
-        cell: ({ row }) => <ApiKeyCell apiKey={row.original} />,
-        enableSorting: false,
-        size: 260,
-      },
-      {
-        id: 'quota',
-        accessorKey: 'remain_quota',
-        header: `${t('Quota')} (${quotaUnit})`,
-        cell: ({ row }) => <ApiKeyQuotaCell apiKey={row.original} now={now} />,
-        size: 260,
-        minSize: 260,
       },
       {
         accessorKey: 'group',
         header: t('Group'),
         cell: ({ row }) => {
-          const apiKey = row.original
-          const group = row.getValue('group') as string
+          const group = (row.getValue('group') as string)?.trim() || ''
           return (
-            <ApiKeyGroupCell
-              group={group}
-              ratio={groupRatios[group]}
-              crossGroupRetry={apiKey.cross_group_retry}
-              shouldReduceMotion={shouldReduceMotion}
-            />
+            <span className='bg-muted text-muted-foreground inline-flex h-[22px] items-center rounded-md px-2 text-xs! font-medium! whitespace-nowrap'>
+              {group || t('Follow user group')}
+            </span>
           )
         },
-        size: 220,
+        filterFn: (row, id, value) =>
+          value.includes((row.getValue(id) as string)?.trim() || ''),
         meta: { mobileHidden: true },
+      },
+      {
+        id: 'quota',
+        accessorKey: 'remain_quota',
+        header: t('Quota usage'),
+        cell: ({ row }) => <ApiKeyQuotaCell apiKey={row.original} now={now} />,
       },
       {
         id: 'model_limits',
         accessorKey: 'model_limits',
-        header: t('Models'),
-        cell: ({ row }) => <ModelLimitsCell apiKey={row.original} />,
-        enableSorting: false,
-        size: 160,
-        meta: { mobileHidden: true },
-      },
-      {
-        id: 'allow_ips',
-        accessorKey: 'allow_ips',
-        header: t('IP Restriction'),
-        cell: ({ row }) => <IpRestrictionsCell apiKey={row.original} />,
-        enableSorting: false,
-        size: 160,
-        meta: { mobileHidden: true },
-      },
-      {
-        id: 'activity_time',
-        accessorKey: 'created_time',
-        header: t('Time'),
-        cell: ({ row }) => (
-          <ApiKeyActivityCell apiKey={row.original} now={now} />
-        ),
-        size: 220,
+        header: t('Available models'),
+        cell: ({ row }) => {
+          const models = row.original.model_limits_enabled
+            ? (row.original.model_limits || '').split(',').filter(Boolean)
+            : []
+          return (
+            <span className='text-muted-foreground block max-w-60 truncate font-mono! text-xs!'>
+              {models.length ? models.join(', ') : t('All')}
+            </span>
+          )
+        },
         meta: { mobileHidden: true },
       },
       {
         accessorKey: 'expired_time',
-        header: t('Expires'),
+        header: t('Expiration Time'),
         cell: ({ row }) => {
           const expiredTime = row.getValue('expired_time') as number
           if (expiredTime === -1) {
             return (
-              <StatusBadge
-                label={t('Never')}
-                variant='neutral'
-                copyable={false}
-                className='-ml-1.5'
-              />
+              <span className='text-subtle-foreground'>
+                {t('Never expires')}
+              </span>
             )
           }
           return (
-            <ApiKeyTimestampCell
-              timestamp={expiredTime}
-              now={now}
-              locale={locale}
-              justNowLabel={justNowLabel}
-              className={
-                expiredTime * 1000 <= now
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
-              }
-            />
+            <time
+              dateTime={new Date(expiredTime * 1000).toISOString()}
+              className='text-subtle-foreground tabular-nums'
+            >
+              {dayjs(expiredTime * 1000).format('YYYY-MM-DD')}
+            </time>
           )
         },
-        size: 180,
+        filterFn: (row, id, value: string[]) => {
+          const expiredTime = row.getValue(id) as number
+          if (expiredTime === -1) {
+            return value.includes(API_KEY_EXPIRY_FILTER.NEVER)
+          }
+          if (expiredTime * 1000 <= now) {
+            return value.includes(API_KEY_EXPIRY_FILTER.EXPIRED)
+          }
+          return value.includes(API_KEY_EXPIRY_FILTER.SCHEDULED)
+        },
+        meta: { mobileHidden: true },
+      },
+      {
+        id: 'accessed_time',
+        accessorKey: 'accessed_time',
+        header: t('Last Used'),
+        cell: ({ row }) => (
+          <ApiKeyTimestampCell
+            timestamp={row.original.accessed_time}
+            now={now}
+            locale={locale}
+            justNowLabel={justNowLabel}
+            className='text-subtle-foreground'
+          />
+        ),
         meta: { mobileHidden: true },
       },
       {
         id: 'actions',
-        header: () => t('Actions'),
+        header: () => <span className='sr-only'>{t('Actions')}</span>,
         cell: ({ row }) => <DataTableRowActions row={row} />,
         meta: { pinned: 'right' as const },
       },
     ],
-    [t, quotaUnit, now, groupRatios, shouldReduceMotion, locale, justNowLabel]
+    [t, now, locale, justNowLabel]
   )
 }

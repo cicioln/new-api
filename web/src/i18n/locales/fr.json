@@ -7402,6 +7402,15 @@
     "{{code}} retried": "{{code}} relancé",
     "Don't show again today": "Ne plus afficher aujourd'hui",
     "Got it": "Compris",
-    "Channel availability": "Disponibilité des canaux"
+    "Channel availability": "Disponibilité des canaux",
+    "Quota running low": "Quota presque épuisé",
+    "Has expiry date": "Avec date d'expiration",
+    "Unlimited quota": "Quota illimité",
+    "Quota usage": "Utilisation du quota",
+    "Available models": "Modèles disponibles",
+    "{{count}} keys total": "{{count}} clés au total",
+    "Search name or key…": "Rechercher un nom ou une clé…",
+    "Used percentage": "Pourcentage utilisé",
+    "Key status enabled": "Activée"
   }
 }
