@@ -33,12 +33,23 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 
 import { CommonLogsFilterBar } from '../common-logs-filter-bar'
 import { UsageLogsProvider } from '../usage-logs-provider'
+
+// Group and type pickers live in the mobile filter drawer; the desktop
+// toolbar follows the design with dashed chips instead.
+function mockMobileViewport() {
+  if (vi.isMockFunction(window.matchMedia)) return
+  const original = window.matchMedia
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+    ...original(query),
+    matches: query === '(max-width: 640px)',
+  }))
+}
 
 function FilterFixture() {
   const table = useReactTable({
@@ -54,6 +65,7 @@ function FilterFixture() {
 }
 
 async function renderFilter() {
+  mockMobileViewport()
   vi.spyOn(api, 'get').mockImplementation(async (url) => ({
     data: {
       success: true,
@@ -80,13 +92,36 @@ async function renderFilter() {
       <RouterProvider router={router} />
     </QueryClientProvider>
   )
+  await userEvent.click(await screen.findByRole('button', { name: /^Filter/ }))
   await screen.findByRole('combobox', { name: 'Type' })
   return router
 }
 
+const pointerCaptureDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  'setPointerCapture'
+)
+
+beforeEach(() => {
+  // The mobile filter drawer captures the pointer while dragging.
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  })
+})
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  if (pointerCaptureDescriptor) {
+    Object.defineProperty(
+      HTMLElement.prototype,
+      'setPointerCapture',
+      pointerCaptureDescriptor
+    )
+  } else {
+    Reflect.deleteProperty(HTMLElement.prototype, 'setPointerCapture')
+  }
 })
 
 it('marks only retired log types as deprecated while keeping historical filters selectable', async () => {
@@ -121,7 +156,11 @@ it('marks only retired log types as deprecated while keeping historical filters 
   await waitFor(() =>
     expect(router.state.location.search).toMatchObject({ type: ['3'], page: 1 })
   )
-  await userEvent.click(screen.getByRole('combobox', { name: 'Type' }))
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
+  await userEvent.click(screen.getByRole('button', { name: /^Filter/ }))
+  await userEvent.click(await screen.findByRole('combobox', { name: 'Type' }))
   await userEvent.click(screen.getByRole('option', { name: /^Login/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Search' }))
   await waitFor(() =>

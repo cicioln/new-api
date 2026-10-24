@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "{{count}} keys total",
     "Search name or key…": "Search name or key…",
     "Used percentage": "Used percentage",
-    "Key status enabled": "Key status enabled"
+    "Key status enabled": "Key status enabled",
+    "Export CSV": "Export CSV",
+    "Key Name": "Key Name",
+    "Retried": "Retried",
+    "First token / Total": "First token / Total",
+    "{{total}} records total": "{{total}} records total",
+    "Embedding": "Embedding"
   }
 }

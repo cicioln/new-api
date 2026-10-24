@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { getRouteApi } from '@tanstack/react-router'
-import { Loader2 } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -48,7 +48,7 @@ const DEFAULT_MAX_RANGE_DAYS = 365
  * downloads the logs of the current view with the page's other filters as a
  * CSV file. Administrators in the all-users view export every user's logs.
  */
-export function ExportLogsDialog() {
+export function ExportLogsDialog(props: { headerTrigger?: boolean }) {
   const { t } = useTranslation()
   const searchParams = route.useSearch()
   const { canManageScope, isAdminView } = useLogsViewScope()
@@ -142,9 +142,16 @@ export function ExportLogsDialog() {
       open={open}
       onOpenChange={handleOpenChange}
       trigger={
-        <Button type='button' variant='outline'>
-          {t('Export')}
-        </Button>
+        props.headerTrigger ? (
+          <Button type='button' variant='outline' size='sm'>
+            <Download aria-hidden='true' />
+            {t('Export CSV')}
+          </Button>
+        ) : (
+          <Button type='button' variant='outline'>
+            {t('Export')}
+          </Button>
+        )
       }
       title={t('Export logs')}
       description={t(

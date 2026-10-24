@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "{{count}} clés au total",
     "Search name or key…": "Rechercher un nom ou une clé…",
     "Used percentage": "Pourcentage utilisé",
-    "Key status enabled": "Activée"
+    "Key status enabled": "Activée",
+    "Export CSV": "Exporter en CSV",
+    "Key Name": "Nom de la clé",
+    "Retried": "Réessayé",
+    "First token / Total": "Premier jeton / Total",
+    "{{total}} records total": "{{total}} enregistrements au total",
+    "Embedding": "Embedding"
   }
 }

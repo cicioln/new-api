@@ -23,9 +23,11 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DataTableFacetedFilter } from '@/components/data-table/toolbar/faceted-filter'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -43,6 +45,7 @@ import { getGroups } from '@/features/users/api'
 import { useMediaQuery } from '@/hooks'
 import { getUserGroups } from '@/lib/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
+import { cn } from '@/lib/utils'
 
 import { LOG_TYPE_ALL_VALUE, LOG_TYPE_FILTERS } from '../constants'
 import { buildSearchParams } from '../lib/filter'
@@ -51,6 +54,7 @@ import type { CommonLogFilters } from '../types'
 import { CommonLogsStats } from './common-logs-stats'
 import { CompactDateTimeRangePicker } from './compact-date-time-range-picker'
 import { ExportLogsDialog } from './dialogs/export-logs-dialog'
+import { LogsFilterChip } from './logs-filter-chip'
 import {
   LogsFilterField,
   LogsFilterInput,
@@ -484,6 +488,75 @@ export function CommonLogsFilterBar<TData>(
       </LogsFilterField>
     </>
   )
+
+  if (!isMobile) {
+    const typeColumn = props.table.getColumn('created_at')
+    const applyField = (field: keyof CommonLogFilters, value: string) =>
+      handleApply({ ...filters, [field]: value || undefined })
+    const commitOnBlur = (field: 'model' | 'token') => () => {
+      if ((filters[field] || '') !== (searchState.filters[field] || '')) {
+        handleApply()
+      }
+    }
+
+    return (
+      <div className='flex flex-wrap items-center gap-2'>
+        <Input
+          autoComplete='off'
+          aria-label={t('Model Name')}
+          placeholder={t('Model Name')}
+          className='h-8 w-60 text-[13px]'
+          value={filters.model || ''}
+          onChange={(e) => handleChange('model', e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commitOnBlur('model')}
+        />
+        <Input
+          autoComplete='off'
+          aria-label={t('Key Name')}
+          placeholder={t('Key Name')}
+          className={cn('h-8 w-60 text-[13px]', sensitiveInputClass)}
+          value={filters.token || ''}
+          onChange={(e) => handleChange('token', e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commitOnBlur('token')}
+        />
+        <CompactDateTimeRangePicker
+          chip
+          start={filters.startTime}
+          end={filters.endTime}
+          onChange={({ start, end }) =>
+            handleApply({ ...filters, startTime: start, endTime: end })
+          }
+        />
+        {typeColumn && (
+          <DataTableFacetedFilter
+            column={typeColumn}
+            title={t('Type')}
+            options={logTypeItems.filter(
+              (type) => type.value !== LOG_TYPE_ALL_VALUE
+            )}
+            singleSelect
+          />
+        )}
+        {isAdmin && (
+          <LogsFilterChip
+            title={t('User')}
+            value={filters.username}
+            inputClassName={sensitiveInputClass}
+            onApply={(value) => applyField('username', value)}
+          />
+        )}
+        {isAdmin && (
+          <LogsFilterChip
+            title={t('Channel')}
+            value={filters.channel}
+            onApply={(value) => applyField('channel', value)}
+          />
+        )}
+      </div>
+    )
+  }
 
   return (
     <LogsFilterToolbar

@@ -46,6 +46,22 @@ const pointerCaptureDescriptor = Object.getOwnPropertyDescriptor(
   'setPointerCapture'
 )
 
+// Group and type pickers live in the mobile filter drawer; the desktop
+// toolbar follows the design with dashed chips instead.
+function mockMobileViewport() {
+  // The mobile filter drawer captures the pointer while dragging.
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  })
+  if (vi.isMockFunction(window.matchMedia)) return
+  const original = window.matchMedia
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+    ...original(query),
+    matches: query === '(max-width: 640px)',
+  }))
+}
+
 function FilterFixture() {
   const table = useReactTable({
     data: [],
@@ -66,6 +82,7 @@ async function renderFilter(
     premium: { desc: '', ratio: 2 },
   }
 ) {
+  mockMobileViewport()
   vi.spyOn(api, 'get').mockImplementation(async (url) => {
     if (url === '/api/user/self/groups' || url === '/api/group/') {
       if (groups === null) throw new Error('Group loading failed')
@@ -105,6 +122,14 @@ async function renderFilter(
   }
   await screen.findByRole('combobox', { name: 'Group' })
   return router
+}
+
+async function openFilterDrawer() {
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
+  await userEvent.click(screen.getByRole('button', { name: /^Filter/ }))
+  return screen.findByRole('combobox', { name: 'Group' })
 }
 
 afterEach(() => {
@@ -186,7 +211,8 @@ it.each([{}, null])(
         group: 'historical',
       })
     )
-    await userEvent.clear(input)
+    const reopened = await openFilterDrawer()
+    await userEvent.clear(reopened)
     await userEvent.click(screen.getByRole('button', { name: 'Search' }))
     await waitFor(() =>
       expect(router.state.location.search).not.toHaveProperty('group')
@@ -199,10 +225,16 @@ it('resets the selected group and restores a group from URL navigation', async (
   const input = screen.getByRole('combobox', { name: 'Group' })
   expect(input).toHaveValue('premium')
   await userEvent.click(screen.getByRole('button', { name: 'Reset' }))
-  await waitFor(() => expect(input).toHaveValue(''))
-  expect(router.state.location.search).not.toHaveProperty('group')
+  await waitFor(() =>
+    expect(router.state.location.search).not.toHaveProperty('group')
+  )
+  expect(await openFilterDrawer()).toHaveValue('')
   await router.history.push('/usage-logs/common?group=retired')
-  await waitFor(() => expect(input).toHaveValue('retired'))
+  await waitFor(() =>
+    expect(screen.getByRole('combobox', { name: 'Group' })).toHaveValue(
+      'retired'
+    )
+  )
 })
 
 it('keeps a selected group visible on focus and can clear it without choosing another option', async () => {
@@ -220,9 +252,17 @@ it('keeps a selected group visible on focus and can clear it without choosing an
 
 it('keeps the compact input and masks the dropdown together with other sensitive filters', async () => {
   await renderFilter()
-  const input = screen.getByRole('combobox', { name: 'Group' })
-  expect(input).toHaveClass('h-8', 'text-sm', 'leading-5')
+  expect(screen.getByRole('combobox', { name: 'Group' })).toHaveClass(
+    'h-8',
+    'text-sm',
+    'leading-5'
+  )
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
   await userEvent.click(screen.getByRole('button', { name: /^Hide$/ }))
+  const input = await openFilterDrawer()
   await userEvent.click(input)
   const option = await screen.findByRole('option', { name: 'premium' })
   const maskedField = input.closest('.\\[-webkit-text-security\\:disc\\]')
@@ -230,7 +270,6 @@ it('keeps the compact input and masks the dropdown together with other sensitive
   expect(option.closest('.\\[-webkit-text-security\\:disc\\]')).not.toBeNull()
   await userEvent.keyboard('{Escape}')
   expect(input).toHaveAttribute('aria-expanded', 'false')
-  await userEvent.tab()
   expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
 })
 

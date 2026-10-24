@@ -21,7 +21,8 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLogQuota } from '@/lib/format'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatLogQuota, formatNumber } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
@@ -50,9 +51,9 @@ function StatBadge(props: {
 
 function StatCard(props: { label: string; value: string | number }) {
   return (
-    <div className='bg-card rounded-lg border px-[18px] pt-[18px] pb-4'>
+    <div className='bg-card rounded-lg border px-[18px] pt-[18px] pb-3.5'>
       <div className='text-muted-foreground text-[12.5px]'>{props.label}</div>
-      <div className='mt-1.5 truncate text-[28px] leading-tight font-semibold tracking-tight tabular-nums'>
+      <div className='mt-1.5 mb-1 truncate text-[28px] leading-[1.55] font-semibold tracking-tight tabular-nums'>
         {props.value}
       </div>
     </div>
@@ -61,7 +62,8 @@ function StatCard(props: { label: string; value: string | number }) {
 
 /** Badges sit inside the toolbar on mobile; desktop shows design KPI cards above the table. */
 export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const { isAdminView: isAdmin } = useLogsViewScope()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
@@ -105,8 +107,14 @@ export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
     return (
       <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-3'>
         <StatCard label={t('Spend in range')} value={quotaDisplay} />
-        <StatCard label={t('RPM')} value={stats?.rpm || 0} />
-        <StatCard label={t('TPM')} value={stats?.tpm || 0} />
+        <StatCard
+          label={t('RPM')}
+          value={formatNumber(stats?.rpm || 0, locale)}
+        />
+        <StatCard
+          label={t('TPM')}
+          value={formatNumber(stats?.tpm || 0, locale)}
+        />
       </div>
     )
   }
@@ -130,12 +138,12 @@ export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
       />
       <StatBadge
         label={t('RPM')}
-        value={stats?.rpm || 0}
+        value={formatNumber(stats?.rpm || 0, locale)}
         accent='bg-rose-500/65'
       />
       <StatBadge
         label={t('TPM')}
-        value={stats?.tpm || 0}
+        value={formatNumber(stats?.tpm || 0, locale)}
         accent='bg-slate-400/70'
       />
     </div>

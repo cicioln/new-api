@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "Tổng cộng {{count}} khóa",
     "Search name or key…": "Tìm theo tên hoặc khóa…",
     "Used percentage": "Tỷ lệ đã dùng",
-    "Key status enabled": "Bật"
+    "Key status enabled": "Bật",
+    "Export CSV": "Xuất CSV",
+    "Key Name": "Tên khóa",
+    "Retried": "Đã thử lại",
+    "First token / Total": "Token đầu / Tổng",
+    "{{total}} records total": "Tổng {{total}} bản ghi",
+    "Embedding": "Embedding"
   }
 }

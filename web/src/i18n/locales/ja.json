@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "全 {{count}} 件のキー",
     "Search name or key…": "名前またはキーを検索…",
     "Used percentage": "使用率",
-    "Key status enabled": "有効"
+    "Key status enabled": "有効",
+    "Export CSV": "CSV をエクスポート",
+    "Key Name": "キー名",
+    "Retried": "再試行済み",
+    "First token / Total": "初回トークン / 合計",
+    "{{total}} records total": "合計 {{total}} 件",
+    "Embedding": "埋め込み"
   }
 }

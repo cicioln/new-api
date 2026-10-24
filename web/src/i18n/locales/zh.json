@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "共 {{count}} 个密钥",
     "Search name or key…": "搜索名称或密钥…",
     "Used percentage": "已用比例",
-    "Key status enabled": "启用"
+    "Key status enabled": "启用",
+    "Export CSV": "导出 CSV",
+    "Key Name": "密钥名称",
+    "Retried": "已重试",
+    "First token / Total": "首字 / 总耗时",
+    "{{total}} records total": "共 {{total}} 条",
+    "Embedding": "向量"
   }
 }

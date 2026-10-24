@@ -100,6 +100,14 @@ export const LOG_TYPES = [
   { value: 7, label: 'Login', color: 'teal' },
 ] as const
 
+/** Columns whose header and cells are right-aligned numbers in the design. */
+export const COMMON_LOG_NUMERIC_COLUMNS = new Set([
+  'prompt_tokens',
+  'completion_tokens',
+  'use_time',
+  'quota',
+])
+
 /**
  * Log types for DataTableToolbar filters (single select mode)
  * Backend treats type=0 as "all logs" in list/stat endpoints, so the filter

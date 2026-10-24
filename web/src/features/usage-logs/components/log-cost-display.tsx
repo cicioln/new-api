@@ -41,6 +41,8 @@ interface LogCostDisplayProps {
   quota: number
   other: LogOtherData | null
   showBillingSource?: boolean
+  /** Renders the amount as plain right-aligned mono text instead of a bubble. */
+  plain?: boolean
 }
 
 function ToolSurchargeMarker() {
@@ -104,11 +106,15 @@ export function LogCostDisplay(props: LogCostDisplayProps) {
     <TooltipProvider>
       <div className='inline-flex w-fit items-center gap-1.5'>
         <StatusBadge
-          type='badge'
+          type={props.plain ? 'text' : 'badge'}
           variant='neutral'
           size='lg'
           copyable={false}
-          className='border-border/80 bg-muted/60 text-foreground rounded-md border font-semibold tabular-nums'
+          className={
+            props.plain
+              ? 'text-foreground gap-1 font-mono! text-[12.5px]! font-normal! tabular-nums'
+              : 'border-border/80 bg-muted/60 text-foreground rounded-md border font-semibold tabular-nums'
+          }
         >
           {source ? (
             <Tooltip>

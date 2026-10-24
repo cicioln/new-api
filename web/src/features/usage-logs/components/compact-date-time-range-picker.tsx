@@ -35,6 +35,8 @@ interface CompactDateTimeRangePickerProps {
   end?: Date
   onChange: (range: { start?: Date; end?: Date }) => void
   className?: string
+  /** Renders the trigger as a dashed toolbar chip showing only the dates. */
+  chip?: boolean
 }
 
 function toInputValue(date?: Date): string {
@@ -52,6 +54,7 @@ export function CompactDateTimeRangePicker({
   end,
   onChange,
   className,
+  chip = false,
 }: CompactDateTimeRangePickerProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -120,27 +123,51 @@ export function CompactDateTimeRangePicker({
     setOpen(false)
   }
 
+  const chipLabel =
+    start || end
+      ? `${start ? dayjs(start).format('YYYY-MM-DD') : '-'} → ${end ? dayjs(end).format('YYYY-MM-DD') : '-'}`
+      : label
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
-          <Button
-            type='button'
-            variant='outline'
-            aria-label={label}
-            className={cn(
-              'w-full justify-start gap-2 px-2.5 text-sm leading-5 font-normal tabular-nums',
-              !start && !end && 'text-muted-foreground',
-              className
-            )}
-          />
+          chip ? (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              aria-label={label}
+              className={cn(
+                'text-muted-foreground h-8 rounded-lg border-dashed bg-transparent px-3 text-[13px] font-normal tabular-nums shadow-none',
+                className
+              )}
+            />
+          ) : (
+            <Button
+              type='button'
+              variant='outline'
+              aria-label={label}
+              className={cn(
+                'w-full justify-start gap-2 px-2.5 text-sm leading-5 font-normal tabular-nums',
+                !start && !end && 'text-muted-foreground',
+                className
+              )}
+            />
+          )
         }
       >
-        <CalendarDays className='text-muted-foreground size-4 shrink-0' />
-        <span className='hidden truncate sm:block'>{label}</span>
-        <span className='min-w-0 [overflow-wrap:anywhere] whitespace-normal sm:hidden'>
-          {mobileLabel}
-        </span>
+        {chip ? (
+          chipLabel
+        ) : (
+          <>
+            <CalendarDays className='text-muted-foreground size-4 shrink-0' />
+            <span className='hidden truncate sm:block'>{label}</span>
+            <span className='min-w-0 [overflow-wrap:anywhere] whitespace-normal sm:hidden'>
+              {mobileLabel}
+            </span>
+          </>
+        )}
       </PopoverTrigger>
       <PopoverContent
         align='start'

@@ -7411,6 +7411,12 @@
     "{{count}} keys total": "Всего ключей: {{count}}",
     "Search name or key…": "Поиск по имени или ключу…",
     "Used percentage": "Доля использования",
-    "Key status enabled": "Включён"
+    "Key status enabled": "Включён",
+    "Export CSV": "Экспорт CSV",
+    "Key Name": "Имя ключа",
+    "Retried": "Повторено",
+    "First token / Total": "Первый токен / Всего",
+    "{{total}} records total": "Всего записей: {{total}}",
+    "Embedding": "Эмбеддинг"
   }
 }
