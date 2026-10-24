@@ -7418,6 +7418,12 @@
     "First token / Total": "Premier jeton / Total",
     "{{total}} records total": "{{total}} enregistrements au total",
     "Embedding": "Embedding",
-    "Failed · Refunded": "Échec · Remboursé"
+    "Failed · Refunded": "Échec · Remboursé",
+    "Search action or IP": "Rechercher une action ou une IP",
+    "Action type": "Type d'action",
+    "Object": "Objet",
+    "Blocked": "Bloqué",
+    "Export failed": "Échec de l'export",
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Connexions, clés, recharges, modifications de paramètres et autres opérations sensibles."
   }
 }

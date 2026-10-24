@@ -7418,6 +7418,12 @@
     "First token / Total": "Первый токен / Всего",
     "{{total}} records total": "Всего записей: {{total}}",
     "Embedding": "Эмбеддинг",
-    "Failed · Refunded": "Ошибка · Возвращено"
+    "Failed · Refunded": "Ошибка · Возвращено",
+    "Search action or IP": "Поиск по действию или IP",
+    "Action type": "Тип действия",
+    "Object": "Объект",
+    "Blocked": "Заблокировано",
+    "Export failed": "Не удалось экспортировать",
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Входы, ключи, пополнения, изменения настроек и другие важные операции."
   }
 }

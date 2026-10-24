@@ -53,6 +53,7 @@ type AuditLogFilter struct {
 	TokenRef        string
 	ExcludeTokenRef string
 	RequestId       string
+	Keyword         string // Substring of the IP, action key or recorded content.
 	StartTimestamp  int64
 	EndTimestamp    int64
 	Success         *bool
@@ -167,6 +168,9 @@ func GetAuditLogs(filter AuditLogFilter, start, limit, viewerRole int) ([]*Audit
 	if filter.RequestId != "" {
 		query = query.Where("request_id = ?", filter.RequestId)
 	}
+	if filter.Keyword != "" {
+		query = query.Where(auditKeywordCondition(), auditKeywordPattern(filter.Keyword))
+	}
 	if filter.StartTimestamp > 0 {
 		query = query.Where("created_at >= ?", filter.StartTimestamp)
 	}
@@ -260,6 +264,27 @@ func MigrateAuditLogs() error {
 	) ENGINE = MergeTree()
 	PARTITION BY toYYYYMM(toDateTime(created_at))
 	ORDER BY (created_at, event_id)`).Error
+}
+
+// auditKeywordCondition matches one bound pattern against the searchable
+// audit columns. ClickHouse escapes with backslashes; the other engines use
+// '!' so MySQL string escaping cannot change the pattern.
+func auditKeywordCondition() string {
+	clause := "(ip LIKE @p OR action LIKE @p OR content LIKE @p)"
+	if common.UsingLogDatabase(common.DatabaseTypeClickHouse) {
+		return clause
+	}
+	return strings.ReplaceAll(clause, "@p", "@p ESCAPE '!'")
+}
+
+// auditKeywordPattern turns free text into a literal contains-pattern.
+func auditKeywordPattern(keyword string) map[string]any {
+	escape := "!"
+	if common.UsingLogDatabase(common.DatabaseTypeClickHouse) {
+		escape = `\`
+	}
+	replacer := strings.NewReplacer(escape, escape+escape, "%", escape+"%", "_", escape+"_")
+	return map[string]any{"p": "%" + replacer.Replace(keyword) + "%"}
 }
 
 func ValidAuditCategory(category string) bool {

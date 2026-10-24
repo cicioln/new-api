@@ -23,17 +23,138 @@ import { useTranslation } from 'react-i18next'
 import { TruncatedCell } from '@/components/data-table'
 import { StatusBadge } from '@/components/status-badge'
 import dayjs from '@/lib/dayjs'
+import { cn } from '@/lib/utils'
 
 import type { AuditLog } from '../api'
-import { buildAuditDetails } from '../lib/audit-details'
+import { auditRowText } from '../lib/audit-row'
 import { AuditLogDetailsDialog } from './audit-log-details-dialog'
 
+const tagClass =
+  'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-xs! font-medium! whitespace-nowrap'
+
+/**
+ * Columns of the audit table. The audit page follows the design (time,
+ * operator, action, object, IP, client, result) and opens details on row
+ * click; the access history drawer keeps request columns and a details button.
+ */
 export function useAuditLogColumns(
   accessOnly?: boolean
 ): ColumnDef<AuditLog>[] {
   const { t } = useTranslation()
   return useMemo(() => {
-    const columns: ColumnDef<AuditLog>[] = [
+    const result: ColumnDef<AuditLog> = {
+      accessorKey: 'success',
+      header: t('Result'),
+      size: 96,
+      cell: ({ row }) => (
+        <span
+          className={cn(
+            tagClass,
+            row.original.success
+              ? 'bg-success/12 text-success'
+              : 'bg-destructive/10 text-destructive'
+          )}
+        >
+          <span aria-hidden className='size-1.5 rounded-full bg-current' />
+          {row.original.success ? t('Success') : t('Blocked')}
+        </span>
+      ),
+      meta: { label: t('Result'), mobileBadge: true },
+    }
+    const details: ColumnDef<AuditLog> = {
+      id: 'details',
+      header: t('Details'),
+      size: 70,
+      enableHiding: false,
+      cell: ({ row }) => <AuditLogDetailsDialog entry={row.original} />,
+      meta: { label: t('Details') },
+    }
+    if (!accessOnly) {
+      return [
+        {
+          accessorKey: 'created_at',
+          header: t('Time'),
+          cell: ({ row }) => (
+            <span
+              className='text-muted-foreground font-mono! text-xs! tabular-nums'
+              title={dayjs
+                .unix(row.original.created_at)
+                .format('YYYY-MM-DD HH:mm:ss')}
+            >
+              {dayjs.unix(row.original.created_at).format('MM-DD HH:mm')}
+            </span>
+          ),
+          meta: { label: t('Time'), mobileTitle: true },
+        },
+        {
+          accessorKey: 'username',
+          header: t('Operator'),
+          cell: ({ row }) => <span>{row.original.username || '—'}</span>,
+          meta: { label: t('Operator') },
+        },
+        {
+          id: 'action',
+          header: t('Action'),
+          accessorFn: (entry) => auditRowText(entry, t).action,
+          cell: ({ row }) => {
+            const text = auditRowText(row.original, t)
+            return (
+              <div className='flex min-w-0 items-baseline gap-1'>
+                <TruncatedCell className='min-w-0'>{text.action}</TruncatedCell>
+                {text.identifier && (
+                  <span className='text-muted-foreground shrink-0 whitespace-nowrap'>
+                    {text.identifier}
+                  </span>
+                )}
+              </div>
+            )
+          },
+          meta: { label: t('Action') },
+        },
+        {
+          id: 'object',
+          header: t('Object'),
+          accessorFn: (entry) => auditRowText(entry, t).object,
+          cell: ({ getValue }) => (
+            <TruncatedCell
+              className='text-muted-foreground max-w-72'
+              contentClassName='line-clamp-2 whitespace-normal break-words'
+            >
+              {getValue<string>() || '—'}
+            </TruncatedCell>
+          ),
+          meta: { label: t('Object') },
+        },
+        {
+          accessorKey: 'ip',
+          header: 'IP',
+          cell: ({ row }) => (
+            <span className='font-mono! text-xs!'>
+              {row.original.ip || '—'}
+            </span>
+          ),
+          meta: { label: 'IP' },
+        },
+        {
+          id: 'client',
+          header: t('Client'),
+          accessorFn: (entry) => auditRowText(entry, t).client,
+          cell: ({ row, getValue }) => (
+            <span
+              className='text-muted-foreground whitespace-nowrap'
+              title={row.original.user_agent || undefined}
+            >
+              {getValue<string>()}
+            </span>
+          ),
+          meta: { label: t('Client'), mobileHidden: true },
+        },
+        result,
+        // Only mobile cards show this; desktop rows open details on click.
+        details,
+      ]
+    }
+    return [
       {
         accessorKey: 'created_at',
         header: t('Time'),
@@ -45,66 +166,6 @@ export function useAuditLogColumns(
         ),
         meta: { label: t('Time'), mobileTitle: true },
       },
-    ]
-    if (!accessOnly) {
-      columns.push(
-        {
-          accessorKey: 'username',
-          header: t('Username'),
-          size: 100,
-          meta: { label: t('Username') },
-        },
-        {
-          id: 'event',
-          header: t('Event'),
-          size: 360,
-          accessorFn: (entry) => {
-            const detail = buildAuditDetails(entry, t)
-            return [detail.summary, detail.operation?.description]
-              .filter(Boolean)
-              .join(' · ')
-          },
-          cell: ({ row, getValue }) => {
-            const operation = buildAuditDetails(row.original, t).operation
-            if (!operation) {
-              return (
-                <TruncatedCell className='max-w-64'>
-                  {getValue<string>()}
-                </TruncatedCell>
-              )
-            }
-            return (
-              <div className='min-w-0 space-y-1'>
-                <div className='flex min-w-0 items-baseline gap-1'>
-                  <TruncatedCell
-                    className='min-w-0 font-medium'
-                    tooltipContent={operation.summary}
-                  >
-                    {operation.headline}
-                  </TruncatedCell>
-                  {operation.identifier && (
-                    <span className='shrink-0 whitespace-nowrap'>
-                      {operation.identifier}
-                    </span>
-                  )}
-                </div>
-                {operation.description && (
-                  <TruncatedCell
-                    className='text-muted-foreground'
-                    contentClassName='line-clamp-2 whitespace-normal break-words'
-                    tooltipContent={operation.description}
-                  >
-                    {operation.description}
-                  </TruncatedCell>
-                )}
-              </div>
-            )
-          },
-          meta: { label: t('Event') },
-        }
-      )
-    }
-    columns.push(
       {
         accessorKey: 'ip',
         header: 'IP',
@@ -171,15 +232,7 @@ export function useAuditLogColumns(
         ),
         meta: { label: t('Result'), mobileBadge: true },
       },
-      {
-        id: 'details',
-        header: t('Details'),
-        size: 70,
-        enableHiding: false,
-        cell: ({ row }) => <AuditLogDetailsDialog entry={row.original} />,
-        meta: { label: t('Details') },
-      }
-    )
-    return columns
+      details,
+    ]
   }, [accessOnly, t])
 }

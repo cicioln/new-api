@@ -35,9 +35,17 @@ import { auditFieldLabel, buildAuditDetails } from '../lib/audit-details'
 import { AuditDetailFields } from './audit-detail-fields'
 import { AuditDetailValue } from './audit-detail-value'
 
-export function AuditLogDetailsDialog(props: { entry: AuditLog }) {
+export function AuditLogDetailsDialog(props: {
+  entry: AuditLog
+  // Controlled by a clicked table row, which then renders no trigger button.
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const controlled = props.open !== undefined
+  const open = props.open ?? uncontrolledOpen
+  const setOpen = props.onOpenChange ?? setUncontrolledOpen
   const scopes = useQuery({
     queryKey: ['access-token-scopes'],
     queryFn: getAccessTokenScopes,
@@ -76,9 +84,11 @@ export function AuditLogDetailsDialog(props: { entry: AuditLog }) {
       description={t('View the complete details for this log entry')}
       descriptionClassName='sr-only'
       trigger={
-        <Button variant='ghost' size='sm' className='h-7 px-2'>
-          {t('Details')}
-        </Button>
+        controlled ? undefined : (
+          <Button variant='ghost' size='sm' className='h-7 px-2'>
+            {t('Details')}
+          </Button>
+        )
       }
       contentClassName='min-w-0 sm:max-w-lg max-sm:max-h-(--dialog-available-height) max-sm:w-[calc(100vw-1.5rem)] max-sm:max-w-[calc(100vw-1.5rem)]'
       titleClassName='text-base'

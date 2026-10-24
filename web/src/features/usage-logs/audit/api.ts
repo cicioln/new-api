@@ -53,6 +53,7 @@ export interface AuditFilters {
   exclude_token_ref?: string
   username?: string
   request_id?: string
+  keyword?: string
 }
 export async function getAuditLogs(
   scope: 'all' | 'self',

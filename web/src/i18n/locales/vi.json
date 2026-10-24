@@ -7418,6 +7418,12 @@
     "First token / Total": "Token đầu / Tổng",
     "{{total}} records total": "Tổng {{total}} bản ghi",
     "Embedding": "Embedding",
-    "Failed · Refunded": "Thất bại · Đã hoàn tiền"
+    "Failed · Refunded": "Thất bại · Đã hoàn tiền",
+    "Search action or IP": "Tìm thao tác hoặc IP",
+    "Action type": "Loại thao tác",
+    "Object": "Đối tượng",
+    "Blocked": "Đã chặn",
+    "Export failed": "Xuất thất bại",
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Đăng nhập, khóa, nạp tiền, thay đổi cài đặt và các thao tác nhạy cảm khác."
   }
 }

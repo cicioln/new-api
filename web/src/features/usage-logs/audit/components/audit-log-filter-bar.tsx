@@ -17,11 +17,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { Table } from '@tanstack/react-table'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DataTableFacetedFilter } from '@/components/data-table/toolbar/faceted-filter'
 import { Combobox } from '@/components/ui/combobox'
+import { Input } from '@/components/ui/input'
+import { useMediaQuery } from '@/hooks'
 
 import { CompactDateTimeRangePicker } from '../../components/compact-date-time-range-picker'
+import { LogsFilterChip } from '../../components/logs-filter-chip'
 import {
   LogsFilterField,
   LogsFilterInput,
@@ -65,6 +70,66 @@ export function AuditLogFilterBar(props: {
   onReset: () => void
 }) {
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 640px)')
+  const [keyword, setKeyword] = useState(props.filters.keyword ?? '')
+  // Follow resets of the applied keyword while keeping the typed draft.
+  const [appliedKeyword, setAppliedKeyword] = useState(props.filters.keyword)
+  if (appliedKeyword !== props.filters.keyword) {
+    setAppliedKeyword(props.filters.keyword)
+    setKeyword(props.filters.keyword ?? '')
+  }
+  const commitKeyword = () => {
+    const value = keyword.trim() || undefined
+    if (value !== props.filters.keyword) props.onChange({ keyword: value })
+  }
+  const categoryOptions = [
+    { value: 'login', label: t('Login') },
+    { value: 'security', label: t('Account security') },
+    { value: 'operation', label: t('Operation audit') },
+    { value: 'access_token', label: t('Access Token') },
+  ]
+  const keywordInput = (className: string) => (
+    <Input
+      autoComplete='off'
+      aria-label={t('Search action or IP')}
+      placeholder={t('Search action or IP')}
+      className={className}
+      value={keyword}
+      maxLength={128}
+      onChange={(event) => setKeyword(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') commitKeyword()
+      }}
+      onBlur={commitKeyword}
+    />
+  )
+  // The design audit toolbar: search, then "+ Action type" and the
+  // administrator-only "+ Operator" chips.
+  if (!props.accessOnly && !isMobile) {
+    const actionColumn = props.table.getColumn('action')
+    return (
+      <div className='flex flex-wrap items-center gap-2'>
+        {keywordInput('h-8 w-60 text-[13px]')}
+        {actionColumn && (
+          <DataTableFacetedFilter
+            column={actionColumn}
+            title={t('Action type')}
+            options={categoryOptions}
+            singleSelect
+          />
+        )}
+        {props.scope === 'all' && (
+          <LogsFilterChip
+            title={t('Operator')}
+            value={props.filters.username}
+            onApply={(value) =>
+              props.onChange({ username: value || undefined })
+            }
+          />
+        )}
+      </div>
+    )
+  }
   const dateFilter = (
     <LogsFilterField wide>
       <CompactDateTimeRangePicker
@@ -128,10 +193,7 @@ export function AuditLogFilterBar(props: {
           value={props.filters.category ?? 'all'}
           options={[
             { value: 'all', label: t('All categories') },
-            { value: 'login', label: t('Login') },
-            { value: 'security', label: t('Account security') },
-            { value: 'operation', label: t('Operation audit') },
-            { value: 'access_token', label: t('Access Token') },
+            ...categoryOptions,
           ]}
           onChange={(value) =>
             props.onChange({ category: value === 'all' ? undefined : value })
@@ -145,6 +207,9 @@ export function AuditLogFilterBar(props: {
       <>
         {!props.accessOnly && (
           <>
+            <LogsFilterField>
+              {keywordInput('h-8 w-full min-w-0 text-sm')}
+            </LogsFilterField>
             <LogsFilterField>
               <LogsFilterInput
                 aria-label={t('Token identifier')}
@@ -184,6 +249,7 @@ export function AuditLogFilterBar(props: {
       </>
     ) : undefined
   const advancedCount = [
+    props.filters.keyword,
     props.filters.token_ref,
     props.filters.request_id,
     props.filters.username,

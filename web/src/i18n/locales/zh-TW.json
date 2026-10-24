@@ -7418,6 +7418,12 @@
     "First token / Total": "首字 / 總耗時",
     "{{total}} records total": "共 {{total}} 筆",
     "Embedding": "向量",
-    "Failed · Refunded": "失敗 · 已退款"
+    "Failed · Refunded": "失敗 · 已退款",
+    "Search action or IP": "搜尋操作或 IP",
+    "Action type": "操作類型",
+    "Object": "對象",
+    "Blocked": "已攔截",
+    "Export failed": "匯出失敗",
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "登入、金鑰、儲值與設定變更等敏感操作紀錄。"
   }
 }

@@ -137,7 +137,7 @@ it.each([
     'Requested: 4 · Returned: 0',
   ],
 ])(
-  'shows the target and business outcome for %s directly in the event cell',
+  'shows the target and business outcome for %s directly in the action and object cells',
   async (action, params, headline, outcome) => {
     vi.spyOn(api, 'get').mockResolvedValue({
       data: {
@@ -173,7 +173,11 @@ it.each([
     if ('id' in params || 'target_user_id' in params) {
       expect(cell).toHaveTextContent('(ID: 11)')
     }
-    if (outcome) expect(cell).toHaveTextContent(outcome)
+    const row = cell.closest('tr')
+    if (!row) throw new Error('missing row')
+    if (outcome) {
+      expect(within(row).getByRole('cell', { name: outcome })).toBeVisible()
+    }
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   }
 )
@@ -229,7 +233,14 @@ it.each([false, true])(
     if (mobile) expect(screen.queryByRole('table')).not.toBeInTheDocument()
     else expect(screen.getByRole('table')).toBeVisible()
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Details' }))
+    if (mobile) {
+      await user.click(screen.getByRole('button', { name: 'Details' }))
+    } else {
+      expect(
+        screen.queryByRole('button', { name: 'Details' })
+      ).not.toBeInTheDocument()
+      await user.click(screen.getByRole('row', { name: /Enabled → Disabled/ }))
+    }
     const dialog = await screen.findByRole('dialog', { name: 'Log Details' })
     expect(
       within(dialog).getByText(`Update API token “${name}” (ID: 11)`)
@@ -584,7 +595,7 @@ it('changing rows per page resets pagination and sends the selected page size', 
 })
 
 it.each([10, 100])(
-  'role %i defaults to all audit records and can switch both ways',
+  'role %i with an audit grant queries all records without scope tabs',
   async (role) => {
     useAuthStore.getState().auth.setUser({
       id: 1,
@@ -603,30 +614,12 @@ it.each([10, 100])(
         <AuditLogs />
       </QueryClientProvider>
     )
-    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    )
     await waitFor(() =>
       expect(get).toHaveBeenCalledWith('/api/audit', expect.anything())
     )
     expect(get).not.toHaveBeenCalledWith('/api/audit/self', expect.anything())
-    await userEvent.click(screen.getByRole('tab', { name: 'Only Mine' }))
-    await waitFor(() =>
-      expect(get).toHaveBeenLastCalledWith('/api/audit/self', expect.anything())
-    )
-    expect(screen.getByRole('tab', { name: 'Only Mine' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    )
-    await userEvent.click(screen.getByRole('tab', { name: 'All' }))
-    await waitFor(() =>
-      expect(get).toHaveBeenLastCalledWith('/api/audit', expect.anything())
-    )
-    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    )
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Operator' })).toBeVisible()
   }
 )
 
@@ -653,6 +646,9 @@ it.each([1, 10])(
       screen.queryByRole('tablist', { name: 'View scope' })
     ).not.toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'All' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Operator' })
+    ).not.toBeInTheDocument()
   }
 )
 
@@ -728,7 +724,7 @@ it('clears global records and open details on revocation, falls back to self, an
     </QueryClientProvider>
   )
   await screen.findByText('other-account')
-  await userEvent.click(screen.getByRole('button', { name: 'Details' }))
+  await userEvent.click(screen.getByRole('row', { name: /other-account/ }))
   expect(
     await screen.findByRole('dialog', { name: 'Log Details' })
   ).toBeVisible()

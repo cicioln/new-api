@@ -7418,6 +7418,12 @@
     "First token / Total": "First token / Total",
     "{{total}} records total": "{{total}} records total",
     "Embedding": "Embedding",
-    "Failed · Refunded": "Failed · Refunded"
+    "Failed · Refunded": "Failed · Refunded",
+    "Search action or IP": "Search action or IP",
+    "Action type": "Action type",
+    "Object": "Object",
+    "Blocked": "Blocked",
+    "Export failed": "Export failed",
+    "Sign-in, key, top-up and settings changes and other sensitive operations.": "Sign-in, key, top-up and settings changes and other sensitive operations."
   }
 }

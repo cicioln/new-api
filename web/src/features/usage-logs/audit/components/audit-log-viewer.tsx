@@ -21,14 +21,22 @@ import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { DataTablePage, useDataTable } from '@/components/data-table'
+import {
+  DataTablePage,
+  DataTableRow,
+  useDataTable,
+} from '@/components/data-table'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { useMediaQuery } from '@/hooks'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { getAuditLogs, type AuditFilters, type AuditLog } from '../api'
 import { useAuditLogColumns } from './audit-log-columns'
+import { AuditLogDetailsDialog } from './audit-log-details-dialog'
 import { AuditLogFilterBar } from './audit-log-filter-bar'
 
 const EMPTY_LOGS: AuditLog[] = []
@@ -40,8 +48,12 @@ export function AuditLogViewer(props: {
   // The token scope the viewer opens with and returns to on reset.
   defaultTokenScope?: 'all' | 'current'
   onAccessDenied?: () => Promise<void>
+  // Reports the applied query so the page header can export the same records.
+  onParamsChange?: (params: AuditFilters | undefined) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 640px)')
+  const [detail, setDetail] = useState<AuditLog | null>(null)
   const userId = useAuthStore((state) => state.auth.user?.id)
   const [filters, setFilters] = useState<AuditFilters>({ p: 1, page_size: 20 })
   const defaultTokenScope = props.defaultTokenScope ?? 'all'
@@ -75,6 +87,15 @@ export function AuditLogViewer(props: {
   useEffect(() => {
     if (accessDenied) void onAccessDenied?.()
   }, [accessDenied, onAccessDenied])
+  const onParamsChange = props.onParamsChange
+  const queryable = canQuery && !invalidRange
+  const paramsKey = JSON.stringify(params)
+  useEffect(() => {
+    onParamsChange?.(queryable ? JSON.parse(paramsKey) : undefined)
+  }, [onParamsChange, paramsKey, queryable])
+  // Records of a revoked scope must not stay open in the details dialog.
+  if (detail && (accessDenied || query.isError)) setDetail(null)
+  const designTable = !props.accessOnly
   const columns = useAuditLogColumns(props.accessOnly)
   const { table } = useDataTable({
     columns,
@@ -83,6 +104,7 @@ export function AuditLogViewer(props: {
         ? (query.data?.items ?? EMPTY_LOGS)
         : EMPTY_LOGS,
     getRowId: (entry) => entry.event_id,
+    columnVisibility: designTable ? { details: isMobile } : undefined,
     totalCount: query.isError ? 0 : (query.data?.total ?? 0),
     pagination: { pageIndex: filters.p - 1, pageSize: filters.page_size },
     onPaginationChange: (updater) => {
@@ -98,6 +120,20 @@ export function AuditLogViewer(props: {
           p: next.pageSize === previous.page_size ? next.pageIndex + 1 : 1,
           page_size: next.pageSize,
         }
+      })
+    },
+    // The "+ Action type" chip filters the action column by category.
+    columnFilters: filters.category
+      ? [{ id: 'action', value: [filters.category] }]
+      : [],
+    onColumnFiltersChange: (updater) => {
+      const current = filters.category
+        ? [{ id: 'action', value: [filters.category] }]
+        : []
+      const next = typeof updater === 'function' ? updater(current) : updater
+      const value = next.find((filter) => filter.id === 'action')?.value
+      update({
+        category: Array.isArray(value) ? String(value[0]) : undefined,
       })
     },
     enableRowSelection: false,
@@ -121,9 +157,43 @@ export function AuditLogViewer(props: {
         hideMobile={props.accessOnly}
         paginationInFooter={!props.accessOnly}
         className='h-auto min-h-0 flex-1'
-        applyHeaderSize
-        getColumnClassName={() => 'py-2'}
-        tableClassName='[&_[data-slot=table]]:text-[13px] [&_[data-slot=table]_td]:text-[13px] [&_[data-slot=table]_td_*]:text-[13px] [&_[data-slot=table]_th]:text-[13px] [&_[data-slot=table]_th_*]:text-[13px]'
+        compactPagination={designTable && isMobile}
+        simplePagination={designTable && !isMobile}
+        paginationTotalLabel={
+          designTable
+            ? (total) =>
+                t('{{total}} records total', {
+                  total: formatNumber(
+                    total,
+                    toIntlLocale(i18n.resolvedLanguage || i18n.language)
+                  ),
+                })
+            : undefined
+        }
+        fixedHeight={!designTable || isMobile}
+        applyHeaderSize={!designTable}
+        getColumnClassName={designTable ? undefined : () => 'py-2'}
+        tableClassName={
+          designTable
+            ? undefined
+            : '[&_[data-slot=table]]:text-[13px] [&_[data-slot=table]_td]:text-[13px] [&_[data-slot=table]_td_*]:text-[13px] [&_[data-slot=table]_th]:text-[13px] [&_[data-slot=table]_th_*]:text-[13px]'
+        }
+        mobileProps={
+          designTable ? { getRowClassName: () => 'cursor-pointer' } : undefined
+        }
+        renderRow={
+          designTable
+            ? (row) => (
+                <DataTableRow
+                  key={row.id}
+                  row={row}
+                  className='cursor-pointer transition-colors'
+                  cellRenderColumns={table.options.columns}
+                  onClick={() => setDetail(row.original)}
+                />
+              )
+            : undefined
+        }
         toolbar={
           <div className='shrink-0 space-y-2'>
             <AuditLogFilterBar
@@ -172,6 +242,15 @@ export function AuditLogViewer(props: {
           </div>
         }
       />
+      {detail && (
+        <AuditLogDetailsDialog
+          entry={detail}
+          open
+          onOpenChange={(open) => {
+            if (!open) setDetail(null)
+          }}
+        />
+      )}
     </div>
   )
 }

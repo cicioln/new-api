@@ -21,7 +21,6 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getUserProfile } from '@/features/profile/api'
 import {
   ADMIN_PERMISSION_RESOURCES,
@@ -31,14 +30,16 @@ import {
 import { ROLE } from '@/lib/roles'
 import { useAuthStore } from '@/stores/auth-store'
 
+import type { AuditFilters } from './api'
+import { AuditExportButton } from './components/audit-export-button'
 import { AuditLogViewer } from './components/audit-log-viewer'
 
 export function AuditLogs() {
   const { t } = useTranslation()
   const user = useAuthStore((state) => state.auth.user)
   const queryClient = useQueryClient()
-  const [scope, setScope] = useState<'all' | 'self'>('all')
   const [accessRevoked, setAccessRevoked] = useState(false)
+  const [params, setParams] = useState<AuditFilters>()
   const canReadAll =
     !!user &&
     user.role >= ROLE.ADMIN &&
@@ -47,11 +48,11 @@ export function AuditLogs() {
       ADMIN_PERMISSION_RESOURCES.AUDIT,
       ADMIN_PERMISSION_ACTIONS.READ
     )
-  const effectiveScope = canReadAll && !accessRevoked ? scope : 'self'
+  // Auditors see every account's records and narrow them with "+ Operator".
+  const effectiveScope = canReadAll && !accessRevoked ? 'all' : 'self'
   const userId = user?.id
   const handleAccessDenied = useCallback(async () => {
     setAccessRevoked(true)
-    setScope('self')
     const current = useAuthStore.getState().auth.user
     if (current && current.id === userId) {
       useAuthStore.getState().auth.setUser({
@@ -90,20 +91,13 @@ export function AuditLogs() {
   return (
     <SectionPageLayout fixedContent>
       <SectionPageLayout.Title>{t('Audit Logs')}</SectionPageLayout.Title>
-      <SectionPageLayout.Actions>
-        {canReadAll && !accessRevoked && (
-          <Tabs
-            value={scope}
-            onValueChange={(value) =>
-              setScope(value === 'all' ? 'all' : 'self')
-            }
-          >
-            <TabsList aria-label={t('View scope')}>
-              <TabsTrigger value='all'>{t('All')}</TabsTrigger>
-              <TabsTrigger value='self'>{t('Only Mine')}</TabsTrigger>
-            </TabsList>
-          </Tabs>
+      <SectionPageLayout.Description>
+        {t(
+          'Sign-in, key, top-up and settings changes and other sensitive operations.'
         )}
+      </SectionPageLayout.Description>
+      <SectionPageLayout.Actions>
+        <AuditExportButton scope={effectiveScope} params={params} />
       </SectionPageLayout.Actions>
       <SectionPageLayout.Content>
         <div className='flex h-full min-h-0 flex-col gap-3'>
@@ -117,6 +111,7 @@ export function AuditLogs() {
               key={`${userId}:${effectiveScope}`}
               scope={effectiveScope}
               onAccessDenied={handleAccessDenied}
+              onParamsChange={setParams}
             />
           </div>
         </div>
