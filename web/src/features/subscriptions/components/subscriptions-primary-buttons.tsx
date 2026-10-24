@@ -33,7 +33,7 @@ export function SubscriptionsPrimaryButtons() {
         onClick={() => setOpen('create')}
         disabled={!complianceConfirmed}
       >
-        <Plus className='h-4 w-4' />
+        <Plus aria-hidden='true' />
         {t('Create Plan')}
       </Button>
     </div>

@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "共 {{count}} 个兑换码",
     "Generate quota redemption codes in bulk with optional expiry.": "批量生成额度兑换码，可设置有效期。",
     "No unused codes to export": "没有可导出的未使用兑换码",
-    "Exported {{count}} codes": "已导出 {{count}} 个兑换码"
+    "Exported {{count}} codes": "已导出 {{count}} 个兑换码",
+    "/ month": "/ 月",
+    "/ year": "/ 年",
+    "/ day": "/ 天",
+    "/ hour": "/ 小时",
+    "Billed monthly": "按月",
+    "Billed yearly": "按年",
+    "No subscribers yet": "暂无订阅用户",
+    "Subscribers": "订阅用户",
+    "Up to {{count}} per user": "每人限购 {{count}} 份",
+    "Users who subscribe to a plan will appear here.": "订阅套餐的用户会显示在这里。",
+    "{{amount}} total quota": "总额度 {{amount}}",
+    "{{count}} subscribers": "{{count}} 位订阅",
+    "{{count}} subscriptions total": "共 {{count}} 条订阅",
+    "{{group}} group": "{{group}} 分组",
+    "{{period}} {{amount}} quota": "{{period}} {{amount}} 额度",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "按月 / 按年的套餐，订阅期内按套餐额度与分组计费。"
   }
 }

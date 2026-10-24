@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "Tổng cộng {{count}} mã",
     "Generate quota redemption codes in bulk with optional expiry.": "Tạo hàng loạt mã đổi hạn mức, có thể đặt thời hạn.",
     "No unused codes to export": "Không có mã chưa dùng để xuất",
-    "Exported {{count}} codes": "Đã xuất {{count}} mã"
+    "Exported {{count}} codes": "Đã xuất {{count}} mã",
+    "/ month": "/ tháng",
+    "/ year": "/ năm",
+    "/ day": "/ ngày",
+    "/ hour": "/ giờ",
+    "Billed monthly": "Theo tháng",
+    "Billed yearly": "Theo năm",
+    "No subscribers yet": "Chưa có người đăng ký",
+    "Subscribers": "Người đăng ký",
+    "Up to {{count}} per user": "Tối đa {{count}} mỗi người dùng",
+    "Users who subscribe to a plan will appear here.": "Người dùng đăng ký gói sẽ hiển thị tại đây.",
+    "{{amount}} total quota": "Tổng hạn mức {{amount}}",
+    "{{count}} subscribers": "{{count}} người đăng ký",
+    "{{count}} subscriptions total": "Tổng cộng {{count}} đăng ký",
+    "{{group}} group": "Nhóm {{group}}",
+    "{{period}} {{amount}} quota": "Hạn mức {{period}} {{amount}}",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "Gói theo tháng / năm, tính phí theo hạn mức và nhóm của gói trong thời gian đăng ký."
   }
 }

@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "{{count}} codes au total",
     "Generate quota redemption codes in bulk with optional expiry.": "Générez des codes d'échange de quota en lot, avec expiration facultative.",
     "No unused codes to export": "Aucun code inutilisé à exporter",
-    "Exported {{count}} codes": "{{count}} codes exportés"
+    "Exported {{count}} codes": "{{count}} codes exportés",
+    "/ month": "/ mois",
+    "/ year": "/ an",
+    "/ day": "/ jour",
+    "/ hour": "/ heure",
+    "Billed monthly": "Facturé mensuellement",
+    "Billed yearly": "Facturé annuellement",
+    "No subscribers yet": "Aucun abonné pour le moment",
+    "Subscribers": "Abonnés",
+    "Up to {{count}} per user": "Jusqu'à {{count}} par utilisateur",
+    "Users who subscribe to a plan will appear here.": "Les utilisateurs abonnés à une offre apparaîtront ici.",
+    "{{amount}} total quota": "Quota total de {{amount}}",
+    "{{count}} subscribers": "{{count}} abonnés",
+    "{{count}} subscriptions total": "{{count}} abonnements au total",
+    "{{group}} group": "Groupe {{group}}",
+    "{{period}} {{amount}} quota": "Quota {{period}} de {{amount}}",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "Offres mensuelles ou annuelles, facturées selon le quota et le groupe de l'offre pendant l'abonnement."
   }
 }

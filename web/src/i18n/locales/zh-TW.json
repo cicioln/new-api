@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "共 {{count}} 個兌換碼",
     "Generate quota redemption codes in bulk with optional expiry.": "批次產生額度兌換碼，可設定有效期限。",
     "No unused codes to export": "沒有可匯出的未使用兌換碼",
-    "Exported {{count}} codes": "已匯出 {{count}} 個兌換碼"
+    "Exported {{count}} codes": "已匯出 {{count}} 個兌換碼",
+    "/ month": "/ 月",
+    "/ year": "/ 年",
+    "/ day": "/ 天",
+    "/ hour": "/ 小時",
+    "Billed monthly": "按月",
+    "Billed yearly": "按年",
+    "No subscribers yet": "暫無訂閱使用者",
+    "Subscribers": "訂閱使用者",
+    "Up to {{count}} per user": "每人限購 {{count}} 份",
+    "Users who subscribe to a plan will appear here.": "訂閱方案的使用者會顯示在這裡。",
+    "{{amount}} total quota": "總額度 {{amount}}",
+    "{{count}} subscribers": "{{count}} 位訂閱",
+    "{{count}} subscriptions total": "共 {{count}} 筆訂閱",
+    "{{group}} group": "{{group}} 分組",
+    "{{period}} {{amount}} quota": "{{period}} {{amount}} 額度",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "按月 / 按年的方案，訂閱期內按方案額度與分組計費。"
   }
 }

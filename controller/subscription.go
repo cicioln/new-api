@@ -16,6 +16,8 @@ import (
 
 type SubscriptionPlanDTO struct {
 	Plan model.SubscriptionPlan `json:"plan"`
+	// SubscriberCount is only filled for the admin plan list.
+	SubscriberCount int64 `json:"subscriber_count,omitempty"`
 }
 
 type BillingPreferenceRequest struct {
@@ -123,14 +125,33 @@ func AdminListSubscriptionPlans(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	counts, err := model.CountActiveSubscribersByPlan()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
 	result := make([]SubscriptionPlanDTO, 0, len(plans))
 	for _, p := range plans {
 		p.NormalizeDefaults()
 		result = append(result, SubscriptionPlanDTO{
-			Plan: p,
+			Plan:            p,
+			SubscriberCount: counts[p.Id],
 		})
 	}
 	common.ApiSuccess(c, result)
+}
+
+// AdminListAllUserSubscriptions pages through every user's subscriptions.
+func AdminListAllUserSubscriptions(c *gin.Context) {
+	pageInfo := common.GetPageQuery(c)
+	items, total, err := model.ListAdminUserSubscriptions(pageInfo.GetStartIdx(), pageInfo.GetPageSize())
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	pageInfo.SetTotal(int(total))
+	pageInfo.SetItems(items)
+	common.ApiSuccess(c, pageInfo)
 }
 
 type AdminUpsertSubscriptionPlanRequest struct {

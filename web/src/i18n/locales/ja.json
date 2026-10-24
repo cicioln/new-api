@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "全 {{count}} 件のコード",
     "Generate quota redemption codes in bulk with optional expiry.": "クォータ引き換えコードを一括生成し、有効期限も設定できます。",
     "No unused codes to export": "エクスポートできる未使用コードはありません",
-    "Exported {{count}} codes": "{{count}} 件のコードをエクスポートしました"
+    "Exported {{count}} codes": "{{count}} 件のコードをエクスポートしました",
+    "/ month": "/ 月",
+    "/ year": "/ 年",
+    "/ day": "/ 日",
+    "/ hour": "/ 時間",
+    "Billed monthly": "月額",
+    "Billed yearly": "年額",
+    "No subscribers yet": "購読者はまだいません",
+    "Subscribers": "購読ユーザー",
+    "Up to {{count}} per user": "1 人あたり最大 {{count}} 件",
+    "Users who subscribe to a plan will appear here.": "プランを購読したユーザーがここに表示されます。",
+    "{{amount}} total quota": "総クォータ {{amount}}",
+    "{{count}} subscribers": "{{count}} 人が購読",
+    "{{count}} subscriptions total": "合計 {{count}} 件の購読",
+    "{{group}} group": "{{group}} グループ",
+    "{{period}} {{amount}} quota": "{{period}} {{amount}} クォータ",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "月額 / 年額プラン。購読期間中はプランのクォータとグループで課金されます。"
   }
 }

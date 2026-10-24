@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "Всего кодов: {{count}}",
     "Generate quota redemption codes in bulk with optional expiry.": "Массовая генерация кодов погашения квоты с необязательным сроком действия.",
     "No unused codes to export": "Нет неиспользованных кодов для экспорта",
-    "Exported {{count}} codes": "Экспортировано кодов: {{count}}"
+    "Exported {{count}} codes": "Экспортировано кодов: {{count}}",
+    "/ month": "/ месяц",
+    "/ year": "/ год",
+    "/ day": "/ день",
+    "/ hour": "/ час",
+    "Billed monthly": "Ежемесячно",
+    "Billed yearly": "Ежегодно",
+    "No subscribers yet": "Подписчиков пока нет",
+    "Subscribers": "Подписчики",
+    "Up to {{count}} per user": "До {{count}} на пользователя",
+    "Users who subscribe to a plan will appear here.": "Здесь появятся пользователи, оформившие подписку.",
+    "{{amount}} total quota": "Общая квота {{amount}}",
+    "{{count}} subscribers": "Подписчиков: {{count}}",
+    "{{count}} subscriptions total": "Всего подписок: {{count}}",
+    "{{group}} group": "Группа {{group}}",
+    "{{period}} {{amount}} quota": "Квота {{amount}} ({{period}})",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "Месячные или годовые планы; в период подписки тарификация идёт по квоте и группе плана."
   }
 }

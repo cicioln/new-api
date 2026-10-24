@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { api } from '@/lib/api'
 
 import type {
+  AdminUserSubscriptionPage,
   ApiResponse,
   PlanRecord,
   PlanPayload,
@@ -69,6 +70,16 @@ export async function patchPlanStatus(
 // ============================================================================
 // Admin User Subscription Management
 // ============================================================================
+
+export async function getAllUserSubscriptions(params: {
+  p: number
+  page_size: number
+}): Promise<ApiResponse<AdminUserSubscriptionPage>> {
+  const res = await api.get('/api/subscription/admin/user_subscriptions', {
+    params,
+  })
+  return res.data
+}
 
 export async function getUserSubscriptions(
   userId: number

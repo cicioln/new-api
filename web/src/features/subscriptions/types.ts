@@ -50,6 +50,8 @@ export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>
 
 export interface PlanRecord {
   plan: SubscriptionPlan
+  /** Active subscribers; only returned by the admin plan list. */
+  subscriber_count?: number
 }
 
 // ============================================================================
@@ -73,6 +75,16 @@ export type UserSubscription = z.infer<typeof userSubscriptionSchema>
 
 export interface UserSubscriptionRecord {
   subscription: UserSubscription
+}
+
+export type AdminUserSubscription = UserSubscription & {
+  username: string
+  plan_title: string
+}
+
+export interface AdminUserSubscriptionPage {
+  items: AdminUserSubscription[]
+  total: number
 }
 
 // ============================================================================

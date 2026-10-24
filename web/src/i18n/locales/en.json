@@ -7494,6 +7494,22 @@
     "{{count}} codes total": "{{count}} codes total",
     "Generate quota redemption codes in bulk with optional expiry.": "Generate quota redemption codes in bulk with optional expiry.",
     "No unused codes to export": "No unused codes to export",
-    "Exported {{count}} codes": "Exported {{count}} codes"
+    "Exported {{count}} codes": "Exported {{count}} codes",
+    "/ month": "/ month",
+    "/ year": "/ year",
+    "/ day": "/ day",
+    "/ hour": "/ hour",
+    "Billed monthly": "Billed monthly",
+    "Billed yearly": "Billed yearly",
+    "No subscribers yet": "No subscribers yet",
+    "Subscribers": "Subscribers",
+    "Up to {{count}} per user": "Up to {{count}} per user",
+    "Users who subscribe to a plan will appear here.": "Users who subscribe to a plan will appear here.",
+    "{{amount}} total quota": "{{amount}} total quota",
+    "{{count}} subscribers": "{{count}} subscribers",
+    "{{count}} subscriptions total": "{{count}} subscriptions total",
+    "{{group}} group": "{{group}} group",
+    "{{period}} {{amount}} quota": "{{period}} {{amount}} quota",
+    "Monthly or yearly plans, billed by plan quota and group during the subscription period.": "Monthly or yearly plans, billed by plan quota and group during the subscription period."
   }
 }
