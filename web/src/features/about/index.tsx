@@ -17,109 +17,107 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { Construction } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
 import { RichContent } from '@/components/rich-content'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  LEGAL_MARKDOWN_CLASS,
+  LegalFrame,
+} from '@/features/legal/legal-document'
+import { useStatus } from '@/hooks/use-status'
 import { isHttpUrl, isLikelyHtml } from '@/lib/content-format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { getAboutContent } from './api'
 
-function EmptyAboutState() {
+const LINK = 'underline underline-offset-2'
+
+function AboutTitle(props: { name: string }) {
+  const { t } = useTranslation()
+  return (
+    <h1 className='mb-3 text-[34px] font-[650] tracking-[-0.02em]'>
+      {t('About')} {props.name}
+    </h1>
+  )
+}
+
+function EmptyAboutState(props: { name: string }) {
   const { t } = useTranslation()
   const currentYear = new Date().getFullYear()
 
   return (
-    <div className='flex min-h-[60vh] items-center justify-center p-8'>
-      <div className='max-w-2xl space-y-6 text-center'>
-        <div className='flex justify-center'>
-          <Construction className='text-muted-foreground h-24 w-24' />
-        </div>
-        <div className='space-y-2'>
-          <h2 className='text-2xl font-bold'>{t('No About Content Set')}</h2>
-          <p className='text-muted-foreground'>
-            {t(
-              'The administrator has not configured any about content yet. You can set it in the settings page, supporting HTML or URL.'
-            )}
-          </p>
-        </div>
-        <div className='space-y-4 text-sm'>
-          <p>
-            {t('New API Project Repository:')}{' '}
-            <a
-              href='https://github.com/QuantumNous/new-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('https://github.com/QuantumNous/new-api')}
-            </a>
-          </p>
-          <p className='text-muted-foreground'>
-            <a
-              href='https://github.com/QuantumNous/new-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('NewAPI')}
-            </a>{' '}
-            © {currentYear}{' '}
-            <a
-              href='https://github.com/QuantumNous'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('QuantumNous')}
-            </a>{' '}
-            {t('| Based on')}{' '}
-            <a
-              href='https://github.com/songquanpeng/one-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('One API')}
-            </a>{' '}
-            © 2023{' '}
-            <a
-              href='https://github.com/songquanpeng'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('JustSong')}
-            </a>
-          </p>
-          <p className='text-muted-foreground'>
-            {t('This project must be used in compliance with the')}{' '}
-            <a
-              href='https://github.com/QuantumNous/new-api/blob/main/LICENSE'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('AGPL v3.0 License')}
-            </a>
-            .
-          </p>
-        </div>
-      </div>
-    </div>
+    <>
+      <AboutTitle name={props.name} />
+      <p className='text-muted-foreground text-[15px] leading-[1.85]'>
+        {t(
+          'The administrator has not configured any about content yet. You can set it in the settings page, supporting HTML or URL.'
+        )}
+      </p>
+      <h2 className='mt-8 mb-2 text-lg font-semibold'>{t('Open source')}</h2>
+      <p className='text-muted-foreground text-[15px] leading-[1.85]'>
+        <a
+          href='https://github.com/QuantumNous/new-api'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={LINK}
+        >
+          {t('NewAPI')}
+        </a>{' '}
+        © {currentYear}{' '}
+        <a
+          href='https://github.com/QuantumNous'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={LINK}
+        >
+          {t('QuantumNous')}
+        </a>{' '}
+        {t('| Based on')}{' '}
+        <a
+          href='https://github.com/songquanpeng/one-api'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={LINK}
+        >
+          {t('One API')}
+        </a>{' '}
+        © 2023{' '}
+        <a
+          href='https://github.com/songquanpeng'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={LINK}
+        >
+          {t('JustSong')}
+        </a>
+      </p>
+      <p className='text-muted-foreground text-[15px] leading-[1.85]'>
+        {t('This project must be used in compliance with the')}{' '}
+        <a
+          href='https://github.com/QuantumNous/new-api/blob/main/LICENSE'
+          target='_blank'
+          rel='noopener noreferrer'
+          className={LINK}
+        >
+          {t('AGPL v3.0 License')}
+        </a>
+        .
+      </p>
+    </>
   )
 }
 
 export function About() {
   const { t } = useTranslation()
+  const { status } = useStatus()
   const { data, isLoading } = useQuery({
     queryKey: ['about-content'],
     queryFn: async () => requireServerSuccess(await getAboutContent()),
   })
 
+  const name = status?.system_name || 'New API'
   const rawContent = data?.data?.trim() ?? ''
   const hasContent = rawContent.length > 0
   const isUrl = hasContent && isHttpUrl(rawContent)
@@ -127,22 +125,22 @@ export function About() {
 
   if (isLoading) {
     return (
-      <PublicLayout>
-        <div className='mx-auto flex max-w-4xl flex-col gap-4 py-12'>
-          <Skeleton className='h-8 w-[45%]' />
+      <LegalFrame>
+        <div className='flex flex-col gap-4'>
+          <Skeleton className='h-9 w-[45%]' />
           <Skeleton className='h-4 w-full' />
           <Skeleton className='h-4 w-[90%]' />
           <Skeleton className='h-4 w-[80%]' />
         </div>
-      </PublicLayout>
+      </LegalFrame>
     )
   }
 
   if (!hasContent) {
     return (
-      <PublicLayout>
-        <EmptyAboutState />
-      </PublicLayout>
+      <LegalFrame>
+        <EmptyAboutState name={name} />
+      </LegalFrame>
     )
   }
 
@@ -151,7 +149,7 @@ export function About() {
       <PublicLayout showMainContainer={false}>
         <iframe
           src={rawContent}
-          className='h-[calc(100vh-3.5rem)] w-full border-0'
+          className='mt-16 h-[calc(100vh-4rem)] w-full border-0'
           title={t('About')}
           sandbox='allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts'
         />
@@ -161,26 +159,20 @@ export function About() {
 
   if (contentIsHtml) {
     return (
-      <PublicLayout showMainContainer={false}>
-        <RichContent
-          mode='html'
-          htmlVariant='isolated'
-          content={rawContent}
-          className='prose-neutral dark:prose-invert max-w-none'
-        />
-      </PublicLayout>
+      <LegalFrame>
+        <RichContent mode='html' htmlVariant='isolated' content={rawContent} />
+      </LegalFrame>
     )
   }
 
   return (
-    <PublicLayout>
-      <div className='mx-auto max-w-6xl px-4 py-8'>
-        <RichContent
-          mode='markdown'
-          content={rawContent}
-          className='prose-neutral dark:prose-invert max-w-none'
-        />
-      </div>
-    </PublicLayout>
+    <LegalFrame>
+      <AboutTitle name={name} />
+      <RichContent
+        mode='markdown'
+        content={rawContent}
+        className={LEGAL_MARKDOWN_CLASS}
+      />
+    </LegalFrame>
   )
 }

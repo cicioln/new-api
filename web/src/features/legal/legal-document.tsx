@@ -37,11 +37,15 @@ type LegalDocumentProps = {
   emptyMessage: string
 }
 
+/** Document typography shared by the legal and about pages. */
+export const LEGAL_MARKDOWN_CLASS =
+  'text-muted-foreground text-[15px] leading-[1.85] [&_h2]:text-foreground [&_h2]:mt-8 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_p]:my-0 [&_p]:leading-[1.85] [&_li]:my-0 [&_li]:pl-0 [&_ul]:my-0 [&_ul]:pl-5 [&_a]:text-inherit [&_a]:underline [&_code]:bg-muted [&_code]:rounded-[4px] [&_code]:px-1.5 [&_code]:py-px [&_code]:text-[13px]'
+
 type LegalFrameProps = {
   children: React.ReactNode
 }
 
-function LegalFrame(props: LegalFrameProps) {
+export function LegalFrame(props: LegalFrameProps) {
   return (
     <PublicLayout showMainContainer={false}>
       <div className='mx-auto max-w-[1360px] px-4 pt-16 md:px-6'>
@@ -136,7 +140,7 @@ export function LegalDocument(props: LegalDocumentProps) {
       <RichContent
         mode='markdown'
         content={rawContent}
-        className='prose-neutral dark:prose-invert prose-h2:mt-8 prose-h2:mb-2 prose-h2:text-lg prose-p:text-[15px] prose-p:leading-[1.85] prose-li:text-[15px] max-w-none'
+        className={LEGAL_MARKDOWN_CLASS}
       />
     </LegalFrame>
   )
