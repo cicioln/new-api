@@ -7721,6 +7721,16 @@
     "Sign in directly": "Đăng nhập",
     "After signing up you can create API keys. New users join the default group.": "Sau khi đăng ký, bạn có thể tạo khóa API. Người dùng mới vào nhóm default.",
     "Registration is closed": "Tạm thời chưa mở đăng ký",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Quản trị viên đã tắt đăng ký người dùng mới. Liên hệ quản trị viên để có tài khoản, hoặc đăng nhập bằng tài khoản bên thứ ba đã liên kết."
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Quản trị viên đã tắt đăng ký người dùng mới. Liên hệ quản trị viên để có tài khoản, hoặc đăng nhập bằng tài khoản bên thứ ba đã liên kết.",
+    "Switch account": "Đổi tài khoản",
+    "Two-step verification": "Xác minh hai bước",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "Mở ứng dụng xác thực và nhập mã 6 chữ số của tài khoản {{username}}.",
+    "Open your authenticator app and enter the 6-digit code.": "Mở ứng dụng xác thực và nhập mã 6 chữ số.",
+    "Backup code": "Mã dự phòng",
+    "Verify and sign in": "Xác minh và đăng nhập",
+    "Verify with Passkey": "Xác minh bằng Passkey",
+    "Can't use your authenticator?": "Không dùng được ứng dụng xác thực?",
+    "Use a backup code": "Dùng mã dự phòng",
+    "Have your authenticator?": "Có ứng dụng xác thực?"
   }
 }

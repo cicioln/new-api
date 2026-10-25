@@ -150,9 +150,7 @@ it('routes a primary-authenticated challenge into shared verification without ap
       name: 'Primary authentication succeeded',
     })
   )
-  expect(
-    await screen.findByLabelText('Authenticator code or backup code')
-  ).toBeVisible()
+  expect(await screen.findByLabelText('Authenticator code')).toBeVisible()
   expect(router.state.location.pathname).toBe('/otp')
   expect(useAuthStore.getState().auth.user).toBeNull()
   expect(post).not.toHaveBeenCalled()
@@ -183,13 +181,12 @@ it('writes authentication only after verification and preserves the original des
   const post = vi.spyOn(api, 'post').mockReturnValue(pending.promise)
   const { router } = renderLoginVerification()
   const user = userEvent.setup()
-  await user.type(
-    await screen.findByLabelText('Authenticator code or backup code'),
-    '123456'
-  )
+  await user.type(await screen.findByLabelText('Authenticator code'), '123456')
   expect(useAuthStore.getState().auth.pendingLoginVerification).toBeNull()
   expect(useAuthStore.getState().auth.user).toBeNull()
-  await user.dblClick(screen.getByRole('button', { name: 'Verify' }))
+  await user.dblClick(
+    screen.getByRole('button', { name: 'Verify and sign in' })
+  )
   expect(post).toHaveBeenCalledTimes(1)
   expect(useAuthStore.getState().auth.user).toBeNull()
   await act(async () => {
@@ -203,12 +200,12 @@ it('writes authentication only after verification and preserves the original des
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
-it('cancels verification with Escape and returns to sign-in without authenticating', async () => {
+it('cancels verification via switch account and returns to sign-in without authenticating', async () => {
   const post = vi.spyOn(api, 'post')
   const { router } = renderLoginVerification()
   const user = userEvent.setup()
-  await screen.findByLabelText('Authenticator code or backup code')
-  await user.keyboard('{Escape}')
+  await screen.findByLabelText('Authenticator code')
+  await user.click(screen.getByRole('link', { name: 'Switch account' }))
   await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'))
   expect(post).not.toHaveBeenCalled()
   expect(useAuthStore.getState().auth.user).toBeNull()
@@ -223,10 +220,10 @@ it.each(['unmount', 'account switch'] as const)(
     const { router } = renderLoginVerification()
     const user = userEvent.setup()
     await user.type(
-      await screen.findByLabelText('Authenticator code or backup code'),
+      await screen.findByLabelText('Authenticator code'),
       '123456'
     )
-    await user.click(screen.getByRole('button', { name: 'Verify' }))
+    await user.click(screen.getByRole('button', { name: 'Verify and sign in' }))
     await act(async () => {
       if (change === 'unmount') {
         await router.navigate({ to: '/sign-in' })
@@ -261,13 +258,10 @@ it('rejects submission after the five-minute challenge deadline without sending 
   const post = vi.spyOn(api, 'post')
   renderLoginVerification()
   const user = userEvent.setup()
-  await user.type(
-    await screen.findByLabelText('Authenticator code or backup code'),
-    '123456'
-  )
+  await user.type(await screen.findByLabelText('Authenticator code'), '123456')
   const later = Date.now() + 301000
   vi.spyOn(Date, 'now').mockReturnValue(later)
-  await user.click(screen.getByRole('button', { name: 'Verify' }))
+  await user.click(screen.getByRole('button', { name: 'Verify and sign in' }))
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Login flow expired. Please sign in again.'
   )

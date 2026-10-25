@@ -7721,6 +7721,16 @@
     "Sign in directly": "ログイン",
     "After signing up you can create API keys. New users join the default group.": "登録後すぐに API キーを作成できます。新規ユーザーは default グループに入ります。",
     "Registration is closed": "現在登録を受け付けていません",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理者が新規登録を停止しています。アカウントが必要な場合は管理者に連絡するか、連携済みの外部アカウントでログインしてください。"
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理者が新規登録を停止しています。アカウントが必要な場合は管理者に連絡するか、連携済みの外部アカウントでログインしてください。",
+    "Switch account": "別のアカウントを使う",
+    "Two-step verification": "2 段階認証",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "認証アプリを開き、{{username}} アカウントの 6 桁のコードを入力してください。",
+    "Open your authenticator app and enter the 6-digit code.": "認証アプリを開き、6 桁のコードを入力してください。",
+    "Backup code": "バックアップコード",
+    "Verify and sign in": "認証してログイン",
+    "Verify with Passkey": "Passkey で認証",
+    "Can't use your authenticator?": "認証アプリを使えませんか？",
+    "Use a backup code": "バックアップコードを使う",
+    "Have your authenticator?": "認証アプリを使えますか？"
   }
 }

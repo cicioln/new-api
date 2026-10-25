@@ -98,6 +98,12 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
   value: ResizeObserverMock,
 })
 
+// input-otp probes for password-manager badges; jsdom has no layout.
+Object.defineProperty(document, 'elementFromPoint', {
+  configurable: true,
+  value: () => null,
+})
+
 Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
   configurable: true,
   value: () => undefined,

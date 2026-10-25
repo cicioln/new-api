@@ -7721,6 +7721,16 @@
     "Sign in directly": "直接登入",
     "After signing up you can create API keys. New users join the default group.": "註冊後即可建立 API 金鑰，新使用者預設進入 default 分組。",
     "Registration is closed": "暫未開放註冊",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理員已關閉新使用者註冊。如需帳戶請聯絡管理員，或使用已綁定的第三方帳號登入。"
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理員已關閉新使用者註冊。如需帳戶請聯絡管理員，或使用已綁定的第三方帳號登入。",
+    "Switch account": "換個帳號",
+    "Two-step verification": "兩步驗證",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "開啟身分驗證器 App，輸入 {{username}} 帳戶的 6 位動態碼。",
+    "Open your authenticator app and enter the 6-digit code.": "開啟身分驗證器 App，輸入 6 位動態碼。",
+    "Backup code": "備用碼",
+    "Verify and sign in": "驗證並登入",
+    "Verify with Passkey": "改用 Passkey 驗證",
+    "Can't use your authenticator?": "無法使用驗證器？",
+    "Use a backup code": "使用備用碼",
+    "Have your authenticator?": "驗證器可用？"
   }
 }

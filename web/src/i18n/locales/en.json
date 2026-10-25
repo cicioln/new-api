@@ -7721,6 +7721,16 @@
     "Sign in directly": "Sign in",
     "After signing up you can create API keys. New users join the default group.": "After signing up you can create API keys. New users join the default group.",
     "Registration is closed": "Registration is closed",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account."
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.",
+    "Switch account": "Switch account",
+    "Two-step verification": "Two-step verification",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "Open your authenticator app and enter the 6-digit code for the {{username}} account.",
+    "Open your authenticator app and enter the 6-digit code.": "Open your authenticator app and enter the 6-digit code.",
+    "Backup code": "Backup code",
+    "Verify and sign in": "Verify and sign in",
+    "Verify with Passkey": "Verify with Passkey",
+    "Can't use your authenticator?": "Can't use your authenticator?",
+    "Use a backup code": "Use a backup code",
+    "Have your authenticator?": "Have your authenticator?"
   }
 }

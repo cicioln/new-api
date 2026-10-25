@@ -7721,6 +7721,16 @@
     "Sign in directly": "Se connecter",
     "After signing up you can create API keys. New users join the default group.": "Après l'inscription, vous pouvez créer des clés API. Les nouveaux utilisateurs rejoignent le groupe default.",
     "Registration is closed": "Les inscriptions sont fermées",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "L'administrateur a désactivé les inscriptions. Contactez-le pour obtenir un compte, ou connectez-vous avec un compte tiers lié."
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "L'administrateur a désactivé les inscriptions. Contactez-le pour obtenir un compte, ou connectez-vous avec un compte tiers lié.",
+    "Switch account": "Changer de compte",
+    "Two-step verification": "Vérification en deux étapes",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "Ouvrez votre application d'authentification et saisissez le code à 6 chiffres du compte {{username}}.",
+    "Open your authenticator app and enter the 6-digit code.": "Ouvrez votre application d'authentification et saisissez le code à 6 chiffres.",
+    "Backup code": "Code de secours",
+    "Verify and sign in": "Vérifier et se connecter",
+    "Verify with Passkey": "Vérifier avec une Passkey",
+    "Can't use your authenticator?": "Impossible d'utiliser votre application ?",
+    "Use a backup code": "Utiliser un code de secours",
+    "Have your authenticator?": "Votre application est disponible ?"
   }
 }

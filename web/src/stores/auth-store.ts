@@ -81,6 +81,7 @@ export type AuthBootstrapState = 'idle' | 'checking' | 'complete'
 export interface PendingLoginVerification {
   challenge: LoginChallenge
   redirectTo?: string
+  username?: string
 }
 
 interface AuthState {

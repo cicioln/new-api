@@ -7721,6 +7721,16 @@
     "Sign in directly": "Войти",
     "After signing up you can create API keys. New users join the default group.": "После регистрации можно создавать API-ключи. Новые пользователи попадают в группу default.",
     "Registration is closed": "Регистрация закрыта",
-    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Администратор отключил регистрацию. Обратитесь к администратору или войдите через привязанный сторонний аккаунт."
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Администратор отключил регистрацию. Обратитесь к администратору или войдите через привязанный сторонний аккаунт.",
+    "Switch account": "Сменить аккаунт",
+    "Two-step verification": "Двухэтапная проверка",
+    "Open your authenticator app and enter the 6-digit code for the {{username}} account.": "Откройте приложение-аутентификатор и введите 6-значный код для аккаунта {{username}}.",
+    "Open your authenticator app and enter the 6-digit code.": "Откройте приложение-аутентификатор и введите 6-значный код.",
+    "Backup code": "Резервный код",
+    "Verify and sign in": "Подтвердить и войти",
+    "Verify with Passkey": "Подтвердить с Passkey",
+    "Can't use your authenticator?": "Нет доступа к аутентификатору?",
+    "Use a backup code": "Использовать резервный код",
+    "Have your authenticator?": "Аутентификатор под рукой?"
   }
 }

@@ -194,7 +194,7 @@ export function UserAuthForm(props: AuthFormProps) {
 
       if (res.success) {
         form.setValue('password', '')
-        if (await handleLoginResult(res.data, redirectTo)) {
+        if (await handleLoginResult(res.data, redirectTo, data.username)) {
           toast.success(t('Welcome back!'))
         }
       } else {

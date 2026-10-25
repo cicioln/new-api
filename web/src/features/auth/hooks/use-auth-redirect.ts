@@ -74,7 +74,11 @@ export function useAuthRedirect() {
    * Every primary login transport returns the same bundle-or-challenge contract.
    */
   const handleLoginResult = useCallback(
-    async (result: unknown, redirectTo?: string): Promise<boolean> => {
+    async (
+      result: unknown,
+      redirectTo?: string,
+      username?: string
+    ): Promise<boolean> => {
       if (
         !mounted.current ||
         useAuthStore.getState().auth.session?.sid !== sessionID
@@ -97,6 +101,7 @@ export function useAuthRedirect() {
         challenge: result,
         redirectTo:
           sanitizeAuthRedirect(redirectTo, window.location.origin) ?? undefined,
+        username,
       })
       await navigate({ to: '/otp', replace: true })
       return false
