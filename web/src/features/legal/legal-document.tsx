@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isHttpUrl, isLikelyHtml } from '@/lib/content-format'
 
+import { getNumberedHeadings } from './toc'
 import type { LegalDocumentResponse } from './types'
 
 type LegalDocumentProps = {
@@ -61,6 +62,38 @@ export function LegalFrame(props: LegalFrameProps) {
   )
 }
 
+type LegalTocProps = {
+  headings: string[]
+}
+
+function scrollToHeading(heading: string) {
+  const target = [
+    ...document.querySelectorAll('[data-testid="legal-article"] h2'),
+  ].find((node) => node.textContent?.trim() === heading)
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function LegalToc(props: LegalTocProps) {
+  const { t } = useTranslation()
+  return (
+    <nav
+      aria-label={t('Table of contents')}
+      className='bg-card mt-5 mb-8 flex flex-wrap gap-x-3.5 gap-y-1.5 rounded-lg border px-3.5 py-3 text-[13px]'
+    >
+      {props.headings.map((heading) => (
+        <button
+          key={heading}
+          type='button'
+          className='text-muted-foreground hover:text-foreground cursor-pointer'
+          onClick={() => scrollToHeading(heading)}
+        >
+          {heading}
+        </button>
+      ))}
+    </nav>
+  )
+}
+
 export function LegalDocument(props: LegalDocumentProps) {
   const { t } = useTranslation()
   const { data, isLoading } = useQuery({
@@ -74,6 +107,7 @@ export function LegalDocument(props: LegalDocumentProps) {
   const isUrl = hasContent && isHttpUrl(rawContent)
   const contentIsHtml = hasContent && isLikelyHtml(rawContent)
   const success = data?.success ?? false
+  const headings = getNumberedHeadings(rawContent)
 
   if (isLoading) {
     return (
@@ -104,7 +138,7 @@ export function LegalDocument(props: LegalDocumentProps) {
   if (isUrl) {
     return (
       <LegalFrame>
-        <h1 className='mb-3 text-[34px] font-semibold tracking-tight'>
+        <h1 className='mb-3 text-[34px] font-[650] tracking-[-0.02em]'>
           {props.title}
         </h1>
         <p className='text-muted-foreground mb-6 text-[15px] leading-7'>
@@ -134,9 +168,10 @@ export function LegalDocument(props: LegalDocumentProps) {
 
   return (
     <LegalFrame>
-      <h1 className='mb-3 text-[34px] font-semibold tracking-tight'>
+      <h1 className='mb-3 text-[34px] font-[650] tracking-[-0.02em]'>
         {props.title}
       </h1>
+      {headings.length > 1 && <LegalToc headings={headings} />}
       <RichContent
         mode='markdown'
         content={rawContent}

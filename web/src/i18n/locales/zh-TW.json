@@ -7773,6 +7773,7 @@
     "Stacked by model": "按模型堆疊",
     "Model call ranking": "模型呼叫排行",
     "By count": "按次數",
-    "{{value}} calls": "{{value}} 次"
+    "{{value}} calls": "{{value}} 次",
+    "Table of contents": "目錄"
   }
 }

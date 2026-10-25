@@ -76,6 +76,19 @@ describe('legal document layout', () => {
     ).toBeVisible()
   })
 
+  it('lists numbered sections in a table of contents', async () => {
+    renderDocument({
+      success: true,
+      data: '## 1. Scope\n\nA\n\n## 2. Keys\n\nB',
+    })
+
+    const toc = await screen.findByRole('navigation', {
+      name: 'Table of contents',
+    })
+    expect(within(toc).getByRole('button', { name: '1. Scope' })).toBeVisible()
+    expect(within(toc).getByRole('button', { name: '2. Keys' })).toBeVisible()
+  })
+
   it('places the site footer after the article', async () => {
     renderDocument({ success: true, data: 'Text' })
 
