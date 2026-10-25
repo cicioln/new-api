@@ -78,7 +78,7 @@ describe('setup wizard steps', () => {
 
     const row = await screen.findByTestId('setup-database-row')
     expect(within(row).getByText('SQLite')).toBeVisible()
-    expect(within(row).getByText('Persist your data file')).toBeVisible()
+    expect(within(row).getByText('Persist the data file')).toBeVisible()
   })
 
   it('moves the current marker to the next step when clicking next', async () => {
@@ -104,6 +104,6 @@ describe('setup wizard steps', () => {
       await screen.findByRole('heading', { name: 'Ready to initialize' })
     ).toBeVisible()
     expect(screen.getByText('mysql')).toBeVisible()
-    expect(screen.getByText('External operations mode')).toBeVisible()
+    expect(screen.getByText('External operations')).toBeVisible()
   })
 })

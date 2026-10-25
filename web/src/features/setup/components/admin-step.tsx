@@ -44,7 +44,7 @@ export function AdminStep(props: AdminStepProps) {
 
   return (
     <section>
-      <h2 className='text-base font-semibold'>
+      <h2 className='text-lg font-semibold'>
         {t('Create administrator account')}
       </h2>
       <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
@@ -72,7 +72,7 @@ export function AdminStep(props: AdminStepProps) {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder={t('Choose a username')}
+                    placeholder={t('Please enter username')}
                     autoComplete='username'
                     onChange={(event) => {
                       form.clearErrors('username')
@@ -94,7 +94,7 @@ export function AdminStep(props: AdminStepProps) {
                 <FormControl>
                   <PasswordInput
                     {...field}
-                    placeholder={t('Set a secure password (min. 8 characters)')}
+                    placeholder={t('At least 8 characters')}
                     autoComplete='new-password'
                     onChange={(event) => {
                       form.clearErrors('password')
@@ -116,7 +116,7 @@ export function AdminStep(props: AdminStepProps) {
                 <FormControl>
                   <PasswordInput
                     {...field}
-                    placeholder={t('Repeat the administrator password')}
+                    placeholder={t('Enter again')}
                     autoComplete='new-password'
                     onChange={(event) => {
                       form.clearErrors('confirmPassword')

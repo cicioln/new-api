@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "正在校驗授權結果，馬上就好。",
     "Binding {{provider}} account": "正在綁定 {{provider}} 帳號",
     "Confirming the account to link to your profile.": "正在確認要關聯到目前資料的帳號。",
-    "Back to chat": "回到聊天"
+    "Back to chat": "回到聊天",
+    "Complete": "完成",
+    "Setup wizard": "初始化精靈",
+    "Administrator": "管理員",
+    "Finish initialization": "完成初始化",
+    "Supported": "已支援",
+    "Please enter username": "請輸入使用者名稱",
+    "Enter again": "再次輸入",
+    "Self use": "自用",
+    "Demo instance": "演示站",
+    "Persist the data file": "請持久化資料檔案",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "資料目錄：/data/one-api.db · 容器部署時務必掛載 /data，否則重啟後資料遺失",
+    "Serve users with top-up, billing and registration enabled": "面向使用者提供服務，啟用儲值、計費與註冊",
+    "For yourself or your team only; billing off, no quota limits": "只給自己或團隊用，關閉計費，不限額度",
+    "Showcase features with a demo account; write operations restricted": "用演示帳號展示功能，限制寫入操作",
+    "How do you plan to use it?": "你打算怎麼使用？",
+    "You can change this later in System settings › Operations.": "之後可以在「系統設定 › 運維」裡修改。",
+    "Confirm the details below to finish initialization, then go to the login page.": "確認以下資訊後完成初始化，之後進入登入頁。"
   }
 }

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -30,51 +30,39 @@ interface StepNavigationProps {
   isSubmitting?: boolean
 }
 
-export function StepNavigation({
-  currentStep,
-  totalSteps,
-  onBack,
-  onNext,
-  onSubmit,
-  isSubmitting = false,
-}: StepNavigationProps) {
+export function StepNavigation(props: StepNavigationProps) {
   const { t } = useTranslation()
-  const isFirstStep = currentStep === 0
-  const isLastStep = currentStep === totalSteps - 1
+  const isFirstStep = props.currentStep === 0
+  const isLastStep = props.currentStep === props.totalSteps - 1
 
   return (
-    <div className='flex w-full flex-col gap-3 sm:flex-row sm:items-center'>
-      <div className='flex justify-end gap-2 sm:justify-start'>
-        {!isFirstStep && (
-          <Button type='button' variant='outline' onClick={onBack}>
-            {t('Back')}
-          </Button>
-        )}
-      </div>
-
-      <div className='flex flex-1 justify-end gap-2'>
-        {!isLastStep && (
-          <Button type='button' onClick={onNext}>
-            {t('Next')}
-          </Button>
-        )}
-
-        {isLastStep && (
-          <Button type='button' onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className='mr-2 size-4 animate-spin' />
-                {t('Initializing…')}
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className='mr-2 size-4' />
-                {t('Initialize system')}
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+    <div className='flex w-full items-center justify-between'>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={props.onBack}
+        disabled={isFirstStep}
+      >
+        {t('Previous')}
+      </Button>
+      {isLastStep ? (
+        <Button
+          type='button'
+          size='sm'
+          onClick={props.onSubmit}
+          disabled={props.isSubmitting}
+        >
+          {props.isSubmitting && (
+            <Loader2 className='mr-1 size-3.5 animate-spin' />
+          )}
+          {t('Finish initialization')}
+        </Button>
+      ) : (
+        <Button type='button' size='sm' onClick={props.onNext}>
+          {t('Next')}
+        </Button>
+      )}
     </div>
   )
 }

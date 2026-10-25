@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "Проверяем результат авторизации, это займёт мгновение.",
     "Binding {{provider}} account": "Привязываем аккаунт {{provider}}",
     "Confirming the account to link to your profile.": "Подтверждаем аккаунт для привязки к профилю.",
-    "Back to chat": "Вернуться в чат"
+    "Back to chat": "Вернуться в чат",
+    "Complete": "Готово",
+    "Setup wizard": "Мастер настройки",
+    "Administrator": "Администратор",
+    "Finish initialization": "Завершить инициализацию",
+    "Supported": "Поддерживаются",
+    "Please enter username": "Введите имя пользователя",
+    "Enter again": "Введите ещё раз",
+    "Self use": "Для себя",
+    "Demo instance": "Демо-сайт",
+    "Persist the data file": "Сохраните файл данных",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "Каталог данных: /data/one-api.db · В контейнере смонтируйте /data, иначе данные пропадут после перезапуска",
+    "Serve users with top-up, billing and registration enabled": "Обслуживание пользователей: пополнение, тарификация и регистрация включены",
+    "For yourself or your team only; billing off, no quota limits": "Только для вас или команды; тарификация выключена, без лимитов",
+    "Showcase features with a demo account; write operations restricted": "Демонстрация с демо-аккаунтом; запись ограничена",
+    "How do you plan to use it?": "Как вы планируете использовать?",
+    "You can change this later in System settings › Operations.": "Это можно изменить позже в «Настройки системы › Эксплуатация».",
+    "Confirm the details below to finish initialization, then go to the login page.": "Проверьте данные ниже, завершите инициализацию и перейдите ко входу."
   }
 }

@@ -43,20 +43,19 @@ const USAGE_MODE_OPTIONS: Array<{
   {
     value: 'external',
     titleKey: 'External operations',
-    descriptionKey:
-      'Serve multiple users or teams with billing and quota control.',
+    descriptionKey: 'Serve users with top-up, billing and registration enabled',
   },
   {
     value: 'self',
-    titleKey: 'Personal use',
+    titleKey: 'Self use',
     descriptionKey:
-      'Best for single-tenant deployments. Pricing and billing options stay hidden.',
+      'For yourself or your team only; billing off, no quota limits',
   },
   {
     value: 'demo',
-    titleKey: 'Demo site',
+    titleKey: 'Demo instance',
     descriptionKey:
-      'Showcase core capabilities with demo credentials and limited access.',
+      'Showcase features with a demo account; write operations restricted',
   },
 ]
 
@@ -69,11 +68,11 @@ export function UsageModeStep(props: UsageModeStepProps) {
       name='usageMode'
       render={({ field }) => (
         <FormItem className='gap-0'>
-          <FormLabel className='text-base font-semibold'>
-            {t('How will you use the platform?')}
+          <FormLabel className='text-lg font-semibold'>
+            {t('How do you plan to use it?')}
           </FormLabel>
           <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
-            {t('You can change this later in system settings.')}
+            {t('You can change this later in System settings › Operations.')}
           </p>
           <FormControl>
             <RadioGroup
@@ -88,18 +87,18 @@ export function UsageModeStep(props: UsageModeStepProps) {
                 <Label
                   key={option.value}
                   htmlFor={`usage-mode-${option.value}`}
-                  className='bg-card has-data-[checked]:border-foreground has-data-[checked]:ring-muted flex cursor-pointer items-start gap-3 rounded-[10px] border px-3.5 py-3 font-normal transition-colors has-data-[checked]:ring-3'
+                  className='bg-card has-data-[checked]:border-foreground has-data-[checked]:ring-muted relative block cursor-pointer rounded-[10px] border px-3.5 py-3 font-normal transition-colors has-focus-visible:ring-3 has-data-[checked]:ring-3'
                 >
                   <RadioGroupItem
                     id={`usage-mode-${option.value}`}
                     value={option.value}
-                    className='mt-0.5'
+                    className='sr-only absolute!'
                   />
                   <span>
-                    <span className='block text-sm font-medium'>
+                    <span className='block text-sm leading-normal font-semibold'>
                       {t(option.titleKey)}
                     </span>
-                    <span className='text-muted-foreground text-[12.5px]'>
+                    <span className='text-muted-foreground block text-[12.5px] leading-normal'>
                       {t(option.descriptionKey)}
                     </span>
                   </span>

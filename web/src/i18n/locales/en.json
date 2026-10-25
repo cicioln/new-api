@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "Checking the authorization result. This will only take a moment.",
     "Binding {{provider}} account": "Binding {{provider}} account",
     "Confirming the account to link to your profile.": "Confirming the account to link to your profile.",
-    "Back to chat": "Back to chat"
+    "Back to chat": "Back to chat",
+    "Complete": "Complete",
+    "Setup wizard": "Setup wizard",
+    "Administrator": "Administrator",
+    "Finish initialization": "Finish initialization",
+    "Supported": "Supported",
+    "Please enter username": "Please enter username",
+    "Enter again": "Enter again",
+    "Self use": "Self use",
+    "Demo instance": "Demo instance",
+    "Persist the data file": "Persist the data file",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart",
+    "Serve users with top-up, billing and registration enabled": "Serve users with top-up, billing and registration enabled",
+    "For yourself or your team only; billing off, no quota limits": "For yourself or your team only; billing off, no quota limits",
+    "Showcase features with a demo account; write operations restricted": "Showcase features with a demo account; write operations restricted",
+    "How do you plan to use it?": "How do you plan to use it?",
+    "You can change this later in System settings › Operations.": "You can change this later in System settings › Operations.",
+    "Confirm the details below to finish initialization, then go to the login page.": "Confirm the details below to finish initialization, then go to the login page."
   }
 }

@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "正在校验授权结果，马上就好。",
     "Binding {{provider}} account": "正在绑定 {{provider}} 账号",
     "Confirming the account to link to your profile.": "正在确认要关联到当前资料的账号。",
-    "Back to chat": "回到聊天"
+    "Back to chat": "回到聊天",
+    "Complete": "完成",
+    "Setup wizard": "初始化向导",
+    "Administrator": "管理员",
+    "Finish initialization": "完成初始化",
+    "Supported": "已支持",
+    "Please enter username": "请输入用户名",
+    "Enter again": "再次输入",
+    "Self use": "自用",
+    "Demo instance": "演示站",
+    "Persist the data file": "请持久化数据文件",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "数据目录：/data/one-api.db · 容器部署时务必挂载 /data，否则重启后数据丢失",
+    "Serve users with top-up, billing and registration enabled": "面向用户提供服务，启用充值、计费与注册",
+    "For yourself or your team only; billing off, no quota limits": "只给自己或团队用，关闭计费，不限额度",
+    "Showcase features with a demo account; write operations restricted": "用演示账号展示功能，限制写操作",
+    "How do you plan to use it?": "你打算怎么使用？",
+    "You can change this later in System settings › Operations.": "之后可以在「系统设置 › 运维」里修改。",
+    "Confirm the details below to finish initialization, then go to the login page.": "确认以下信息后完成初始化，之后进入登录页。"
   }
 }

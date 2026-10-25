@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "Đang kiểm tra kết quả ủy quyền, chỉ một lát thôi.",
     "Binding {{provider}} account": "Đang liên kết tài khoản {{provider}}",
     "Confirming the account to link to your profile.": "Đang xác nhận tài khoản sẽ liên kết với hồ sơ của bạn.",
-    "Back to chat": "Quay lại trò chuyện"
+    "Back to chat": "Quay lại trò chuyện",
+    "Complete": "Hoàn tất",
+    "Setup wizard": "Trình hướng dẫn khởi tạo",
+    "Administrator": "Quản trị viên",
+    "Finish initialization": "Hoàn tất khởi tạo",
+    "Supported": "Đã hỗ trợ",
+    "Please enter username": "Nhập tên người dùng",
+    "Enter again": "Nhập lại",
+    "Self use": "Tự dùng",
+    "Demo instance": "Trang demo",
+    "Persist the data file": "Hãy lưu bền tệp dữ liệu",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "Thư mục dữ liệu: /data/one-api.db · Khi chạy container hãy mount /data, nếu không dữ liệu sẽ mất khi khởi động lại",
+    "Serve users with top-up, billing and registration enabled": "Phục vụ người dùng, bật nạp tiền, tính phí và đăng ký",
+    "For yourself or your team only; billing off, no quota limits": "Chỉ cho bạn hoặc nhóm; tắt tính phí, không giới hạn hạn mức",
+    "Showcase features with a demo account; write operations restricted": "Trình diễn tính năng bằng tài khoản demo; hạn chế thao tác ghi",
+    "How do you plan to use it?": "Bạn định sử dụng thế nào?",
+    "You can change this later in System settings › Operations.": "Có thể thay đổi sau trong Cài đặt hệ thống › Vận hành.",
+    "Confirm the details below to finish initialization, then go to the login page.": "Xác nhận thông tin dưới đây để hoàn tất khởi tạo, sau đó vào trang đăng nhập."
   }
 }

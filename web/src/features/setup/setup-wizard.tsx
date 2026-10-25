@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { ErrorState } from '@/components/error-state'
-import { LanguageSwitcher } from '@/components/language-switcher'
 import { LoadingState } from '@/components/loading-state'
 import { Card } from '@/components/ui/card'
 import { Form } from '@/components/ui/form'
@@ -44,10 +43,10 @@ import { UsageModeStep } from './components/usage-mode-step'
 import type { SetupFormValues, SetupStatus } from './types'
 
 const STEPS = [
-  { titleKey: 'Database check' },
+  { titleKey: 'Database' },
   { titleKey: 'Administrator account' },
   { titleKey: 'Usage mode' },
-  { titleKey: 'Review & initialize' },
+  { titleKey: 'Complete' },
 ]
 
 const DEFAULT_FORM_VALUES: SetupFormValues = {
@@ -285,12 +284,9 @@ export function SetupWizard() {
               </h1>
             )}
           </div>
-          <div className='flex items-center gap-2'>
-            <span className='text-muted-foreground text-sm'>
-              {t('System setup wizard')}
-            </span>
-            <LanguageSwitcher />
-          </div>
+          <span className='text-muted-foreground text-sm'>
+            {t('Setup wizard')}
+          </span>
         </header>
 
         <ol className='grid grid-cols-4 gap-2 px-6 pt-[18px]'>

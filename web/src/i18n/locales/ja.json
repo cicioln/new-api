@@ -7745,6 +7745,23 @@
     "Checking the authorization result. This will only take a moment.": "認可結果を確認しています。少々お待ちください。",
     "Binding {{provider}} account": "{{provider}} アカウントを連携しています",
     "Confirming the account to link to your profile.": "プロフィールに連携するアカウントを確認しています。",
-    "Back to chat": "チャットに戻る"
+    "Back to chat": "チャットに戻る",
+    "Complete": "完了",
+    "Setup wizard": "初期設定ウィザード",
+    "Administrator": "管理者",
+    "Finish initialization": "初期化を完了",
+    "Supported": "対応済み",
+    "Please enter username": "ユーザー名を入力",
+    "Enter again": "もう一度入力",
+    "Self use": "自分用",
+    "Demo instance": "デモサイト",
+    "Persist the data file": "データファイルを永続化してください",
+    "Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart": "データディレクトリ：/data/one-api.db · コンテナでは必ず /data をマウントしてください。再起動でデータが失われます",
+    "Serve users with top-up, billing and registration enabled": "ユーザー向けにサービスを提供し、チャージ・課金・登録を有効化",
+    "For yourself or your team only; billing off, no quota limits": "自分やチーム専用。課金オフ、上限なし",
+    "Showcase features with a demo account; write operations restricted": "デモアカウントで機能を紹介。書き込み操作を制限",
+    "How do you plan to use it?": "どのように使いますか？",
+    "You can change this later in System settings › Operations.": "後から「システム設定 › 運用」で変更できます。",
+    "Confirm the details below to finish initialization, then go to the login page.": "以下を確認して初期化を完了し、ログインページへ進みます。"
   }
 }

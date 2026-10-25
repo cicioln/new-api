@@ -38,8 +38,8 @@ const DATABASE_META: Record<
   sqlite: {
     label: 'SQLite',
     descriptionKey:
-      'When running in containers or ephemeral environments, ensure the SQLite file is mapped to persistent storage to avoid data loss on restart.',
-    badgeKey: 'Persist your data file',
+      'Data directory: /data/one-api.db · Mount /data when deploying in containers, or data is lost on restart',
+    badgeKey: 'Persist the data file',
     variant: 'warning',
   },
   mysql: {
@@ -80,7 +80,7 @@ export function DatabaseStep(props: DatabaseStepProps) {
 
   return (
     <section>
-      <h2 className='text-base font-semibold'>{t('Detected database')}</h2>
+      <h2 className='text-lg font-semibold'>{t('Detected database')}</h2>
       <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
         {t(
           'The database is determined by the SQL_DSN environment variable; the wizard only confirms it.'
@@ -118,9 +118,7 @@ export function DatabaseStep(props: DatabaseStepProps) {
           )}
         </div>
         <div className='py-3.5'>
-          <p className='text-[13.5px] font-medium'>
-            {t('Supported databases')}
-          </p>
+          <p className='text-[13.5px] font-medium'>{t('Supported')}</p>
           <p className='text-muted-foreground mt-0.5 text-[12.5px]'>
             {t(
               'MySQL ≥ 5.7.8 · PostgreSQL ≥ 9.6. Set SQL_DSN and restart to switch.'

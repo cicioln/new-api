@@ -26,9 +26,9 @@ interface CompleteStepProps {
 }
 
 const USAGE_MODE_LABEL_KEYS: Record<SetupFormValues['usageMode'], string> = {
-  external: 'External operations mode',
-  self: 'Personal use mode',
-  demo: 'Demo site mode',
+  external: 'External operations',
+  self: 'Self use',
+  demo: 'Demo instance',
 }
 
 export function CompleteStep(props: CompleteStepProps) {
@@ -36,10 +36,10 @@ export function CompleteStep(props: CompleteStepProps) {
 
   return (
     <section>
-      <h2 className='text-base font-semibold'>{t('Ready to initialize')}</h2>
+      <h2 className='text-lg font-semibold'>{t('Ready to initialize')}</h2>
       <p className='text-muted-foreground mt-0.5 mb-3.5 text-[12.5px]'>
         {t(
-          'Double check the configuration below. Your system will be locked until initialization is complete.'
+          'Confirm the details below to finish initialization, then go to the login page.'
         )}
       </p>
       <dl className='grid grid-cols-[110px_1fr] gap-x-4 gap-y-2.5 text-[13px]'>
@@ -47,7 +47,7 @@ export function CompleteStep(props: CompleteStepProps) {
         <dd className='font-mono text-[12.5px]'>
           {props.status?.database_type || t('Unknown')}
         </dd>
-        <dt className='text-muted-foreground'>{t('Administrator account')}</dt>
+        <dt className='text-muted-foreground'>{t('Administrator')}</dt>
         <dd className='font-mono text-[12.5px]'>
           {props.status?.root_init
             ? t('Existing account will be reused')
