@@ -7582,6 +7582,10 @@
     "Disk cache": "ディスクキャッシュ",
     "Memory buffers": "メモリバッファ",
     "{{count}} files": "{{count}} 個",
-    "Log files": "ログファイル"
+    "Log files": "ログファイル",
+    "Connect drawing, video, music and other async task platforms.": "画像・動画・音楽などの非同期タスクプラットフォームを接続します。",
+    "Install plugin": "プラグインをインストール",
+    "Enabled · {{count}} channels bound": "有効 · {{count}} 個のチャネルに紐付け",
+    "Plugin not enabled": "未有効"
   }
 }

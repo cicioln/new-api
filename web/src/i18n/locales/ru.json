@@ -7582,6 +7582,10 @@
     "Disk cache": "Дисковый кэш",
     "Memory buffers": "Буферы памяти",
     "{{count}} files": "файлов: {{count}}",
-    "Log files": "Файлы журнала"
+    "Log files": "Файлы журнала",
+    "Connect drawing, video, music and other async task platforms.": "Подключение платформ асинхронных задач: рисунки, видео, музыка и другое.",
+    "Install plugin": "Установить плагин",
+    "Enabled · {{count}} channels bound": "Включён · привязано каналов: {{count}}",
+    "Plugin not enabled": "Не включён"
   }
 }

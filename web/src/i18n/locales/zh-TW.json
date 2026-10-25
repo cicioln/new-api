@@ -7582,6 +7582,10 @@
     "Disk cache": "磁碟快取",
     "Memory buffers": "記憶體緩衝",
     "{{count}} files": "{{count}} 個",
-    "Log files": "日誌檔案"
+    "Log files": "日誌檔案",
+    "Connect drawing, video, music and other async task platforms.": "接入繪圖、影片、音樂等非同步任務平台。",
+    "Install plugin": "安裝外掛",
+    "Enabled · {{count}} channels bound": "已啟用 · 綁定 {{count}} 個渠道",
+    "Plugin not enabled": "未啟用"
   }
 }

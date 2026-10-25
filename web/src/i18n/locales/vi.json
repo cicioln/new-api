@@ -7582,6 +7582,10 @@
     "Disk cache": "Bộ nhớ đệm đĩa",
     "Memory buffers": "Bộ đệm bộ nhớ",
     "{{count}} files": "{{count}} tệp",
-    "Log files": "Tệp nhật ký"
+    "Log files": "Tệp nhật ký",
+    "Connect drawing, video, music and other async task platforms.": "Kết nối các nền tảng tác vụ bất đồng bộ như vẽ ảnh, video, âm nhạc.",
+    "Install plugin": "Cài đặt plugin",
+    "Enabled · {{count}} channels bound": "Đã bật · liên kết {{count}} kênh",
+    "Plugin not enabled": "Chưa bật"
   }
 }

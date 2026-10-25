@@ -7582,6 +7582,10 @@
     "Disk cache": "Disk cache",
     "Memory buffers": "Memory buffers",
     "{{count}} files": "{{count}} files",
-    "Log files": "Log files"
+    "Log files": "Log files",
+    "Connect drawing, video, music and other async task platforms.": "Connect drawing, video, music and other async task platforms.",
+    "Install plugin": "Install plugin",
+    "Enabled · {{count}} channels bound": "Enabled · {{count}} channels bound",
+    "Plugin not enabled": "Plugin not enabled"
   }
 }

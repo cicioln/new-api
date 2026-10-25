@@ -1,3 +1,5 @@
+import { PlusSignIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -17,7 +19,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CircleHelp, Upload } from 'lucide-react'
+import { Settings2, Store, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -25,14 +27,26 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { SectionPageLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { handleServerError } from '@/lib/handle-server-error'
 
 import {
@@ -42,7 +56,7 @@ import {
 } from './api'
 import { MarketplacePanel } from './components/marketplace-panel'
 import { PluginDetailSheet } from './components/plugin-detail-sheet'
-import { PluginsTable } from './components/plugins-table'
+import { PluginsGrid } from './components/plugins-grid'
 import { UploadDialog } from './components/upload-dialog'
 import type { TaskPluginListItem } from './types'
 
@@ -50,7 +64,7 @@ export function TaskPlugins() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [detail, setDetail] = useState<TaskPluginListItem | null>(null)
-  const [tab, setTab] = useState('installed')
+  const [marketplaceOpen, setMarketplaceOpen] = useState(false)
   const [uploadKey, setUploadKey] = useState<string | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [confirmDisable, setConfirmDisable] = useState(false)
@@ -76,86 +90,100 @@ export function TaskPlugins() {
   }
   return (
     <>
-      <SectionPageLayout fixedContent>
+      <SectionPageLayout>
         <SectionPageLayout.Title>{t('Task Plugins')}</SectionPageLayout.Title>
+        <SectionPageLayout.Description>
+          {t('Connect drawing, video, music and other async task platforms.')}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Actions>
-          <div className='flex items-center gap-2'>
-            <Switch
-              id='task-plugin-enabled-switch'
-              checked={enabledQuery.data ?? false}
-              disabled={enabledQuery.isLoading || enabledMutation.isPending}
-              onCheckedChange={(checked) => {
-                if (checked) enabledMutation.mutate(true)
-                else setConfirmDisable(true)
-              }}
-            />
-            <Label
-              htmlFor='task-plugin-enabled-switch'
-              className='hidden text-sm font-normal sm:inline'
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
+                  aria-label={t('Enable task plugins')}
+                />
+              }
             >
-              {t('Enable task plugins')}
-            </Label>
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    aria-label={t('Factory and custom plugin behavior')}
+              <Settings2 className='text-muted-foreground' />
+            </PopoverTrigger>
+            <PopoverContent align='end' className='w-80'>
+              <div className='space-y-2 text-sm'>
+                <div className='flex items-center justify-between gap-3'>
+                  <Label
+                    htmlFor='task-plugin-enabled-switch'
+                    className='font-medium'
+                  >
+                    {t('Enable task plugins')}
+                  </Label>
+                  <Switch
+                    id='task-plugin-enabled-switch'
+                    checked={enabledQuery.data ?? false}
+                    disabled={
+                      enabledQuery.isLoading || enabledMutation.isPending
+                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) enabledMutation.mutate(true)
+                      else setConfirmDisable(true)
+                    }}
                   />
-                }
-              >
-                <CircleHelp className='text-muted-foreground' />
-              </PopoverTrigger>
-              <PopoverContent align='end' className='w-80'>
-                <div className='space-y-2 text-sm'>
-                  <p className='font-medium'>{t('Enable task plugins')}</p>
-                  <p className='text-muted-foreground'>
-                    {t(
-                      'When disabled, the entire task plugin system stops serving, including factory and custom plugins.'
-                    )}
-                  </p>
-                  <p className='font-medium'>
-                    {t('Factory and custom plugin behavior')}
-                  </p>
-                  <p className='text-muted-foreground'>
-                    {t(
-                      'Factory plugins cannot be deleted or disabled individually. A custom version can override them; deleting or disabling that version restores the factory plugin. Third-party-only platforms become unavailable when their plugin is deleted or disabled.'
-                    )}
-                  </p>
                 </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          {tab === 'installed' && (
-            <Button onClick={() => openUpload()}>
-              <Upload />
-              {t('Upload plugin')}
-            </Button>
-          )}
+                <p className='text-muted-foreground'>
+                  {t(
+                    'When disabled, the entire task plugin system stops serving, including factory and custom plugins.'
+                  )}
+                </p>
+                <p className='font-medium'>
+                  {t('Factory and custom plugin behavior')}
+                </p>
+                <p className='text-muted-foreground'>
+                  {t(
+                    'Factory plugins cannot be deleted or disabled individually. A custom version can override them; deleting or disabling that version restores the factory plugin. Third-party-only platforms become unavailable when their plugin is deleted or disabled.'
+                  )}
+                </p>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button size='sm' />}>
+              <HugeiconsIcon icon={PlusSignIcon} aria-hidden='true' />
+              {t('Install plugin')}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => setMarketplaceOpen(true)}>
+                <Store />
+                {t('Marketplace')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openUpload()}>
+                <Upload />
+                {t('Upload plugin')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
-          <Tabs
-            value={tab}
-            onValueChange={setTab}
-            className='flex h-full min-h-0 flex-col gap-3'
-          >
-            <TabsList className='max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto'>
-              <TabsTrigger value='installed'>{t('Installed')}</TabsTrigger>
-              <TabsTrigger value='marketplace'>{t('Marketplace')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value='installed' className='min-h-0 flex-1'>
-              <PluginsTable
-                onDetails={setDetail}
-                onUpload={(key) => openUpload(key)}
-              />
-            </TabsContent>
-            <TabsContent value='marketplace' className='min-h-0 flex-1'>
-              <MarketplacePanel />
-            </TabsContent>
-          </Tabs>
+          <PluginsGrid
+            onDetails={setDetail}
+            onUpload={(key) => openUpload(key)}
+          />
         </SectionPageLayout.Content>
       </SectionPageLayout>
+      <Sheet open={marketplaceOpen} onOpenChange={setMarketplaceOpen}>
+        <SheetContent className='w-full gap-0 overflow-y-auto sm:max-w-4xl'>
+          <SheetHeader className='border-b p-4 pr-12 sm:p-6'>
+            <SheetTitle>{t('Marketplace')}</SheetTitle>
+            <SheetDescription>
+              {t(
+                'Connect drawing, video, music and other async task platforms.'
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className='p-4 sm:p-6'>
+            <MarketplacePanel />
+          </div>
+        </SheetContent>
+      </Sheet>
       <PluginDetailSheet
         key={detail?.meta.key ?? ''}
         plugin={detail}

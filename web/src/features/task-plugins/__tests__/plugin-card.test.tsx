@@ -16,11 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-} from '@tanstack/react-table'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, test, vi } from 'vitest'
@@ -63,125 +58,85 @@ function makeItem(overrides?: Partial<TaskPluginListItem>): TaskPluginListItem {
   }
 }
 
-const stubColumns: ColumnDef<TaskPluginListItem, unknown>[] = [
-  { id: 'source', cell: () => 'source-badge' },
-  { id: 'runtime', cell: () => 'runtime-badge' },
-  { id: 'enabled', cell: () => 'enabled-switch' },
-  { id: 'actions', cell: () => 'actions-menu' },
-]
-
-function PluginCardHarness({ item }: { item: TaskPluginListItem }) {
-  const table = useReactTable({
-    data: [item],
-    columns: stubColumns,
-    getCoreRowModel: getCoreRowModel(),
-  })
-  return <PluginCard row={table.getRowModel().rows[0]} />
+function renderCard(item: TaskPluginListItem) {
+  const handlers = {
+    onToggle: vi.fn(),
+    onDetails: vi.fn(),
+    onUpload: vi.fn(),
+    onDelete: vi.fn(),
+  }
+  render(<PluginCard plugin={item} switchDisabled={false} {...handlers} />)
+  return handlers
 }
 
-describe('PluginCard layout', () => {
-  test('given a plugin, the plugin version reads as a pill beside the source and runtime badges', () => {
-    render(<PluginCardHarness item={makeItem()} />)
+describe('PluginCard', () => {
+  test('given a plugin, the version reads as a labelled caption under the name', () => {
+    renderCard(makeItem())
 
-    const version = screen.getByText('v1.2.3')
-    const badgeRow = version.parentElement
-    expect(screen.queryByText('API v1')).not.toBeInTheDocument()
-    expect(badgeRow).toHaveClass('flex-wrap')
-    expect(badgeRow?.textContent).toContain('source-badge')
-    expect(badgeRow?.textContent).toContain('runtime-badge')
-  })
-
-  test('given a plugin, the plugin version carries a labelled accessible name', () => {
-    render(<PluginCardHarness item={makeItem()} />)
-
-    expect(screen.getByLabelText('Active version 1.2.3')).toBeInTheDocument()
+    expect(screen.getByText('Kling')).toBeInTheDocument()
+    expect(screen.getByLabelText('Active version 1.2.3')).toHaveTextContent(
+      'v1.2.3'
+    )
   })
 
   test('given a description, it is clamped to two lines', () => {
-    render(<PluginCardHarness item={makeItem()} />)
+    renderCard(makeItem())
 
     expect(screen.getByText('Generate videos with Kling.')).toHaveClass(
       'line-clamp-2'
     )
   })
 
-  test('given a plugin, the bound models render as named chips rather than a count', () => {
-    render(<PluginCardHarness item={makeItem()} />)
+  test('given an enabled plugin, the footer names the bound channel count', () => {
+    renderCard(makeItem({ channel_count: 2 }))
 
-    expect(screen.getByText('Models')).toBeInTheDocument()
-    expect(screen.getByText('kling-v1')).toBeInTheDocument()
-    expect(screen.getByText('kling-v2')).toBeInTheDocument()
+    expect(screen.getByText('Enabled · 2 channels bound')).toBeInTheDocument()
   })
 
-  test('given more than four models, only four chips render plus an overflow count', () => {
-    render(
-      <PluginCardHarness
-        item={makeItem({
-          meta: {
-            ...makeItem().meta,
-            models: ['a', 'b', 'c', 'd', 'e', 'f'],
-          },
-        })}
-      />
-    )
+  test('given a disabled plugin, the footer says it is not enabled', () => {
+    renderCard(makeItem({ enabled: false, runtime_status: 'disabled' }))
 
-    for (const model of ['a', 'b', 'c', 'd']) {
-      expect(screen.getByText(model)).toBeInTheDocument()
-    }
-    expect(screen.queryByText('e')).toBeNull()
-    expect(screen.queryByText('f')).toBeNull()
-    expect(screen.getByText('+2')).toHaveAttribute('title', 'e, f')
+    expect(screen.getByText('Plugin not enabled')).toBeInTheDocument()
   })
 
-  test('given no models, the models section is omitted', () => {
-    render(
-      <PluginCardHarness
-        item={makeItem({ meta: { ...makeItem().meta, models: [] } })}
-      />
+  test('given a compile failure, the footer reports it with the runtime error', () => {
+    renderCard(
+      makeItem({ runtime_status: 'compile_failed', runtime_error: 'boom' })
     )
 
-    expect(screen.queryByText('Models')).toBeNull()
+    expect(screen.getByText('Compilation failed')).toHaveAttribute(
+      'title',
+      'boom'
+    )
+  })
+
+  test('toggling the switch reports the requested state', async () => {
+    const user = userEvent.setup()
+    const handlers = renderCard(makeItem())
+
+    await user.click(
+      screen.getByRole('switch', { name: 'Enable plugin kling' })
+    )
+
+    expect(handlers.onToggle).toHaveBeenCalledWith(false, expect.anything())
+  })
+
+  test('the configure menu opens details', async () => {
+    const user = userEvent.setup()
+    const handlers = renderCard(makeItem())
+
+    await user.click(screen.getByRole('button', { name: 'Configure' }))
+    await user.click(screen.getByRole('menuitem', { name: 'Details' }))
+
+    expect(handlers.onDetails).toHaveBeenCalledOnce()
   })
 
   test('given a usage schema, billing parameters stay out of the card', () => {
-    const { container } = render(<PluginCardHarness item={makeItem()} />)
+    renderCard(makeItem())
 
     expect(screen.queryByText('Billing parameters')).toBeNull()
     expect(screen.queryByText('duration')).toBeNull()
-    expect(container.querySelector('table')).toBeNull()
   })
-
-  test('given a plugin, the footer pins the enabled toggle at the card bottom', () => {
-    render(<PluginCardHarness item={makeItem()} />)
-
-    const label = screen.getByText('Enabled')
-    const footer = label.parentElement
-    expect(footer).toHaveClass('mt-auto')
-    expect(screen.getByText('enabled-switch')).toBeInTheDocument()
-  })
-})
-
-describe('PluginCard website', () => {
-  test('shows an HTTPS website with safe new-tab attributes', () => {
-    const item = makeItem()
-    item.meta.website = 'https://example.com/docs'
-    render(<PluginCardHarness item={item} />)
-    const link = screen.getByRole('link', { name: 'Plugin website' })
-    expect(link).toHaveAttribute('href', item.meta.website)
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
-  })
-  test.each([undefined, 'http://example.com', 'javascript:alert(1)'])(
-    'hides website %s',
-    (website) => {
-      const item = makeItem()
-      item.meta.website = website
-      render(<PluginCardHarness item={item} />)
-      expect(
-        screen.queryByRole('link', { name: 'Plugin website' })
-      ).not.toBeInTheDocument()
-    }
-  )
 })
 
 test.each(['override', 'factory', 'override_over_factory'] as const)(

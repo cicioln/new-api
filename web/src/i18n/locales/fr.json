@@ -7582,6 +7582,10 @@
     "Disk cache": "Cache disque",
     "Memory buffers": "Tampons mémoire",
     "{{count}} files": "{{count}} fichiers",
-    "Log files": "Fichiers journaux"
+    "Log files": "Fichiers journaux",
+    "Connect drawing, video, music and other async task platforms.": "Connectez des plateformes de tâches asynchrones : dessin, vidéo, musique, etc.",
+    "Install plugin": "Installer un plugin",
+    "Enabled · {{count}} channels bound": "Activé · {{count}} canaux liés",
+    "Plugin not enabled": "Non activé"
   }
 }

@@ -16,141 +16,115 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { flexRender, type Row } from '@tanstack/react-table'
-import { memo } from 'react'
+import { Eye, Trash2, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Switch } from '@/components/ui/switch'
 import { resolveLocalizedText } from '@/lib/localized-text'
 
 import type { TaskPluginListItem } from '../types'
 import { PluginIcon } from './plugin-icon'
-import { PluginWebsiteLink } from './plugin-website-link'
+
+type PluginCardProps = {
+  plugin: TaskPluginListItem
+  switchDisabled: boolean
+  onToggle: (enabled: boolean) => void
+  onDetails: () => void
+  onUpload: () => void
+  onDelete: () => void
+}
 
 /**
- * A card is one grid cell, so the model list has to stay a fixed number of
- * lines regardless of how many models a plugin binds. The overflow count keeps
- * the remaining names reachable through its tooltip.
+ * One installed plugin: identity and enable switch on top, the plugin's own
+ * description, then its serving state with the configuration menu. Manifest
+ * detail (models, billing parameters, source) lives in the detail sheet.
  */
-const MAX_VISIBLE_MODELS = 4
-
-/**
- * Bespoke task-plugin card for the card view. Reuses the column cell renderers
- * via `flexRender` so the table and card views share one implementation of the
- * source/runtime badges, the enable switch (with its usage-guard mutation),
- * and the actions menu.
- *
- * The card answers "which plugin is this and is it live" — identity, source,
- * runtime state, the plugin version, the models it binds, and the enable toggle.
- * Manifest detail (billing parameters, endpoints, source) belongs to the detail
- * sheet: rendering it here made every card a different height and buried the
- * plugin's own description under its parameter descriptions.
- */
-function PluginCardComponent({ row }: { row: Row<TaskPluginListItem> }) {
+export function PluginCard(props: PluginCardProps) {
   const { t, i18n } = useTranslation()
-  const cells = row.getAllCells()
-  const description = resolveLocalizedText(
-    row.original.meta.description,
-    i18n.language
-  )
-  const models = row.original.meta.models ?? []
-  const hiddenModels = models.slice(MAX_VISIBLE_MODELS)
+  const meta = props.plugin.meta
+  const description = resolveLocalizedText(meta.description, i18n.language)
 
-  const renderCell = (id: string) => {
-    const cell = cells.find((c) => c.column.id === id)
-    if (!cell || !cell.column.columnDef.cell) {
-      return null
-    }
-    return flexRender(cell.column.columnDef.cell, cell.getContext())
+  let status = (
+    <span>
+      {props.plugin.enabled
+        ? t('Enabled · {{count}} channels bound', {
+            count: props.plugin.channel_count,
+          })
+        : t('Plugin not enabled')}
+    </span>
+  )
+  if (props.plugin.runtime_status === 'compile_failed') {
+    status = (
+      <span className='text-destructive' title={props.plugin.runtime_error}>
+        {t('Compilation failed')}
+      </span>
+    )
   }
 
-  const labelClass = 'text-muted-foreground text-[11px] font-medium select-none'
-
   return (
-    <div className='flex h-full flex-col gap-2'>
-      {/* Row 1: type icon + name/key, with runtime status + actions menu */}
-      <div className='flex items-start justify-between gap-2'>
-        <div className='flex min-w-0 flex-1 items-center gap-2.5'>
-          <span className='mt-0.5 shrink-0'>
-            <PluginIcon
-              plugin={{ ...row.original.meta, hasIcon: row.original.has_icon }}
-              size={20}
-            />
-          </span>
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-medium'>
-              {row.original.meta.name}
-            </div>
-            <div className='text-muted-foreground truncate font-mono text-xs'>
-              {row.original.meta.key}
-            </div>
-          </div>
+    <div className='bg-card flex min-w-0 flex-col gap-3 rounded-[10px] border p-4'>
+      <div className='flex items-center gap-3'>
+        <span className='shrink-0'>
+          <PluginIcon
+            plugin={{ ...meta, hasIcon: props.plugin.has_icon }}
+            size={34}
+          />
+        </span>
+        <div className='min-w-0'>
+          <div className='truncate text-sm font-semibold'>{meta.name}</div>
+          <small
+            className='text-muted-foreground text-xs'
+            aria-label={`${t('Active version')} ${meta.version}`}
+          >
+            {meta.version ? `v${meta.version}` : '—'}
+          </small>
         </div>
-        <div className='flex shrink-0 items-center gap-1.5'>
-          {renderCell('actions')}
-        </div>
+        <Switch
+          aria-label={t('Enable plugin {{key}}', { key: meta.key })}
+          checked={props.plugin.enabled}
+          disabled={props.switchDisabled}
+          onCheckedChange={props.onToggle}
+          className='data-checked:bg-success data-unchecked:bg-border ml-auto px-px data-[size=default]:h-5 data-[size=default]:w-[34px]'
+        />
       </div>
-
-      <PluginWebsiteLink website={row.original.meta.website} />
-
-      {/* Row 2: source, runtime, and plugin version badges wrap freely. */}
-      <div className='flex flex-wrap items-center gap-1.5'>
-        {renderCell('source')}
-        {renderCell('runtime')}
-        <Badge
-          variant='secondary'
-          className='font-mono font-normal'
-          aria-label={`${t('Active version')} ${row.original.meta.version}`}
-        >
-          {row.original.meta.version ? `v${row.original.meta.version}` : '—'}
-        </Badge>
-      </div>
-
       {description ? (
-        <p className='text-muted-foreground line-clamp-2 text-xs'>
+        <p className='text-muted-foreground line-clamp-2 text-[13px] leading-[1.6]'>
           {description}
         </p>
       ) : null}
-
-      {/* Row 3: the bound models, named rather than counted */}
-      {models.length > 0 ? (
-        <div className='space-y-1.5'>
-          <div className={labelClass}>{t('Models')}</div>
-          <div className='flex flex-wrap gap-1'>
-            {models.slice(0, MAX_VISIBLE_MODELS).map((model) => (
-              <Badge
-                key={model}
-                variant='outline'
-                className='max-w-full font-mono font-normal'
-                title={model}
-              >
-                <span className='min-w-0 truncate'>{model}</span>
-              </Badge>
-            ))}
-            {hiddenModels.length > 0 ? (
-              <Badge
-                variant='secondary'
-                className='font-normal'
-                title={hiddenModels.join(', ')}
-              >
-                +{hiddenModels.length}
-              </Badge>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Footer: enabled toggle pinned to the card bottom */}
-      <div className='mt-auto flex items-center justify-between gap-2 border-t pt-2'>
-        <span className={labelClass}>{t('Enabled')}</span>
-        {renderCell('enabled')}
+      <div className='text-muted-foreground mt-auto flex items-center justify-between gap-2 text-xs'>
+        {status}
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant='outline' size='sm' />}>
+            {t('Configure')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onClick={props.onDetails}>
+              <Eye />
+              {t('Details')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={props.onUpload}>
+              <Upload />
+              {t('Upload new version')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={props.plugin.source === 'factory'}
+              variant='destructive'
+              onClick={props.onDelete}
+            >
+              <Trash2 />
+              {t('Delete active custom version')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
 }
-
-/**
- * Memoized so each card only re-renders when its own react-table row reference
- * changes rather than on every parent table state update.
- */
-export const PluginCard = memo(PluginCardComponent)

@@ -23,7 +23,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 
-import { PluginsTable } from '../components/plugins-table'
+import { PluginsGrid } from '../components/plugins-grid'
 import type { TaskPluginListItem } from '../types'
 
 vi.mock('@/lib/lobe-icon', () => ({ getLobeIcon: () => null }))
@@ -32,15 +32,12 @@ const clients: QueryClient[] = []
 afterEach(() => {
   for (const client of clients) client.clear()
   clients.length = 0
-  localStorage.removeItem('task-plugins-view-mode')
 })
 
 function renderPlugins(
   enabled: boolean,
-  view: 'card' | 'table' = 'card',
   source: TaskPluginListItem['source'] = 'override'
 ) {
-  localStorage.setItem('task-plugins-view-mode', view)
   const item: TaskPluginListItem = {
     meta: {
       key: 'example',
@@ -76,25 +73,20 @@ function renderPlugins(
   })
   render(
     <QueryClientProvider client={client}>
-      <PluginsTable onDetails={() => undefined} onUpload={() => undefined} />
+      <PluginsGrid onDetails={() => undefined} onUpload={() => undefined} />
     </QueryClientProvider>
   )
   return screen.getAllByRole('switch', { name: 'Enable plugin example' })[0]
 }
 
-test.each([
-  ['card', true],
-  ['card', false],
-  ['table', true],
-  ['table', false],
-] as const)(
-  '%s view: changing enabled=%s requires confirmation and cancellation preserves status',
-  async (view, enabled) => {
+test.each([true, false])(
+  'changing enabled=%s requires confirmation and cancellation preserves status',
+  async (enabled) => {
     const user = userEvent.setup()
     const post = vi
       .spyOn(api, 'post')
       .mockResolvedValue({ data: { success: true, data: null } })
-    const toggle = renderPlugins(enabled, view)
+    const toggle = renderPlugins(enabled)
     await user.click(toggle)
     expect(post).not.toHaveBeenCalled()
     expect(toggle).toHaveAttribute('aria-checked', String(enabled))
@@ -265,8 +257,8 @@ test.each(['factory', 'override_over_factory'] as const)(
   '%s deletion protects the factory plugin while allowing custom version removal',
   async (source) => {
     const user = userEvent.setup()
-    renderPlugins(true, 'table', source)
-    await user.click(screen.getAllByRole('button', { name: 'Open menu' })[0])
+    renderPlugins(true, source)
+    await user.click(screen.getByRole('button', { name: 'Configure' }))
     const remove = screen.getByRole('menuitem', {
       name: 'Delete active custom version',
     })

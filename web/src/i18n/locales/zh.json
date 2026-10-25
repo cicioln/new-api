@@ -7582,6 +7582,10 @@
     "Disk cache": "磁盘缓存",
     "Memory buffers": "内存缓冲",
     "{{count}} files": "{{count}} 个",
-    "Log files": "日志文件"
+    "Log files": "日志文件",
+    "Connect drawing, video, music and other async task platforms.": "接入绘图、视频、音乐等异步任务平台。",
+    "Install plugin": "安装插件",
+    "Enabled · {{count}} channels bound": "已启用 · 绑定 {{count}} 个渠道",
+    "Plugin not enabled": "未启用"
   }
 }
