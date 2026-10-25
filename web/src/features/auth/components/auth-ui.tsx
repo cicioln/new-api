@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { CircleCheck, ChevronLeft } from 'lucide-react'
+import { CircleCheck, ChevronLeft, TriangleAlert } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -110,8 +110,25 @@ export function AuthDivider(props: { children: React.ReactNode }) {
   )
 }
 
-/** Green success notice with a check icon. */
-export function AuthNotice(props: { children: React.ReactNode }) {
+/** Success notice with a check icon; `warn` swaps in the amber alert style. */
+export function AuthNotice(props: {
+  children: React.ReactNode
+  warn?: boolean
+}) {
+  if (props.warn) {
+    return (
+      <div
+        role='alert'
+        className='text-foreground mb-[18px] flex gap-3 rounded-[10px] bg-[color-mix(in_srgb,var(--warning)_16%,var(--card))] p-3.5 text-[13px] leading-[1.6]'
+      >
+        <TriangleAlert
+          className='text-warning mt-px size-[18px] shrink-0'
+          strokeWidth={2}
+        />
+        <div>{props.children}</div>
+      </div>
+    )
+  }
   return (
     <div className='text-foreground mb-[18px] flex gap-3 rounded-[10px] bg-[color-mix(in_srgb,var(--success)_16%,var(--card))] p-3.5 text-[13px] leading-[1.6]'>
       <CircleCheck

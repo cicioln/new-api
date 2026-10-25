@@ -7731,6 +7731,11 @@
     "Verify with Passkey": "Подтвердить с Passkey",
     "Can't use your authenticator?": "Нет доступа к аутентификатору?",
     "Use a backup code": "Использовать резервный код",
-    "Have your authenticator?": "Аутентификатор под рукой?"
+    "Have your authenticator?": "Аутентификатор под рукой?",
+    "New password copied to clipboard": "Новый пароль скопирован в буфер обмена",
+    "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Ссылка для сброса действует 10 минут и может быть использована только один раз. Запросите новую.",
+    "Go to sign in": "Перейти ко входу",
+    "A new password will be generated for this account, and the old one stops working immediately.": "Для этой учётной записи будет создан новый пароль, а старый сразу перестанет действовать.",
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Пароль сброшен. Войдите с новым паролем, затем измените его в разделе «Безопасность и доступ»."
   }
 }

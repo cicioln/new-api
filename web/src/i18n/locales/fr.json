@@ -7731,6 +7731,11 @@
     "Verify with Passkey": "Vérifier avec une Passkey",
     "Can't use your authenticator?": "Impossible d'utiliser votre application ?",
     "Use a backup code": "Utiliser un code de secours",
-    "Have your authenticator?": "Votre application est disponible ?"
+    "Have your authenticator?": "Votre application est disponible ?",
+    "New password copied to clipboard": "Nouveau mot de passe copié dans le presse-papiers",
+    "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Les liens de réinitialisation sont valables 10 minutes et ne peuvent être utilisés qu'une fois. Veuillez en demander un nouveau.",
+    "Go to sign in": "Aller à la connexion",
+    "A new password will be generated for this account, and the old one stops working immediately.": "Un nouveau mot de passe sera généré pour ce compte et l'ancien cessera immédiatement de fonctionner.",
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Mot de passe réinitialisé. Connectez-vous avec le nouveau mot de passe, puis modifiez-le dans Sécurité et accès."
   }
 }

@@ -7731,6 +7731,11 @@
     "Verify with Passkey": "Xác minh bằng Passkey",
     "Can't use your authenticator?": "Không dùng được ứng dụng xác thực?",
     "Use a backup code": "Dùng mã dự phòng",
-    "Have your authenticator?": "Có ứng dụng xác thực?"
+    "Have your authenticator?": "Có ứng dụng xác thực?",
+    "New password copied to clipboard": "Đã sao chép mật khẩu mới vào bộ nhớ tạm",
+    "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Liên kết đặt lại có hiệu lực trong 10 phút và chỉ dùng được một lần. Vui lòng yêu cầu liên kết mới.",
+    "Go to sign in": "Đi đến đăng nhập",
+    "A new password will be generated for this account, and the old one stops working immediately.": "Hệ thống sẽ tạo mật khẩu mới cho tài khoản này và mật khẩu cũ sẽ mất hiệu lực ngay lập tức.",
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Đã đặt lại mật khẩu. Hãy đăng nhập bằng mật khẩu mới, sau đó đổi mật khẩu trong Bảo mật & Truy cập."
   }
 }

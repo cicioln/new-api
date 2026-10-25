@@ -7731,6 +7731,11 @@
     "Verify with Passkey": "改用 Passkey 验证",
     "Can't use your authenticator?": "无法使用验证器？",
     "Use a backup code": "使用备用码",
-    "Have your authenticator?": "验证器可用？"
+    "Have your authenticator?": "验证器可用？",
+    "New password copied to clipboard": "新密码已复制到剪贴板",
+    "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "重置链接 10 分钟内有效且只能使用一次，请重新申请。",
+    "Go to sign in": "去登录",
+    "A new password will be generated for this account, and the old one stops working immediately.": "确认后系统会为该账户生成一个新密码，旧密码立即失效。",
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "密码已重置。请用新密码登录，并在「安全与访问」中改成自己的密码。"
   }
 }

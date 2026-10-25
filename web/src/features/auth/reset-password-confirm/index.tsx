@@ -16,14 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useNavigate } from '@tanstack/react-router'
-import { CircleCheck, TriangleAlert } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { CopyButton } from '@/components/copy-button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,8 +31,20 @@ import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { handleServerError } from '@/lib/handle-server-error'
 import { AuthOperationError } from '@/lib/secure-verification'
 import { createServerError } from '@/lib/server-error-message'
+import { cn } from '@/lib/utils'
 
 import { AuthLayout } from '../auth-layout'
+import {
+  AUTH_FIELD_CLASS,
+  AUTH_FORM_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+  AUTH_LABEL_LINK_CLASS,
+  AUTH_SUBMIT_CLASS,
+  AuthAlt,
+  AuthHeader,
+  AuthNotice,
+} from '../components/auth-ui'
 
 export type ResetPasswordSearchParams = {
   email?: string
@@ -76,11 +86,7 @@ export function ResetPasswordConfirm(props: ResetPasswordConfirmProps) {
         setNewPassword(password)
         const copySuccess = await copyToClipboard(password)
         if (copySuccess) {
-          toast.success(
-            t('Password reset and copied to clipboard: {{password}}', {
-              password,
-            })
-          )
+          toast.success(t('New password copied to clipboard'))
         } else {
           toast.success(t('Password reset: {{password}}', { password }))
         }
@@ -94,122 +100,116 @@ export function ResetPasswordConfirm(props: ResetPasswordConfirmProps) {
     }
   }
 
+  const backToLogin = (
+    <AuthAlt>
+      <Link to='/sign-in' replace>
+        {t('Back to login')}
+      </Link>
+    </AuthAlt>
+  )
+
   if (!isValidResetLink) {
     return (
       <AuthLayout>
-        <div className='w-full space-y-6'>
-          <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
-            {t('Reset password')}
-          </h2>
-          <Alert className='border-warning/40 bg-warning/10'>
-            <TriangleAlert aria-hidden='true' className='text-warning' />
-            <AlertTitle>{t('Link invalid or expired')}</AlertTitle>
-            <AlertDescription>
-              {t(
-                'Reset links expire after a short time and can only be used once. Please request a new one.'
-              )}
-            </AlertDescription>
-          </Alert>
-          <Button
-            className='w-full'
-            onClick={() => navigate({ to: '/forgot-password', replace: true })}
-          >
-            {t('Request again')}
-          </Button>
-          <Button
-            variant='link'
-            className='w-full'
-            onClick={() => navigate({ to: '/sign-in', replace: true })}
-          >
-            {t('Back to login')}
-          </Button>
-        </div>
+        <AuthNotice warn>
+          <b>{t('Link invalid or expired')}</b>
+          <br />
+          {t(
+            'Reset links are valid for 10 minutes and can only be used once. Please request a new one.'
+          )}
+        </AuthNotice>
+        <Button
+          className={cn(AUTH_SUBMIT_CLASS, 'mt-0')}
+          onClick={() => navigate({ to: '/forgot-password', replace: true })}
+        >
+          {t('Request again')}
+        </Button>
+        {backToLogin}
       </AuthLayout>
     )
   }
 
+  let submitLabel = t('Reset password')
+  if (newPassword) {
+    submitLabel = t('Go to sign in')
+  } else if (isActive) {
+    submitLabel = t('auth.resetPasswordConfirm.retry', {
+      seconds: secondsLeft,
+    })
+  }
+
   return (
     <AuthLayout>
-      <div className='w-full space-y-6'>
-        <div className='space-y-2'>
-          <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
-            {t('Reset password')}
-          </h2>
-          <p className='text-muted-foreground text-left text-sm sm:text-base'>
-            {t('auth.resetPasswordConfirm.description')}
-          </p>
+      <AuthHeader
+        title={t('Reset password')}
+        description={t(
+          'A new password will be generated for this account, and the old one stops working immediately.'
+        )}
+      />
+
+      <div className={AUTH_FORM_CLASS}>
+        <div className={cn('grid', AUTH_FIELD_CLASS)}>
+          <Label htmlFor='email' className={AUTH_LABEL_CLASS}>
+            {t('Email')}
+          </Label>
+          <Input
+            id='email'
+            type='email'
+            value={email}
+            disabled
+            className={AUTH_INPUT_CLASS}
+          />
         </div>
 
-        <div className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='email'>{t('Email')}</Label>
-            <Input id='email' type='email' value={email} disabled />
-          </div>
-
-          {newPassword && (
-            <>
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <Label htmlFor='password'>{t('New password')}</Label>
-                  <span className='text-primary text-xs'>
-                    {t('Password has been copied to clipboard')}
-                  </span>
-                </div>
-                <div className='flex gap-2'>
-                  <Input
-                    id='password'
-                    value={newPassword}
-                    readOnly
-                    className='font-mono'
-                  />
-                  <CopyButton
-                    value={newPassword}
-                    variant='outline'
-                    size='icon'
-                    aria-label={t('Copy password')}
-                  />
-                </div>
+        {newPassword && (
+          <>
+            <div className={cn('grid', AUTH_FIELD_CLASS)}>
+              <Label htmlFor='password' className={AUTH_LABEL_CLASS}>
+                {t('New password')}
+                <span className={AUTH_LABEL_LINK_CLASS}>
+                  {t('Copied to clipboard')}
+                </span>
+              </Label>
+              <div className='flex gap-2'>
+                <Input
+                  id='password'
+                  value={newPassword}
+                  readOnly
+                  className={cn(AUTH_INPUT_CLASS, 'font-mono')}
+                />
+                <CopyButton
+                  value={newPassword}
+                  variant='outline'
+                  size='default'
+                  hideIcon
+                  className='h-10 rounded-lg px-4'
+                  aria-label={t('Copy password')}
+                >
+                  {t('Copy')}
+                </CopyButton>
               </div>
-              <Alert>
-                <CircleCheck aria-hidden='true' className='text-success' />
-                <AlertDescription>
-                  {t('auth.resetPasswordConfirm.success')}
-                </AlertDescription>
-              </Alert>
-            </>
-          )}
+            </div>
+            <AuthNotice>
+              {t(
+                'Password reset. Sign in with the new password, then change it in Security & Access.'
+              )}
+            </AuthNotice>
+          </>
+        )}
 
-          <Button
-            className='w-full'
-            onClick={
-              newPassword
-                ? () => navigate({ to: '/sign-in', replace: true })
-                : handleSubmit
-            }
-            disabled={newPassword ? false : loading || isActive}
-          >
-            {newPassword && t('auth.resetPasswordConfirm.backToLogin')}
-            {!newPassword &&
-              isActive &&
-              t('auth.resetPasswordConfirm.retry', {
-                seconds: secondsLeft,
-              })}
-            {!newPassword &&
-              !isActive &&
-              t('auth.resetPasswordConfirm.confirm')}
-          </Button>
-
-          {!newPassword && (
-            <Button
-              variant='link'
-              className='w-full'
-              onClick={() => navigate({ to: '/sign-in', replace: true })}
-            >
-              {t('Back to login')}
-            </Button>
-          )}
-        </div>
+        <Button
+          className={cn(AUTH_SUBMIT_CLASS, newPassword && 'mt-0')}
+          onClick={
+            newPassword
+              ? () => navigate({ to: '/sign-in', replace: true })
+              : handleSubmit
+          }
+          disabled={newPassword ? false : loading || isActive}
+        >
+          {submitLabel}
+        </Button>
       </div>
+      {backToLogin}
     </AuthLayout>
   )
 }
