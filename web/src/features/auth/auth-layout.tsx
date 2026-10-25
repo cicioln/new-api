@@ -19,8 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { LogoMark } from '@/components/layout/components/logo-mark'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSystemConfig } from '@/hooks/use-system-config'
+import { cn } from '@/lib/utils'
 
 type AuthLayoutProps = {
   children: React.ReactNode
@@ -34,29 +36,26 @@ const STREAM_ROWS = [
   { path: '/v1/embeddings', model: 'text-embedding-3', ms: '42ms' },
   { path: '/v1beta/generateContent', model: 'gemini-3-pro', ms: '406ms' },
   { path: '/v1/chat/completions', model: 'deepseek-v4', ms: '275ms' },
-  { path: '/v1/responses', model: 'gpt-5.2-codex', ms: '330ms' },
+  { path: '/v1/images/generations', model: 'gpt-image-2', ms: '3.2s' },
+  { path: '/v1/messages', model: 'claude-opus-5-5', ms: '298ms' },
 ] as const
+
+const HANDLED_REQUESTS = 1284903
 
 export function AuthLayout(props: AuthLayoutProps) {
   const { t } = useTranslation()
-  const { systemName, logo, loading } = useSystemConfig()
 
   return (
     <div className='grid min-h-svh lg:grid-cols-2'>
       <aside className='relative hidden flex-col overflow-hidden border-r border-[#23252a] bg-[#141518] px-12 py-10 text-[#f2f1ec] lg:flex'>
-        <Link
-          to='/'
-          className='relative z-10 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80'
-        >
-          <AuthBrand logo={logo} systemName={systemName} loading={loading} />
-        </Link>
+        <AuthBrand inverted />
         <div
           aria-hidden
-          className='absolute inset-x-12 top-[120px] font-mono text-xs leading-loose opacity-50'
+          className='absolute top-[120px] right-10 left-12 font-mono text-xs leading-[2] opacity-50'
         >
           {STREAM_ROWS.map((row) => (
             <div
-              key={`${row.path}-${row.model}`}
+              key={`${row.path}-${row.model}-${row.ms}`}
               className='flex gap-3.5 overflow-hidden whitespace-nowrap'
             >
               <span className='text-[#3dd68c]'>200</span>
@@ -67,59 +66,48 @@ export function AuthLayout(props: AuthLayoutProps) {
             </div>
           ))}
         </div>
-        <blockquote className='relative z-10 mt-auto max-w-[440px] text-[26px] leading-snug font-medium tracking-tight'>
+        <blockquote className='relative z-10 mt-auto max-w-[440px] text-[26px] leading-[1.35] font-medium tracking-[-0.02em]'>
           {t(
             '“Delete the integration code for six vendors and keep one base_url.”'
           )}
         </blockquote>
         <p className='relative z-10 mt-4 text-[13px] opacity-55'>
-          {t('Unified AI Gateway')}
+          {t('{{value}} requests processed today', {
+            value: HANDLED_REQUESTS.toLocaleString('en-US'),
+          })}
         </p>
       </aside>
 
-      <div className='flex flex-col'>
-        <Link
-          to='/'
-          className='m-6 flex w-fit items-center gap-2.5 transition-opacity hover:opacity-80 lg:hidden'
-        >
-          <AuthBrand logo={logo} systemName={systemName} loading={loading} />
-        </Link>
-        <div className='flex flex-1 items-center justify-center px-6 py-10'>
-          <div className='flex w-full max-w-[380px] flex-col space-y-2'>
-            {props.children}
-          </div>
+      <main className='grid place-items-center px-6 py-10'>
+        <div className='flex w-full max-w-[380px] flex-col'>
+          <AuthBrand className='mb-8 lg:hidden' />
+          {props.children}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
 
-function AuthBrand(props: {
-  logo: string
-  systemName: string
-  loading: boolean
-}) {
-  const { t } = useTranslation()
+function AuthBrand(props: { inverted?: boolean; className?: string }) {
+  const { systemName, loading } = useSystemConfig()
+  const markClassName = props.inverted
+    ? 'bg-[#f2f1ec] text-[#111214] after:border-[#141518]'
+    : undefined
+
   return (
-    <>
-      <div className='relative size-7'>
-        {props.loading ? (
-          <Skeleton className='absolute inset-0 rounded-md' />
-        ) : (
-          <img
-            src={props.logo}
-            alt={t('Logo')}
-            className='size-7 rounded-md object-cover'
-          />
-        )}
-      </div>
-      {props.loading ? (
+    <Link
+      to='/'
+      className={cn(
+        'relative z-10 flex w-fit items-center gap-2.5 text-base font-bold tracking-[-0.01em] transition-opacity hover:opacity-80',
+        props.className
+      )}
+    >
+      <LogoMark className={markClassName} />
+      {loading ? (
         <Skeleton className='h-5 w-24' />
       ) : (
-        <span className='text-[15px] font-semibold tracking-tight'>
-          {props.systemName}
-        </span>
+        <span>{systemName || 'New API'}</span>
       )}
-    </>
+    </Link>
   )
 }

@@ -7692,6 +7692,12 @@
     "API calls are not affected during maintenance; the console is temporarily unavailable.": "Trong thời gian bảo trì, các lệnh gọi API không bị ảnh hưởng; bảng điều khiển tạm thời không khả dụng.",
     "No access permission": "Không có quyền truy cập",
     "Back to overview": "Về tổng quan",
-    "This page requires administrator permission. Contact the site administrator to request access.": "Trang này yêu cầu quyền quản trị viên. Vui lòng liên hệ quản trị viên trang để được cấp quyền."
+    "This page requires administrator permission. Contact the site administrator to request access.": "Trang này yêu cầu quyền quản trị viên. Vui lòng liên hệ quản trị viên trang để được cấp quyền.",
+    "{{value}} requests processed today": "Hôm nay đã xử lý {{value}} yêu cầu",
+    "Back to sign in": "Quay lại đăng nhập",
+    "Recover password": "Khôi phục mật khẩu",
+    "Enter the email you registered with and we will send you a reset link.": "Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết đặt lại.",
+    "Email sent": "Đã gửi email",
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Hãy kiểm tra {{email}}. Liên kết có hiệu lực 10 phút. Nếu chưa nhận được, hãy kiểm tra thư rác hoặc <resend>gửi lại</resend>."
   }
 }

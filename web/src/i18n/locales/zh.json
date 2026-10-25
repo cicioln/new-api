@@ -7692,6 +7692,12 @@
     "API calls are not affected during maintenance; the console is temporarily unavailable.": "维护期间 API 调用不受影响，控制台暂不可用。",
     "No access permission": "没有访问权限",
     "Back to overview": "回到总览",
-    "This page requires administrator permission. Contact the site administrator to request access.": "这个页面需要管理员权限，如需开通请联系站点管理员。"
+    "This page requires administrator permission. Contact the site administrator to request access.": "这个页面需要管理员权限，如需开通请联系站点管理员。",
+    "{{value}} requests processed today": "今日已处理 {{value}} 次请求",
+    "Back to sign in": "返回登录",
+    "Recover password": "找回密码",
+    "Enter the email you registered with and we will send you a reset link.": "输入注册时使用的邮箱，我们会发送一封重置链接。",
+    "Email sent": "邮件已发送",
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "请查收 {{email}}，链接 10 分钟内有效。没收到可检查垃圾邮件，或 <resend>重新发送</resend>。"
   }
 }

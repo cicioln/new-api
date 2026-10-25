@@ -7692,6 +7692,12 @@
     "API calls are not affected during maintenance; the console is temporarily unavailable.": "Во время работ API продолжает работать, консоль временно недоступна.",
     "No access permission": "Нет доступа",
     "Back to overview": "К обзору",
-    "This page requires administrator permission. Contact the site administrator to request access.": "Эта страница требует прав администратора. Чтобы получить доступ, обратитесь к администратору сайта."
+    "This page requires administrator permission. Contact the site administrator to request access.": "Эта страница требует прав администратора. Чтобы получить доступ, обратитесь к администратору сайта.",
+    "{{value}} requests processed today": "Сегодня обработано запросов: {{value}}",
+    "Back to sign in": "Вернуться ко входу",
+    "Recover password": "Восстановление пароля",
+    "Enter the email you registered with and we will send you a reset link.": "Введите email, указанный при регистрации, и мы пришлём ссылку для сброса.",
+    "Email sent": "Письмо отправлено",
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Проверьте {{email}}. Ссылка действует 10 минут. Если письма нет, проверьте спам или <resend>отправьте повторно</resend>."
   }
 }

@@ -17,10 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { z } from 'zod'
 
@@ -37,6 +37,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { sendPasswordResetEmail } from '@/features/auth/api'
 import {
+  AUTH_FIELD_CLASS,
+  AUTH_FORM_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+  AUTH_SUBMIT_CLASS,
+  AuthHeader,
+  AuthNotice,
+} from '@/features/auth/components/auth-ui'
+import {
   forgotPasswordFormSchema,
   PASSWORD_RESET_COUNTDOWN,
 } from '@/features/auth/constants'
@@ -47,12 +56,10 @@ import { AuthOperationError } from '@/lib/secure-verification'
 import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
-export function ForgotPasswordForm({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLFormElement>) {
+export function ForgotPasswordForm(props: { className?: string }) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
+  const [sentTo, setSentTo] = useState('')
 
   const {
     isTurnstileEnabled,
@@ -80,7 +87,7 @@ export function ForgotPasswordForm({
     try {
       const res = await sendPasswordResetEmail(data.email, turnstileToken)
       if (res?.success) {
-        form.reset()
+        setSentTo(data.email)
         startCountdown()
         toast.success(t('Reset email sent, please check your inbox'))
       } else {
@@ -97,47 +104,81 @@ export function ForgotPasswordForm({
     }
   }
 
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className={cn('grid gap-2', className)}
-        {...props}
-      >
-        <FormField
-          control={form.control}
-          name='email'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder='name@example.com' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+  if (sentTo) {
+    return (
+      <AuthNotice>
+        <b>{t('Email sent')}</b>
+        <br />
+        <Trans
+          t={t}
+          i18nKey='Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.'
+          values={{ email: sentTo }}
+          components={{
+            resend: (
+              <button
+                type='button'
+                className='underline'
+                onClick={() => setSentTo('')}
+              />
+            ),
+          }}
         />
+      </AuthNotice>
+    )
+  }
 
-        <Button
-          type='submit'
-          className='mt-2'
-          disabled={isLoading || isActive || !turnstileReady}
+  return (
+    <>
+      <AuthHeader
+        title={t('Recover password')}
+        description={t(
+          'Enter the email you registered with and we will send you a reset link.'
+        )}
+      />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className={cn(AUTH_FORM_CLASS, props.className)}
         >
-          {isActive
-            ? t('Resend ({{seconds}}s)', { seconds: secondsLeft })
-            : t('Send reset email')}
-          {isLoading ? <Loader2 className='animate-spin' /> : <ArrowRight />}
-        </Button>
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem className={AUTH_FIELD_CLASS}>
+                <FormLabel className={AUTH_LABEL_CLASS}>{t('Email')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='email'
+                    autoComplete='email'
+                    placeholder='you@example.com'
+                    className={AUTH_INPUT_CLASS}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {isTurnstileEnabled && (
-          <div className='mt-2'>
+          {isTurnstileEnabled && (
             <Turnstile
               siteKey={turnstileSiteKey}
               onVerify={setTurnstileToken}
             />
-          </div>
-        )}
-      </form>
-    </Form>
+          )}
+
+          <Button
+            type='submit'
+            className={AUTH_SUBMIT_CLASS}
+            disabled={isLoading || isActive || !turnstileReady}
+          >
+            {isLoading && <Loader2 className='animate-spin' />}
+            {isActive
+              ? t('Resend ({{seconds}}s)', { seconds: secondsLeft })
+              : t('Send reset email')}
+          </Button>
+        </form>
+      </Form>
+    </>
   )
 }

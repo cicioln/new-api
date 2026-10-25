@@ -7692,6 +7692,12 @@
     "API calls are not affected during maintenance; the console is temporarily unavailable.": "API calls are not affected during maintenance; the console is temporarily unavailable.",
     "No access permission": "No access",
     "Back to overview": "Back to overview",
-    "This page requires administrator permission. Contact the site administrator to request access.": "This page requires administrator permission. Contact the site administrator to request access."
+    "This page requires administrator permission. Contact the site administrator to request access.": "This page requires administrator permission. Contact the site administrator to request access.",
+    "{{value}} requests processed today": "{{value}} requests processed today",
+    "Back to sign in": "Back to sign in",
+    "Recover password": "Recover password",
+    "Enter the email you registered with and we will send you a reset link.": "Enter the email you registered with and we will send you a reset link.",
+    "Email sent": "Email sent",
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>."
   }
 }

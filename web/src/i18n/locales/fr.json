@@ -7692,6 +7692,12 @@
     "API calls are not affected during maintenance; the console is temporarily unavailable.": "Les appels API ne sont pas affectés pendant la maintenance ; la console est temporairement indisponible.",
     "No access permission": "Accès refusé",
     "Back to overview": "Retour à l'aperçu",
-    "This page requires administrator permission. Contact the site administrator to request access.": "Cette page nécessite les droits d'administrateur. Contactez l'administrateur du site pour obtenir l'accès."
+    "This page requires administrator permission. Contact the site administrator to request access.": "Cette page nécessite les droits d'administrateur. Contactez l'administrateur du site pour obtenir l'accès.",
+    "{{value}} requests processed today": "{{value}} requêtes traitées aujourd'hui",
+    "Back to sign in": "Retour à la connexion",
+    "Recover password": "Récupérer le mot de passe",
+    "Enter the email you registered with and we will send you a reset link.": "Saisissez l'e-mail utilisé à l'inscription, nous vous enverrons un lien de réinitialisation.",
+    "Email sent": "E-mail envoyé",
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Consultez {{email}}. Le lien est valable 10 minutes. Sinon, vérifiez vos spams ou <resend>renvoyez</resend>."
   }
 }
