@@ -7653,6 +7653,17 @@
     "Use key": "使用金鑰",
     "Use {{model}} to draw a pelican riding a bicycle": "用 {{model}} 畫一隻騎自行車的鵜鶘",
     "View all {{count}} groups": "查看全部 {{count}} 個分組",
-    "Model vendor": "廠商"
+    "Model vendor": "廠商",
+    "Model rankings": "模型排行榜",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "按本站實際路由的 Token 量統計，資料來自 /api/rankings。",
+    "Vendor share": "廠商份額",
+    "Fastest rising": "上升最快",
+    "Rank improvement versus the previous period": "與上一週期相比排名提升",
+    "Period over period": "環比",
+    "Rank change": "排名變化",
+    "Ranking period this year": "今年",
+    "Ranking category marketing": "行銷",
+    "Ranking category productivity": "效率",
+    "Token share": "份額"
   }
 }

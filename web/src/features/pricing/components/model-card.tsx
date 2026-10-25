@@ -24,6 +24,7 @@ import { useMarketPrice } from '../hooks/use-market-price'
 import {
   formatMarketLatency,
   formatMarketTps,
+  getVendorAvatarName,
   type MarketPerf,
 } from '../lib/market'
 import type { PricingModel, TokenUnit } from '../types'
@@ -75,7 +76,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       className='group/market bg-card hover:border-input hover:shadow-card relative flex min-w-0 cursor-pointer flex-col gap-3 rounded-xl border p-[18px] transition-all duration-150 hover:-translate-y-px'
     >
       <div className='flex items-center gap-3'>
-        <VendorAvatar model={props.model} />
+        <VendorAvatar name={getVendorAvatarName(props.model)} />
         <div className='min-w-0 flex-1'>
           <MarketModelName
             name={props.model.model_name}

@@ -155,12 +155,17 @@ const FALLBACK_COLORS = [
   '#6366F1',
 ]
 
-/** Avatar color and letter for a model's vendor, stable across renders. */
-export function getVendorAvatar(model: PricingModel): {
+/** Avatar name for a model: its vendor, or the model itself when unknown. */
+export function getVendorAvatarName(model: PricingModel): string {
+  return model.vendor_name || model.model_name || '?'
+}
+
+/** Avatar color and letter for a vendor name, stable across renders. */
+export function getVendorAvatar(vendorName: string): {
   color: string
   letter: string
 } {
-  const name = model.vendor_name || model.model_name || '?'
+  const name = vendorName || '?'
   let color = VENDOR_COLORS[name]
   if (!color) {
     let hash = 0

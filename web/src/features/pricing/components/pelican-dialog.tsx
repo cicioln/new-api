@@ -28,7 +28,7 @@ import { useStreamRequest } from '@/features/playground/hooks/use-stream-request
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { formatMarketLatency } from '../lib/market'
+import { formatMarketLatency, getVendorAvatarName } from '../lib/market'
 import {
   extractSvg,
   loadPelicanHistory,
@@ -411,7 +411,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   return (
     <>
       <div className='flex items-center gap-3 border-b px-5 py-4'>
-        <VendorAvatar model={props.model} />
+        <VendorAvatar name={getVendorAvatarName(props.model)} />
         <div className='min-w-0'>
           <DialogTitle className='font-mono text-[15px] font-medium'>
             {props.model.model_name}

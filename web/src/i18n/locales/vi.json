@@ -7653,6 +7653,17 @@
     "Use key": "Khóa sử dụng",
     "Use {{model}} to draw a pelican riding a bicycle": "Dùng {{model}} vẽ bồ nông đạp xe",
     "View all {{count}} groups": "Xem tất cả {{count}} nhóm",
-    "Model vendor": "Nhà phát triển"
+    "Model vendor": "Nhà phát triển",
+    "Model rankings": "Bảng xếp hạng mô hình",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "Xếp theo lượng token thực tế đi qua trang này, dữ liệu từ /api/rankings.",
+    "Vendor share": "Thị phần nhà phát triển",
+    "Fastest rising": "Tăng nhanh nhất",
+    "Rank improvement versus the previous period": "Thứ hạng tăng so với kỳ trước",
+    "Period over period": "So với kỳ trước",
+    "Rank change": "Thay đổi thứ hạng",
+    "Ranking period this year": "Năm nay",
+    "Ranking category marketing": "Tiếp thị",
+    "Ranking category productivity": "Năng suất",
+    "Token share": "Thị phần"
   }
 }

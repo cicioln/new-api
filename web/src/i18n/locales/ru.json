@@ -7653,6 +7653,17 @@
     "Use key": "Ключ",
     "Use {{model}} to draw a pelican riding a bicycle": "Нарисовать с {{model}} пеликана на велосипеде",
     "View all {{count}} groups": "Показать все группы ({{count}})",
-    "Model vendor": "Разработчик"
+    "Model vendor": "Разработчик",
+    "Model rankings": "Рейтинг моделей",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "По объёму токенов, реально прошедших через этот сайт; данные из /api/rankings.",
+    "Vendor share": "Доля разработчиков",
+    "Fastest rising": "Быстрее всех растут",
+    "Rank improvement versus the previous period": "Рост позиции по сравнению с прошлым периодом",
+    "Period over period": "К прошлому периоду",
+    "Rank change": "Изменение места",
+    "Ranking period this year": "Этот год",
+    "Ranking category marketing": "Маркетинг",
+    "Ranking category productivity": "Продуктивность",
+    "Token share": "Доля"
   }
 }

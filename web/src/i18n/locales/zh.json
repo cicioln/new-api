@@ -7653,6 +7653,17 @@
     "Use key": "使用密钥",
     "Use {{model}} to draw a pelican riding a bicycle": "用 {{model}} 画一只骑自行车的鹈鹕",
     "View all {{count}} groups": "查看全部 {{count}} 个分组",
-    "Model vendor": "厂商"
+    "Model vendor": "厂商",
+    "Model rankings": "模型排行榜",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "按本站实际路由的 Token 量统计，数据来自 /api/rankings。",
+    "Vendor share": "厂商份额",
+    "Fastest rising": "上升最快",
+    "Rank improvement versus the previous period": "与上一周期相比排名提升",
+    "Period over period": "环比",
+    "Rank change": "排名变化",
+    "Ranking period this year": "今年",
+    "Ranking category marketing": "营销",
+    "Ranking category productivity": "效率",
+    "Token share": "份额"
   }
 }

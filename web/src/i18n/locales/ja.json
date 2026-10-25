@@ -7653,6 +7653,17 @@
     "Use key": "使用するキー",
     "Use {{model}} to draw a pelican riding a bicycle": "{{model}} で自転車に乗るペリカンを描く",
     "View all {{count}} groups": "{{count}} 件のグループをすべて表示",
-    "Model vendor": "ベンダー"
+    "Model vendor": "ベンダー",
+    "Model rankings": "モデルランキング",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "本サイトで実際にルーティングされた Token 量で集計（/api/rankings より）。",
+    "Vendor share": "ベンダー別シェア",
+    "Fastest rising": "急上昇",
+    "Rank improvement versus the previous period": "前期間と比べた順位の上昇",
+    "Period over period": "前期比",
+    "Rank change": "順位変動",
+    "Ranking period this year": "今年",
+    "Ranking category marketing": "マーケティング",
+    "Ranking category productivity": "効率化",
+    "Token share": "シェア"
   }
 }

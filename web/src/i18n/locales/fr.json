@@ -7653,6 +7653,17 @@
     "Use key": "Clé utilisée",
     "Use {{model}} to draw a pelican riding a bicycle": "Faire dessiner à {{model}} un pélican à vélo",
     "View all {{count}} groups": "Voir les {{count}} groupes",
-    "Model vendor": "Éditeur"
+    "Model vendor": "Éditeur",
+    "Model rankings": "Classement des modèles",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "Classé selon les tokens réellement routés par ce site, données issues de /api/rankings.",
+    "Vendor share": "Part par éditeur",
+    "Fastest rising": "Plus fortes progressions",
+    "Rank improvement versus the previous period": "Progression du rang par rapport à la période précédente",
+    "Period over period": "Évolution",
+    "Rank change": "Évolution du rang",
+    "Ranking period this year": "Cette année",
+    "Ranking category marketing": "Marketing",
+    "Ranking category productivity": "Productivité",
+    "Token share": "Part"
   }
 }

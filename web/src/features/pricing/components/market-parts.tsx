@@ -25,11 +25,8 @@ import { cn } from '@/lib/utils'
 import { getVendorAvatar, supportsPelicanTest } from '../lib/market'
 import type { PricingModel } from '../types'
 
-export function VendorAvatar(props: {
-  model: PricingModel
-  className?: string
-}) {
-  const avatar = getVendorAvatar(props.model)
+export function VendorAvatar(props: { name: string; className?: string }) {
+  const avatar = getVendorAvatar(props.name)
   return (
     <span
       aria-hidden

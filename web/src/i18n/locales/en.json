@@ -7653,6 +7653,17 @@
     "Use key": "Use key",
     "Use {{model}} to draw a pelican riding a bicycle": "Use {{model}} to draw a pelican riding a bicycle",
     "View all {{count}} groups": "View all {{count}} groups",
-    "Model vendor": "Model vendor"
+    "Model vendor": "Model vendor",
+    "Model rankings": "Model rankings",
+    "Ranked by tokens actually routed through this site, from /api/rankings.": "Ranked by tokens actually routed through this site, from /api/rankings.",
+    "Vendor share": "Vendor share",
+    "Fastest rising": "Fastest rising",
+    "Rank improvement versus the previous period": "Rank improvement versus the previous period",
+    "Period over period": "Period over period",
+    "Rank change": "Rank change",
+    "Ranking period this year": "Ranking period this year",
+    "Ranking category marketing": "Ranking category marketing",
+    "Ranking category productivity": "Ranking category productivity",
+    "Token share": "Token share"
   }
 }
