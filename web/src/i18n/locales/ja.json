@@ -7586,6 +7586,14 @@
     "Connect drawing, video, music and other async task platforms.": "画像・動画・音楽などの非同期タスクプラットフォームを接続します。",
     "Install plugin": "プラグインをインストール",
     "Enabled · {{count}} channels bound": "有効 · {{count}} 個のチャネルに紐付け",
-    "Plugin not enabled": "未有効"
+    "Plugin not enabled": "未有効",
+    "Tune parameters and compare outputs across models. Requests are billed to the selected group.": "パラメータを調整して複数モデルの出力を比較します。リクエストは選択したグループで実際に課金されます。",
+    "View code": "コードを表示",
+    "Add comparison": "比較を追加",
+    "Remove comparison": "比較を削除",
+    "Done · {{seconds}}s": "完了 · {{seconds}}s",
+    "{{value}} tokens": "{{value}} tokens",
+    "Send a prompt to compare model outputs.": "プロンプトを送信してモデルの出力を比較します。",
+    "Call the same model with your API key using these settings.": "API キーを使い、この設定で同じモデルを呼び出します。"
   }
 }

@@ -7586,6 +7586,14 @@
     "Connect drawing, video, music and other async task platforms.": "接入繪圖、影片、音樂等非同步任務平台。",
     "Install plugin": "安裝外掛",
     "Enabled · {{count}} channels bound": "已啟用 · 綁定 {{count}} 個渠道",
-    "Plugin not enabled": "未啟用"
+    "Plugin not enabled": "未啟用",
+    "Tune parameters and compare outputs across models. Requests are billed to the selected group.": "調參並對比多個模型的輸出，請求會按所選分組真實扣費。",
+    "View code": "查看程式碼",
+    "Add comparison": "新增對比",
+    "Remove comparison": "移除對比",
+    "Done · {{seconds}}s": "完成 · {{seconds}}s",
+    "{{value}} tokens": "{{value}} tokens",
+    "Send a prompt to compare model outputs.": "傳送提示詞以對比模型輸出。",
+    "Call the same model with your API key using these settings.": "使用你的 API 金鑰按目前設定呼叫同一模型。"
   }
 }

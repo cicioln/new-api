@@ -27,9 +27,9 @@ import {
   isStreamClosedReadyState,
   isStreamDoneMessage,
   parseStreamErrorDetails,
-  parseStreamMessageUpdates,
+  parseStreamMessage,
 } from '../lib'
-import type { ChatCompletionRequest } from '../types'
+import type { ChatCompletionRequest, ChatCompletionUsage } from '../types'
 
 interface StreamEventSource {
   readyState?: number
@@ -43,6 +43,7 @@ interface StreamEventSource {
 
 interface StreamRequestCallbacks {
   onUpdate: (type: 'reasoning' | 'content', chunk: string) => void
+  onUsage?: (usage: ChatCompletionUsage) => void
   onComplete: () => void
   onError: (error: string, errorCode?: string) => void
 }
@@ -121,10 +122,13 @@ export function createStreamRequestController(
       }
 
       try {
-        const updates = parseStreamMessageUpdates(data)
+        const parsed = parseStreamMessage(data)
 
-        for (const update of updates) {
+        for (const update of parsed.updates) {
           callbacks.onUpdate(update.type, update.chunk)
+        }
+        if (parsed.usage) {
+          callbacks.onUsage?.(parsed.usage)
         }
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -202,17 +206,8 @@ export function useStreamRequest() {
   }
 
   const sendStreamRequest = useCallback(
-    (
-      payload: ChatCompletionRequest,
-      onUpdate: (type: 'reasoning' | 'content', chunk: string) => void,
-      onComplete: () => void,
-      onError: (error: string, errorCode?: string) => void
-    ) =>
-      controllerRef.current?.send(payload, {
-        onUpdate,
-        onComplete,
-        onError,
-      }),
+    (payload: ChatCompletionRequest, callbacks: StreamRequestCallbacks) =>
+      controllerRef.current?.send(payload, callbacks),
     []
   )
 

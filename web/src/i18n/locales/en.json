@@ -7586,6 +7586,14 @@
     "Connect drawing, video, music and other async task platforms.": "Connect drawing, video, music and other async task platforms.",
     "Install plugin": "Install plugin",
     "Enabled · {{count}} channels bound": "Enabled · {{count}} channels bound",
-    "Plugin not enabled": "Plugin not enabled"
+    "Plugin not enabled": "Plugin not enabled",
+    "Tune parameters and compare outputs across models. Requests are billed to the selected group.": "Tune parameters and compare outputs across models. Requests are billed to the selected group.",
+    "View code": "View code",
+    "Add comparison": "Add comparison",
+    "Remove comparison": "Remove comparison",
+    "Done · {{seconds}}s": "Done · {{seconds}}s",
+    "{{value}} tokens": "{{value}} tokens",
+    "Send a prompt to compare model outputs.": "Send a prompt to compare model outputs.",
+    "Call the same model with your API key using these settings.": "Call the same model with your API key using these settings."
   }
 }

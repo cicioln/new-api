@@ -7586,6 +7586,14 @@
     "Connect drawing, video, music and other async task platforms.": "Подключение платформ асинхронных задач: рисунки, видео, музыка и другое.",
     "Install plugin": "Установить плагин",
     "Enabled · {{count}} channels bound": "Включён · привязано каналов: {{count}}",
-    "Plugin not enabled": "Не включён"
+    "Plugin not enabled": "Не включён",
+    "Tune parameters and compare outputs across models. Requests are billed to the selected group.": "Настраивайте параметры и сравнивайте ответы моделей. Запросы оплачиваются по выбранной группе.",
+    "View code": "Показать код",
+    "Add comparison": "Добавить сравнение",
+    "Remove comparison": "Убрать сравнение",
+    "Done · {{seconds}}s": "Готово · {{seconds}} с",
+    "{{value}} tokens": "{{value}} токенов",
+    "Send a prompt to compare model outputs.": "Отправьте запрос, чтобы сравнить ответы моделей.",
+    "Call the same model with your API key using these settings.": "Вызовите ту же модель с вашим API-ключом и этими настройками."
   }
 }

@@ -36,6 +36,10 @@ export function buildChatCompletionPayload(
   const processedMessages = messages
     .filter(isValidMessage)
     .map(formatMessageForAPI)
+  const systemPrompt = config.system_prompt.trim()
+  if (systemPrompt) {
+    processedMessages.unshift({ role: 'system', content: systemPrompt })
+  }
 
   const payload: ChatCompletionRequest = {
     model: config.model,

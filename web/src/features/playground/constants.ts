@@ -54,6 +54,7 @@ export const DEFAULT_CONFIG: PlaygroundConfig = {
   presence_penalty: 0,
   seed: null,
   stream: true,
+  system_prompt: '',
 }
 
 export const DEFAULT_PARAMETER_ENABLED: ParameterEnabled = {

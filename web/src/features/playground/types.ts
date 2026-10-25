@@ -49,6 +49,7 @@ export interface Message {
   isContentComplete?: boolean
   status?: MessageStatus
   errorCode?: string | null
+  usage?: ChatCompletionUsage
 }
 
 // API payload types
@@ -78,6 +79,12 @@ export interface ChatCompletionRequest {
   seed?: number
 }
 
+export interface ChatCompletionUsage {
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
+}
+
 export interface ChatCompletionChunk {
   id: string
   object: string
@@ -92,6 +99,7 @@ export interface ChatCompletionChunk {
     }
     finish_reason: string | null
   }>
+  usage?: ChatCompletionUsage | null
 }
 
 export interface ChatCompletionResponse {
@@ -108,11 +116,7 @@ export interface ChatCompletionResponse {
     }
     finish_reason: string
   }>
-  usage?: {
-    prompt_tokens: number
-    completion_tokens: number
-    total_tokens: number
-  }
+  usage?: ChatCompletionUsage
 }
 
 // Configuration types
@@ -126,6 +130,7 @@ export interface PlaygroundConfig {
   presence_penalty: number
   seed: number | null
   stream: boolean
+  system_prompt: string
 }
 
 export interface ParameterEnabled {

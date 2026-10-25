@@ -255,12 +255,21 @@ export function useChatHandler({
         config,
         parameterEnabled
       )
-      void sendStreamRequest(
-        payload,
-        (type, chunk) => handleStreamUpdate(generation, type, chunk),
-        () => handleStreamComplete(generation),
-        (error, errorCode) => handleStreamError(generation, error, errorCode)
-      )
+      void sendStreamRequest(payload, {
+        onUpdate: (type, chunk) => handleStreamUpdate(generation, type, chunk),
+        onUsage: (usage) => {
+          if (generation !== requestGenerationRef.current) return
+          onMessageUpdate((prev) =>
+            updateLastAssistantMessage(prev, (message) => ({
+              ...message,
+              usage,
+            }))
+          )
+        },
+        onComplete: () => handleStreamComplete(generation),
+        onError: (error, errorCode) =>
+          handleStreamError(generation, error, errorCode),
+      })
     },
     [
       config,
@@ -270,6 +279,7 @@ export function useChatHandler({
       handleStreamUpdate,
       handleStreamComplete,
       handleStreamError,
+      onMessageUpdate,
     ]
   )
 

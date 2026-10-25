@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { ERROR_MESSAGES } from '../../constants'
-import type { ChatCompletionChunk } from '../../types'
+import type { ChatCompletionChunk, ChatCompletionUsage } from '../../types'
 
 const STREAM_DONE_MESSAGE = '[DONE]'
 const STREAM_CLOSED_READY_STATE = 2
@@ -64,12 +64,18 @@ export function parseStreamErrorDetails(data?: string): StreamErrorDetails {
   }
 }
 
-export function parseStreamMessageUpdates(data: string): StreamMessageUpdate[] {
+export type ParsedStreamMessage = {
+  updates: StreamMessageUpdate[]
+  usage: ChatCompletionUsage | null
+}
+
+export function parseStreamMessage(data: string): ParsedStreamMessage {
   const chunk = JSON.parse(data) as ChatCompletionChunk
   const delta = chunk.choices?.[0]?.delta
+  const usage = chunk.usage ?? null
 
   if (!delta) {
-    return []
+    return { updates: [], usage }
   }
 
   const updates: StreamMessageUpdate[] = []
@@ -82,7 +88,7 @@ export function parseStreamMessageUpdates(data: string): StreamMessageUpdate[] {
     updates.push({ type: 'content', chunk: delta.content })
   }
 
-  return updates
+  return { updates, usage }
 }
 
 export function isStreamDoneMessage(data: string): boolean {

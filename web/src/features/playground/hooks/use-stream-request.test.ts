@@ -196,4 +196,34 @@ describe('latest-wins stream request coordination', () => {
 
     expect(updates).toEqual(['current'])
   })
+
+  test('a final chunk carrying usage reports token usage to the caller', async () => {
+    const sources: FakeStreamSource[] = []
+    const usages: unknown[] = []
+    const controller = createStreamRequestController({
+      getHeaders: () => Promise.resolve({}),
+      createSource: () => {
+        const source = new FakeStreamSource()
+        sources.push(source)
+        return source
+      },
+      setStreaming: () => undefined,
+    })
+
+    await controller.send(payload, {
+      ...noopCallbacks,
+      onUsage: (usage) => usages.push(usage),
+    })
+    sources[0]?.emit(
+      'message',
+      JSON.stringify({
+        choices: [],
+        usage: { prompt_tokens: 5, completion_tokens: 412, total_tokens: 417 },
+      })
+    )
+
+    expect(usages).toEqual([
+      { prompt_tokens: 5, completion_tokens: 412, total_tokens: 417 },
+    ])
+  })
 })

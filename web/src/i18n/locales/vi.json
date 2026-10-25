@@ -7586,6 +7586,14 @@
     "Connect drawing, video, music and other async task platforms.": "Kết nối các nền tảng tác vụ bất đồng bộ như vẽ ảnh, video, âm nhạc.",
     "Install plugin": "Cài đặt plugin",
     "Enabled · {{count}} channels bound": "Đã bật · liên kết {{count}} kênh",
-    "Plugin not enabled": "Chưa bật"
+    "Plugin not enabled": "Chưa bật",
+    "Tune parameters and compare outputs across models. Requests are billed to the selected group.": "Tinh chỉnh tham số và so sánh đầu ra của nhiều mô hình. Yêu cầu được tính phí theo nhóm đã chọn.",
+    "View code": "Xem mã",
+    "Add comparison": "Thêm so sánh",
+    "Remove comparison": "Xóa so sánh",
+    "Done · {{seconds}}s": "Xong · {{seconds}}s",
+    "{{value}} tokens": "{{value}} token",
+    "Send a prompt to compare model outputs.": "Gửi lời nhắc để so sánh đầu ra của các mô hình.",
+    "Call the same model with your API key using these settings.": "Gọi cùng mô hình bằng khóa API của bạn với các thiết lập này."
   }
 }
