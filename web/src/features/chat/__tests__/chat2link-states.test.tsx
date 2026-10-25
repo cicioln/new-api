@@ -60,7 +60,7 @@ afterEach(() => {
 })
 
 describe('chat2link states', () => {
-  it('shows the no preset state with a dashboard link when no web chat is configured', async () => {
+  it('shows the no preset state with a chat link when no web chat is configured', async () => {
     renderChat2Link([], [])
 
     expect(
@@ -69,8 +69,8 @@ describe('chat2link states', () => {
       })
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: 'Back to Dashboard' })
-    ).toHaveAttribute('href', '/dashboard')
+      screen.getByRole('button', { name: 'Back to chat' })
+    ).toHaveAttribute('href', '/playground')
   })
 
   it('shows the key error inline without a global toast when no token is enabled', async () => {

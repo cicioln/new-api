@@ -17,6 +17,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const homeGroupsMaxHours = 24
+
+// parseHomeGroupsHours keeps the public window between 1 and 24 hours so
+// anonymous callers cannot trigger month-long aggregations.
+func parseHomeGroupsHours(raw string) int {
+	parsed, err := strconv.Atoi(raw)
+	if err != nil || parsed <= 0 {
+		return 1
+	}
+	return min(parsed, homeGroupsMaxHours)
+}
+
 type homeGroup struct {
 	Group        string   `json:"group"`
 	Desc         string   `json:"desc"`
@@ -30,12 +42,7 @@ type homeGroup struct {
 // GetHomeGroups lists the viewer's usable groups with ratio, model count and
 // recent performance. Request counts are never exposed.
 func GetHomeGroups(c *gin.Context) {
-	hours := 1
-	if rawHours := c.Query("hours"); rawHours != "" {
-		if parsed, err := strconv.Atoi(rawHours); err == nil {
-			hours = parsed
-		}
-	}
+	hours := parseHomeGroupsHours(c.Query("hours"))
 
 	groupRatio := map[string]float64{}
 	maps.Copy(groupRatio, ratio_setting.GetGroupRatioCopy())
