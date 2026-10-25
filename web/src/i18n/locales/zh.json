@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "重置链接 10 分钟内有效且只能使用一次，请重新申请。",
     "Go to sign in": "去登录",
     "A new password will be generated for this account, and the old one stops working immediately.": "确认后系统会为该账户生成一个新密码，旧密码立即失效。",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "密码已重置。请用新密码登录，并在「安全与访问」中改成自己的密码。"
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "密码已重置。请用新密码登录，并在「安全与访问」中改成自己的密码。",
+    "Authorization complete": "授权完成",
+    "Return to the original window to continue. You can close this window.": "请回到原窗口继续，此窗口可以关闭。",
+    "{{provider}} sign-in failed": "{{provider}} 登录失败",
+    "{{provider}} authorization failed": "{{provider}} 授权失败",
+    "Finishing {{provider}} sign-in": "正在完成 {{provider}} 登录",
+    "Checking the authorization result. This will only take a moment.": "正在校验授权结果，马上就好。",
+    "Binding {{provider}} account": "正在绑定 {{provider}} 账号",
+    "Confirming the account to link to your profile.": "正在确认要关联到当前资料的账号。",
+    "Back to chat": "回到聊天"
   }
 }

@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Ссылка для сброса действует 10 минут и может быть использована только один раз. Запросите новую.",
     "Go to sign in": "Перейти ко входу",
     "A new password will be generated for this account, and the old one stops working immediately.": "Для этой учётной записи будет создан новый пароль, а старый сразу перестанет действовать.",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "Пароль сброшен. Войдите с новым паролем, затем измените его в разделе «Безопасность и доступ»."
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Пароль сброшен. Войдите с новым паролем, затем измените его в разделе «Безопасность и доступ».",
+    "Authorization complete": "Авторизация завершена",
+    "Return to the original window to continue. You can close this window.": "Вернитесь в исходное окно, чтобы продолжить. Это окно можно закрыть.",
+    "{{provider}} sign-in failed": "Не удалось войти через {{provider}}",
+    "{{provider}} authorization failed": "Не удалось авторизоваться через {{provider}}",
+    "Finishing {{provider}} sign-in": "Завершаем вход через {{provider}}",
+    "Checking the authorization result. This will only take a moment.": "Проверяем результат авторизации, это займёт мгновение.",
+    "Binding {{provider}} account": "Привязываем аккаунт {{provider}}",
+    "Confirming the account to link to your profile.": "Подтверждаем аккаунт для привязки к профилю.",
+    "Back to chat": "Вернуться в чат"
   }
 }

@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Liên kết đặt lại có hiệu lực trong 10 phút và chỉ dùng được một lần. Vui lòng yêu cầu liên kết mới.",
     "Go to sign in": "Đi đến đăng nhập",
     "A new password will be generated for this account, and the old one stops working immediately.": "Hệ thống sẽ tạo mật khẩu mới cho tài khoản này và mật khẩu cũ sẽ mất hiệu lực ngay lập tức.",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "Đã đặt lại mật khẩu. Hãy đăng nhập bằng mật khẩu mới, sau đó đổi mật khẩu trong Bảo mật & Truy cập."
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Đã đặt lại mật khẩu. Hãy đăng nhập bằng mật khẩu mới, sau đó đổi mật khẩu trong Bảo mật & Truy cập.",
+    "Authorization complete": "Đã hoàn tất ủy quyền",
+    "Return to the original window to continue. You can close this window.": "Hãy quay lại cửa sổ ban đầu để tiếp tục. Bạn có thể đóng cửa sổ này.",
+    "{{provider}} sign-in failed": "Đăng nhập {{provider}} thất bại",
+    "{{provider}} authorization failed": "Ủy quyền {{provider}} thất bại",
+    "Finishing {{provider}} sign-in": "Đang hoàn tất đăng nhập {{provider}}",
+    "Checking the authorization result. This will only take a moment.": "Đang kiểm tra kết quả ủy quyền, chỉ một lát thôi.",
+    "Binding {{provider}} account": "Đang liên kết tài khoản {{provider}}",
+    "Confirming the account to link to your profile.": "Đang xác nhận tài khoản sẽ liên kết với hồ sơ của bạn.",
+    "Back to chat": "Quay lại trò chuyện"
   }
 }

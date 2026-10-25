@@ -85,8 +85,8 @@ function Chat2LinkPage() {
           'The administrator has not configured a Web chat preset yet.'
         )}
         action={
-          <Button size='sm' render={<Link to='/dashboard' />}>
-            {t('Back to Dashboard')}
+          <Button size='sm' render={<Link to='/playground' />}>
+            {t('Back to chat')}
           </Button>
         }
       />

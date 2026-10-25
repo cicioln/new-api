@@ -16,24 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  useNavigate,
-  useParams,
-  useSearch,
-} from '@tanstack/react-router'
+import { createFileRoute, useParams, useSearch } from '@tanstack/react-router'
 import type { AxiosRequestConfig } from 'axios'
 import i18next from 'i18next'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import { OAuthCallbackScreen } from '@/features/auth/components/oauth-callback-screen'
+import {
+  OAuthCallbackScreen,
+  type OAuthCallbackResult,
+} from '@/features/auth/components/oauth-callback-screen'
 import {
   OAUTH_POPUP_CALLBACK_MESSAGE,
   OAUTH_POPUP_RESULT_MESSAGE,
 } from '@/features/auth/constants'
 import { useAuthRedirect } from '@/features/auth/hooks/use-auth-redirect'
-import { sanitizeAuthRedirect } from '@/features/auth/lib/auth-redirect'
 import {
   parseTelegramBindCallback,
   postTelegramBindResult,
@@ -46,9 +43,12 @@ import {
 } from '@/features/auth/lib/oauth-callback-mode'
 import type { LoginResponse } from '@/features/auth/types'
 import { api } from '@/lib/api'
-import { handleServerError } from '@/lib/handle-server-error'
+import { markServerErrorHandled } from '@/lib/handle-server-error'
 import { AuthOperationError } from '@/lib/secure-verification'
-import { getServerErrorMessageKey } from '@/lib/server-error-message'
+import {
+  getServerErrorMessage,
+  getServerErrorMessageKey,
+} from '@/lib/server-error-message'
 
 type OAuthRequestConfig = AxiosRequestConfig & {
   skipBusinessError?: boolean
@@ -65,13 +65,13 @@ interface OAuthPopupResult {
 }
 
 function OAuthCallback() {
-  const navigate = useNavigate()
   const { handleLoginResult } = useAuthRedirect()
   const loginExchange = useRef<{
     key: string
     request: Promise<{ data: LoginResponse }>
   } | null>(null)
   const completedLogin = useRef<string | null>(null)
+  const [result, setResult] = useState<OAuthCallbackResult | null>(null)
   const { provider } = useParams({ from: '/oauth/$provider' }) as {
     provider: string
   }
@@ -101,6 +101,13 @@ function OAuthCallback() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+    const fail = (error: unknown, fallback: string) => {
+      markServerErrorHandled(error)
+      setResult({
+        tone: 'error',
+        message: getServerErrorMessage(error, fallback),
+      })
+    }
 
     const code = search.code ?? ''
     const state = callbackState
@@ -121,7 +128,10 @@ function OAuthCallback() {
           window.location.origin
         )
       ) {
-        toast.error(i18next.t('Telegram binding failed. Please try again.'))
+        setResult({
+          tone: 'error',
+          message: i18next.t('Telegram binding failed. Please try again.'),
+        })
         const closeTimeout = window.setTimeout(() => window.close(), 1500)
         return () => window.clearTimeout(closeTimeout)
       }
@@ -132,7 +142,10 @@ function OAuthCallback() {
     if (mode === 'bind' || mode === 'verify') {
       const opener = window.opener
       if (!opener || opener.closed) {
-        toast.error(i18next.t('OAuth window is no longer available.'))
+        setResult({
+          tone: 'error',
+          message: i18next.t('OAuth window is no longer available.'),
+        })
         return
       }
 
@@ -157,19 +170,22 @@ function OAuthCallback() {
         }
         cancelResultTimeout()
         if (result.success) {
-          if (mode === 'bind') toast.success(i18next.t('Binding successful!'))
-          window.close()
+          setResult({ tone: 'success' })
+          delayedClose = window.setTimeout(() => window.close(), 1500)
           return
         }
-        handleServerError(result, i18next.t('OAuth failed'))
+        fail(result, i18next.t('OAuth failed'))
         delayedClose = window.setTimeout(() => window.close(), 1500)
       }
 
       window.addEventListener('message', handleBindingResult)
       cancelResultTimeout = startOAuthBindResponseDeadline(() => {
-        toast.error(
-          i18next.t('OAuth authorization timed out. Please try again.')
-        )
+        setResult({
+          tone: 'error',
+          message: i18next.t(
+            'OAuth authorization timed out. Please try again.'
+          ),
+        })
         delayedClose = window.setTimeout(() => window.close(), 1500)
       })
       opener.postMessage(
@@ -191,15 +207,8 @@ function OAuthCallback() {
       }
     }
 
-    const safeNavigate = (target: unknown, fallback = '/dashboard') => {
-      const href =
-        sanitizeAuthRedirect(target, window.location.origin) ?? fallback
-      void navigate({ href, replace: true })
-    }
-
     if (!code && !search.error) {
-      toast.error(i18next.t('Missing code'))
-      safeNavigate('/sign-in', '/sign-in')
+      setResult({ tone: 'error', message: i18next.t('Missing code') })
       return
     }
 
@@ -239,7 +248,7 @@ function OAuthCallback() {
           return
         }
         const messageKey = getServerErrorMessageKey(response.data)
-        handleServerError(
+        fail(
           response.data,
           messageKey
             ? i18next.t(messageKey)
@@ -247,11 +256,11 @@ function OAuthCallback() {
         )
       } catch (error: unknown) {
         if (!active) return
-        handleServerError(
-          AuthOperationError.from(error, i18next.t('OAuth failed'))
+        fail(
+          AuthOperationError.from(error, i18next.t('OAuth failed')),
+          i18next.t('OAuth failed')
         )
       }
-      safeNavigate('/sign-in', '/sign-in')
     })()
     return () => {
       active = false
@@ -259,7 +268,6 @@ function OAuthCallback() {
   }, [
     callbackState,
     mode,
-    navigate,
     handleLoginResult,
     provider,
     search.code,
@@ -271,7 +279,7 @@ function OAuthCallback() {
     search.telegram_bind,
   ])
 
-  return <OAuthCallbackScreen provider={provider} mode={mode} />
+  return <OAuthCallbackScreen provider={provider} mode={mode} result={result} />
 }
 
 export const Route = createFileRoute('/oauth/$provider')({

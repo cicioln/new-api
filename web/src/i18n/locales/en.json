@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Reset links are valid for 10 minutes and can only be used once. Please request a new one.",
     "Go to sign in": "Go to sign in",
     "A new password will be generated for this account, and the old one stops working immediately.": "A new password will be generated for this account, and the old one stops working immediately.",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "Password reset. Sign in with the new password, then change it in Security & Access."
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Password reset. Sign in with the new password, then change it in Security & Access.",
+    "Authorization complete": "Authorization complete",
+    "Return to the original window to continue. You can close this window.": "Return to the original window to continue. You can close this window.",
+    "{{provider}} sign-in failed": "{{provider}} sign-in failed",
+    "{{provider}} authorization failed": "{{provider}} authorization failed",
+    "Finishing {{provider}} sign-in": "Finishing {{provider}} sign-in",
+    "Checking the authorization result. This will only take a moment.": "Checking the authorization result. This will only take a moment.",
+    "Binding {{provider}} account": "Binding {{provider}} account",
+    "Confirming the account to link to your profile.": "Confirming the account to link to your profile.",
+    "Back to chat": "Back to chat"
   }
 }

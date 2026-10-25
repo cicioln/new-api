@@ -16,13 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { StatusScreen } from '@/components/status-screen'
+import { Button } from '@/components/ui/button'
+
+export type OAuthCallbackResult =
+  | { tone: 'success' }
+  | { tone: 'error'; message: string }
 
 type OAuthCallbackScreenProps = {
   provider: string
   mode: 'login' | 'bind' | 'verify'
+  /** Final outcome; while unset the screen shows a spinner. */
+  result?: OAuthCallbackResult | null
 }
 
 const providerLabels: Record<string, string> = {
@@ -39,26 +47,56 @@ export function OAuthCallbackScreen(props: OAuthCallbackScreenProps) {
     providerLabels[props.provider?.toLowerCase() ?? ''] ?? 'account'
   )
 
-  let headline = t('Signing you in with {{provider}}', {
+  if (props.result?.tone === 'success') {
+    return (
+      <StatusScreen
+        tone='success'
+        title={t('Authorization complete')}
+        description={t(
+          'Return to the original window to continue. You can close this window.'
+        )}
+      />
+    )
+  }
+
+  if (props.result?.tone === 'error') {
+    let title = t('{{provider}} sign-in failed', { provider: providerLabel })
+    if (props.mode !== 'login') {
+      title = t('{{provider}} authorization failed', {
+        provider: providerLabel,
+      })
+    }
+    return (
+      <StatusScreen
+        tone='error'
+        title={title}
+        description={props.result.message}
+        action={
+          props.mode === 'login' && (
+            <Button size='sm' render={<Link to='/sign-in' replace />}>
+              {t('Back to login')}
+            </Button>
+          )
+        }
+      />
+    )
+  }
+
+  let headline = t('Finishing {{provider}} sign-in', {
     provider: providerLabel,
   })
-  let description = t('Hang tight while we finish connecting your account.')
+  let description = t(
+    'Checking the authorization result. This will only take a moment.'
+  )
   if (props.mode === 'bind') {
-    headline = t('Binding your {{provider}} account', {
-      provider: providerLabel,
-    })
-    description = t(
-      'Hang tight while we securely link this account to your profile.'
-    )
+    headline = t('Binding {{provider}} account', { provider: providerLabel })
+    description = t('Confirming the account to link to your profile.')
   }
   if (props.mode === 'verify') {
     headline = t('Verifying your {{provider}} account', {
       provider: providerLabel,
     })
     description = t('Confirming the account linked to your profile.')
-  }
-  if (props.mode !== 'login') {
-    description = `${description} ${t('Return to the original window to continue.')}`
   }
 
   return (

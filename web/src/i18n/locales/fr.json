@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "Les liens de réinitialisation sont valables 10 minutes et ne peuvent être utilisés qu'une fois. Veuillez en demander un nouveau.",
     "Go to sign in": "Aller à la connexion",
     "A new password will be generated for this account, and the old one stops working immediately.": "Un nouveau mot de passe sera généré pour ce compte et l'ancien cessera immédiatement de fonctionner.",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "Mot de passe réinitialisé. Connectez-vous avec le nouveau mot de passe, puis modifiez-le dans Sécurité et accès."
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "Mot de passe réinitialisé. Connectez-vous avec le nouveau mot de passe, puis modifiez-le dans Sécurité et accès.",
+    "Authorization complete": "Autorisation terminée",
+    "Return to the original window to continue. You can close this window.": "Revenez à la fenêtre d'origine pour continuer. Vous pouvez fermer cette fenêtre.",
+    "{{provider}} sign-in failed": "Échec de la connexion {{provider}}",
+    "{{provider}} authorization failed": "Échec de l'autorisation {{provider}}",
+    "Finishing {{provider}} sign-in": "Finalisation de la connexion {{provider}}",
+    "Checking the authorization result. This will only take a moment.": "Vérification du résultat de l'autorisation, un instant.",
+    "Binding {{provider}} account": "Association du compte {{provider}}",
+    "Confirming the account to link to your profile.": "Confirmation du compte à associer à votre profil.",
+    "Back to chat": "Retour au chat"
   }
 }

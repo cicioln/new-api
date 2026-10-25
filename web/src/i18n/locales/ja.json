@@ -7736,6 +7736,15 @@
     "Reset links are valid for 10 minutes and can only be used once. Please request a new one.": "リセットリンクの有効期限は 10 分で、一度しか使用できません。もう一度申請してください。",
     "Go to sign in": "ログインへ",
     "A new password will be generated for this account, and the old one stops working immediately.": "このアカウントに新しいパスワードが生成され、古いパスワードはすぐに無効になります。",
-    "Password reset. Sign in with the new password, then change it in Security & Access.": "パスワードをリセットしました。新しいパスワードでログインし、「セキュリティとアクセス」で自分のパスワードに変更してください。"
+    "Password reset. Sign in with the new password, then change it in Security & Access.": "パスワードをリセットしました。新しいパスワードでログインし、「セキュリティとアクセス」で自分のパスワードに変更してください。",
+    "Authorization complete": "認可が完了しました",
+    "Return to the original window to continue. You can close this window.": "元のウィンドウに戻って続けてください。このウィンドウは閉じてかまいません。",
+    "{{provider}} sign-in failed": "{{provider}} ログインに失敗しました",
+    "{{provider}} authorization failed": "{{provider}} の認可に失敗しました",
+    "Finishing {{provider}} sign-in": "{{provider}} ログインを完了しています",
+    "Checking the authorization result. This will only take a moment.": "認可結果を確認しています。少々お待ちください。",
+    "Binding {{provider}} account": "{{provider}} アカウントを連携しています",
+    "Confirming the account to link to your profile.": "プロフィールに連携するアカウントを確認しています。",
+    "Back to chat": "チャットに戻る"
   }
 }
