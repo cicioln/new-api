@@ -96,7 +96,7 @@ test.each([
     render(<RouterProvider router={afterReload} />)
     await screen.findByText('Current page')
     await act(() => afterReload.navigate({ to: '/wallet' }))
-    expect(await screen.findByText(/Oops! Something went wrong/)).toBeVisible()
+    expect(await screen.findByText(/Something went wrong/)).toBeVisible()
     expect(screen.queryByText('500')).not.toBeInTheDocument()
     expect(reload).toHaveBeenCalledTimes(1)
   }
@@ -114,9 +114,7 @@ test('failed and repeated intent preloads keep the current page usable until nav
   await act(() => router.preloadRoute({ to: '/wallet' }))
   expect(screen.getByText('Current page')).toBeVisible()
   expect(reload).not.toHaveBeenCalled()
-  expect(
-    screen.queryByText(/Oops! Something went wrong/)
-  ).not.toBeInTheDocument()
+  expect(screen.queryByText(/Something went wrong/)).not.toBeInTheDocument()
   await act(() => router.navigate({ to: '/wallet' }))
   await waitFor(() => expect(reload).toHaveBeenCalledTimes(1))
 })
@@ -162,7 +160,7 @@ test('a chunk failure with blocked session storage shows the error without riski
   render(<RouterProvider router={router} />)
   await screen.findByText('Current page')
   await act(() => router.navigate({ to: '/wallet' }))
-  expect(await screen.findByText(/Oops! Something went wrong/)).toBeVisible()
+  expect(await screen.findByText(/Something went wrong/)).toBeVisible()
   expect(screen.queryByText('500')).not.toBeInTheDocument()
   expect(reload).not.toHaveBeenCalled()
 })

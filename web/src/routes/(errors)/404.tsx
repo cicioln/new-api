@@ -18,8 +18,17 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute } from '@tanstack/react-router'
 
+import { PublicLayout } from '@/components/layout'
 import { NotFoundError } from '@/features/errors/not-found-error'
 
 export const Route = createFileRoute('/(errors)/404')({
-  component: NotFoundError,
+  component: RouteComponent,
 })
+
+function RouteComponent() {
+  return (
+    <PublicLayout showMainContainer={false}>
+      <NotFoundError />
+    </PublicLayout>
+  )
+}

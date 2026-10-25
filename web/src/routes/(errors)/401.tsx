@@ -18,8 +18,17 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute } from '@tanstack/react-router'
 
+import { PublicLayout } from '@/components/layout'
 import { UnauthorisedError } from '@/features/errors/unauthorized-error'
 
 export const Route = createFileRoute('/(errors)/401')({
-  component: UnauthorisedError,
+  component: RouteComponent,
 })
+
+function RouteComponent() {
+  return (
+    <PublicLayout showMainContainer={false}>
+      <UnauthorisedError />
+    </PublicLayout>
+  )
+}

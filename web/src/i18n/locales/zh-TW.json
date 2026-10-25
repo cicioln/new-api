@@ -7680,6 +7680,18 @@
     "Status page · All operational": "狀態頁 · 全部正常",
     "Status page · {{count}} services degraded": "狀態頁 · {{count}} 個服務異常",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "用戶端請求經閘道按分組路由，懸停分組查看模型，點擊進入模型廣場",
-    "Model count column": "模型數"
+    "Model count column": "模型數",
+    "Page not found": "頁面不存在",
+    "Back to home page": "返回首頁",
+    "Browse models": "瀏覽模型",
+    "The link may have expired, or the page has been moved.": "連結可能已失效，或頁面已被移動。",
+    "Something went wrong": "服務出錯了",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "請求沒有成功處理，可以重新整理重試。問題持續出現請聯絡管理員。",
+    "Refresh and retry": "重新整理重試",
+    "System under maintenance": "系統維護中",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "維護期間 API 呼叫不受影響，控制台暫不可用。",
+    "No access permission": "沒有存取權限",
+    "Back to overview": "回到總覽",
+    "This page requires administrator permission. Contact the site administrator to request access.": "這個頁面需要管理員權限，如需開通請聯絡站點管理員。"
   }
 }

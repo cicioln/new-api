@@ -7680,6 +7680,18 @@
     "Status page · All operational": "Statut · Tout fonctionne",
     "Status page · {{count}} services degraded": "Statut · {{count}} en anomalie",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Les requêtes clientes sont routées par la passerelle vers chaque groupe ; survolez un groupe pour voir ses modèles, cliquez pour ouvrir le catalogue",
-    "Model count column": "Modèles"
+    "Model count column": "Modèles",
+    "Page not found": "Page introuvable",
+    "Back to home page": "Retour à l'accueil",
+    "Browse models": "Parcourir les modèles",
+    "The link may have expired, or the page has been moved.": "Le lien a peut-être expiré ou la page a été déplacée.",
+    "Something went wrong": "Une erreur s'est produite",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "La requête n'a pas pu être traitée. Actualisez pour réessayer. Si le problème persiste, contactez l'administrateur.",
+    "Refresh and retry": "Actualiser",
+    "System under maintenance": "Maintenance en cours",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "Les appels API ne sont pas affectés pendant la maintenance ; la console est temporairement indisponible.",
+    "No access permission": "Accès refusé",
+    "Back to overview": "Retour à l'aperçu",
+    "This page requires administrator permission. Contact the site administrator to request access.": "Cette page nécessite les droits d'administrateur. Contactez l'administrateur du site pour obtenir l'accès."
   }
 }

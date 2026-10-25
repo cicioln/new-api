@@ -7680,6 +7680,18 @@
     "Status page · All operational": "ステータス · すべて正常",
     "Status page · {{count}} services degraded": "ステータス · {{count}} 件異常",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "クライアントのリクエストはゲートウェイ経由でグループごとにルーティングされます。グループにホバーでモデル表示、クリックでモデル一覧へ",
-    "Model count column": "モデル数"
+    "Model count column": "モデル数",
+    "Page not found": "ページが見つかりません",
+    "Back to home page": "ホームに戻る",
+    "Browse models": "モデルを見る",
+    "The link may have expired, or the page has been moved.": "リンクの有効期限が切れているか、ページが移動された可能性があります。",
+    "Something went wrong": "エラーが発生しました",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "リクエストを処理できませんでした。再読み込みしてお試しください。問題が続く場合は管理者にお問い合わせください。",
+    "Refresh and retry": "再読み込み",
+    "System under maintenance": "メンテナンス中",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "メンテナンス中も API 呼び出しは影響を受けませんが、コンソールは一時的に利用できません。",
+    "No access permission": "アクセス権限がありません",
+    "Back to overview": "概要に戻る",
+    "This page requires administrator permission. Contact the site administrator to request access.": "このページには管理者権限が必要です。利用するにはサイト管理者にお問い合わせください。"
   }
 }

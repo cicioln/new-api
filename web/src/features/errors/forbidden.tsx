@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -26,26 +26,19 @@ import { ErrorFrame } from './error-frame'
 export function ForbiddenError() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { history } = useRouter()
   return (
     <ErrorFrame
       code={403}
-      title={t('Access Forbidden')}
+      title={t('No access permission')}
       actions={
-        <>
-          <Button variant='outline' onClick={() => history.go(-1)}>
-            {t('Go Back')}
-          </Button>
-          <Button onClick={() => navigate({ to: '/' })}>
-            {t('Back to Home')}
-          </Button>
-        </>
+        <Button size='sm' onClick={() => navigate({ to: '/dashboard' })}>
+          {t('Back to overview')}
+        </Button>
       }
     >
-      <p className='text-muted-foreground text-center'>
-        {t("You don't have necessary permission")} <br />
-        {t('to view this resource.')}
-      </p>
+      {t(
+        'This page requires administrator permission. Contact the site administrator to request access.'
+      )}
     </ErrorFrame>
   )
 }

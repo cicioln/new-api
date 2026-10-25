@@ -7680,6 +7680,18 @@
     "Status page · All operational": "Trạng thái · Tất cả bình thường",
     "Status page · {{count}} services degraded": "Trạng thái · {{count}} dịch vụ bất thường",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Yêu cầu từ client được cổng định tuyến theo nhóm; di chuột để xem mô hình, nhấn để mở danh mục mô hình",
-    "Model count column": "Số mô hình"
+    "Model count column": "Số mô hình",
+    "Page not found": "Không tìm thấy trang",
+    "Back to home page": "Về trang chủ",
+    "Browse models": "Xem mô hình",
+    "The link may have expired, or the page has been moved.": "Liên kết có thể đã hết hạn hoặc trang đã bị di chuyển.",
+    "Something went wrong": "Đã xảy ra lỗi",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "Yêu cầu chưa được xử lý thành công. Hãy tải lại để thử lại. Nếu sự cố vẫn tiếp diễn, vui lòng liên hệ quản trị viên.",
+    "Refresh and retry": "Tải lại",
+    "System under maintenance": "Đang bảo trì",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "Trong thời gian bảo trì, các lệnh gọi API không bị ảnh hưởng; bảng điều khiển tạm thời không khả dụng.",
+    "No access permission": "Không có quyền truy cập",
+    "Back to overview": "Về tổng quan",
+    "This page requires administrator permission. Contact the site administrator to request access.": "Trang này yêu cầu quyền quản trị viên. Vui lòng liên hệ quản trị viên trang để được cấp quyền."
   }
 }

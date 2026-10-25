@@ -7680,6 +7680,18 @@
     "Status page · All operational": "Статус · Всё работает",
     "Status page · {{count}} services degraded": "Статус · сбоев: {{count}}",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Запросы клиентов маршрутизируются шлюзом по группам; наведите на группу, чтобы увидеть модели, нажмите, чтобы открыть каталог",
-    "Model count column": "Моделей"
+    "Model count column": "Моделей",
+    "Page not found": "Страница не найдена",
+    "Back to home page": "На главную",
+    "Browse models": "Смотреть модели",
+    "The link may have expired, or the page has been moved.": "Ссылка могла устареть или страница была перемещена.",
+    "Something went wrong": "Произошла ошибка",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "Запрос не был обработан. Обновите страницу и повторите попытку. Если проблема сохраняется, обратитесь к администратору.",
+    "Refresh and retry": "Обновить",
+    "System under maintenance": "Идут технические работы",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "Во время работ API продолжает работать, консоль временно недоступна.",
+    "No access permission": "Нет доступа",
+    "Back to overview": "К обзору",
+    "This page requires administrator permission. Contact the site administrator to request access.": "Эта страница требует прав администратора. Чтобы получить доступ, обратитесь к администратору сайта."
   }
 }

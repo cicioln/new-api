@@ -47,7 +47,7 @@ export function UnauthorisedError() {
             variant='outline'
             onClick={() => navigate({ to: '/' })}
           >
-            {t('Back to Home')}
+            {t('Back to home page')}
           </Button>
         </>
       }

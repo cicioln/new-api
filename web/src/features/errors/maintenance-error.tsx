@@ -18,22 +18,38 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 
+import { LogoMark } from '@/components/layout/components/logo-mark'
 import { Button } from '@/components/ui/button'
+import { useSystemConfig } from '@/hooks/use-system-config'
 
 import { ErrorFrame } from './error-frame'
 
 export function MaintenanceError() {
   const { t } = useTranslation()
+  const { systemName } = useSystemConfig()
   return (
     <ErrorFrame
-      code={503}
-      title={t('Website is under maintenance!')}
-      actions={<Button variant='outline'>{t('Learn more')}</Button>}
+      className='mt-[18vh]'
+      leading={
+        <div className='text-foreground mb-7 flex items-center justify-center gap-2.5 text-base font-bold tracking-[-0.01em]'>
+          <LogoMark />
+          <span>{systemName || 'New API'}</span>
+        </div>
+      }
+      title={t('System under maintenance')}
+      actions={
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={() => window.location.reload()}
+        >
+          {t('Check again')}
+        </Button>
+      }
     >
-      <p className='text-muted-foreground text-center'>
-        {t('The site is not available at the moment.')} <br />
-        {t("We'll be back online shortly.")}
-      </p>
+      {t(
+        'API calls are not affected during maintenance; the console is temporarily unavailable.'
+      )}
     </ErrorFrame>
   )
 }

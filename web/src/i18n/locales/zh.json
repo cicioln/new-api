@@ -7680,6 +7680,18 @@
     "Status page · All operational": "状态页 · 全部正常",
     "Status page · {{count}} services degraded": "状态页 · {{count}} 个服务异常",
     "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "客户端请求经网关按分组路由，悬停分组查看模型，点击进入模型广场",
-    "Model count column": "模型数"
+    "Model count column": "模型数",
+    "Page not found": "页面不存在",
+    "Back to home page": "返回首页",
+    "Browse models": "浏览模型",
+    "The link may have expired, or the page has been moved.": "链接可能已失效，或页面已被移动。",
+    "Something went wrong": "服务出错了",
+    "The request was not processed successfully. Refresh to try again. If the problem persists, contact the administrator.": "请求没有成功处理，可以刷新重试。问题持续出现请联系管理员。",
+    "Refresh and retry": "刷新重试",
+    "System under maintenance": "系统维护中",
+    "API calls are not affected during maintenance; the console is temporarily unavailable.": "维护期间 API 调用不受影响，控制台暂不可用。",
+    "No access permission": "没有访问权限",
+    "Back to overview": "回到总览",
+    "This page requires administrator permission. Contact the site administrator to request access.": "这个页面需要管理员权限，如需开通请联系站点管理员。"
   }
 }

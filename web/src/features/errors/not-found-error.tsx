@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -26,26 +26,26 @@ import { ErrorFrame } from './error-frame'
 export function NotFoundError() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { history } = useRouter()
   return (
     <ErrorFrame
       code={404}
-      title={t('Oops! Page Not Found!')}
+      title={t('Page not found')}
       actions={
         <>
-          <Button variant='outline' onClick={() => history.go(-1)}>
-            {t('Go Back')}
+          <Button size='sm' onClick={() => navigate({ to: '/' })}>
+            {t('Back to home page')}
           </Button>
-          <Button onClick={() => navigate({ to: '/' })}>
-            {t('Back to Home')}
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => navigate({ to: '/pricing' })}
+          >
+            {t('Browse models')}
           </Button>
         </>
       }
     >
-      <p className='text-muted-foreground text-center'>
-        {t("It seems like the page you're looking for")} <br />
-        {t('does not exist or might have been removed.')}
-      </p>
+      {t('The link may have expired, or the page has been moved.')}
     </ErrorFrame>
   )
 }

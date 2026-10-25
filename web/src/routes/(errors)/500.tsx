@@ -18,8 +18,17 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute } from '@tanstack/react-router'
 
+import { PublicLayout } from '@/components/layout'
 import { GeneralError } from '@/features/errors/general-error'
 
 export const Route = createFileRoute('/(errors)/500')({
-  component: GeneralError,
+  component: RouteComponent,
 })
+
+function RouteComponent() {
+  return (
+    <PublicLayout showMainContainer={false}>
+      <GeneralError code={500} />
+    </PublicLayout>
+  )
+}
