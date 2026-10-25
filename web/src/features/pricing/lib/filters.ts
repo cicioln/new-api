@@ -131,7 +131,7 @@ const PRICE_SORTS: Partial<
  * per call (task models use their first usage example). Undefined when the
  * model has no price of that kind.
  */
-function getSortPrice(
+export function getSortPrice(
   model: PricingModel,
   kind: SortPriceKind
 ): number | undefined {

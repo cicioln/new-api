@@ -16,100 +16,179 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { Row, PaginationState } from '@tanstack/react-table'
-import { useState, useCallback } from 'react'
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  DataTablePagination,
-  DataTableRow,
-  DataTableView,
-  useDataTable,
-} from '@/components/data-table'
+import { cn } from '@/lib/utils'
 
-import { DEFAULT_PRICING_PAGE_SIZE, DEFAULT_TOKEN_UNIT } from '../constants'
+import { DEFAULT_TOKEN_UNIT } from '../constants'
+import { useMarketPrice } from '../hooks/use-market-price'
+import {
+  formatMarketLatency,
+  formatMarketTps,
+  type MarketPerf,
+} from '../lib/market'
 import type { PricingModel, TokenUnit } from '../types'
-import { usePricingColumns } from './pricing-columns'
+import {
+  MarketGroupTags,
+  MarketModelName,
+  PelicanButton,
+  VendorAvatar,
+} from './market-parts'
+import { MarketStatusBars, MarketSuccessRate } from './market-status'
 
 export interface PricingTableProps {
   models: PricingModel[]
-  isLoading?: boolean
+  perf: Map<string, MarketPerf>
   priceRate?: number
   usdExchangeRate?: number
   tokenUnit?: TokenUnit
   showRechargePrice?: boolean
   selectedGroup?: string
-  onModelClick?: (modelName: string) => void
+  onModelClick: (modelName: string) => void
+  onTest?: (modelName: string) => void
 }
+
+const TH =
+  'text-subtle-foreground bg-background border-b px-2.5 py-2.5 text-left text-xs font-medium whitespace-nowrap first:pl-[18px] last:pr-[18px]'
+const TD =
+  'border-b px-2.5 py-[11px] whitespace-nowrap first:pl-[18px] last:pr-[18px] group-last/market:border-b-0'
+const NUM = 'text-right font-mono text-[12.5px] tabular-nums'
+
+type RowProps = Omit<PricingTableProps, 'models' | 'perf'> & {
+  model: PricingModel
+  perf?: MarketPerf
+}
+
+const PricingTableRow = memo(function PricingTableRow(props: RowProps) {
+  const prices = useMarketPrice(props.model, {
+    tokenUnit: props.tokenUnit ?? DEFAULT_TOKEN_UNIT,
+    showRechargePrice: props.showRechargePrice ?? false,
+    priceRate: props.priceRate ?? 1,
+    usdExchangeRate: props.usdExchangeRate ?? 1,
+    group: props.selectedGroup,
+  })
+  const open = () => props.onModelClick(props.model.model_name)
+
+  return (
+    <tr
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && event.key === 'Enter') {
+          open()
+        }
+      }}
+      className='group/market hover:[&>td]:bg-muted/50 cursor-pointer'
+    >
+      <td className={TD}>
+        <div className='flex items-center gap-2.5'>
+          <VendorAvatar
+            model={props.model}
+            className='size-7 rounded-[7px] text-xs'
+          />
+          <div className='min-w-0'>
+            <MarketModelName
+              name={props.model.model_name}
+              className='text-[13px]'
+            />
+            <small className='text-subtle-foreground text-[11.5px]'>
+              {props.model.vendor_name || '—'}
+            </small>
+          </div>
+        </div>
+      </td>
+      <td className={TD}>
+        <div className='flex gap-1'>
+          <MarketGroupTags
+            groups={props.model.enable_groups || []}
+            max={2}
+            className='text-[11px]'
+          />
+        </div>
+      </td>
+      <td className={TD}>
+        <div className='flex items-center gap-2'>
+          <MarketStatusBars perf={props.perf} className='w-[72px]' />
+          <MarketSuccessRate perf={props.perf} className='text-xs' />
+        </div>
+      </td>
+      <td className={cn(TD, NUM)}>
+        {formatMarketLatency(props.perf?.latencyMs)}
+      </td>
+      <td className={cn(TD, NUM, 'max-[1280px]:hidden')}>
+        {formatMarketTps(props.perf?.tps)}
+        {props.perf?.tps != null && (
+          <span className='text-subtle-foreground text-[11px]'> t/s</span>
+        )}
+      </td>
+      {[0, 1].map((index) => {
+        const price = prices[index]
+        return (
+          <td key={index} className={cn(TD, NUM)}>
+            {price ? price.value : '—'}
+            {price?.unit && (
+              <span className='text-subtle-foreground text-[11px]'>
+                {' '}
+                {price.unit}
+              </span>
+            )}
+          </td>
+        )
+      })}
+      <td className={cn(TD, 'w-[1%] text-right')}>
+        {props.onTest && (
+          <PelicanButton model={props.model} onTest={props.onTest} />
+        )}
+      </td>
+    </tr>
+  )
+})
 
 export function PricingTable(props: PricingTableProps) {
   const { t } = useTranslation()
-  const {
-    models,
-    isLoading = false,
-    priceRate = 1,
-    usdExchangeRate = 1,
-    tokenUnit = DEFAULT_TOKEN_UNIT,
-    showRechargePrice = false,
-    selectedGroup,
-    onModelClick,
-  } = props
-
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: DEFAULT_PRICING_PAGE_SIZE,
-  })
-
-  const columns = usePricingColumns({
-    tokenUnit,
-    priceRate,
-    usdExchangeRate,
-    showRechargePrice,
-    selectedGroup,
-  })
-
-  const { table } = useDataTable({
-    data: models,
-    columns,
-    pageCount: Math.ceil(models.length / pagination.pageSize),
-    pagination,
-    onPaginationChange: setPagination,
-    manualPagination: false,
-    withFilteredRowModel: false,
-    withSortedRowModel: false,
-    withFacetedRowModel: false,
-  })
-
-  const handleRowClick = useCallback(
-    (model: PricingModel) => {
-      onModelClick?.(model.model_name)
-    },
-    [onModelClick]
-  )
+  const unit = (props.tokenUnit ?? DEFAULT_TOKEN_UNIT) === 'K' ? '1K' : '1M'
 
   return (
-    <div className='space-y-4'>
-      <DataTableView
-        table={table}
-        isLoading={isLoading}
-        emptyTitle={t('No Models Found')}
-        emptyDescription={t('No models match your current filters.')}
-        skeletonKeyPrefix='pricing-skeleton'
-        applyHeaderSize
-        getColumnClassName={(_columnId, kind) =>
-          kind === 'header' ? 'text-muted-foreground font-medium' : undefined
-        }
-        renderRow={(row: Row<PricingModel>) => (
-          <DataTableRow
-            key={row.id}
-            row={row}
-            className='hover:bg-muted/30 cursor-pointer transition-colors'
-            onClick={() => handleRowClick(row.original)}
-          />
-        )}
-      />
-
-      {!isLoading && models.length > 0 && <DataTablePagination table={table} />}
+    <div className='bg-card overflow-x-auto rounded-xl border'>
+      <table className='w-full min-w-full border-collapse text-[13px]'>
+        <thead>
+          <tr>
+            <th className={TH}>{t('Model')}</th>
+            <th className={TH}>{t('Group')}</th>
+            <th className={TH}>{t('Status · 24h')}</th>
+            <th className={cn(TH, 'text-right')}>{t('Latency')}</th>
+            <th className={cn(TH, 'text-right max-[1280px]:hidden')}>
+              {t('Throughput short')}
+            </th>
+            <th className={cn(TH, 'text-right')}>
+              {t('Input')} / {unit}
+            </th>
+            <th className={cn(TH, 'text-right')}>
+              {t('Output')} / {unit}
+            </th>
+            <th className={TH}>
+              <span className='sr-only'>{t('Actions')}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.models.map((model) => (
+            <PricingTableRow
+              key={model.id ?? model.model_name}
+              model={model}
+              perf={props.perf.get(model.model_name)}
+              priceRate={props.priceRate}
+              usdExchangeRate={props.usdExchangeRate}
+              tokenUnit={props.tokenUnit}
+              showRechargePrice={props.showRechargePrice}
+              selectedGroup={props.selectedGroup}
+              onModelClick={props.onModelClick}
+              onTest={props.onTest}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

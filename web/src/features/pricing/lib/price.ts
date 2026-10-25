@@ -149,7 +149,8 @@ export function formatPrice(
   priceRate = 1,
   usdExchangeRate = 1,
   selectedGroup?: string,
-  showCurrencySymbol = true
+  showCurrencySymbol = true,
+  minimumFractionDigits = 0
 ): string {
   if (model.quota_type === QUOTA_TYPE_VALUES.REQUEST) {
     return '-'
@@ -171,6 +172,7 @@ export function formatPrice(
     digitsLarge: 4,
     digitsSmall: 6,
     abbreviate: false,
+    minimumFractionDigits,
   })
 }
 
@@ -250,7 +252,8 @@ export function formatRequestPrice(
   priceRate = 1,
   usdExchangeRate = 1,
   selectedGroup?: string,
-  showCurrencySymbol = true
+  showCurrencySymbol = true,
+  minimumFractionDigits = 0
 ): string {
   if (model.quota_type !== QUOTA_TYPE_VALUES.REQUEST) {
     return '-'
@@ -272,5 +275,6 @@ export function formatRequestPrice(
     digitsLarge: 4,
     digitsSmall: 4,
     abbreviate: false,
+    minimumFractionDigits,
   })
 }

@@ -621,7 +621,7 @@ it('switches provider group prices, localized conditions and examples, and shows
   expect(within(panel).getByText('$0.5')).toBeVisible()
 })
 
-it('shows provider count, price range and missing-price status in both list and card views', () => {
+it('shows provider count and missing-price status in the list and the price range on cards', () => {
   const shared: PricingModel = {
     ...model,
     billing_mode: undefined,
@@ -657,9 +657,9 @@ it('shows provider count, price range and missing-price status in both list and 
       <ModelCard model={shared} onClick={vi.fn()} />
     </QueryClientProvider>
   )
-  expect(screen.getAllByText(/3 providers/)).toHaveLength(2)
+  expect(screen.getAllByText(/3 providers/)).toHaveLength(1)
   expect(screen.getAllByText(/Not configured for some providers/)).toHaveLength(
-    2
+    1
   )
   expect(screen.getByText('0.4 – 0.8/s')).toBeVisible()
   expect(screen.getByText('$0.4 – $0.8')).toBeVisible()
