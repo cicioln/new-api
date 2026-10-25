@@ -7698,6 +7698,15 @@
     "Recover password": "Récupérer le mot de passe",
     "Enter the email you registered with and we will send you a reset link.": "Saisissez l'e-mail utilisé à l'inscription, nous vous enverrons un lien de réinitialisation.",
     "Email sent": "E-mail envoyé",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Consultez {{email}}. Le lien est valable 10 minutes. Sinon, vérifiez vos spams ou <resend>renvoyez</resend>."
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Consultez {{email}}. Le lien est valable 10 minutes. Sinon, vérifiez vos spams ou <resend>renvoyez</resend>.",
+    "Sign in to your account": "Connexion à votre compte",
+    "Welcome back. Pick up where you left off.": "Bon retour. Reprenez là où vous vous étiez arrêté.",
+    "Or use your username and password": "Ou utilisez votre identifiant et mot de passe",
+    "Sign up for free": "Inscription gratuite",
+    "No account yet?": "Pas encore de compte ?",
+    "Username or email": "Nom d'utilisateur ou e-mail",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "J'ai lu et j'accepte les <terms>Conditions d'utilisation</terms> et la <privacy>Politique de confidentialité</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "J'ai lu et j'accepte les <terms>Conditions d'utilisation</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "J'ai lu et j'accepte la <privacy>Politique de confidentialité</privacy>"
   }
 }

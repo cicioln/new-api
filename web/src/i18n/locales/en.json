@@ -7698,6 +7698,15 @@
     "Recover password": "Recover password",
     "Enter the email you registered with and we will send you a reset link.": "Enter the email you registered with and we will send you a reset link.",
     "Email sent": "Email sent",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>."
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.",
+    "Sign in to your account": "Sign in to your account",
+    "Welcome back. Pick up where you left off.": "Welcome back. Pick up where you left off.",
+    "Or use your username and password": "Or use your username and password",
+    "Sign up for free": "Sign up for free",
+    "No account yet?": "No account yet?",
+    "Username or email": "Username or email",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "I have read and agree to the <terms>User Agreement</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "I have read and agree to the <privacy>Privacy Policy</privacy>"
   }
 }

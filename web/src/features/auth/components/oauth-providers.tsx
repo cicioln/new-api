@@ -39,9 +39,11 @@ type OAuthProvidersProps = {
   onWeChatLogin?: () => void
   isWeChatLoading?: boolean
   redirectTo?: string
+  /** Extra buttons (e.g. Passkey) appended to the provider grid. */
+  extraButtons?: ProviderButton[]
 }
 
-type ProviderButton = {
+export type ProviderButton = {
   key: string
   label: string
   onClick: () => void
@@ -49,14 +51,9 @@ type ProviderButton = {
   disabled?: boolean
 }
 
-export function OAuthProviders({
-  status,
-  disabled = false,
-  className,
-  onWeChatLogin,
-  isWeChatLoading = false,
-  redirectTo,
-}: OAuthProvidersProps) {
+export function OAuthProviders(props: OAuthProvidersProps) {
+  const status = props.status
+  const disabled = props.disabled ?? false
   const { t } = useTranslation()
   const {
     isLoading,
@@ -68,24 +65,24 @@ export function OAuthProviders({
     handleLinuxDOLogin,
     handleTelegramLogin,
     handleCustomOAuthLogin,
-  } = useOAuthLogin(status, redirectTo)
+  } = useOAuthLogin(status, props.redirectTo)
 
   const providerButtons: ProviderButton[] = []
 
-  if (status?.wechat_login && onWeChatLogin) {
+  if (status?.wechat_login && props.onWeChatLogin) {
     providerButtons.push({
       key: 'wechat',
-      label: t('Continue with WeChat'),
-      onClick: onWeChatLogin,
-      icon: <IconWeChat className='h-4 w-4' />,
-      disabled: isWeChatLoading,
+      label: t('WeChat'),
+      onClick: props.onWeChatLogin,
+      icon: <IconWeChat className='size-4 text-[#12a150]' />,
+      disabled: props.isWeChatLoading,
     })
   }
 
   if (status?.github_oauth) {
     providerButtons.push({
       key: 'github',
-      label: githubButtonText || t('Continue with GitHub'),
+      label: githubButtonDisabled ? githubButtonText : 'GitHub',
       onClick: handleGitHubLogin,
       icon: <IconGithub className='h-4 w-4' />,
       disabled: githubButtonDisabled,
@@ -95,7 +92,7 @@ export function OAuthProviders({
   if (status?.discord_oauth) {
     providerButtons.push({
       key: 'discord',
-      label: t('Continue with Discord'),
+      label: 'Discord',
       onClick: handleDiscordLogin,
       icon: <IconDiscord className='h-4 w-4' />,
     })
@@ -105,9 +102,7 @@ export function OAuthProviders({
     const oidcDisplayName = status.oidc_display_name?.trim() || 'OIDC'
     providerButtons.push({
       key: 'oidc',
-      label: t('Continue with {{name}}', {
-        name: oidcDisplayName,
-      }),
+      label: oidcDisplayName,
       onClick: handleOIDCLogin,
     })
   }
@@ -115,7 +110,7 @@ export function OAuthProviders({
   if (status?.linuxdo_oauth) {
     providerButtons.push({
       key: 'linuxdo',
-      label: t('Continue with LinuxDO'),
+      label: 'LinuxDO',
       onClick: handleLinuxDOLogin,
       icon: <IconLinuxDo className='h-4 w-4' />,
     })
@@ -124,9 +119,9 @@ export function OAuthProviders({
   if (status?.telegram_oauth) {
     providerButtons.push({
       key: 'telegram',
-      label: t('Continue with Telegram'),
+      label: 'Telegram',
       onClick: handleTelegramLogin,
-      icon: <IconTelegram data-icon='inline-start' />,
+      icon: <IconTelegram className='size-4' />,
     })
   }
 
@@ -136,44 +131,31 @@ export function OAuthProviders({
     for (const provider of customProviders) {
       providerButtons.push({
         key: `custom-${provider.slug}`,
-        label: t('Continue with {{name}}', { name: provider.name }),
+        label: provider.name,
         onClick: () => handleCustomOAuthLogin(provider),
       })
     }
   }
 
+  providerButtons.push(...(props.extraButtons ?? []))
+
   if (providerButtons.length === 0) return null
 
   return (
-    <div className={cn('space-y-3', className)}>
-      <div className='relative'>
-        <div className='absolute inset-0 flex items-center'>
-          <span className='w-full border-t' />
-        </div>
-        <div className='relative flex justify-center text-xs uppercase'>
-          <span className='bg-background text-muted-foreground px-2'>
-            {t('Or continue with')}
-          </span>
-        </div>
-      </div>
-
-      <div className='flex flex-col gap-2'>
-        {providerButtons.map(
-          ({ key, label, onClick, icon, disabled: extraDisabled }) => (
-            <Button
-              key={key}
-              variant='outline'
-              type='button'
-              disabled={disabled || isLoading || extraDisabled}
-              onClick={onClick}
-              className='h-11 w-full justify-center gap-2 rounded-lg'
-            >
-              {icon}
-              {label}
-            </Button>
-          )
-        )}
-      </div>
+    <div className={cn('grid grid-cols-2 gap-2', props.className)}>
+      {providerButtons.map((button) => (
+        <Button
+          key={button.key}
+          variant='outline'
+          type='button'
+          disabled={disabled || isLoading || button.disabled}
+          onClick={button.onClick}
+          className='h-[38px] w-full justify-center gap-2 rounded-lg px-4 text-sm last:odd:col-span-2'
+        >
+          {button.icon}
+          {button.label}
+        </Button>
+      ))}
     </div>
   )
 }

@@ -7698,6 +7698,15 @@
     "Recover password": "Восстановление пароля",
     "Enter the email you registered with and we will send you a reset link.": "Введите email, указанный при регистрации, и мы пришлём ссылку для сброса.",
     "Email sent": "Письмо отправлено",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Проверьте {{email}}. Ссылка действует 10 минут. Если письма нет, проверьте спам или <resend>отправьте повторно</resend>."
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Проверьте {{email}}. Ссылка действует 10 минут. Если письма нет, проверьте спам или <resend>отправьте повторно</resend>.",
+    "Sign in to your account": "Вход в аккаунт",
+    "Welcome back. Pick up where you left off.": "С возвращением. Продолжайте с того места, где остановились.",
+    "Or use your username and password": "Или войдите по логину и паролю",
+    "Sign up for free": "Зарегистрироваться бесплатно",
+    "No account yet?": "Ещё нет аккаунта?",
+    "Username or email": "Имя пользователя или email",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "Я прочитал(а) и принимаю <terms>Пользовательское соглашение</terms> и <privacy>Политику конфиденциальности</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "Я прочитал(а) и принимаю <terms>Пользовательское соглашение</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Я прочитал(а) и принимаю <privacy>Политику конфиденциальности</privacy>"
   }
 }

@@ -7698,6 +7698,15 @@
     "Recover password": "Khôi phục mật khẩu",
     "Enter the email you registered with and we will send you a reset link.": "Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết đặt lại.",
     "Email sent": "Đã gửi email",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Hãy kiểm tra {{email}}. Liên kết có hiệu lực 10 phút. Nếu chưa nhận được, hãy kiểm tra thư rác hoặc <resend>gửi lại</resend>."
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "Hãy kiểm tra {{email}}. Liên kết có hiệu lực 10 phút. Nếu chưa nhận được, hãy kiểm tra thư rác hoặc <resend>gửi lại</resend>.",
+    "Sign in to your account": "Đăng nhập tài khoản",
+    "Welcome back. Pick up where you left off.": "Chào mừng trở lại. Tiếp tục công việc của bạn.",
+    "Or use your username and password": "Hoặc dùng tên đăng nhập và mật khẩu",
+    "Sign up for free": "Đăng ký miễn phí",
+    "No account yet?": "Chưa có tài khoản?",
+    "Username or email": "Tên người dùng hoặc email",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "Tôi đã đọc và đồng ý với <terms>Thỏa thuận người dùng</terms> và <privacy>Chính sách bảo mật</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "Tôi đã đọc và đồng ý với <terms>Thỏa thuận người dùng</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Tôi đã đọc và đồng ý với <privacy>Chính sách bảo mật</privacy>"
   }
 }

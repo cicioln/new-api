@@ -7698,6 +7698,15 @@
     "Recover password": "找回密码",
     "Enter the email you registered with and we will send you a reset link.": "输入注册时使用的邮箱，我们会发送一封重置链接。",
     "Email sent": "邮件已发送",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "请查收 {{email}}，链接 10 分钟内有效。没收到可检查垃圾邮件，或 <resend>重新发送</resend>。"
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "请查收 {{email}}，链接 10 分钟内有效。没收到可检查垃圾邮件，或 <resend>重新发送</resend>。",
+    "Sign in to your account": "登录账户",
+    "Welcome back. Pick up where you left off.": "欢迎回来，继续你的工作。",
+    "Or use your username and password": "或使用账号密码",
+    "Sign up for free": "免费注册",
+    "No account yet?": "还没有账户？",
+    "Username or email": "用户名或邮箱",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "我已阅读并同意<terms>用户协议</terms>和<privacy>隐私政策</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "我已阅读并同意<terms>用户协议</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "我已阅读并同意<privacy>隐私政策</privacy>"
   }
 }

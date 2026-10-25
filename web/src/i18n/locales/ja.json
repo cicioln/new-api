@@ -7698,6 +7698,15 @@
     "Recover password": "パスワードの再設定",
     "Enter the email you registered with and we will send you a reset link.": "登録時のメールアドレスを入力すると、再設定リンクをお送りします。",
     "Email sent": "メールを送信しました",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "{{email}} をご確認ください。リンクの有効期限は 10 分です。届かない場合は迷惑メールをご確認いただくか、<resend>再送信</resend>してください。"
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "{{email}} をご確認ください。リンクの有効期限は 10 分です。届かない場合は迷惑メールをご確認いただくか、<resend>再送信</resend>してください。",
+    "Sign in to your account": "アカウントにサインイン",
+    "Welcome back. Pick up where you left off.": "おかえりなさい。続きから始めましょう。",
+    "Or use your username and password": "またはユーザー名とパスワードで",
+    "Sign up for free": "無料で登録",
+    "No account yet?": "アカウントをお持ちでないですか？",
+    "Username or email": "ユーザー名またはメール",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>を読み、同意します",
+    "I have read and agree to the <terms>User Agreement</terms>": "<terms>利用規約</terms>を読み、同意します",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "<privacy>プライバシーポリシー</privacy>を読み、同意します"
   }
 }

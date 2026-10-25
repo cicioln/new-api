@@ -7698,6 +7698,15 @@
     "Recover password": "找回密碼",
     "Enter the email you registered with and we will send you a reset link.": "輸入註冊時使用的信箱，我們會發送一封重設連結。",
     "Email sent": "郵件已發送",
-    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "請查收 {{email}}，連結 10 分鐘內有效。沒收到可檢查垃圾郵件，或 <resend>重新發送</resend>。"
+    "Check {{email}}. The link is valid for 10 minutes. If it has not arrived, check your spam folder, or <resend>resend</resend>.": "請查收 {{email}}，連結 10 分鐘內有效。沒收到可檢查垃圾郵件，或 <resend>重新發送</resend>。",
+    "Sign in to your account": "登入帳戶",
+    "Welcome back. Pick up where you left off.": "歡迎回來，繼續你的工作。",
+    "Or use your username and password": "或使用帳號密碼",
+    "Sign up for free": "免費註冊",
+    "No account yet?": "還沒有帳戶？",
+    "Username or email": "使用者名稱或信箱",
+    "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "我已閱讀並同意<terms>使用者協議</terms>和<privacy>隱私權政策</privacy>",
+    "I have read and agree to the <terms>User Agreement</terms>": "我已閱讀並同意<terms>使用者協議</terms>",
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "我已閱讀並同意<privacy>隱私權政策</privacy>"
   }
 }

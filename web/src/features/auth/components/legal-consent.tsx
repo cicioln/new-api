@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -31,65 +31,62 @@ interface LegalConsentProps {
   className?: string
 }
 
-export function LegalConsent({
-  status,
-  checked,
-  onCheckedChange,
-  className,
-}: LegalConsentProps) {
+export function LegalConsent(props: LegalConsentProps) {
   const { t } = useTranslation()
-  const hasUserAgreement = Boolean(status?.user_agreement_enabled)
-  const hasPrivacyPolicy = Boolean(status?.privacy_policy_enabled)
+  const hasUserAgreement = Boolean(props.status?.user_agreement_enabled)
+  const hasPrivacyPolicy = Boolean(props.status?.privacy_policy_enabled)
 
   if (!hasUserAgreement && !hasPrivacyPolicy) {
     return null
   }
 
-  const handleChange = (value: boolean) => {
-    onCheckedChange(value === true)
+  const linkClassName =
+    'text-foreground underline underline-offset-[3px] hover:opacity-75'
+  const links = {
+    terms: (
+      <a
+        href='/user-agreement'
+        target='_blank'
+        rel='noopener noreferrer'
+        className={linkClassName}
+      />
+    ),
+    privacy: (
+      <a
+        href='/privacy-policy'
+        target='_blank'
+        rel='noopener noreferrer'
+        className={linkClassName}
+      />
+    ),
+  }
+  let consentKey =
+    'I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>'
+  if (!hasPrivacyPolicy) {
+    consentKey = 'I have read and agree to the <terms>User Agreement</terms>'
+  } else if (!hasUserAgreement) {
+    consentKey =
+      'I have read and agree to the <privacy>Privacy Policy</privacy>'
   }
 
   return (
     <div
       className={cn(
-        'border-border/60 bg-muted/40 flex items-start gap-3 rounded-md border p-3',
-        className
+        'text-subtle-foreground flex items-center gap-2 text-[12.5px]',
+        props.className
       )}
     >
       <Checkbox
         id='legal-consent'
-        checked={checked}
-        onCheckedChange={handleChange}
-        className='mt-0.5'
+        checked={props.checked}
+        onCheckedChange={(value) => props.onCheckedChange(value === true)}
       />
       <Label
         htmlFor='legal-consent'
-        className='text-muted-foreground items-start gap-1 text-left text-xs leading-5 font-normal'
+        className='text-subtle-foreground text-[12.5px] leading-[1.55] font-normal'
       >
         <span>
-          {t('I have read and agree to the')}{' '}
-          {hasUserAgreement && (
-            <a
-              href='/user-agreement'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('User Agreement')}
-            </a>
-          )}
-          {hasUserAgreement && hasPrivacyPolicy && ' and the '}
-          {hasPrivacyPolicy && (
-            <a
-              href='/privacy-policy'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('Privacy Policy')}
-            </a>
-          )}
-          .
+          <Trans t={t} i18nKey={consentKey} components={links} />
         </span>
       </Label>
     </div>
