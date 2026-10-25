@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "用演示账号展示功能，限制写操作",
     "How do you plan to use it?": "你打算怎么使用？",
     "You can change this later in System settings › Operations.": "之后可以在「系统设置 › 运维」里修改。",
-    "Confirm the details below to finish initialization, then go to the login page.": "确认以下信息后完成初始化，之后进入登录页。"
+    "Confirm the details below to finish initialization, then go to the login page.": "确认以下信息后完成初始化，之后进入登录页。",
+    "Calls and spend by model, user and channel, with data from /api/data.": "按模型、用户和渠道查看调用与消耗，数据来自 /api/data。",
+    "Traffic": "流量",
+    "Total requests": "总请求",
+    "Total spend": "总消耗",
+    "Average first token": "平均首字",
+    "Peak {{value}} · {{time}}": "峰值 {{value}} · {{time}}",
+    "Spend trend": "消耗趋势",
+    "Stacked by model": "按模型堆叠",
+    "Model call ranking": "模型调用排行",
+    "By count": "按次数",
+    "{{value}} calls": "{{value}} 次"
   }
 }

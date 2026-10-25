@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "Présenter les fonctions avec un compte démo ; écritures restreintes",
     "How do you plan to use it?": "Comment comptez-vous l'utiliser ?",
     "You can change this later in System settings › Operations.": "Modifiable plus tard dans Paramètres système › Exploitation.",
-    "Confirm the details below to finish initialization, then go to the login page.": "Vérifiez les informations ci-dessous pour terminer, puis accédez à la connexion."
+    "Confirm the details below to finish initialization, then go to the login page.": "Vérifiez les informations ci-dessous pour terminer, puis accédez à la connexion.",
+    "Calls and spend by model, user and channel, with data from /api/data.": "Appels et dépenses par modèle, utilisateur et canal, avec les données de /api/data.",
+    "Traffic": "Trafic",
+    "Total requests": "Requêtes totales",
+    "Total spend": "Dépense totale",
+    "Average first token": "Premier jeton moyen",
+    "Peak {{value}} · {{time}}": "Pic {{value}} · {{time}}",
+    "Spend trend": "Tendance des dépenses",
+    "Stacked by model": "Empilé par modèle",
+    "Model call ranking": "Classement des appels par modèle",
+    "By count": "Par nombre",
+    "{{value}} calls": "{{value}} appels"
   }
 }

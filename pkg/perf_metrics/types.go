@@ -29,6 +29,7 @@ type QueryParams struct {
 
 // Summary is the request-weighted aggregate over every bucket in the window.
 type Summary struct {
+	AvgTtftMs    int64   `json:"avg_ttft_ms"`
 	AvgLatencyMs int64   `json:"avg_latency_ms"`
 	SuccessRate  float64 `json:"success_rate"`
 	AvgTps       float64 `json:"avg_tps"`

@@ -78,7 +78,7 @@ function Sparkline(props: { values: number[]; className: string }) {
 }
 
 /** A formatted value whose currency sign and unit use the small, muted style. */
-function SplitValue(props: { text: string }) {
+export function SplitValue(props: { text: string }) {
   const match = SPLIT_VALUE.exec(props.text)
   if (!match) return props.text
   const sign = match[1].trim()
@@ -100,7 +100,12 @@ function SplitValue(props: { text: string }) {
   )
 }
 
-function ChangeText(props: { change: number | null; suffix: ReactNode }) {
+export function ChangeText(props: {
+  change: number | null
+  suffix: ReactNode
+  /** Show a rise in the bad color, e.g. for latency. */
+  inverse?: boolean
+}) {
   const { i18n } = useTranslation()
   if (props.change === null) {
     return <span>{props.suffix}</span>
@@ -115,7 +120,10 @@ function ChangeText(props: { change: number | null; suffix: ReactNode }) {
   return (
     <>
       <span
-        className={cn('font-medium', up ? 'text-success' : 'text-destructive')}
+        className={cn(
+          'font-medium',
+          up === !props.inverse ? 'text-success' : 'text-destructive'
+        )}
       >
         {up ? '↑' : '↓'} {percent}%
       </span>
@@ -124,13 +132,13 @@ function ChangeText(props: { change: number | null; suffix: ReactNode }) {
   )
 }
 
-function KpiCard(props: {
+export function KpiCard(props: {
   label: string
   tag?: string
   value: ReactNode
   detail: ReactNode
-  spark: number[]
-  sparkClassName: string
+  spark?: number[]
+  sparkClassName?: string
   loading: boolean
 }) {
   return (
@@ -153,7 +161,12 @@ function KpiCard(props: {
       <div className='text-subtle-foreground flex min-h-[18px] items-center gap-1.5 text-xs'>
         {props.detail}
       </div>
-      <Sparkline values={props.spark} className={props.sparkClassName} />
+      {props.spark != null && (
+        <Sparkline
+          values={props.spark}
+          className={props.sparkClassName ?? ''}
+        />
+      )}
     </div>
   )
 }

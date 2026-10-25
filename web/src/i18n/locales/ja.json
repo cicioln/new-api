@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "デモアカウントで機能を紹介。書き込み操作を制限",
     "How do you plan to use it?": "どのように使いますか？",
     "You can change this later in System settings › Operations.": "後から「システム設定 › 運用」で変更できます。",
-    "Confirm the details below to finish initialization, then go to the login page.": "以下を確認して初期化を完了し、ログインページへ進みます。"
+    "Confirm the details below to finish initialization, then go to the login page.": "以下を確認して初期化を完了し、ログインページへ進みます。",
+    "Calls and spend by model, user and channel, with data from /api/data.": "モデル・ユーザー・チャネル別の呼び出しと消費。データは /api/data から取得します。",
+    "Traffic": "トラフィック",
+    "Total requests": "総リクエスト",
+    "Total spend": "総消費",
+    "Average first token": "平均初回トークン",
+    "Peak {{value}} · {{time}}": "ピーク {{value}} · {{time}}",
+    "Spend trend": "消費の推移",
+    "Stacked by model": "モデル別積み上げ",
+    "Model call ranking": "モデル呼び出しランキング",
+    "By count": "回数順",
+    "{{value}} calls": "{{value}} 回"
   }
 }

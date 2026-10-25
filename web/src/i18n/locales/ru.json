@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "Демонстрация с демо-аккаунтом; запись ограничена",
     "How do you plan to use it?": "Как вы планируете использовать?",
     "You can change this later in System settings › Operations.": "Это можно изменить позже в «Настройки системы › Эксплуатация».",
-    "Confirm the details below to finish initialization, then go to the login page.": "Проверьте данные ниже, завершите инициализацию и перейдите ко входу."
+    "Confirm the details below to finish initialization, then go to the login page.": "Проверьте данные ниже, завершите инициализацию и перейдите ко входу.",
+    "Calls and spend by model, user and channel, with data from /api/data.": "Вызовы и расходы по моделям, пользователям и каналам, данные из /api/data.",
+    "Traffic": "Трафик",
+    "Total requests": "Всего запросов",
+    "Total spend": "Всего расходов",
+    "Average first token": "Среднее время первого токена",
+    "Peak {{value}} · {{time}}": "Пик {{value}} · {{time}}",
+    "Spend trend": "Динамика расходов",
+    "Stacked by model": "По моделям",
+    "Model call ranking": "Рейтинг вызовов моделей",
+    "By count": "По количеству",
+    "{{value}} calls": "{{value}} вызовов"
   }
 }

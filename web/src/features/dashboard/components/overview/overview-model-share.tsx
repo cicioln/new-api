@@ -28,21 +28,14 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   foldModelShare,
+  MODEL_BAR_CLASSES,
+  OTHER_BAR_CLASS,
   type OverviewModelUsage,
 } from '@/features/dashboard/lib/overview'
 import { toIntlLocale } from '@/i18n/languages'
 import { formatNumber, formatQuota } from '@/lib/format'
 
 const MODEL_SHARE_LIMIT = 5
-/** Fixed palette for the top models; the second bar follows the ink color. */
-const MODEL_BAR_CLASSES = [
-  'bg-[#D97757]',
-  'bg-foreground',
-  'bg-[#4285F4]',
-  'bg-[#4D6BFE]',
-  'bg-[#615CED]',
-]
-const OTHER_BAR_CLASS = 'bg-[#B9B6AD] dark:bg-[#5A5D66]'
 const SKELETON_ROWS = ['a', 'b', 'c', 'd', 'e']
 
 function ShareRow(props: {

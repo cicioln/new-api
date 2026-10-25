@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "Showcase features with a demo account; write operations restricted",
     "How do you plan to use it?": "How do you plan to use it?",
     "You can change this later in System settings › Operations.": "You can change this later in System settings › Operations.",
-    "Confirm the details below to finish initialization, then go to the login page.": "Confirm the details below to finish initialization, then go to the login page."
+    "Confirm the details below to finish initialization, then go to the login page.": "Confirm the details below to finish initialization, then go to the login page.",
+    "Calls and spend by model, user and channel, with data from /api/data.": "Calls and spend by model, user and channel, with data from /api/data.",
+    "Traffic": "Traffic",
+    "Total requests": "Total requests",
+    "Total spend": "Total spend",
+    "Average first token": "Average first token",
+    "Peak {{value}} · {{time}}": "Peak {{value}} · {{time}}",
+    "Spend trend": "Spend trend",
+    "Stacked by model": "Stacked by model",
+    "Model call ranking": "Model call ranking",
+    "By count": "By count",
+    "{{value}} calls": "{{value}} calls"
   }
 }

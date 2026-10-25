@@ -19,6 +19,16 @@ For commercial licensing, please contact support@quantumnous.com
 import type { QuotaDataItem } from '@/features/dashboard/types'
 import dayjs from '@/lib/dayjs'
 
+/** Fixed palette for the top models; the second bar follows the ink color. */
+export const MODEL_BAR_CLASSES = [
+  'bg-[#D97757]',
+  'bg-foreground',
+  'bg-[#4285F4]',
+  'bg-[#4D6BFE]',
+  'bg-[#615CED]',
+]
+export const OTHER_BAR_CLASS = 'bg-[#B9B6AD] dark:bg-[#5A5D66]'
+
 export type OverviewPeriod = '24h' | '7d' | '30d'
 
 export const OVERVIEW_PERIODS: Record<

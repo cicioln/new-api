@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 export type PerformanceSummary = {
+  avg_ttft_ms?: number
   avg_latency_ms: number
   success_rate: number
   avg_tps: number

@@ -235,6 +235,8 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 			totalLatencyMs: row.TotalLatencyMs,
 			outputTokens:   row.OutputTokens,
 			generationMs:   row.GenerationMs,
+			ttftSumMs:      row.TtftSumMs,
+			ttftCount:      row.TtftCount,
 		}
 		mergeModelTotals(totals, row.ModelName, value)
 		mergeModelBucket(modelBuckets, row.ModelName, row.BucketTs, value)
@@ -276,6 +278,8 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 		all.totalLatencyMs += total.totalLatencyMs
 		all.outputTokens += total.outputTokens
 		all.generationMs += total.generationMs
+		all.ttftSumMs += total.ttftSumMs
+		all.ttftCount += total.ttftCount
 		avgLatency := total.totalLatencyMs / total.requestCount
 		successRate := float64(total.successCount) / float64(total.requestCount) * 100
 		avgTps := 0.0
@@ -335,6 +339,8 @@ func QueryGroupSummary(hours int, groups []string) (GroupSummaryResult, error) {
 			totalLatencyMs: row.TotalLatencyMs,
 			outputTokens:   row.OutputTokens,
 			generationMs:   row.GenerationMs,
+			ttftSumMs:      row.TtftSumMs,
+			ttftCount:      row.TtftCount,
 		})
 	}
 
@@ -513,6 +519,8 @@ func buildQueryResult(modelName string, merged map[bucketKey]counters) QueryResu
 		all.totalLatencyMs += total.totalLatencyMs
 		all.outputTokens += total.outputTokens
 		all.generationMs += total.generationMs
+		all.ttftSumMs += total.ttftSumMs
+		all.ttftCount += total.ttftCount
 
 		results = append(results, GroupResult{
 			Group:        group,
@@ -548,6 +556,7 @@ func summarize(total counters) *Summary {
 		return nil
 	}
 	return &Summary{
+		AvgTtftMs:    avg(total.ttftSumMs, total.ttftCount),
 		AvgLatencyMs: avg(total.totalLatencyMs, total.requestCount),
 		SuccessRate:  math.Round(successRate(total)*100) / 100,
 		AvgTps:       math.Round(avgTps(total)*100) / 100,

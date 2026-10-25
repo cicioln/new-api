@@ -219,7 +219,7 @@ func TestPerformanceAggregationAndFlush(t *testing.T) {
 			before, err := Query(QueryParams{Model: "test-model", Hours: 24, AllowedGroups: groups})
 			require.NoError(t, err)
 			require.NotNil(t, before.Summary)
-			assert.Equal(t, Summary{SuccessRate: 99.01, AvgLatencyMs: 1009, AvgTps: 5}, *before.Summary)
+			assert.Equal(t, Summary{AvgTtftMs: 100, SuccessRate: 99.01, AvgLatencyMs: 1009, AvgTps: 5}, *before.Summary)
 			assert.Equal(t, start, before.WindowStart)
 			require.Len(t, before.Series, 1)
 			assert.Equal(t, hour, before.Series[0].Ts)

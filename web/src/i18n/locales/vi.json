@@ -7762,6 +7762,17 @@
     "Showcase features with a demo account; write operations restricted": "Trình diễn tính năng bằng tài khoản demo; hạn chế thao tác ghi",
     "How do you plan to use it?": "Bạn định sử dụng thế nào?",
     "You can change this later in System settings › Operations.": "Có thể thay đổi sau trong Cài đặt hệ thống › Vận hành.",
-    "Confirm the details below to finish initialization, then go to the login page.": "Xác nhận thông tin dưới đây để hoàn tất khởi tạo, sau đó vào trang đăng nhập."
+    "Confirm the details below to finish initialization, then go to the login page.": "Xác nhận thông tin dưới đây để hoàn tất khởi tạo, sau đó vào trang đăng nhập.",
+    "Calls and spend by model, user and channel, with data from /api/data.": "Lượt gọi và chi tiêu theo mô hình, người dùng và kênh, dữ liệu từ /api/data.",
+    "Traffic": "Lưu lượng",
+    "Total requests": "Tổng yêu cầu",
+    "Total spend": "Tổng chi tiêu",
+    "Average first token": "Token đầu trung bình",
+    "Peak {{value}} · {{time}}": "Đỉnh {{value}} · {{time}}",
+    "Spend trend": "Xu hướng chi tiêu",
+    "Stacked by model": "Xếp chồng theo mô hình",
+    "Model call ranking": "Xếp hạng lượt gọi mô hình",
+    "By count": "Theo số lượt",
+    "{{value}} calls": "{{value}} lượt"
   }
 }
