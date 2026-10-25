@@ -35,10 +35,13 @@ type SystemInstanceRoleInfo struct {
 }
 
 type SystemInstanceRuntimeInfo struct {
-	Version   string `json:"version"`
-	GOOS      string `json:"goos"`
-	GOARCH    string `json:"goarch"`
-	StartedAt int64  `json:"started_at"`
+	Version      string `json:"version"`
+	GoVersion    string `json:"go_version"`
+	GOOS         string `json:"goos"`
+	GOARCH       string `json:"goarch"`
+	StartedAt    int64  `json:"started_at"`
+	Database     string `json:"database"`
+	RedisEnabled bool   `json:"redis_enabled"`
 }
 
 type SystemInstanceHostInfo struct {
@@ -53,6 +56,8 @@ type SystemInstanceResources struct {
 
 type SystemInstanceResourceUsage struct {
 	UsagePercent float64 `json:"usage_percent"`
+	TotalBytes   uint64  `json:"total_bytes,omitempty"`
+	UsedBytes    uint64  `json:"used_bytes,omitempty"`
 }
 
 type SystemInstanceStorageMetrics struct {
@@ -97,10 +102,13 @@ func ReportCurrentSystemInstance() error {
 			IsMaster: common.IsMasterNode,
 		},
 		Runtime: SystemInstanceRuntimeInfo{
-			Version:   common.Version,
-			GOOS:      runtime.GOOS,
-			GOARCH:    runtime.GOARCH,
-			StartedAt: common.StartTime,
+			Version:      common.Version,
+			GoVersion:    runtime.Version(),
+			GOOS:         runtime.GOOS,
+			GOARCH:       runtime.GOARCH,
+			StartedAt:    common.StartTime,
+			Database:     string(common.MainDatabaseType()),
+			RedisEnabled: common.RedisEnabled,
 		},
 		Host: SystemInstanceHostInfo{
 			Hostname: hostname,
@@ -111,6 +119,8 @@ func ReportCurrentSystemInstance() error {
 			},
 			Memory: SystemInstanceResourceUsage{
 				UsagePercent: systemStatus.MemoryUsage,
+				TotalBytes:   systemStatus.MemoryTotal,
+				UsedBytes:    systemStatus.MemoryUsed,
 			},
 			Storage: SystemInstanceStorageMetrics{
 				TotalBytes:  diskInfo.Total,

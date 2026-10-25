@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "When set, the top bar shows a Docs link",
     "About page content": "About page content",
     "Markdown / HTML or URL": "Markdown / HTML or URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML or URL, leave empty to skip"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML or URL, leave empty to skip",
+    "Version, runtime environment and resource usage.": "Version, runtime environment and resource usage.",
+    "Current version: {{version}}": "Current version: {{version}}",
+    "View changelog": "View changelog",
+    "Disk": "Disk",
+    "Runtime environment": "Runtime environment",
+    "Cache and queues": "Cache and queues",
+    "Connected": "Connected",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}}d {{hours}}h {{minutes}}m",
+    "Nodes": "Nodes",
+    "{{count}} other nodes": "{{count}} other nodes",
+    "Channel affinity": "Channel affinity",
+    "{{count}} of {{capacity}} entries": "{{count}} of {{capacity}} entries",
+    "Disk cache": "Disk cache",
+    "Memory buffers": "Memory buffers",
+    "{{count}} files": "{{count}} files",
+    "Log files": "Log files"
   }
 }

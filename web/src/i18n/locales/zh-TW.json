@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "填寫後頂欄顯示「文件」",
     "About page content": "關於頁內容",
     "Markdown / HTML or URL": "Markdown / HTML 或 URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML 或 URL，留空則不顯示"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML 或 URL，留空則不顯示",
+    "Version, runtime environment and resource usage.": "版本、執行環境與資源佔用。",
+    "Current version: {{version}}": "目前 {{version}}",
+    "View changelog": "查看更新日誌",
+    "Disk": "磁碟",
+    "Runtime environment": "執行環境",
+    "Cache and queues": "快取與佇列",
+    "Connected": "已連線",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}} 天 {{hours}} 小時 {{minutes}} 分",
+    "Nodes": "節點",
+    "{{count}} other nodes": "{{count}} 個從節點",
+    "Channel affinity": "渠道親和",
+    "{{count}} of {{capacity}} entries": "{{count}} / {{capacity}} 筆",
+    "Disk cache": "磁碟快取",
+    "Memory buffers": "記憶體緩衝",
+    "{{count}} files": "{{count}} 個",
+    "Log files": "日誌檔案"
   }
 }

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Loader2,
@@ -61,14 +61,14 @@ import { handleServerError } from '@/lib/handle-server-error'
 import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
+import { deleteStaleSystemInstance, deleteStaleSystemInstances } from '../api'
 import {
-  deleteStaleSystemInstance,
-  deleteStaleSystemInstances,
-  listSystemInstances,
-} from '../api'
+  INSTANCE_POLL_INTERVAL_MS,
+  SYSTEM_INSTANCES_QUERY_KEY,
+  useSystemInstances,
+} from '../hooks/use-system-instances'
 import type { SystemInstance, SystemInstanceStatus } from '../types'
 
-const INSTANCE_POLL_INTERVAL_MS = 30_000
 const INSTANCE_SKELETON_KEYS = [
   'system-instance-skeleton-1',
   'system-instance-skeleton-2',
@@ -497,19 +497,7 @@ export function SystemInstancesPanel() {
   const [deleteTarget, setDeleteTarget] = useState<SystemInstance | null>(null)
   const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false)
   const [deletingNodeName, setDeletingNodeName] = useState<string | null>(null)
-  const instancesQuery = useQuery({
-    queryKey: ['system-info', 'instances'],
-    queryFn: async () => {
-      const res = await listSystemInstances()
-      if (!res.success || !Array.isArray(res.data)) {
-        throw createServerError(res, t('We could not load instances.'))
-      }
-      return res.data
-    },
-    staleTime: 30 * 1000,
-    retry: false,
-    refetchInterval: INSTANCE_POLL_INTERVAL_MS,
-  })
+  const instancesQuery = useSystemInstances()
 
   const instances = instancesQuery.data ?? []
   const staleInstances = instances.filter(
@@ -521,7 +509,7 @@ export function SystemInstancesPanel() {
 
   const invalidateInstances = async () => {
     await queryClient.invalidateQueries({
-      queryKey: ['system-info', 'instances'],
+      queryKey: SYSTEM_INSTANCES_QUERY_KEY,
     })
   }
 

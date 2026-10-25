@@ -16,29 +16,55 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { RefreshIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { useSystemUpdate } from '@/features/system-update/use-system-update'
 
 import { SystemInstancesPanel } from './components/system-instances-panel'
+import { SystemOverview } from './components/system-overview'
 import { SystemTasksPanel } from './components/system-tasks-panel'
+import { SystemUpdateNotice } from './components/system-update-notice'
 
 export function SystemInfo() {
   const { t } = useTranslation()
+  const update = useSystemUpdate()
 
   return (
     <SectionPageLayout>
-      <SectionPageLayout.Title>
-        <span className='inline-flex min-w-0 items-center gap-2'>
-          <span className='truncate'>{t('System Info')}</span>
-          <Badge variant='outline' className='shrink-0'>
-            Root
-          </Badge>
-        </span>
-      </SectionPageLayout.Title>
+      <SectionPageLayout.Title>{t('System Info')}</SectionPageLayout.Title>
+      <SectionPageLayout.Description>
+        {t('Version, runtime environment and resource usage.')}
+      </SectionPageLayout.Description>
+      <SectionPageLayout.Actions>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          aria-busy={update.checking}
+          disabled={update.checking || !update.online}
+          onClick={() => void update.checkNow()}
+        >
+          {update.checking ? (
+            <Spinner data-icon='inline-start' aria-hidden='true' />
+          ) : (
+            <HugeiconsIcon
+              icon={RefreshIcon}
+              data-icon='inline-start'
+              aria-hidden='true'
+            />
+          )}
+          {t('Check for updates')}
+        </Button>
+      </SectionPageLayout.Actions>
       <SectionPageLayout.Content>
-        <div className='space-y-4'>
+        <SystemUpdateNotice update={update} />
+        <div className='space-y-3.5'>
+          <SystemOverview />
           <SystemInstancesPanel />
           <SystemTasksPanel />
         </div>

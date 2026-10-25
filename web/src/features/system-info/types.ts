@@ -33,9 +33,12 @@ export type SystemInstanceInfo = {
   }
   runtime?: {
     version?: string
+    go_version?: string
     goos?: string
     goarch?: string
     started_at?: number
+    database?: string
+    redis_enabled?: boolean
     [key: string]: unknown
   }
   host?: {
@@ -49,6 +52,8 @@ export type SystemInstanceInfo = {
     }
     memory?: {
       usage_percent?: number
+      total_bytes?: number
+      used_bytes?: number
       [key: string]: unknown
     }
     storage?: {

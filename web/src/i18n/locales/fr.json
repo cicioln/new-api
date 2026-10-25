@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "Si renseigné, la barre supérieure affiche un lien Docs",
     "About page content": "Contenu de la page À propos",
     "Markdown / HTML or URL": "Markdown / HTML ou URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML ou URL, laisser vide pour ignorer"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML ou URL, laisser vide pour ignorer",
+    "Version, runtime environment and resource usage.": "Version, environnement d'exécution et utilisation des ressources.",
+    "Current version: {{version}}": "Version actuelle : {{version}}",
+    "View changelog": "Voir le journal des modifications",
+    "Disk": "Disque",
+    "Runtime environment": "Environnement d'exécution",
+    "Cache and queues": "Cache et files",
+    "Connected": "Connecté",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}} j {{hours}} h {{minutes}} min",
+    "Nodes": "Nœuds",
+    "{{count}} other nodes": "{{count}} autres nœuds",
+    "Channel affinity": "Affinité de canal",
+    "{{count}} of {{capacity}} entries": "{{count}} entrées sur {{capacity}}",
+    "Disk cache": "Cache disque",
+    "Memory buffers": "Tampons mémoire",
+    "{{count}} files": "{{count}} fichiers",
+    "Log files": "Fichiers journaux"
   }
 }

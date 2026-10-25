@@ -24,6 +24,8 @@ type DiskSpaceInfo struct {
 type SystemStatus struct {
 	CPUUsage    float64
 	MemoryUsage float64
+	MemoryTotal uint64
+	MemoryUsed  uint64
 	DiskUsage   float64
 }
 
@@ -64,6 +66,8 @@ func updateSystemStatus() {
 	memInfo, err := mem.VirtualMemory()
 	if err == nil {
 		status.MemoryUsage = memInfo.UsedPercent
+		status.MemoryTotal = memInfo.Total
+		status.MemoryUsed = memInfo.Used
 	}
 
 	// Disk

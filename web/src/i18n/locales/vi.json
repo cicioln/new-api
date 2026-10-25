@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "Khi điền, thanh trên hiển thị liên kết Tài liệu",
     "About page content": "Nội dung trang Giới thiệu",
     "Markdown / HTML or URL": "Markdown / HTML hoặc URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML hoặc URL, để trống để bỏ qua"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML hoặc URL, để trống để bỏ qua",
+    "Version, runtime environment and resource usage.": "Phiên bản, môi trường chạy và mức dùng tài nguyên.",
+    "Current version: {{version}}": "Phiên bản hiện tại: {{version}}",
+    "View changelog": "Xem nhật ký thay đổi",
+    "Disk": "Ổ đĩa",
+    "Runtime environment": "Môi trường chạy",
+    "Cache and queues": "Bộ nhớ đệm và hàng đợi",
+    "Connected": "Đã kết nối",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}} ngày {{hours}} giờ {{minutes}} phút",
+    "Nodes": "Nút",
+    "{{count}} other nodes": "{{count}} nút khác",
+    "Channel affinity": "Gắn kết kênh",
+    "{{count}} of {{capacity}} entries": "{{count}} / {{capacity}} mục",
+    "Disk cache": "Bộ nhớ đệm đĩa",
+    "Memory buffers": "Bộ đệm bộ nhớ",
+    "{{count}} files": "{{count}} tệp",
+    "Log files": "Tệp nhật ký"
   }
 }

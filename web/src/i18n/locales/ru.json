@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "Если задано, в верхней панели появится ссылка «Документация»",
     "About page content": "Содержимое страницы «О нас»",
     "Markdown / HTML or URL": "Markdown / HTML или URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML или URL, оставьте пустым, чтобы не показывать"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML или URL, оставьте пустым, чтобы не показывать",
+    "Version, runtime environment and resource usage.": "Версия, среда выполнения и использование ресурсов.",
+    "Current version: {{version}}": "Текущая версия: {{version}}",
+    "View changelog": "Список изменений",
+    "Disk": "Диск",
+    "Runtime environment": "Среда выполнения",
+    "Cache and queues": "Кэш и очереди",
+    "Connected": "Подключено",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}} д {{hours}} ч {{minutes}} мин",
+    "Nodes": "Узлы",
+    "{{count}} other nodes": "других узлов: {{count}}",
+    "Channel affinity": "Привязка к каналу",
+    "{{count}} of {{capacity}} entries": "{{count}} из {{capacity}} записей",
+    "Disk cache": "Дисковый кэш",
+    "Memory buffers": "Буферы памяти",
+    "{{count}} files": "файлов: {{count}}",
+    "Log files": "Файлы журнала"
   }
 }

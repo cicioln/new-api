@@ -7566,6 +7566,22 @@
     "When set, the top bar shows a Docs link": "入力するとトップバーに「ドキュメント」が表示されます",
     "About page content": "概要ページの内容",
     "Markdown / HTML or URL": "Markdown / HTML または URL",
-    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML または URL、空欄で表示しない"
+    "Markdown / HTML or URL, leave empty to skip": "Markdown / HTML または URL、空欄で表示しない",
+    "Version, runtime environment and resource usage.": "バージョン、実行環境、リソース使用状況。",
+    "Current version: {{version}}": "現在 {{version}}",
+    "View changelog": "変更履歴を見る",
+    "Disk": "ディスク",
+    "Runtime environment": "実行環境",
+    "Cache and queues": "キャッシュとキュー",
+    "Connected": "接続済み",
+    "{{days}}d {{hours}}h {{minutes}}m": "{{days}} 日 {{hours}} 時間 {{minutes}} 分",
+    "Nodes": "ノード",
+    "{{count}} other nodes": "他 {{count}} ノード",
+    "Channel affinity": "チャネルアフィニティ",
+    "{{count}} of {{capacity}} entries": "{{count}} / {{capacity}} 件",
+    "Disk cache": "ディスクキャッシュ",
+    "Memory buffers": "メモリバッファ",
+    "{{count}} files": "{{count}} 個",
+    "Log files": "ログファイル"
   }
 }
