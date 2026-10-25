@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { Check, Loader2, X, type LucideIcon } from 'lucide-react'
+import { Check, X, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Skeleton } from '@/components/ui/skeleton'
@@ -80,9 +80,9 @@ export function StatusScreen(props: StatusScreenProps) {
         </Link>
 
         {props.tone === 'pending' && (
-          <Loader2
+          <span
             aria-hidden='true'
-            className='text-muted-foreground mb-3.5 size-6 animate-spin'
+            className='border-border border-t-foreground mb-[18px] size-7 animate-spin rounded-full border-[2.5px] motion-reduce:[animation-duration:2.4s]'
           />
         )}
         {props.tone !== 'pending' && (

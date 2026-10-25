@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "Xong · {{seconds}}s",
     "{{value}} tokens": "{{value}} token",
     "Send a prompt to compare model outputs.": "Gửi lời nhắc để so sánh đầu ra của các mô hình.",
-    "Call the same model with your API key using these settings.": "Gọi cùng mô hình bằng khóa API của bạn với các thiết lập này."
+    "Call the same model with your API key using these settings.": "Gọi cùng mô hình bằng khóa API của bạn với các thiết lập này.",
+    "No available API keys": "Không có khóa API khả dụng",
+    "Create key": "Tạo khóa",
+    "Using key <key/>. The chat will open in a new page shortly.": "Đã chọn khóa <key/>. Cuộc trò chuyện sẽ sớm mở ở trang mới."
   }
 }

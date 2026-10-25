@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "Done · {{seconds}}s",
     "{{value}} tokens": "{{value}} tokens",
     "Send a prompt to compare model outputs.": "Send a prompt to compare model outputs.",
-    "Call the same model with your API key using these settings.": "Call the same model with your API key using these settings."
+    "Call the same model with your API key using these settings.": "Call the same model with your API key using these settings.",
+    "No available API keys": "No available API keys",
+    "Create key": "Create key",
+    "Using key <key/>. The chat will open in a new page shortly.": "Using key <key/>. The chat will open in a new page shortly."
   }
 }

@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "完了 · {{seconds}}s",
     "{{value}} tokens": "{{value}} tokens",
     "Send a prompt to compare model outputs.": "プロンプトを送信してモデルの出力を比較します。",
-    "Call the same model with your API key using these settings.": "API キーを使い、この設定で同じモデルを呼び出します。"
+    "Call the same model with your API key using these settings.": "API キーを使い、この設定で同じモデルを呼び出します。",
+    "No available API keys": "利用可能な API キーがありません",
+    "Create key": "キーを作成",
+    "Using key <key/>. The chat will open in a new page shortly.": "キー <key/> を使用します。まもなく新しいページでチャットを開きます。"
   }
 }

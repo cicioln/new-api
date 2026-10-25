@@ -16,19 +16,34 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { KeyRound, TriangleAlert } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { StatusScreen } from '@/components/status-screen'
 import { Button } from '@/components/ui/button'
-import { useActiveChatKey } from '@/features/chat/hooks/use-active-chat-key'
+import { useActiveChatToken } from '@/features/chat/hooks/use-active-chat-key'
 import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
 import { resolveChatUrl } from '@/features/chat/lib/chat-links'
 import { useStatus } from '@/hooks/use-status'
+import { resolveAuthentication } from '@/lib/auth-session'
+import { useAuthStore } from '@/stores/auth-store'
 
-export const Route = createFileRoute('/_authenticated/chat2link')({
+// Lives outside the sidebar layout: it is a full-page redirect screen.
+export const Route = createFileRoute('/chat2link')({
+  beforeLoad: async ({ location }) => {
+    await resolveAuthentication()
+
+    const { auth } = useAuthStore.getState()
+
+    if (!auth.user || !auth.accessToken) {
+      throw redirect({
+        to: '/sign-in',
+        search: { redirect: location.href },
+      })
+    }
+  },
   component: Chat2LinkPage,
 })
 
@@ -42,28 +57,27 @@ function Chat2LinkPage() {
     [chatPresets]
   )
 
-  const { data: activeKey, error: keyError } = useActiveChatKey(
+  const { data: activeToken, error: keyError } = useActiveChatToken(
     Boolean(firstWebPreset)
   )
 
   useEffect(() => {
-    if (!firstWebPreset || !activeKey) return
+    if (!firstWebPreset || !activeToken) return
 
     const url = resolveChatUrl({
       template: firstWebPreset.url,
-      apiKey: activeKey,
+      apiKey: activeToken.key,
       serverAddress,
     })
 
     if (url) {
       window.location.href = url
     }
-  }, [firstWebPreset, activeKey, serverAddress])
+  }, [firstWebPreset, activeToken, serverAddress])
 
   if (!statusLoading && !firstWebPreset) {
     return (
       <StatusScreen
-        className='min-h-[70svh]'
         tone='error'
         icon={TriangleAlert}
         title={t('No available Web chat links')}
@@ -82,16 +96,15 @@ function Chat2LinkPage() {
   if (keyError) {
     return (
       <StatusScreen
-        className='min-h-[70svh]'
         tone='error'
         icon={KeyRound}
-        title={t('No enabled tokens available')}
+        title={t('No available API keys')}
         description={t(
           'Create or enable an API key, then open the chat from here.'
         )}
         action={
           <Button size='sm' render={<Link to='/keys' />}>
-            {t('Create API Key')}
+            {t('Create key')}
           </Button>
         }
       />
@@ -100,14 +113,25 @@ function Chat2LinkPage() {
 
   return (
     <StatusScreen
-      className='min-h-[70svh]'
       tone='pending'
       title={
         firstWebPreset
           ? t('Opening {{name}}', { name: firstWebPreset.name })
           : t('Redirecting to chat page...')
       }
-      description={t('The chat will open with your API key in a moment.')}
+      description={
+        activeToken ? (
+          <Trans
+            t={t}
+            i18nKey='Using key <key/>. The chat will open in a new page shortly.'
+            components={{
+              key: <span className='font-mono'>{activeToken.name}</span>,
+            }}
+          />
+        ) : (
+          t('The chat will open with your API key in a moment.')
+        )
+      }
     />
   )
 }

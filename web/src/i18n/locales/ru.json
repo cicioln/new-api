@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "Готово · {{seconds}} с",
     "{{value}} tokens": "{{value}} токенов",
     "Send a prompt to compare model outputs.": "Отправьте запрос, чтобы сравнить ответы моделей.",
-    "Call the same model with your API key using these settings.": "Вызовите ту же модель с вашим API-ключом и этими настройками."
+    "Call the same model with your API key using these settings.": "Вызовите ту же модель с вашим API-ключом и этими настройками.",
+    "No available API keys": "Нет доступных API-ключей",
+    "Create key": "Создать ключ",
+    "Using key <key/>. The chat will open in a new page shortly.": "Выбран ключ <key/>. Чат скоро откроется на новой странице."
   }
 }

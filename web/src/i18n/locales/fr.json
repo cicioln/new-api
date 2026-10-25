@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "Terminé · {{seconds}} s",
     "{{value}} tokens": "{{value}} tokens",
     "Send a prompt to compare model outputs.": "Envoyez un prompt pour comparer les réponses des modèles.",
-    "Call the same model with your API key using these settings.": "Appelez le même modèle avec votre clé API et ces paramètres."
+    "Call the same model with your API key using these settings.": "Appelez le même modèle avec votre clé API et ces paramètres.",
+    "No available API keys": "Aucune clé API disponible",
+    "Create key": "Créer une clé",
+    "Using key <key/>. The chat will open in a new page shortly.": "Clé <key/> sélectionnée. Le chat va s'ouvrir dans une nouvelle page."
   }
 }

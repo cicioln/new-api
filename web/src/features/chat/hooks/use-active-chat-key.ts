@@ -28,6 +28,14 @@ import {
 import { useAuthStore } from '@/stores/auth-store'
 
 export async function fetchActiveChatKey() {
+  const token = await fetchActiveChatToken()
+  return token.key
+}
+
+/**
+ * Get the first enabled API key with its display name
+ */
+export async function fetchActiveChatToken() {
   const result = await getApiKeys({ p: 1, size: 50 })
   if (!result.success) {
     throw createServerError(result, t('Failed to load API keys'))
@@ -44,7 +52,7 @@ export async function fetchActiveChatKey() {
     throw createServerError(keyResult, t('Failed to load API keys'))
   }
 
-  return `sk-${keyResult.data.key}`
+  return { name: active.name, key: `sk-${keyResult.data.key}` }
 }
 
 /**
@@ -56,6 +64,22 @@ export function useActiveChatKey(enabled: boolean) {
   return useQuery({
     queryKey: ['chat-active-key', userId],
     queryFn: async () => requireServerSuccess(await fetchActiveChatKey()),
+    enabled: enabled && Boolean(userId),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    meta: { errorToast: false },
+  })
+}
+
+/**
+ * Get the currently active API key together with its name
+ */
+export function useActiveChatToken(enabled: boolean) {
+  const userId = useAuthStore((state) => state.auth.user?.id)
+
+  return useQuery({
+    queryKey: ['chat-active-token', userId],
+    queryFn: async () => requireServerSuccess(await fetchActiveChatToken()),
     enabled: enabled && Boolean(userId),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

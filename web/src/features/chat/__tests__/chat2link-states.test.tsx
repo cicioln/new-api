@@ -29,7 +29,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/lib/api'
 import { createAppQueryClient } from '@/lib/query-client'
-import { Route } from '@/routes/_authenticated/chat2link'
+import { Route } from '@/routes/chat2link'
 import { useAuthStore } from '@/stores/auth-store'
 
 function renderChat2Link(chats: unknown, tokens: unknown[]) {
@@ -79,12 +79,13 @@ describe('chat2link states', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: 'No enabled tokens available',
+        name: 'No available API keys',
       })
     ).toBeVisible()
-    expect(
-      screen.getByRole('button', { name: 'Create API Key' })
-    ).toHaveAttribute('href', '/keys')
+    expect(screen.getByRole('button', { name: 'Create key' })).toHaveAttribute(
+      'href',
+      '/keys'
+    )
     expect(toastError).not.toHaveBeenCalled()
   })
 })

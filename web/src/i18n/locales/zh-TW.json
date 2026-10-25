@@ -7594,6 +7594,9 @@
     "Done · {{seconds}}s": "完成 · {{seconds}}s",
     "{{value}} tokens": "{{value}} tokens",
     "Send a prompt to compare model outputs.": "傳送提示詞以對比模型輸出。",
-    "Call the same model with your API key using these settings.": "使用你的 API 金鑰按目前設定呼叫同一模型。"
+    "Call the same model with your API key using these settings.": "使用你的 API 金鑰按目前設定呼叫同一模型。",
+    "No available API keys": "沒有可用的 API 金鑰",
+    "Create key": "建立金鑰",
+    "Using key <key/>. The chat will open in a new page shortly.": "已選用金鑰 <key/>，即將在新頁面開啟聊天。"
   }
 }
