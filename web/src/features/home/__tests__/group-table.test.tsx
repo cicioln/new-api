@@ -87,17 +87,16 @@ describe('home group table', () => {
     const user = userEvent.setup()
     renderTable()
 
-    const vipRow = (await screen.findByText('vip')).closest('tr')
-    expect(vipRow).toHaveTextContent('VIP line')
+    const vipRow = (await screen.findByText('VIP line')).closest('tr')
     expect(vipRow).toHaveTextContent('×0.8')
     expect(vipRow).toHaveTextContent('12')
     expect(vipRow).toHaveTextContent('99.4%')
-    expect(vipRow).toHaveTextContent('820ms')
+    expect(vipRow).toHaveTextContent('0.82s')
 
     const idleRow = screen.getByText('default').closest('tr')
-    expect(idleRow).toHaveTextContent('No data')
+    expect(idleRow).toHaveTextContent('No traffic in the last hour')
 
-    await user.click(screen.getByText('vip'))
+    await user.click(screen.getByText('VIP line'))
     expect(navigate).toHaveBeenCalledWith({
       to: '/pricing',
       search: { group: 'vip' },

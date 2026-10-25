@@ -333,6 +333,8 @@ func QueryGroupSummary(hours int, groups []string) (GroupSummaryResult, error) {
 			requestCount:   row.RequestCount,
 			successCount:   row.SuccessCount,
 			totalLatencyMs: row.TotalLatencyMs,
+			outputTokens:   row.OutputTokens,
+			generationMs:   row.GenerationMs,
 		})
 	}
 

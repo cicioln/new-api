@@ -7664,6 +7664,22 @@
     "Ranking period this year": "今年",
     "Ranking category marketing": "マーケティング",
     "Ranking category productivity": "効率化",
-    "Token share": "シェア"
+    "Token share": "シェア",
+    "Home page": "ホーム",
+    "Enter console": "コンソール",
+    "Loading groups…": "読み込み中…",
+    "No traffic in the last hour": "直近 1 時間のデータなし",
+    "Click to view this group →": "クリックしてモデルを見る →",
+    "View models →": "モデルを見る →",
+    "Compatible with": "対応エンドポイント：",
+    "Endpoint list separator": "、",
+    "and other common endpoints": "など",
+    "Hello": "こんにちは",
+    "API Reference": "API リファレンス",
+    "Terms of Service": "利用規約",
+    "Status page · All operational": "ステータス · すべて正常",
+    "Status page · {{count}} services degraded": "ステータス · {{count}} 件異常",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "クライアントのリクエストはゲートウェイ経由でグループごとにルーティングされます。グループにホバーでモデル表示、クリックでモデル一覧へ",
+    "Model count column": "モデル数"
   }
 }

@@ -48,7 +48,7 @@ type LegalFrameProps = {
 export function LegalFrame(props: LegalFrameProps) {
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='mx-auto max-w-[1360px] px-4 pt-16 md:px-6'>
+      <div className='mx-auto max-w-[1360px] px-4 md:px-6'>
         <article
           data-testid='legal-article'
           className='mx-auto max-w-[760px] pt-14 pb-24'

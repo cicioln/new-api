@@ -32,6 +32,7 @@ type Monitor struct {
 
 type UptimeGroupResult struct {
 	CategoryName string    `json:"categoryName"`
+	URL          string    `json:"url,omitempty"`
 	Monitors     []Monitor `json:"monitors"`
 }
 
@@ -69,6 +70,7 @@ func fetchGroupData(ctx context.Context, client *http.Client, groupConfig map[st
 	}
 
 	baseURL := strings.TrimSuffix(url, "/")
+	result.URL = baseURL + "/status/" + slug
 
 	var statusData struct {
 		PublicGroupList []struct {

@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLatency } from '@/features/performance-metrics/lib/format'
 import { cn } from '@/lib/utils'
 
 import { useHomeFlow, type HomeFlowGroup } from '../../hooks/use-home-flow'
@@ -89,7 +88,7 @@ function GroupTableBody(props: { flow: ReturnType<typeof useHomeFlow> }) {
         <tr className='text-subtle-foreground border-b text-left text-[12.5px] whitespace-nowrap'>
           <th className='px-5 py-3 font-medium'>{t('Group')}</th>
           <th className='px-5 py-3 font-medium'>{t('Ratio')}</th>
-          <th className='px-5 py-3 font-medium'>{t('Models')}</th>
+          <th className='px-5 py-3 font-medium'>{t('Model count column')}</th>
           <th className='px-5 py-3 font-medium'>{t('1h success rate')}</th>
           <th className='px-5 py-3 font-medium'>{t('Average latency')}</th>
           <th className='px-5 py-3'>
@@ -149,12 +148,7 @@ function GroupRow(props: {
             aria-hidden
             className={cn('size-2 rounded-full', GROUP_HEALTH_DOT[health])}
           />
-          <span>{g.group}</span>
-          {g.desc && g.desc !== g.group && (
-            <span className='text-subtle-foreground text-xs font-normal'>
-              {g.desc}
-            </span>
-          )}
+          <span>{g.desc || g.group}</span>
         </div>
       </td>
       <td
@@ -177,16 +171,18 @@ function GroupRow(props: {
             {g.successRate?.toFixed(1)}%
           </td>
           <td className='px-5 py-3.5 font-mono tabular-nums'>
-            {g.avgLatencyMs === null ? '—' : formatLatency(g.avgLatencyMs)}
+            {g.avgLatencyMs === null
+              ? '—'
+              : `${(g.avgLatencyMs / 1000).toFixed(2)}s`}
           </td>
         </>
       ) : (
         <td colSpan={2} className='text-subtle-foreground px-5 py-3.5'>
-          {t('No data')}
+          {t('No traffic in the last hour')}
         </td>
       )}
       <td className='text-primary px-5 py-3.5 text-right text-[13px]'>
-        {t('View models')}
+        {t('View models →')}
       </td>
     </tr>
   )

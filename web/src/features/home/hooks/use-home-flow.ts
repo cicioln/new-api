@@ -30,12 +30,13 @@ export type HomeFlowGroup = {
   group: string
   desc: string
   ratio: number
-  /** Most-used model names first, at most three */
+  /** Model names enabled for the group, from pricing */
   models: string[]
   modelTotal: number
   /** null when the group has no measured traffic in the window */
   successRate: number | null
   avgLatencyMs: number | null
+  avgTps: number | null
 }
 
 export type HomeFlowStatus = 'loading' | 'error' | 'empty' | 'ready'
@@ -62,6 +63,7 @@ type HomeGroupsResponse = {
       model_count: number
       success_rate: number | null
       avg_latency_ms: number | null
+      avg_tps?: number | null
     }[]
   }
 }
@@ -118,10 +120,11 @@ export function useHomeFlow(): HomeFlowData {
       group: g.group,
       desc: g.desc,
       ratio: g.ratio,
-      models: [...(namesByGroup.get(g.group) ?? []), ...allNames].slice(0, 3),
+      models: [...new Set([...(namesByGroup.get(g.group) ?? []), ...allNames])],
       modelTotal: g.model_count,
       successRate: g.success_rate,
       avgLatencyMs: g.avg_latency_ms,
+      avgTps: g.avg_tps ?? null,
     }))
 
     let status: HomeFlowStatus = 'ready'

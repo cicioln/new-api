@@ -16,370 +16,556 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link } from '@tanstack/react-router'
-import { ArrowRight } from 'lucide-react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { CopyButton } from '@/components/copy-button'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { formatLatency } from '@/features/performance-metrics/lib/format'
-import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
-import { cn } from '@/lib/utils'
 
-import { useHomeFlow, type HomeFlowGroup } from '../../hooks/use-home-flow'
-import {
-  getGroupHealth,
-  GROUP_HEALTH_DOT,
-  GROUP_HEALTH_TEXT,
-  type GroupHealth,
-} from './health'
+import { useHomeFlow, type HomeFlowData } from '../../hooks/use-home-flow'
+import { getGroupHealth, type GroupHealth } from './health'
 
-interface HeroProps {
-  className?: string
-  isAuthenticated?: boolean
+type Node = { x: number; y: number; hit: number }
+type SourceNode = Node & { label: string; hint: string }
+type GroupNode = Node & { index: number }
+type Packet = {
+  s: SourceNode
+  d: GroupNode
+  leg: number
+  t: number
+  v: number
 }
 
-const HEALTH_STROKE: Record<GroupHealth, string> = {
-  ok: 'stroke-success',
-  degraded: 'stroke-warning',
-  failing: 'stroke-destructive',
-  idle: 'stroke-subtle-foreground/50',
+type FlowText = {
+  systemName: string
+  gateway: string
+  loading: string
+  error: string
+  empty: string
+  noData: string
+  models: (count: number) => string
+  tipGo: string
 }
 
-type FlowPath = { id: string; d: string; health?: GroupHealth; speed: number }
+const SOURCE_HINTS = [
+  'Cherry Studio · LobeChat',
+  'Cursor · Claude Code',
+  'OpenAI SDK · Dify · n8n',
+]
 
-/** Smooth horizontal S-curve between two points. */
-function curve(x1: number, y1: number, x2: number, y2: number) {
-  const mid = (x1 + x2) / 2
-  return `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
+const HEALTH_COLOR: Record<GroupHealth, string> = {
+  ok: '--success',
+  degraded: '--warning',
+  failing: '--destructive',
+  idle: '--subtle-foreground',
 }
 
-export function Hero(props: HeroProps) {
+/**
+ * Request flow canvas: clients send packets to the gateway, which routes them
+ * to each group and back. Groups come from `/api/home/groups`.
+ */
+export function Hero() {
   const { t } = useTranslation()
-  const { status } = useStatus()
-  const { systemName, logo, loading: brandLoading } = useSystemConfig()
+  const { systemName } = useSystemConfig()
   const flow = useHomeFlow()
+  const navigate = useNavigate()
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const text: FlowText = {
+    systemName: systemName || 'New API',
+    gateway: t('Unified AI Gateway'),
+    loading: t('Loading groups…'),
+    error: t('Failed to load groups'),
+    empty: t('No groups available'),
+    noData: t('No traffic in the last hour'),
+    models: (count) => t('{{count}} models', { count }),
+    tipGo: t('Click to view this group →'),
+  }
+  const sources = [t('Chat clients'), t('IDE plugins'), t('SDK calls')]
+  const flowRef = useRef<HomeFlowData>(flow)
+  const textRef = useRef(text)
+  const sourcesRef = useRef(sources)
+  const refreshRef = useRef<() => void>(() => undefined)
 
-  const origin =
-    (typeof status?.server_address === 'string' &&
-      status.server_address.trim().replace(/\/+$/, '')) ||
-    (typeof window !== 'undefined' ? window.location.origin : '')
-  const baseUrl = `${origin}/v1`
+  useEffect(() => {
+    flowRef.current = flow
+    textRef.current = text
+    sourcesRef.current = sources
+  })
 
-  const sources = [
-    { label: t('Chat clients'), hint: 'Cherry Studio · LobeChat' },
-    { label: t('IDE plugins'), hint: 'Cursor · Claude Code' },
-    { label: t('SDK calls'), hint: 'OpenAI SDK · Dify · n8n' },
-  ]
+  useEffect(() => {
+    refreshRef.current()
+  }, [flow.groups, flow.status, flow.noPerf, systemName, t])
 
-  // Anchors used to measure the SVG flow lines
-  const stageRef = useRef<HTMLDivElement>(null)
-  const hubRef = useRef<HTMLDivElement>(null)
-  const sourceRefs = useRef<(HTMLSpanElement | null)[]>([])
-  const groupRefs = useRef<(HTMLSpanElement | null)[]>([])
-  const [paths, setPaths] = useState<FlowPath[]>([])
-  const [size, setSize] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = canvasRef.current
+    const ctx = el?.getContext('2d')
+    if (!el || !ctx) return
+    const cv: HTMLCanvasElement = el
+    const g = ctx
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let W = 0
+    let H = 0
+    let hub = { x: 0, y: 0 }
+    let src: SourceNode[] = []
+    let dst: GroupNode[] = []
+    let pk: Packet[] = []
+    let pulse = 0
+    let acc = 0
+    let prev = 0
+    let dash = 0
+    let gd = 64
+    let br = 0
+    let hov: number | null = null
+    let raf = 0
 
-  const groups = flow.groups
-
-  useLayoutEffect(() => {
-    const stage = stageRef.current
-    const hub = hubRef.current
-    if (!stage || !hub) return
-
-    const measure = () => {
-      const box = stage.getBoundingClientRect()
-      const hubBox = hub.getBoundingClientRect()
-      const center = (el: Element) => {
-        const r = el.getBoundingClientRect()
-        return {
-          x: r.left + r.width / 2 - box.left,
-          y: r.top + r.height / 2 - box.top,
-        }
-      }
-      const hubY = hubBox.top + hubBox.height / 2 - box.top
-      const hubLeft = hubBox.left - box.left
-      const hubRight = hubBox.right - box.left
-      const next: FlowPath[] = []
-
-      sourceRefs.current.forEach((el, i) => {
-        if (!el) return
-        const p = center(el)
-        next.push({
-          id: `source-${i}`,
-          d: curve(p.x + 6, p.y, hubLeft, hubY + (i - 1) * 14),
-          speed: 1.4 + i * 0.25,
-        })
-      })
-      groupRefs.current.slice(0, groups.length).forEach((el, i) => {
-        if (!el) return
-        const p = center(el)
-        const spread = groups.length > 1 ? i / (groups.length - 1) : 0.5
-        next.push({
-          id: `group-${groups[i].group}`,
-          d: curve(hubRight, hubY + (spread - 0.5) * 36, p.x - 6, p.y),
-          health: getGroupHealth(groups[i].successRate),
-          speed: 1.2 + (i % 4) * 0.3,
-        })
-      })
-      setSize({ w: box.width, h: box.height })
-      setPaths(next)
+    const cssv = (name: string) =>
+      getComputedStyle(cv).getPropertyValue(name).trim()
+    const live = () => {
+      const s = flowRef.current.status
+      return s === 'ready' && flowRef.current.groups.length > 0
+    }
+    const health = (i: number) => {
+      const f = flowRef.current
+      return f.noPerf ? 'idle' : getGroupHealth(f.groups[i].successRate)
     }
 
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(stage)
-    return () => ro.disconnect()
-  }, [groups])
+    function layout() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      W = cv.clientWidth
+      H = cv.clientHeight
+      cv.width = W * dpr
+      cv.height = H * dpr
+      g.setTransform(dpr, 0, 0, dpr, 0, 0)
+      // Clients hug the left, groups the right, gateway in the middle, all
+      // inside the shared 1360px content width.
+      const sm = W < 640
+      const gp = sm ? 16 : 24
+      const bl = Math.max(gp, (W - 1360) / 2 + gp)
+      br = W - bl
+      let sx = bl + 150
+      let dx = Math.max(sx + 300, br - 270)
+      if (sm) {
+        sx = bl + 6
+        dx = br - 132
+      }
+      hub = { x: (sx + dx) / 2, y: H / 2 }
+      const gs = Math.min(H * 0.2, 120)
+      const groups = flowRef.current.groups
+      gd = Math.min((H - 80) / Math.max(groups.length - 1, 1), 64)
+      if (!live()) pk = []
+      const names = sourcesRef.current
+      src = names.map((label, i) => ({
+        x: sx,
+        y: H / 2 + (i - (names.length - 1) / 2) * gs,
+        label,
+        hint: SOURCE_HINTS[i],
+        hit: src[i]?.hit ?? 0,
+      }))
+      dst = (live() ? groups : []).map((_, i) => ({
+        x: dx,
+        y: H / 2 + (i - (groups.length - 1) / 2) * gd,
+        index: i,
+        hit: 0,
+      }))
+      pk = pk.filter((p) => dst.includes(p.d))
+    }
 
-  let stageNote = ''
-  if (flow.status === 'loading') stageNote = t('Loading...')
-  else if (flow.status === 'error') stageNote = t('Failed to load groups')
-  else if (flow.status === 'empty') stageNote = t('No groups available')
+    function hitDst(x: number, y: number) {
+      for (const d of dst) {
+        if (x > d.x - 24 && Math.abs(y - d.y) < gd / 2) return d.index
+      }
+      return null
+    }
+    function pos(e: MouseEvent) {
+      const r = cv.getBoundingClientRect()
+      return [e.clientX - r.left, e.clientY - r.top]
+    }
+    function pt(a: Node | typeof hub, b: Node | typeof hub, t: number) {
+      const mx = (a.x + b.x) / 2
+      const u = 1 - t
+      return {
+        x:
+          u * u * u * a.x +
+          3 * u * u * t * mx +
+          3 * u * t * t * mx +
+          t * t * t * b.x,
+        y:
+          u * u * u * a.y +
+          3 * u * u * t * a.y +
+          3 * u * t * t * b.y +
+          t * t * t * b.y,
+      }
+    }
+    function curve(a: Node | typeof hub, b: Node | typeof hub) {
+      const mx = (a.x + b.x) / 2
+      g.beginPath()
+      g.moveTo(a.x, a.y)
+      g.bezierCurveTo(mx, a.y, mx, b.y, b.x, b.y)
+      g.stroke()
+    }
+    function rr(x: number, y: number, w: number, h: number, r: number) {
+      g.beginPath()
+      g.roundRect(x, y, w, h, r)
+    }
+    function spawn() {
+      if (!live() || !dst.length) return
+      pk.push({
+        s: src[(Math.random() * src.length) | 0],
+        d: dst[(Math.random() * dst.length) | 0],
+        leg: 0,
+        t: 0,
+        v: 0.9 + Math.random() * 0.6,
+      })
+    }
+    // leg 0 client→gateway, 1 gateway→group, 2 group→gateway, 3 gateway→client
+    function ends(p: Packet) {
+      const legs = [
+        [p.s, hub],
+        [hub, p.d],
+        [p.d, hub],
+        [hub, p.s],
+      ] as const
+      return legs[p.leg]
+    }
+    function step(dt: number) {
+      acc += dt
+      while (acc > 0.18) {
+        acc -= 0.18
+        spawn()
+      }
+      pk = pk.filter((p) => {
+        p.t += dt * p.v * (p.leg === 1 || p.leg === 2 ? 1.1 : 1.3)
+        if (p.t < 1) return true
+        p.t = 0
+        p.leg++
+        if (p.leg === 1 || p.leg === 3) pulse = 1
+        if (p.leg === 2) p.d.hit = 1
+        if (p.leg === 4) {
+          p.s.hit = 1
+          return false
+        }
+        return true
+      })
+      pulse = Math.max(0, pulse - dt * 2.5)
+      dash += dt * 24
+      for (const n of [...src, ...dst]) n.hit = Math.max(0, n.hit - dt * 3)
+    }
+
+    function draw() {
+      const tx = textRef.current
+      const f = flowRef.current
+      const ink = cssv('--foreground')
+      const bg = cssv('--background')
+      const line = cssv('--input')
+      const mute = cssv('--subtle-foreground')
+      const ac = cssv('--primary')
+      const ft = getComputedStyle(cv).fontFamily
+      const mo = cssv('--font-mono')
+      const sm = W < 640
+      const dim = (i: number) => (hov !== null && i !== hov ? 0.18 : 1)
+      g.clearRect(0, 0, W, H)
+      g.lineWidth = 1
+      g.strokeStyle = line
+      for (const s of src) curve(s, hub)
+      if (f.status === 'loading') {
+        g.fillStyle = cssv('--muted')
+        for (let k = 0; k < 5; k++) {
+          const yy = hub.y + (k - 2) * 56
+          rr(
+            sm ? br - 132 : Math.max(hub.x + 150, br - 270),
+            yy - 10,
+            sm ? 120 : 220,
+            20,
+            6
+          )
+          g.fill()
+        }
+      }
+      for (const d of dst) {
+        const st = health(d.index)
+        g.globalAlpha = dim(d.index)
+        // Failing groups: moving dashed line in the status color
+        if (st === 'failing') {
+          g.setLineDash([5, 5])
+          g.lineDashOffset = -dash
+          g.strokeStyle = cssv(HEALTH_COLOR.failing)
+        } else g.strokeStyle = hov === d.index ? ac : line
+        g.lineWidth = hov === d.index ? 1.6 : 1
+        curve(hub, d)
+        g.setLineDash([])
+      }
+      g.globalAlpha = 1
+      // Packets: accent on the way out, group status color on the way back
+      g.lineCap = 'round'
+      g.lineWidth = 2
+      for (const p of pk) {
+        const [a0, b0] = ends(p)
+        const a = pt(a0, b0, Math.max(0, p.t - 0.05))
+        const q = pt(a0, b0, p.t)
+        g.globalAlpha = dim(p.d.index)
+        g.strokeStyle = p.leg < 2 ? ac : cssv(HEALTH_COLOR[health(p.d.index)])
+        g.beginPath()
+        g.moveTo(a.x, a.y)
+        g.lineTo(q.x, q.y)
+        g.stroke()
+      }
+      g.globalAlpha = 1
+      g.lineCap = 'butt'
+      g.textBaseline = 'middle'
+      for (const s of src) {
+        g.fillStyle = bg
+        g.strokeStyle = s.hit ? ac : line
+        g.lineWidth = 1.5
+        g.beginPath()
+        g.arc(s.x, s.y, 6 + s.hit * 2, 0, 7)
+        g.fill()
+        g.stroke()
+        g.textAlign = sm ? 'left' : 'right'
+        g.fillStyle = ink
+        g.font = `600 13px ${ft}`
+        g.fillText(s.label, sm ? s.x - 6 : s.x - 16, s.y - (sm ? 20 : 8))
+        if (!sm) {
+          g.fillStyle = mute
+          g.font = `11px ${ft}`
+          g.fillText(s.hint, s.x - 16, s.y + 10)
+        }
+      }
+      g.textAlign = 'left'
+      for (const d of dst) {
+        const o = f.groups[d.index]
+        const st = health(d.index)
+        const c = cssv(HEALTH_COLOR[st])
+        const x0 = d.x + 16
+        const mw = br - x0
+        const da = dim(d.index)
+        const glow =
+          st === 'failing'
+            ? 0.2 + 0.3 * (0.5 + 0.5 * Math.sin(dash / 4))
+            : 0.25 + d.hit * 0.35
+        g.globalAlpha = glow * da
+        g.fillStyle = c
+        g.beginPath()
+        g.arc(d.x, d.y, 9 + d.hit * 3, 0, 7)
+        g.fill()
+        g.globalAlpha = da
+        g.beginPath()
+        g.arc(d.x, d.y, 5, 0, 7)
+        g.fill()
+        const nm = o.desc || o.group
+        const ty = sm ? d.y : d.y - 16
+        g.fillStyle = ink
+        g.font = `600 13px ${ft}`
+        g.fillText(nm, x0, ty)
+        const nw = g.measureText(nm).width
+        g.fillStyle = o.ratio < 1 ? ac : mute
+        g.font = `11px ${mo}`
+        g.fillText(`×${o.ratio.toFixed(1)}`, x0 + nw + 6, ty)
+        if (sm) continue
+        // Model list: show as many as fit, fold the rest into +N
+        const total = Math.max(o.modelTotal, o.models.length)
+        let ml = ''
+        for (
+          let k = Math.min(o.models.length, d.index === 0 ? 2 : 3);
+          k >= 0;
+          k--
+        ) {
+          const more = total > k ? ` +${total - k}` : ''
+          ml = o.models.slice(0, k).join(' · ') + more
+          if (g.measureText(ml).width <= mw) break
+        }
+        g.fillStyle = d.hit ? ink : cssv('--muted-foreground')
+        g.fillText(ml.trim(), x0, d.y + 1)
+        g.font = `10.5px ${mo}`
+        if (o.successRate === null || f.noPerf) {
+          g.fillStyle = mute
+          g.fillText(tx.noData, x0, d.y + 16)
+          continue
+        }
+        const u = `1h ${o.successRate.toFixed(1)}%`
+        g.fillStyle = st === 'ok' ? mute : c
+        g.fillText(u, x0, d.y + 16)
+        const rest = [
+          '',
+          o.avgLatencyMs === null
+            ? null
+            : `${(o.avgLatencyMs / 1000).toFixed(2)}s`,
+          o.avgTps === null ? null : `${o.avgTps.toFixed(1)} t/s`,
+        ]
+          .filter((v) => v !== null)
+          .join(' · ')
+        g.fillStyle = mute
+        g.fillText(rest, x0 + g.measureText(u).width, d.y + 16)
+      }
+      g.globalAlpha = 1
+      g.textAlign = 'center'
+      if (pulse) {
+        g.strokeStyle = ac
+        g.lineWidth = 2
+        g.globalAlpha = pulse * 0.6
+        const r = 46 + (1 - pulse) * 40
+        rr(hub.x - r, hub.y - r, r * 2, r * 2, 20 + (1 - pulse) * 10)
+        g.stroke()
+        g.globalAlpha = 1
+      }
+      g.fillStyle = ink
+      rr(hub.x - 36, hub.y - 36, 72, 72, 18)
+      g.fill()
+      g.fillStyle = bg
+      g.font = `500 30px ${mo}`
+      g.fillText('N', hub.x, hub.y + 2)
+      g.fillStyle = ac
+      g.strokeStyle = bg
+      g.lineWidth = 4
+      rr(hub.x + 22, hub.y + 22, 22, 22, 7)
+      g.stroke()
+      g.fill()
+      g.fillStyle = ink
+      g.font = `600 14px ${ft}`
+      g.fillText(tx.systemName, hub.x, hub.y + 62)
+      g.fillStyle = mute
+      g.font = `12px ${ft}`
+      g.fillText(tx.gateway, hub.x, hub.y + 81)
+      if (!live()) {
+        const msg = { loading: tx.loading, error: tx.error }[
+          f.status as 'loading' | 'error'
+        ]
+        g.fillStyle = f.status === 'error' ? cssv('--destructive') : mute
+        g.font = `13px ${ft}`
+        g.fillText(msg ?? tx.empty, hub.x, hub.y + 112)
+      }
+      if (hov !== null) {
+        const d = dst.find((n) => n.index === hov)
+        if (d) tip(d, ink, mute, ac, ft, mo)
+      }
+    }
+
+    // Hover card: the group's model list, placed left of the node
+    function tip(
+      d: GroupNode,
+      ink: string,
+      mute: string,
+      ac: string,
+      ft: string,
+      mo: string
+    ) {
+      const tx = textRef.current
+      const o = flowRef.current.groups[d.index]
+      const ns = o.models
+      const lh = 20
+      const pad = 14
+      g.font = `12px ${mo}`
+      let w = 0
+      for (const n of ns) w = Math.max(w, g.measureText(n).width)
+      w = Math.max(w + 24, 168) + pad * 2
+      const h = pad * 2 + 22 + ns.length * lh + 24
+      let x = d.x - 28 - w
+      if (x < 8) x = Math.min(d.x + 16, W - w - 8)
+      const y = Math.max(8, Math.min(d.y - h / 2, H - h - 8))
+      g.save()
+      g.shadowColor = 'rgba(0,0,0,.18)'
+      g.shadowBlur = 24
+      g.shadowOffsetY = 8
+      g.fillStyle = cssv('--card')
+      rr(x, y, w, h, 10)
+      g.fill()
+      g.restore()
+      g.strokeStyle = cssv('--border')
+      g.lineWidth = 1
+      rr(x + 0.5, y + 0.5, w - 1, h - 1, 10)
+      g.stroke()
+      g.textAlign = 'left'
+      g.textBaseline = 'middle'
+      g.fillStyle = ink
+      g.font = `600 13px ${ft}`
+      g.fillText(
+        `${o.desc || o.group} · ${tx.models(o.modelTotal)}`,
+        x + pad,
+        y + pad + 8
+      )
+      g.font = `12px ${mo}`
+      ns.forEach((n, i) => {
+        const yy = y + pad + 22 + i * lh + lh / 2
+        g.fillStyle = mute
+        g.beginPath()
+        g.arc(x + pad + 3, yy, 3, 0, 7)
+        g.fill()
+        g.fillStyle = ink
+        g.fillText(n, x + pad + 14, yy)
+      })
+      g.fillStyle = ac
+      g.font = `12px ${ft}`
+      g.fillText(tx.tipGo, x + pad, y + h - pad - 4)
+    }
+
+    function frame(ts: number) {
+      raf = requestAnimationFrame(frame)
+      if (cv.clientWidth !== W || cv.clientHeight !== H) layout()
+      const dt = prev ? Math.min((ts - prev) / 1000, 0.05) : 0
+      prev = ts
+      step(dt)
+      draw()
+    }
+
+    const onMove = (e: MouseEvent) => {
+      const [x, y] = pos(e)
+      const h = hitDst(x, y)
+      if (h !== hov) {
+        hov = h
+        cv.style.cursor = h === null ? '' : 'pointer'
+        if (still) draw()
+      }
+    }
+    const onLeave = () => {
+      hov = null
+      cv.style.cursor = ''
+      if (still) draw()
+    }
+    const onClick = (e: MouseEvent) => {
+      const [x, y] = pos(e)
+      const h = hitDst(x, y)
+      if (h !== null && live()) {
+        const group = flowRef.current.groups[h].group
+        void navigate({ to: '/pricing', search: { group } })
+      }
+    }
+    cv.addEventListener('mousemove', onMove)
+    cv.addEventListener('mouseleave', onLeave)
+    cv.addEventListener('click', onClick)
+
+    refreshRef.current = () => {
+      layout()
+      if (still) draw()
+    }
+    const onResize = () => {
+      layout()
+      draw()
+    }
+    if (still) {
+      layout()
+      for (let i = 0; i < 400; i++) step(0.02)
+      draw()
+      window.addEventListener('resize', onResize)
+    } else raf = requestAnimationFrame(frame)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', onResize)
+      cv.removeEventListener('mousemove', onMove)
+      cv.removeEventListener('mouseleave', onLeave)
+      cv.removeEventListener('click', onClick)
+      refreshRef.current = () => undefined
+    }
+  }, [navigate])
 
   return (
-    <section
-      className={cn(
-        'relative z-10 overflow-hidden px-4 pt-24 pb-4 md:px-6 md:pt-28 lg:pb-6',
-        props.className
-      )}
-    >
-      <div
-        aria-hidden
-        className='line-grid pointer-events-none absolute inset-0 -z-10'
+    <div className='relative h-[calc(100vh-61px)] min-h-[480px] overflow-hidden before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] before:[mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_20%,transparent_75%)] before:bg-[size:56px_56px] before:opacity-60 max-[1100px]:h-[620px] max-[1100px]:min-h-0 max-[640px]:h-[520px]'>
+      <canvas
+        ref={canvasRef}
+        className='absolute inset-0 block size-full'
+        aria-label={t(
+          'Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square'
+        )}
       />
-
-      <div className='mx-auto max-w-[1360px]'>
-        {/* Topology stage */}
-        <div
-          ref={stageRef}
-          className='landing-animate-fade-up relative grid items-center gap-10 opacity-0 lg:min-h-[400px] lg:grid-cols-[12rem_minmax(0,1fr)_minmax(0,24rem)] lg:gap-6'
-        >
-          {size.w > 0 && (
-            <svg
-              aria-hidden
-              className='pointer-events-none absolute inset-0 hidden lg:block'
-              width={size.w}
-              height={size.h}
-              viewBox={`0 0 ${size.w} ${size.h}`}
-              fill='none'
-            >
-              {paths.map((p) => (
-                <g key={p.id}>
-                  <path d={p.d} className='stroke-border' strokeWidth={1.25} />
-                  <path
-                    d={p.d}
-                    className={cn(
-                      'flow-dash',
-                      p.health ? HEALTH_STROKE[p.health] : 'stroke-primary'
-                    )}
-                    strokeWidth={1.75}
-                    strokeLinecap='round'
-                    style={
-                      { '--flow-speed': `${p.speed}s` } as React.CSSProperties
-                    }
-                  />
-                </g>
-              ))}
-            </svg>
-          )}
-
-          {/* Sources */}
-          <ul className='relative hidden flex-col gap-16 lg:flex'>
-            {sources.map((source, i) => (
-              <li
-                key={source.label}
-                className='flex items-center justify-end gap-3 text-right'
-              >
-                <div className='min-w-0'>
-                  <p className='text-sm font-semibold whitespace-nowrap'>
-                    {source.label}
-                  </p>
-                  <p className='text-subtle-foreground text-[11px] whitespace-nowrap'>
-                    {source.hint}
-                  </p>
-                </div>
-                <span
-                  ref={(el) => {
-                    sourceRefs.current[i] = el
-                  }}
-                  className='bg-background border-border size-3 shrink-0 rounded-full border-[1.5px]'
-                />
-              </li>
-            ))}
-          </ul>
-
-          {/* Hub */}
-          <div className='relative flex flex-col items-center text-center'>
-            <div ref={hubRef} className='relative'>
-              <span
-                aria-hidden
-                className='hub-pulse border-primary/40 absolute -inset-4 rounded-[1.75rem] border'
-              />
-              <div className='bg-foreground relative flex size-[72px] items-center justify-center overflow-hidden rounded-[18px]'>
-                {brandLoading ? (
-                  <Skeleton className='size-full' />
-                ) : (
-                  <img
-                    src={logo}
-                    alt={t('Logo')}
-                    className='size-12 rounded-xl object-contain'
-                  />
-                )}
-              </div>
-              <span
-                aria-hidden
-                className='bg-primary border-background absolute -right-2 -bottom-2 size-[22px] rounded-[7px] border-4'
-              />
-            </div>
-            <h1 className='mt-7 text-3xl font-semibold tracking-tight md:text-4xl'>
-              {brandLoading ? <Skeleton className='h-9 w-40' /> : systemName}
-            </h1>
-            <p className='text-subtle-foreground mt-2 text-sm'>
-              {t('Unified AI Gateway')}
-            </p>
-            {stageNote && (
-              <p
-                className={cn(
-                  'mt-4 text-sm',
-                  flow.status === 'error'
-                    ? 'text-destructive'
-                    : 'text-subtle-foreground'
-                )}
-              >
-                {stageNote}
-              </p>
-            )}
-          </div>
-
-          {/* Groups */}
-          <ul className='relative flex flex-col gap-3 lg:gap-2'>
-            {groups.map((g, i) => (
-              <GroupNode
-                key={g.group}
-                group={g}
-                noPerf={flow.noPerf}
-                dotRef={(el) => {
-                  groupRefs.current[i] = el
-                }}
-              />
-            ))}
-          </ul>
-        </div>
-
-        {/* Base URL + CTAs */}
-        <div
-          className='landing-animate-fade-up mt-8 flex flex-col items-center gap-5 opacity-0'
-          style={{ animationDelay: '120ms' }}
-        >
-          <div className='bg-card inline-flex max-w-full items-center gap-2.5 rounded-full border p-1.5 pr-2'>
-            <span className='bg-foreground text-background rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap'>
-              {t('OpenAI Compatible')}
-            </span>
-            <code className='truncate font-mono text-sm'>{baseUrl}</code>
-            <CopyButton
-              value={baseUrl}
-              size='icon'
-              className='size-7 rounded-full'
-              tooltip={t('Copy')}
-            />
-          </div>
-
-          <div className='flex flex-wrap items-center justify-center gap-3'>
-            <Button
-              className='group bg-foreground text-background hover:bg-foreground/90 h-10 px-5'
-              render={
-                <Link to={props.isAuthenticated ? '/dashboard' : '/sign-up'} />
-              }
-            >
-              {props.isAuthenticated ? t('Go to Dashboard') : t('Get Started')}
-              <ArrowRight className='ml-1 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
-            </Button>
-            <Button
-              variant='outline'
-              className='bg-card h-10 px-5'
-              render={<Link to='/pricing' />}
-            >
-              {t('View Pricing')}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function GroupNode(props: {
-  group: HomeFlowGroup
-  noPerf: boolean
-  dotRef: (el: HTMLSpanElement | null) => void
-}) {
-  const g = props.group
-  const health = getGroupHealth(g.successRate)
-  const extra = g.modelTotal - g.models.length
-
-  return (
-    <li>
-      <Link
-        to='/pricing'
-        search={{ group: g.group }}
-        className='bg-card/80 hover:bg-muted flex items-start gap-3 rounded-lg border px-3 py-2 transition-colors lg:border-transparent lg:bg-transparent lg:px-2 lg:py-1'
-      >
-        <span
-          ref={props.dotRef}
-          className={cn(
-            'status-halo mt-1.5 size-2.5 shrink-0 rounded-full',
-            GROUP_HEALTH_DOT[health]
-          )}
-        />
-        <div className='min-w-0 flex-1'>
-          <p className='flex items-baseline gap-1.5 text-[13px] font-semibold'>
-            <span className='truncate' title={g.group}>
-              {g.group}
-            </span>
-            <span
-              className={cn(
-                'font-mono text-[11px] font-normal',
-                g.ratio < 1 ? 'text-primary' : 'text-subtle-foreground'
-              )}
-            >
-              ×{g.ratio.toFixed(1)}
-            </span>
-          </p>
-          {g.models.length > 0 && (
-            <p className='text-muted-foreground truncate font-mono text-[11px]'>
-              {g.models.join(' · ')}
-              {extra > 0 && ` +${extra}`}
-            </p>
-          )}
-          <p className='text-subtle-foreground truncate font-mono text-[10.5px] tabular-nums'>
-            <GroupStats group={g} noPerf={props.noPerf} health={health} />
-          </p>
-        </div>
-      </Link>
-    </li>
-  )
-}
-
-function GroupStats(props: {
-  group: HomeFlowGroup
-  noPerf: boolean
-  health: GroupHealth
-}) {
-  const { t } = useTranslation()
-  const g = props.group
-  if (props.noPerf || g.successRate === null) return <>{t('No data')}</>
-  return (
-    <>
-      <span
-        className={props.health === 'ok' ? '' : GROUP_HEALTH_TEXT[props.health]}
-      >
-        1h {g.successRate.toFixed(1)}%
-      </span>
-      {g.avgLatencyMs !== null && ` · ${formatLatency(g.avgLatencyMs)}`}
-    </>
+    </div>
   )
 }

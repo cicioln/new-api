@@ -7664,6 +7664,22 @@
     "Ranking period this year": "今年",
     "Ranking category marketing": "营销",
     "Ranking category productivity": "效率",
-    "Token share": "份额"
+    "Token share": "份额",
+    "Home page": "首页",
+    "Enter console": "进入控制台",
+    "Loading groups…": "正在加载分组…",
+    "No traffic in the last hour": "近 1 小时无请求",
+    "Click to view this group →": "点击查看该分组模型 →",
+    "View models →": "查看模型 →",
+    "Compatible with": "兼容",
+    "Endpoint list separator": "、",
+    "and other common endpoints": "等常用端点",
+    "Hello": "你好",
+    "API Reference": "API 参考",
+    "Terms of Service": "服务条款",
+    "Status page · All operational": "状态页 · 全部正常",
+    "Status page · {{count}} services degraded": "状态页 · {{count}} 个服务异常",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "客户端请求经网关按分组路由，悬停分组查看模型，点击进入模型广场",
+    "Model count column": "模型数"
   }
 }

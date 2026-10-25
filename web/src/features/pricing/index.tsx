@@ -237,7 +237,7 @@ export function Pricing() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='mx-auto w-full max-w-[1360px] px-6 pt-16 pb-16'>
+      <div className='mx-auto w-full max-w-[1360px] px-6 pb-16'>
         <div className='grid grid-cols-[220px_minmax(0,1fr)] gap-7 pt-8 max-[1000px]:grid-cols-[minmax(0,1fr)]'>
           <MarketFilters
             total={models.length}

@@ -24,6 +24,7 @@ type homeGroup struct {
 	ModelCount   int      `json:"model_count"`
 	SuccessRate  *float64 `json:"success_rate"`
 	AvgLatencyMs *int64   `json:"avg_latency_ms"`
+	AvgTps       *float64 `json:"avg_tps"`
 }
 
 // GetHomeGroups lists the viewer's usable groups with ratio, model count and
@@ -79,6 +80,7 @@ func GetHomeGroups(c *gin.Context) {
 		if summary, ok := perf.Groups[name]; ok {
 			item.SuccessRate = &summary.SuccessRate
 			item.AvgLatencyMs = &summary.AvgLatencyMs
+			item.AvgTps = &summary.AvgTps
 		}
 		groups = append(groups, item)
 	}

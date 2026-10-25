@@ -7664,6 +7664,22 @@
     "Ranking period this year": "Ranking period this year",
     "Ranking category marketing": "Ranking category marketing",
     "Ranking category productivity": "Ranking category productivity",
-    "Token share": "Token share"
+    "Token share": "Token share",
+    "Home page": "Home page",
+    "Enter console": "Enter console",
+    "Loading groups…": "Loading groups…",
+    "No traffic in the last hour": "No traffic in the last hour",
+    "Click to view this group →": "Click to view this group →",
+    "View models →": "View models →",
+    "Compatible with": "Compatible with",
+    "Endpoint list separator": "Endpoint list separator",
+    "and other common endpoints": "and other common endpoints",
+    "Hello": "Hello",
+    "API Reference": "API Reference",
+    "Terms of Service": "Terms of Service",
+    "Status page · All operational": "Status page · All operational",
+    "Status page · {{count}} services degraded": "Status page · {{count}} services degraded",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square",
+    "Model count column": "Model count column"
   }
 }

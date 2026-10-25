@@ -177,6 +177,7 @@ export interface UptimeMonitor {
 
 export interface UptimeGroupResult {
   categoryName: string
+  url?: string
   monitors: UptimeMonitor[]
 }
 

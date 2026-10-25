@@ -7664,6 +7664,22 @@
     "Ranking period this year": "Cette année",
     "Ranking category marketing": "Marketing",
     "Ranking category productivity": "Productivité",
-    "Token share": "Part"
+    "Token share": "Part",
+    "Home page": "Accueil",
+    "Enter console": "Console",
+    "Loading groups…": "Chargement des groupes…",
+    "No traffic in the last hour": "Aucune requête depuis une heure",
+    "Click to view this group →": "Cliquez pour voir ce groupe →",
+    "View models →": "Voir les modèles →",
+    "Compatible with": "Compatible avec",
+    "Endpoint list separator": ", ",
+    "and other common endpoints": "et d'autres endpoints courants",
+    "Hello": "Bonjour",
+    "API Reference": "Référence API",
+    "Terms of Service": "Conditions d'utilisation",
+    "Status page · All operational": "Statut · Tout fonctionne",
+    "Status page · {{count}} services degraded": "Statut · {{count}} en anomalie",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Les requêtes clientes sont routées par la passerelle vers chaque groupe ; survolez un groupe pour voir ses modèles, cliquez pour ouvrir le catalogue",
+    "Model count column": "Modèles"
   }
 }

@@ -7664,6 +7664,22 @@
     "Ranking period this year": "Этот год",
     "Ranking category marketing": "Маркетинг",
     "Ranking category productivity": "Продуктивность",
-    "Token share": "Доля"
+    "Token share": "Доля",
+    "Home page": "Главная",
+    "Enter console": "Консоль",
+    "Loading groups…": "Загрузка групп…",
+    "No traffic in the last hour": "Нет запросов за последний час",
+    "Click to view this group →": "Нажмите, чтобы открыть группу →",
+    "View models →": "Модели →",
+    "Compatible with": "Совместимо с",
+    "Endpoint list separator": ", ",
+    "and other common endpoints": "и другими распространёнными эндпоинтами",
+    "Hello": "Привет",
+    "API Reference": "Справочник API",
+    "Terms of Service": "Условия использования",
+    "Status page · All operational": "Статус · Всё работает",
+    "Status page · {{count}} services degraded": "Статус · сбоев: {{count}}",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Запросы клиентов маршрутизируются шлюзом по группам; наведите на группу, чтобы увидеть модели, нажмите, чтобы открыть каталог",
+    "Model count column": "Моделей"
   }
 }

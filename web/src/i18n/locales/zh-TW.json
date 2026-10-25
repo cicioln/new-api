@@ -7664,6 +7664,22 @@
     "Ranking period this year": "今年",
     "Ranking category marketing": "行銷",
     "Ranking category productivity": "效率",
-    "Token share": "份額"
+    "Token share": "份額",
+    "Home page": "首頁",
+    "Enter console": "進入控制台",
+    "Loading groups…": "正在載入分組…",
+    "No traffic in the last hour": "近 1 小時無請求",
+    "Click to view this group →": "點擊查看該分組模型 →",
+    "View models →": "查看模型 →",
+    "Compatible with": "相容",
+    "Endpoint list separator": "、",
+    "and other common endpoints": "等常用端點",
+    "Hello": "你好",
+    "API Reference": "API 參考",
+    "Terms of Service": "服務條款",
+    "Status page · All operational": "狀態頁 · 全部正常",
+    "Status page · {{count}} services degraded": "狀態頁 · {{count}} 個服務異常",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "用戶端請求經閘道按分組路由，懸停分組查看模型，點擊進入模型廣場",
+    "Model count column": "模型數"
   }
 }

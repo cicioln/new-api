@@ -149,7 +149,7 @@ export function About() {
       <PublicLayout showMainContainer={false}>
         <iframe
           src={rawContent}
-          className='mt-16 h-[calc(100vh-4rem)] w-full border-0'
+          className='h-[calc(100vh-61px)] w-full border-0'
           title={t('About')}
           sandbox='allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts'
         />

@@ -7664,6 +7664,22 @@
     "Ranking period this year": "Năm nay",
     "Ranking category marketing": "Tiếp thị",
     "Ranking category productivity": "Năng suất",
-    "Token share": "Thị phần"
+    "Token share": "Thị phần",
+    "Home page": "Trang chủ",
+    "Enter console": "Vào bảng điều khiển",
+    "Loading groups…": "Đang tải nhóm…",
+    "No traffic in the last hour": "Không có yêu cầu trong 1 giờ qua",
+    "Click to view this group →": "Nhấn để xem nhóm này →",
+    "View models →": "Xem mô hình →",
+    "Compatible with": "Tương thích",
+    "Endpoint list separator": ", ",
+    "and other common endpoints": "và các endpoint phổ biến khác",
+    "Hello": "Xin chào",
+    "API Reference": "Tài liệu API",
+    "Terms of Service": "Điều khoản dịch vụ",
+    "Status page · All operational": "Trạng thái · Tất cả bình thường",
+    "Status page · {{count}} services degraded": "Trạng thái · {{count}} dịch vụ bất thường",
+    "Client requests are routed by the gateway to each group; hover a group to see its models and click to open the model square": "Yêu cầu từ client được cổng định tuyến theo nhóm; di chuột để xem mô hình, nhấn để mở danh mục mô hình",
+    "Model count column": "Số mô hình"
   }
 }
