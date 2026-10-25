@@ -25,6 +25,7 @@ import { SectionPageLayout } from '@/components/layout'
 
 import { useSystemOptions, getOptionValue } from '../hooks/use-system-options'
 import type { SystemOption } from '../types'
+import { SettingsNav } from './settings-nav'
 import { SettingsPageProvider } from './settings-page-context'
 
 type SettingsPageProps<
@@ -42,6 +43,8 @@ type SettingsPageProps<
   ) => ReactNode
   getSectionMeta: (sectionId: TSectionId) => {
     titleKey: string
+    cardTitleKey?: string
+    descriptionKey?: string
   }
   extraArgs?: TExtraArgs
   loadingMessage?: string
@@ -53,10 +56,12 @@ type SettingsPageProps<
 
 type SettingsPageFrameProps = {
   title: ReactNode
+  description?: ReactNode
   children: ReactNode
 }
 
 function SettingsPageFrame(props: SettingsPageFrameProps) {
+  const { t } = useTranslation()
   const [actionsContainer, setActionsContainer] =
     useState<HTMLDivElement | null>(null)
   const [titleStatusContainer, setTitleStatusContainer] =
@@ -69,23 +74,39 @@ function SettingsPageFrame(props: SettingsPageFrameProps) {
     >
       <SectionPageLayout>
         <SectionPageLayout.Title>
-          <span className='inline-flex max-w-full min-w-0 items-center gap-2 align-middle'>
-            <span className='truncate'>{props.title}</span>
-            <span
-              ref={setTitleStatusContainer}
-              className='inline-flex min-w-0 shrink-0 items-center'
-            />
-          </span>
+          {t('System Settings')}
         </SectionPageLayout.Title>
-        <SectionPageLayout.Actions>
-          <div
-            ref={setActionsContainer}
-            className='flex flex-wrap items-center justify-end gap-2'
-          />
-        </SectionPageLayout.Actions>
+        <SectionPageLayout.Description>
+          {t(
+            'Changes take effect immediately after saving, no restart needed.'
+          )}
+        </SectionPageLayout.Description>
         <SectionPageLayout.Content>
-          <div className='flex h-full min-h-0 w-full flex-col gap-4'>
-            {props.children}
+          <div className='grid items-start gap-6 lg:grid-cols-[200px_minmax(0,1fr)]'>
+            <SettingsNav />
+            <div className='min-w-0'>
+              <section className='bg-card min-w-0 rounded-lg border p-[18px]'>
+                <div className='flex items-center justify-between gap-2'>
+                  <h3 className='text-sm font-semibold'>{props.title}</h3>
+                  <span
+                    ref={setTitleStatusContainer}
+                    className='inline-flex min-w-0 shrink-0 items-center'
+                  />
+                </div>
+                {props.description != null && (
+                  <p className='text-subtle-foreground mt-0.5 text-[12.5px]'>
+                    {props.description}
+                  </p>
+                )}
+                <div className='mt-3.5 flex min-w-0 flex-col gap-4'>
+                  {props.children}
+                </div>
+              </section>
+              <div
+                ref={setActionsContainer}
+                className='mt-3.5 flex flex-wrap items-center justify-end gap-2 empty:hidden'
+              />
+            </div>
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
@@ -117,6 +138,10 @@ export function SettingsPage<
   const params = useParams({ from: routePath as any })
   const activeSection = (params?.section ?? defaultSection) as TSectionId
   const sectionMeta = getSectionMeta(activeSection)
+  const cardTitle = t(sectionMeta.cardTitleKey ?? sectionMeta.titleKey)
+  const cardDescription = sectionMeta.descriptionKey
+    ? t(sectionMeta.descriptionKey)
+    : undefined
 
   const settings = useMemo(() => {
     const baseSettings = getOptionValue(
@@ -130,7 +155,7 @@ export function SettingsPage<
 
   if (isLoading) {
     return (
-      <SettingsPageFrame title={t(sectionMeta.titleKey)}>
+      <SettingsPageFrame title={cardTitle} description={cardDescription}>
         <div className='text-muted-foreground flex min-h-40 items-center justify-center text-sm'>
           {t(loadingMessage)}
         </div>
@@ -140,7 +165,7 @@ export function SettingsPage<
 
   if (isError && !data) {
     return (
-      <SettingsPageFrame title={t(sectionMeta.titleKey)}>
+      <SettingsPageFrame title={cardTitle} description={cardDescription}>
         <ErrorState
           title={t('Failed to load settings')}
           onRetry={() => void refetch()}
@@ -156,7 +181,7 @@ export function SettingsPage<
   )
 
   return (
-    <SettingsPageFrame title={t(sectionMeta.titleKey)}>
+    <SettingsPageFrame title={cardTitle} description={cardDescription}>
       {sectionContent}
     </SettingsPageFrame>
   )

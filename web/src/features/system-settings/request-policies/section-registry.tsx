@@ -26,6 +26,7 @@ const POLICY_SECTIONS = [
   {
     id: 'filtering',
     titleKey: 'Request checks',
+    descriptionKey: 'Checks run on requests before forwarding.',
     build: (settings: RequestPolicySettings) => (
       <RequestChecksSection
         defaultValues={{
@@ -39,11 +40,13 @@ const POLICY_SECTIONS = [
   {
     id: 'routing',
     titleKey: 'Sessions and retries',
+    descriptionKey: 'Retries on failure and channel affinity.',
     build: () => <RoutingPolicySection />,
   },
   {
     id: 'health',
     titleKey: 'Channel health',
+    descriptionKey: 'Channel health checks.',
     build: (settings: RequestPolicySettings) => (
       <ChannelHealthSection defaultValues={settings} />
     ),

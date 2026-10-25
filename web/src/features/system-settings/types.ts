@@ -147,8 +147,6 @@ export type SiteSettings = {
   Footer: string
   About: string
   HomePageContent: string
-  ServerAddress: string
-  TaskPublicAddress: string
   'general_setting.docs_link': string
   'legal.user_agreement': string
   'legal.privacy_policy': string
@@ -361,6 +359,8 @@ export type OperationsSettings = {
   DefaultCollapseSidebar: boolean
   DemoSiteEnabled: boolean
   SelfUseModeEnabled: boolean
+  ServerAddress: string
+  TaskPublicAddress: string
   QuotaRemindThreshold: string
   SMTPServer: string
   SMTPPort: string

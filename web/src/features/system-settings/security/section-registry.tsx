@@ -26,6 +26,7 @@ const SECURITY_SECTIONS = [
   {
     id: 'rate-limit',
     titleKey: 'Rate Limiting',
+    descriptionKey: 'Rate limits per IP and per user.',
     build: (settings: SecuritySettings) => (
       <RateLimitSection
         defaultValues={{
@@ -44,6 +45,8 @@ const SECURITY_SECTIONS = [
   {
     id: 'ssrf',
     titleKey: 'SSRF Protection',
+    descriptionKey:
+      'Restrict the addresses the server may access to prevent SSRF.',
     build: (settings: SecuritySettings) => (
       <SSRFSection
         defaultValues={{
@@ -68,6 +71,7 @@ const SECURITY_SECTIONS = [
   {
     id: 'token-limits',
     titleKey: 'Token Limits',
+    descriptionKey: 'Limits on how many API keys each user can create.',
     build: (settings: SecuritySettings) => (
       <TokenLimitSection
         defaultValues={{

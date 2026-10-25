@@ -210,7 +210,7 @@ describe('Passkey website guidance', () => {
       screen.getByRole('textbox', { name: 'Passkey display name' }),
       ' changed'
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     const dialog = await screen.findByRole('alertdialog')
     expect(
       await within(dialog).findByText(
@@ -298,7 +298,7 @@ describe('Passkey website guidance', () => {
       screen.getByRole('textbox', { name: 'Allowed Passkey websites' })
     ).toHaveValue('https://example.com\nhttps://api.example.com')
     expect(put).not.toHaveBeenCalled()
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() =>
       expect(put).toHaveBeenCalledWith(
         '/api/option/passkey/domains',
@@ -411,7 +411,7 @@ describe('Passkey website guidance', () => {
       screen.getByRole('textbox', { name: 'Primary Passkey domain' }),
       window.location.hostname
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await user.click(screen.getByRole('button', { name: 'Why set this?' }))
     const fill = screen.getByRole('button', { name: 'Keep existing domain' })
     expect(fill).toBeDisabled()
@@ -465,7 +465,7 @@ describe('Passkey website guidance', () => {
       screen.getByRole('textbox', { name: 'Primary Passkey domain' }),
       'example.com'
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Change the Passkey domain?',
     })
@@ -477,7 +477,7 @@ describe('Passkey website guidance', () => {
     expect(put.mock.calls[0]?.[1]).toMatchObject({ preview: true })
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     expect(put).toHaveBeenCalledTimes(1)
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await user.click(
       await screen.findByRole('button', { name: 'Change domain' })
     )
@@ -515,7 +515,7 @@ describe('Passkey website guidance', () => {
     await user.clear(
       screen.getByRole('textbox', { name: 'Primary Passkey domain' })
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Change the Passkey domain?',
     })
@@ -534,7 +534,7 @@ describe('Passkey website guidance', () => {
       screen.getByRole('textbox', { name: 'Primary Passkey domain' }),
       'example.com'
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     expect(await screen.findByRole('alertdialog')).toHaveTextContent(
       `Current domain: ${window.location.hostname}`
     )
@@ -556,7 +556,7 @@ describe('Passkey website guidance', () => {
     })
     await user.clear(input)
     await user.type(input, 'example.com')
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await user.click(
       await screen.findByRole('button', { name: 'Change domain' })
     )
@@ -606,7 +606,7 @@ describe('Passkey website guidance', () => {
     await user.clear(
       screen.getByRole('textbox', { name: 'Compatible Passkey domains' })
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     const dialog = await screen.findByRole('alertdialog', {
       name: 'Remove compatible Passkey domains?',
     })

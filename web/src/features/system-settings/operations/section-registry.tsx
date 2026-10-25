@@ -30,12 +30,15 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'behavior',
     titleKey: 'System Behavior',
+    descriptionKey: 'Switches that affect the whole site.',
     build: (settings: OperationsSettings) => (
       <SystemBehaviorSection
         defaultValues={{
           DefaultCollapseSidebar: settings.DefaultCollapseSidebar,
           DemoSiteEnabled: settings.DemoSiteEnabled,
           SelfUseModeEnabled: settings.SelfUseModeEnabled,
+          ServerAddress: settings.ServerAddress ?? '',
+          TaskPublicAddress: settings.TaskPublicAddress ?? '',
         }}
       />
     ),
@@ -43,6 +46,7 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'alerts',
     titleKey: 'Monitoring & Alerts',
+    descriptionKey: 'Quota reminders and performance metric collection.',
     build: (settings: OperationsSettings) => (
       <MonitoringSettingsSection
         defaultValues={{
@@ -62,6 +66,7 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'email',
     titleKey: 'SMTP Email',
+    descriptionKey: 'Verification codes, password resets and alert emails.',
     build: (settings: OperationsSettings) => (
       <EmailSettingsSection
         defaultValues={{
@@ -81,6 +86,8 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'worker',
     titleKey: 'Worker Proxy',
+    descriptionKey:
+      'Reach upstreams through a Worker proxy, used for image downloads and more.',
     build: (settings: OperationsSettings) => (
       <WorkerSettingsSection
         defaultValues={{
@@ -95,6 +102,7 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'logs',
     titleKey: 'Log Maintenance',
+    descriptionKey: 'Retention and cleanup of usage logs.',
     build: (settings: OperationsSettings) => (
       <LogSettingsSection
         defaultValues={{
@@ -110,6 +118,7 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'performance',
     titleKey: 'Performance',
+    descriptionKey: 'Disk cache and system resource monitoring.',
     build: (settings: OperationsSettings) => (
       <PerformanceSection
         defaultValues={{
@@ -136,6 +145,7 @@ const OPERATIONS_SECTIONS = [
   {
     id: 'update-checker',
     titleKey: 'System maintenance',
+    descriptionKey: 'Current version, uptime and update checks.',
     build: (
       _settings: OperationsSettings,
       currentVersion?: string | null,

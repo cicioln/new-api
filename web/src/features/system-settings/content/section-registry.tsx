@@ -41,6 +41,7 @@ const CONTENT_SECTIONS = [
   {
     id: 'dashboard',
     titleKey: 'Data Dashboard',
+    descriptionKey: 'The data dashboard in the console overview.',
     build: (settings: ContentSettings) => (
       <DashboardSection
         defaultValues={{
@@ -56,6 +57,7 @@ const CONTENT_SECTIONS = [
   {
     id: 'announcements',
     titleKey: 'Announcements',
+    descriptionKey: 'The announcement list on the right of the overview page.',
     build: (settings: ContentSettings) => (
       <AnnouncementsSection
         enabled={settings['console_setting.announcements_enabled']}
@@ -66,6 +68,8 @@ const CONTENT_SECTIONS = [
   {
     id: 'api-info',
     titleKey: 'API Addresses',
+    descriptionKey:
+      'Shown on the overview page so users can copy the endpoint.',
     build: (settings: ContentSettings) => (
       <ApiInfoSection
         enabled={settings['console_setting.api_info_enabled']}
@@ -76,6 +80,7 @@ const CONTENT_SECTIONS = [
   {
     id: 'faq',
     titleKey: 'FAQ',
+    descriptionKey: 'Frequently asked questions shown on the overview page.',
     build: (settings: ContentSettings) => (
       <FAQSection
         enabled={settings['console_setting.faq_enabled']}
@@ -86,6 +91,8 @@ const CONTENT_SECTIONS = [
   {
     id: 'uptime-kuma',
     titleKey: 'Uptime Kuma',
+    descriptionKey:
+      'The "Status" link in the footer and the availability card in the overview.',
     build: (settings: ContentSettings) => (
       <UptimeKumaSection
         enabled={settings['console_setting.uptime_kuma_enabled']}
@@ -96,6 +103,7 @@ const CONTENT_SECTIONS = [
   {
     id: 'chat',
     titleKey: 'Chat Presets',
+    descriptionKey: 'Client presets used by the Chat page and chat2link.',
     build: (settings: ContentSettings) => (
       <ChatSettingsSection defaultValue={settings.Chats} />
     ),
@@ -103,6 +111,7 @@ const CONTENT_SECTIONS = [
   {
     id: 'drawing',
     titleKey: 'Drawing',
+    descriptionKey: 'Default parameters for drawing tasks.',
     build: (settings: ContentSettings) => (
       <DrawingSettingsSection
         defaultValues={{

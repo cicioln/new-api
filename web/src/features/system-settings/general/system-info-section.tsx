@@ -44,12 +44,9 @@ import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useSettingsForm } from '../hooks/use-settings-form'
 import { useUpdateOption } from '../hooks/use-update-option'
-import { isValidTaskPublicAddress } from './task-public-address'
 
 const _systemInfoSchema = z.object({
   SystemName: z.string().min(1),
-  ServerAddress: z.string().optional(),
-  TaskPublicAddress: z.string().refine(isValidTaskPublicAddress),
   Logo: z.string().url().optional().or(z.literal('')),
   Footer: z.string().optional(),
   About: z.string().optional(),
@@ -69,6 +66,11 @@ type SystemInfoSectionProps = {
   defaultValues: SystemInfoFormValues
 }
 
+const inputClassName = 'h-10 px-3'
+const textareaClassName =
+  'field-sizing-fixed h-24 px-3 py-2.5 font-mono text-[12.5px] leading-normal md:text-[12.5px]'
+const labelClassName = 'text-[13px] font-medium'
+
 function normalizeValue(value: unknown): string {
   if (value === undefined || value === null) return ''
   return typeof value === 'string' ? value : String(value)
@@ -80,8 +82,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
 
   const normalizedDefaults: SystemInfoFormValues = {
     SystemName: normalizeValue(defaultValues.SystemName),
-    ServerAddress: normalizeValue(defaultValues.ServerAddress),
-    TaskPublicAddress: normalizeValue(defaultValues.TaskPublicAddress),
     Logo: normalizeValue(defaultValues.Logo),
     Footer: normalizeValue(defaultValues.Footer),
     About: normalizeValue(defaultValues.About),
@@ -98,13 +98,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
   const systemInfoSchemaWithI18n = z.object({
     SystemName: z.string().min(1, {
       error: () => t('System name is required'),
-    }),
-    ServerAddress: z.string().optional(),
-    TaskPublicAddress: z.string().refine(isValidTaskPublicAddress, {
-      error: () =>
-        t(
-          'Enter an absolute HTTP(S) URL without credentials, query parameters, or fragments'
-        ),
     }),
     Logo: z.string().url().optional().or(z.literal('')),
     Footer: z.string().optional(),
@@ -129,13 +122,9 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
       defaultValues: normalizedDefaults,
       onSubmit: async (_data, changedFields) => {
         for (const [key, value] of Object.entries(changedFields)) {
-          let v = normalizeValue(value)
-          if (key === 'ServerAddress' || key === 'TaskPublicAddress') {
-            v = v.replace(/\/+$/, '')
-          }
           await updateOption.mutateAsync({
             key,
-            value: v,
+            value: normalizeValue(value),
           })
         }
       },
@@ -145,7 +134,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
     <>
       <FormNavigationGuard when={isDirty} />
 
-      <SettingsSection title={t('System Information')}>
+      <SettingsSection title={t('Brand & Content')}>
         <Form {...form}>
           <SettingsForm onSubmit={handleSubmit}>
             <SettingsPageFormActions
@@ -155,60 +144,22 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
               isResetDisabled={!isDirty}
             />
             <FormDirtyIndicator isDirty={isDirty} />
-            <SettingsFormGrid>
+            <SettingsFormGrid className='gap-y-3.5'>
               <FormField
                 control={form.control}
                 name='SystemName'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('System Name')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t('New API')} {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      {t('The name displayed across the application')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='ServerAddress'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Server Address')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder='https://yourdomain.com' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      {t(
-                        'The public URL of your server, used for OAuth callbacks, webhooks, and other external integrations'
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='TaskPublicAddress'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Async Task Public Address')}</FormLabel>
+                    <FormLabel className={labelClassName}>
+                      {t('System Name')}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder='https://media.example.com/tasks'
+                        className={inputClassName}
+                        placeholder='New API'
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t(
-                        'Public base URL for async task media. Supports a dedicated media domain, port, or Nginx path prefix; falls back to Server Address when empty.'
-                      )}
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -219,84 +170,18 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                 name='Logo'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('Logo URL')}</FormLabel>
+                    <FormLabel className={labelClassName}>
+                      {t('Logo address')}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder={t('https://example.com/logo.png')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('URL to your logo image (optional)')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='general_setting.docs_link'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Documentation Link')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('https://docs.example.com')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('Link to your documentation site')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='Footer'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Footer')}</FormLabel>
-                    <FormControl>
-                      <Textarea
+                        className={inputClassName}
                         placeholder={t(
-                          '© 2025 Your Company. All rights reserved.'
+                          'https://…/logo.png, leave empty to use the default logo'
                         )}
-                        rows={4}
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t('Footer text displayed at the bottom of pages')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='About'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('About')}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t(
-                          'Enter HTML code (e.g., <p>About us...</p>) or a URL (e.g., https://example.com) to embed as iframe'
-                        )}
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t(
-                        'Supports HTML markup or iframe embedding. Enter HTML code directly, or provide a complete URL to automatically embed it as an iframe.'
-                      )}
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -308,19 +193,45 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                   name='HomePageContent'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Home Page Content')}</FormLabel>
+                      <FormLabel className={labelClassName}>
+                        {t('Home Page Content')}
+                      </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder={t('Welcome to our New API...')}
-                          rows={6}
+                          className={textareaClassName}
+                          placeholder={t(
+                            'Leave empty for the default home page; HTML / Markdown replaces it; an address starting with https:// is embedded as an iframe'
+                          )}
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        {t(
-                          'Content displayed on the home page (supports Markdown)'
-                        )}
+                      <FormDescription className='text-subtle-foreground text-xs'>
+                        {t('Maps to home_page_content')}
                       </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </SettingsFormGridItem>
+
+              <SettingsFormGridItem span='full'>
+                <FormField
+                  control={form.control}
+                  name='Footer'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClassName}>
+                        {t('Footer HTML')}
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className={textareaClassName}
+                          placeholder={t(
+                            'Leave empty to use the default footer'
+                          )}
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -329,24 +240,63 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
 
               <FormField
                 control={form.control}
-                name='legal.user_agreement'
+                name='general_setting.docs_link'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('User Agreement')}</FormLabel>
+                    <FormLabel className={labelClassName}>
+                      {t('Docs address')}
+                    </FormLabel>
                     <FormControl>
-                      <Textarea
+                      <Input
+                        className={inputClassName}
                         placeholder={t(
-                          'Provide Markdown, HTML, or an external URL for the user agreement'
+                          'When set, the top bar shows a Docs link'
                         )}
-                        rows={6}
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t(
-                        'Leave empty to disable the agreement requirement. Supports Markdown, HTML, or a full URL to redirect users.'
-                      )}
-                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='About'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={labelClassName}>
+                      {t('About page content')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputClassName}
+                        placeholder={t('Markdown / HTML or URL')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='legal.user_agreement'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={labelClassName}>
+                      {t('User Agreement')}
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputClassName}
+                        placeholder={t(
+                          'Markdown / HTML or URL, leave empty to skip'
+                        )}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -357,21 +307,18 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                 name='legal.privacy_policy'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('Privacy Policy')}</FormLabel>
+                    <FormLabel className={labelClassName}>
+                      {t('Privacy Policy')}
+                    </FormLabel>
                     <FormControl>
-                      <Textarea
+                      <Input
+                        className={inputClassName}
                         placeholder={t(
-                          'Provide Markdown, HTML, or an external URL for the privacy policy'
+                          'Markdown / HTML or URL, leave empty to skip'
                         )}
-                        rows={6}
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      {t(
-                        'Leave empty to disable the privacy policy requirement. Supports Markdown, HTML, or a full URL to redirect users.'
-                      )}
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

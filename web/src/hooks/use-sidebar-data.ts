@@ -200,7 +200,7 @@ export function useSidebarData(): SidebarData {
           {
             title: t('System Settings'),
             url: '/system-settings/site',
-            activeUrls: ['/system-settings'],
+            activePathPrefix: '/system-settings',
             icon: Cog,
             requiredRole: ROLE.SUPER_ADMIN,
           },

@@ -95,7 +95,7 @@ test.each(['0.5', '1.5', '2.5', '0.0001'])(
     await user.tab()
     expect(input).toHaveValue(Number(value))
     expect(input).toBeValid()
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() =>
       expect(api.put).toHaveBeenCalledWith('/api/option/', {
         key: 'quota_setting.pre_consume_multiplier',
@@ -110,7 +110,7 @@ test.each(['0', '-0.5', ''])(
   async (value) => {
     const input = await renderSettings()
     fireEvent.change(input, { target: { value } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'))
     expect(screen.getByText('Must be greater than 0')).toBeInTheDocument()
     expect(api.put).not.toHaveBeenCalled()
@@ -123,7 +123,7 @@ test('zero threshold disables bypass and saves as zero', async () => {
     name: 'Wallet pre-consume bypass threshold (USD)',
   })
   fireEvent.change(input, { target: { value: '0' } })
-  fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() =>
     expect(api.put).toHaveBeenCalledWith('/api/option/', {
       key: 'quota_setting.trust_quota_usd',
@@ -140,7 +140,7 @@ test.each(['', '-1'])(
       name: 'Wallet pre-consume bypass threshold (USD)',
     })
     fireEvent.change(input, { target: { value } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'))
     expect(api.put).not.toHaveBeenCalled()
   }

@@ -33,6 +33,9 @@ const SITE_SECTIONS = [
   {
     id: 'system-info',
     titleKey: 'System Information',
+    cardTitleKey: 'Brand & Content',
+    descriptionKey:
+      'Name and logo appear in the top bar, sidebar, footer, sign-in page and browser title.',
     build: (settings: SiteSettings) => (
       <SystemInfoSection
         defaultValues={{
@@ -41,8 +44,6 @@ const SITE_SECTIONS = [
           Footer: settings.Footer,
           About: settings.About,
           HomePageContent: settings.HomePageContent,
-          ServerAddress: settings.ServerAddress,
-          TaskPublicAddress: settings.TaskPublicAddress,
           general_setting: {
             docs_link: settings['general_setting.docs_link'],
           },
@@ -57,6 +58,8 @@ const SITE_SECTIONS = [
   {
     id: 'notice',
     titleKey: 'System Notice',
+    descriptionKey:
+      'Shown at the top of the console and in the notice popup. Supports Markdown.',
     build: (settings: SiteSettings) => (
       <NoticeSection defaultValue={settings.Notice ?? ''} />
     ),
@@ -64,6 +67,9 @@ const SITE_SECTIONS = [
   {
     id: 'header-navigation',
     titleKey: 'Header navigation',
+    cardTitleKey: 'Top bar modules',
+    descriptionKey:
+      'Maps to HeaderNavModules. Disabled entries are hidden from the top bar and return 403 when opened directly; with "Requires login", visitors are sent to the sign-in page.',
     build: (settings: SiteSettings) => {
       const headerNavConfig = parseHeaderNavModules(settings.HeaderNavModules)
       const headerNavSerialized = serializeHeaderNavModules(headerNavConfig)
@@ -78,6 +84,8 @@ const SITE_SECTIONS = [
   {
     id: 'sidebar-modules',
     titleKey: 'Sidebar modules',
+    descriptionKey:
+      'Admins can hide modules from the user sidebar; users can hide more in Profile.',
     build: (settings: SiteSettings) => {
       const sidebarConfig = parseSidebarModulesAdmin(
         settings.SidebarModulesAdmin

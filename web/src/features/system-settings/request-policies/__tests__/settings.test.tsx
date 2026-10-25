@@ -188,10 +188,10 @@ afterEach(() => {
 
 describe('request policy settings', () => {
   it.each([
-    ['retry', 'Save Changes'],
-    ['health', 'Save Changes'],
+    ['retry', 'Save Settings'],
+    ['health', 'Save Settings'],
     ['filtering', 'Save sensitive words'],
-    ['affinity', 'Save Changes'],
+    ['affinity', 'Save Settings'],
   ])(
     'opening %s and saving unchanged values does not write options',
     async (section, saveLabel) => {
@@ -220,7 +220,7 @@ describe('request policy settings', () => {
         target: { value: input },
       })
       await userEvent.click(
-        screen.getByRole('button', { name: 'Save Changes' })
+        screen.getByRole('button', { name: 'Save Settings' })
       )
       await waitFor(() =>
         expect(api.patch).toHaveBeenCalledExactlyOnceWith(
@@ -276,7 +276,7 @@ describe('request policy settings', () => {
       screen.queryByRole('button', { name: 'Advanced settings' })
     ).not.toBeInTheDocument()
     fireEvent.change(codes, { target: { value: '599-500' } })
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     expect(codes).toHaveAttribute('aria-invalid', 'true')
     expect(api.put).not.toHaveBeenCalled()
   })
@@ -290,12 +290,14 @@ describe('request policy settings', () => {
       name: 'Maximum retries',
     })
     fireEvent.change(retries, { target: { value: '4' } })
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled()
+      expect(
+        screen.getByRole('button', { name: 'Save Settings' })
+      ).toBeEnabled()
     )
     expect(retries).toHaveValue(4)
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(2))
   })
 

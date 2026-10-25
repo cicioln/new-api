@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
+import i18next from 'i18next'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import * as z from 'zod'
@@ -26,8 +27,11 @@ import {
   FormControl,
   FormDescription,
   FormField,
+  FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 
 import {
@@ -39,11 +43,19 @@ import { SettingsPageFormActions } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useResetForm } from '../hooks/use-reset-form'
 import { useUpdateOption } from '../hooks/use-update-option'
+import { isValidTaskPublicAddress } from './task-public-address'
 
 const behaviorSchema = z.object({
   DefaultCollapseSidebar: z.boolean(),
   DemoSiteEnabled: z.boolean(),
   SelfUseModeEnabled: z.boolean(),
+  ServerAddress: z.string(),
+  TaskPublicAddress: z.string().refine(isValidTaskPublicAddress, {
+    error: () =>
+      i18next.t(
+        'Enter an absolute HTTP(S) URL without credentials, query parameters, or fragments'
+      ),
+  }),
 })
 
 type BehaviorFormValues = z.infer<typeof behaviorSchema>
@@ -71,7 +83,9 @@ export function SystemBehaviorSection({
     )
 
     for (const [key, value] of updates) {
-      await updateOption.mutateAsync({ key, value })
+      // Addresses are stored without a trailing slash
+      const next = typeof value === 'string' ? value.replace(/\/+$/, '') : value
+      await updateOption.mutateAsync({ key, value: next })
     }
   }
 
@@ -83,6 +97,47 @@ export function SystemBehaviorSection({
             onSave={form.handleSubmit(onSubmit)}
             isSaving={updateOption.isPending}
           />
+          <FormField
+            control={form.control}
+            name='ServerAddress'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Server Address')}</FormLabel>
+                <FormControl>
+                  <Input placeholder='https://yourdomain.com' {...field} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The public URL of your server, used for OAuth callbacks, webhooks, and other external integrations'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='TaskPublicAddress'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Async Task Public Address')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder='https://media.example.com/tasks'
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Public base URL for async task media. Supports a dedicated media domain, port, or Nginx path prefix; falls back to Server Address when empty.'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name='DefaultCollapseSidebar'

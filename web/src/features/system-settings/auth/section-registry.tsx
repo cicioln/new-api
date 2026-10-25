@@ -28,6 +28,9 @@ const AUTH_SECTIONS = [
   {
     id: 'basic-auth',
     titleKey: 'Basic Authentication',
+    cardTitleKey: 'Login & Registration',
+    descriptionKey:
+      'The sign-in page only shows enabled methods; the "or use your account" divider is hidden when all third-party sign-in is off.',
     build: (settings: AuthSettings) => (
       <BasicAuthSection
         defaultValues={{
@@ -45,6 +48,8 @@ const AUTH_SECTIONS = [
   {
     id: 'oauth',
     titleKey: 'OAuth Integrations',
+    descriptionKey:
+      "Fill in each platform's Client ID / Secret, then enable the sign-in method in Basic Authentication.",
     build: (settings: AuthSettings) => (
       <OAuthSection
         serverAddress={settings.ServerAddress}
@@ -81,7 +86,8 @@ const AUTH_SECTIONS = [
   },
   {
     id: 'passkey',
-    titleKey: 'Passkey Authentication',
+    titleKey: 'Passkey',
+    descriptionKey: 'WebAuthn passkeys for sign-in and two-step verification.',
     build: (settings: AuthSettings) => (
       <PasskeySection
         defaultValues={{
@@ -105,6 +111,7 @@ const AUTH_SECTIONS = [
   {
     id: 'bot-protection',
     titleKey: 'Bot Protection',
+    descriptionKey: 'Checked on sign-in, sign-up and password recovery.',
     build: (settings: AuthSettings) => (
       <BotProtectionSection
         defaultValues={{
@@ -118,6 +125,7 @@ const AUTH_SECTIONS = [
   {
     id: 'custom-oauth',
     titleKey: 'Custom OAuth',
+    descriptionKey: 'Connect any OIDC-compatible identity provider.',
     build: (settings: AuthSettings) => (
       <CustomOAuthSection serverAddress={settings.ServerAddress} />
     ),

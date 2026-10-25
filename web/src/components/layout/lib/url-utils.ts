@@ -65,6 +65,14 @@ export function checkIsActive(
     return true
   }
 
+  if (
+    item.activePathPrefix &&
+    (hrefWithoutQuery === item.activePathPrefix ||
+      hrefWithoutQuery.startsWith(`${item.activePathPrefix}/`))
+  ) {
+    return true
+  }
+
   // For collapsible items (NavCollapsible), check sub-items first
   if ('items' in item && item.items) {
     const collapsibleItem = item as NavCollapsible

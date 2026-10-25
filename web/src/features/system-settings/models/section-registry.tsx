@@ -38,6 +38,7 @@ const MODELS_SECTIONS = [
   {
     id: 'global',
     titleKey: 'Global Model Configuration',
+    descriptionKey: 'Request handling that applies to all models.',
     build: (settings: ModelSettings) => (
       <GlobalSettingsCard
         defaultValues={{
@@ -67,6 +68,7 @@ const MODELS_SECTIONS = [
   {
     id: 'gemini',
     titleKey: 'Gemini',
+    descriptionKey: 'Gemini-specific settings.',
     build: (settings: ModelSettings) => (
       <GeminiSettingsCard
         defaultValues={{
@@ -91,6 +93,7 @@ const MODELS_SECTIONS = [
   {
     id: 'claude',
     titleKey: 'Claude',
+    descriptionKey: 'Claude-specific settings.',
     build: (settings: ModelSettings) => (
       <ClaudeSettingsCard
         defaultValues={{
@@ -109,6 +112,7 @@ const MODELS_SECTIONS = [
   {
     id: 'grok',
     titleKey: 'Grok',
+    descriptionKey: 'Grok-specific settings.',
     build: (settings: ModelSettings) => (
       <GrokSettingsCard
         defaultValues={{
@@ -124,6 +128,7 @@ const MODELS_SECTIONS = [
   {
     id: 'model-deployment',
     titleKey: 'Model Deployment',
+    descriptionKey: 'Deployment platform for self-hosted models.',
     build: (settings: ModelSettings) => (
       <IoNetDeploymentSettingsSection
         defaultValues={{

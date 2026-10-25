@@ -171,7 +171,7 @@ it('opens global affinity settings and the complete rules table without switchin
       name: 'Keep the session binding when the channel is unavailable',
     })
   ).toBeVisible()
-  expect(screen.getAllByRole('button', { name: 'Save Changes' })).toHaveLength(
+  expect(screen.getAllByRole('button', { name: 'Save Settings' })).toHaveLength(
     1
   )
   expect(
@@ -214,7 +214,7 @@ it('editing a rule and retries saves one draft without dropping transforms or ex
   await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
   expect(api.patch).not.toHaveBeenCalled()
   expect(screen.getByRole('table')).toHaveTextContent('Renamed session')
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   const payload = vi.mocked(api.patch).mock.calls[0][1] as {
     options: Record<string, string>
@@ -283,7 +283,7 @@ it('keeps binding options available for rule overrides regardless of the global 
     })
   )
   expect(api.patch).not.toHaveBeenCalled()
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(vi.mocked(api.patch).mock.calls[0][1]).toEqual({
     options: {
@@ -309,11 +309,11 @@ it('a failed save retains the edited retries and rules for another save', async 
     target: { value: 'Unsaved rule' },
   })
   await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   expect(await screen.findByText('Save rejected')).toBeVisible()
   expect(retries).toHaveValue(5)
   expect(screen.getByRole('table')).toHaveTextContent('Unsaved rule')
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(2))
 })
 
@@ -365,7 +365,7 @@ it.each([
     expect(
       screen.queryByRole('radio', { name: 'Use per-rule settings' })
     ).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
     expect(vi.mocked(api.patch).mock.calls[0][1]).toEqual({
       options: { 'channel_affinity_setting.session_mode': mode },
@@ -403,7 +403,7 @@ it('switching between visual and JSON editing preserves the shared draft', async
       name: 'Maximum retries',
     })
   ).toHaveValue(7)
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(currentOptions.RetryTimes).toBe('7')
   expect(
@@ -437,7 +437,7 @@ it('editing a rule without a session mode saves the chosen override with the ret
     target: { value: 'Renamed rule' },
   })
   await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(currentOptions.RetryTimes).toBe('4')
   const savedRule = JSON.parse(
@@ -486,7 +486,7 @@ it('switches a rule between inheritance and override while preserving other rule
   expect(
     screen.getByRole('row', { name: /Session rule.*X-Session/ })
   ).toHaveTextContent('Require the original channel')
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(
     JSON.parse(currentOptions['channel_affinity_setting.rules'])[0].session_mode
@@ -514,7 +514,7 @@ it('switches a rule between inheritance and override while preserving other rule
   expect(
     screen.getByRole('radio', { name: 'Require the original channel' })
   ).toBeChecked()
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(2))
   expect(currentOptions['channel_affinity_setting.session_mode']).toBe('strict')
   const savedRules = JSON.parse(
@@ -577,7 +577,7 @@ it('refreshing settings preserves unsaved rule and retry edits', async () => {
     ).toHaveValue(120)
   )
   expect(screen.getByText('No rules yet')).toBeVisible()
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(vi.mocked(api.patch).mock.calls[0][1]).toEqual({
     options: { RetryTimes: '7', 'channel_affinity_setting.rules': '[]' },
@@ -597,7 +597,7 @@ it('disabling global affinity preserves every rule and saves zero retries as zer
       name: 'Enable session affinity',
     })
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   await waitFor(() => expect(api.patch).toHaveBeenCalledTimes(1))
   expect(vi.mocked(api.patch).mock.calls[0][1]).toEqual({
     options: { RetryTimes: '0', 'channel_affinity_setting.enabled': 'false' },
@@ -620,7 +620,7 @@ it('invalid JSON stays editable and prevents saving', async () => {
     'true'
   )
   expect(editor).toHaveValue('[')
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   expect(await screen.findByText('Invalid rules JSON format')).toBeVisible()
   expect(editor).toHaveValue('[')
   expect(api.patch).not.toHaveBeenCalled()
@@ -677,7 +677,7 @@ it('cancelling deletion from the rule menu leaves the rule in the draft', async 
   await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   expect(screen.getByRole('table')).toHaveTextContent('Session rule')
-  await userEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save Settings' }))
   expect(api.patch).not.toHaveBeenCalled()
 })
 

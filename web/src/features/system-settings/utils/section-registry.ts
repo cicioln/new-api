@@ -25,6 +25,10 @@ import type { ReactNode } from 'react'
 export type SectionDefinition<TSettings, TExtraArgs extends unknown[] = []> = {
   id: string
   titleKey: string
+  /** Card heading when it differs from the navigation label */
+  cardTitleKey?: string
+  /** One-line explanation shown under the card heading */
+  descriptionKey?: string
   build: (settings: TSettings, ...extraArgs: TExtraArgs) => ReactNode
 }
 

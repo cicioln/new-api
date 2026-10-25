@@ -28,6 +28,8 @@ type BaseNavItem = {
   icon?: React.ElementType
   activeUrls?: (LinkProps['to'] | (string & {}))[]
   configUrls?: (LinkProps['to'] | (string & {}))[]
+  /** Keep the item active for every path under this prefix */
+  activePathPrefix?: string
   /**
    * Minimum role required to see this item in the sidebar. When set, the item
    * is hidden for users whose role is below this threshold (see

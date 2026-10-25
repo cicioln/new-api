@@ -135,7 +135,7 @@ describe('OAuth settings saves', () => {
         screen.getByRole('textbox', { name: 'Client ID' }),
         'github-client'
       )
-      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+      await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
       await waitFor(() =>
         expect(api.put).toHaveBeenCalledWith('/api/option/', {
@@ -161,7 +161,7 @@ describe('OAuth settings saves', () => {
     await renderSettings({
       'oidc.well_known': 'provider.example.com/discovery',
     })
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     expect(infoToast).toHaveBeenCalledWith('No changes to save')
     expect(discovery).not.toHaveBeenCalled()
@@ -176,7 +176,7 @@ describe('OAuth settings saves', () => {
     })
     await user.click(screen.getByRole('tab', { name: 'OIDC' }))
     await user.click(screen.getByRole('switch', { name: 'Enable OIDC' }))
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     await waitFor(() =>
       expect(api.put).toHaveBeenCalledWith('/api/option/', {
@@ -197,7 +197,7 @@ describe('OAuth settings saves', () => {
       'provider.example.com/discovery'
     )
     await user.click(screen.getByRole('tab', { name: 'GitHub' }))
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     const url = await screen.findByRole('textbox', { name: 'Well-Known URL' })
     expect(url).toHaveAttribute('aria-invalid', 'true')
@@ -217,7 +217,7 @@ describe('OAuth settings saves', () => {
     })
     await user.click(screen.getByRole('tab', { name: 'OIDC' }))
     await user.click(screen.getByRole('switch', { name: 'Enable OIDC' }))
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     expect(
       screen.getByRole('textbox', { name: 'Well-Known URL' })
@@ -249,7 +249,7 @@ describe('OAuth settings saves', () => {
       screen.getByRole('textbox', { name: 'Well-Known URL' }),
       'https://provider.example.com/discovery'
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     await waitFor(() =>
       expect(get).toHaveBeenCalledWith('https://provider.example.com/discovery')
@@ -275,7 +275,9 @@ describe('OAuth settings saves', () => {
       value: response.data.userinfo_endpoint,
     })
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled()
+      expect(
+        screen.getByRole('button', { name: 'Save Settings' })
+      ).toBeEnabled()
     )
   })
 
@@ -291,7 +293,7 @@ describe('OAuth settings saves', () => {
         'invalid'
       )
       await user.click(
-        screen.getByRole('button', { name: testI18n.t('Save Changes') })
+        screen.getByRole('button', { name: testI18n.t('Save Settings') })
       )
 
       const url = screen.getByRole('textbox', { name: 'Well-Known URL' })
@@ -318,17 +320,17 @@ describe('OAuth settings saves', () => {
       screen.getByRole('textbox', { name: 'Well-Known URL' }),
       'https://provider.example.com/discovery'
     )
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
 
     await waitFor(() => expect(errorToast).toHaveBeenCalledTimes(1))
     expect(api.put).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Save Settings' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled()
     expect(screen.getByRole('textbox', { name: 'Well-Known URL' })).toHaveValue(
       'https://provider.example.com/discovery'
     )
     get.mockResolvedValue({ data: {} })
-    await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await user.click(screen.getByRole('button', { name: 'Save Settings' }))
     await waitFor(() =>
       expect(api.put).toHaveBeenCalledWith('/api/option/', {
         key: 'oidc.well_known',

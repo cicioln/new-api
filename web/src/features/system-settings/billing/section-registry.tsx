@@ -57,6 +57,7 @@ const BILLING_SECTIONS = [
   {
     id: 'quota',
     titleKey: 'Quota Settings',
+    descriptionKey: 'New user, invitation and pre-consumed quota.',
     build: (settings: BillingSettings) => (
       <QuotaSettingsSection
         defaultValues={{
@@ -82,6 +83,8 @@ const BILLING_SECTIONS = [
   {
     id: 'currency',
     titleKey: 'Currency & Display',
+    descriptionKey:
+      'How amounts are shown in the console and model marketplace (quota_display_type).',
     build: (settings: BillingSettings) => (
       <PricingSection
         defaultValues={{
@@ -105,6 +108,7 @@ const BILLING_SECTIONS = [
   {
     id: 'model-pricing',
     titleKey: 'Model Pricing',
+    descriptionKey: 'Base model ratios and per-request prices.',
     build: (settings: BillingSettings) => (
       <RatioSettingsCard
         titleKey='Model Pricing'
@@ -118,6 +122,8 @@ const BILLING_SECTIONS = [
   {
     id: 'group-pricing',
     titleKey: 'Group Pricing',
+    descriptionKey:
+      'Group ratios set the multipliers shown under "Choose price and route by group" on the home page.',
     build: (settings: BillingSettings) => (
       <RatioSettingsCard
         titleKey='Group Pricing'
@@ -131,6 +137,7 @@ const BILLING_SECTIONS = [
   {
     id: 'payment',
     titleKey: 'Payment Gateway',
+    descriptionKey: 'Payment methods used for top-ups.',
     build: (settings: BillingSettings) => (
       <PaymentSettingsSection
         defaultValues={{
@@ -191,6 +198,7 @@ const BILLING_SECTIONS = [
   {
     id: 'checkin',
     titleKey: 'Check-in Rewards',
+    descriptionKey: 'Check-in rewards go straight to the balance, once a day.',
     build: (settings: BillingSettings) => (
       <CheckinSettingsSection
         defaultValues={{
