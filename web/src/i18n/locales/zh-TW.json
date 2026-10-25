@@ -7707,6 +7707,20 @@
     "Username or email": "使用者名稱或信箱",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "我已閱讀並同意<terms>使用者協議</terms>和<privacy>隱私權政策</privacy>",
     "I have read and agree to the <terms>User Agreement</terms>": "我已閱讀並同意<terms>使用者協議</terms>",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "我已閱讀並同意<privacy>隱私權政策</privacy>"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "我已閱讀並同意<privacy>隱私權政策</privacy>",
+    "Get code": "取得驗證碼",
+    "Or sign up with email": "或使用信箱註冊",
+    "Or sign up with a username": "或使用使用者名稱註冊",
+    "3–20 letters, digits or underscores": "3–20 位字母、數字或底線",
+    "Email verification code": "信箱驗證碼",
+    "6 digits": "6 位數字",
+    "At least 8 characters": "至少 8 位",
+    "Invitation code": "邀請碼",
+    "Optional": "選填",
+    "Both of you get bonus credit when filled in": "填寫後雙方均獲得獎勵額度",
+    "Sign in directly": "直接登入",
+    "After signing up you can create API keys. New users join the default group.": "註冊後即可建立 API 金鑰，新使用者預設進入 default 分組。",
+    "Registration is closed": "暫未開放註冊",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理員已關閉新使用者註冊。如需帳戶請聯絡管理員，或使用已綁定的第三方帳號登入。"
   }
 }

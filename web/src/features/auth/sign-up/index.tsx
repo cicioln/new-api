@@ -19,43 +19,48 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '@/components/ui/button'
 import { useStatus } from '@/hooks/use-status'
 
 import { AuthLayout } from '../auth-layout'
-import { TermsFooter } from '../components/terms-footer'
+import { AUTH_SUBMIT_CLASS, AuthAlt, AuthHeader } from '../components/auth-ui'
 import { SignUpForm } from './components/sign-up-form'
 
 export function SignUp() {
   const { t } = useTranslation()
   const { status } = useStatus()
+  const registerClosed =
+    status?.self_use_mode_enabled === true || status?.register_enabled === false
+
+  if (registerClosed) {
+    return (
+      <AuthLayout>
+        <AuthHeader
+          title={t('Registration is closed')}
+          description={t(
+            'The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.'
+          )}
+        />
+        <Button className={AUTH_SUBMIT_CLASS} render={<Link to='/sign-in' />}>
+          {t('Back to sign in')}
+        </Button>
+      </AuthLayout>
+    )
+  }
 
   return (
     <AuthLayout>
-      <div className='w-full space-y-8'>
-        <div className='space-y-2'>
-          <h2 className='text-center text-2xl font-semibold tracking-tight sm:text-left'>
-            {t('Create an account')}
-          </h2>
-          <p className='text-muted-foreground text-left text-sm sm:text-base'>
-            {t('Already have an account?')}{' '}
-            <Link
-              to='/sign-in'
-              className='hover:text-primary font-medium underline underline-offset-4'
-            >
-              {t('Sign in')}
-            </Link>
-            .
-          </p>
-        </div>
-
-        <SignUpForm />
-
-        <TermsFooter
-          variant='sign-up'
-          status={status}
-          className='text-center'
-        />
-      </div>
+      <AuthHeader
+        title={t('Create account')}
+        description={t(
+          'After signing up you can create API keys. New users join the default group.'
+        )}
+      />
+      <SignUpForm />
+      <AuthAlt>
+        {t('Already have an account?')}
+        <Link to='/sign-in'>{t('Sign in directly')}</Link>
+      </AuthAlt>
     </AuthLayout>
   )
 }

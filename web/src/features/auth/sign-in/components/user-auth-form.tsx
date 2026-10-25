@@ -46,6 +46,7 @@ import {
   AUTH_INPUT_CLASS,
   AUTH_LABEL_CLASS,
   AUTH_LABEL_LINK_CLASS,
+  AUTH_PASSWORD_CLASS,
   AUTH_SUBMIT_CLASS,
   AuthDivider,
 } from '@/features/auth/components/auth-ui'
@@ -403,7 +404,7 @@ export function UserAuthForm(props: AuthFormProps) {
                   <FormControl>
                     <PasswordInput
                       autoComplete='current-password'
-                      className='[&_input]:bg-card [&_input]:focus-visible:border-foreground [&_input]:h-10 [&_input]:rounded-lg [&_input]:px-3 [&_input]:pe-9 [&_input]:text-sm [&_input]:focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_22%,transparent)] [&_input]:focus-visible:ring-0'
+                      className={AUTH_PASSWORD_CLASS}
                       {...field}
                     />
                   </FormControl>

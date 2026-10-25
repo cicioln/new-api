@@ -7707,6 +7707,20 @@
     "Username or email": "Имя пользователя или email",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "Я прочитал(а) и принимаю <terms>Пользовательское соглашение</terms> и <privacy>Политику конфиденциальности</privacy>",
     "I have read and agree to the <terms>User Agreement</terms>": "Я прочитал(а) и принимаю <terms>Пользовательское соглашение</terms>",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Я прочитал(а) и принимаю <privacy>Политику конфиденциальности</privacy>"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Я прочитал(а) и принимаю <privacy>Политику конфиденциальности</privacy>",
+    "Get code": "Получить код",
+    "Or sign up with email": "Или зарегистрируйтесь по email",
+    "Or sign up with a username": "Или зарегистрируйтесь по имени пользователя",
+    "3–20 letters, digits or underscores": "3–20 букв, цифр или подчёркиваний",
+    "Email verification code": "Код подтверждения из письма",
+    "6 digits": "6 цифр",
+    "At least 8 characters": "Не менее 8 символов",
+    "Invitation code": "Код приглашения",
+    "Optional": "Необязательно",
+    "Both of you get bonus credit when filled in": "Оба получат бонусный кредит",
+    "Sign in directly": "Войти",
+    "After signing up you can create API keys. New users join the default group.": "После регистрации можно создавать API-ключи. Новые пользователи попадают в группу default.",
+    "Registration is closed": "Регистрация закрыта",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Администратор отключил регистрацию. Обратитесь к администратору или войдите через привязанный сторонний аккаунт."
   }
 }

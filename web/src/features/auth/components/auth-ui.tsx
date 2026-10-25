@@ -40,6 +40,9 @@ export const AUTH_INPUT_CLASS =
   'bg-card h-10 rounded-lg px-3 text-sm focus-visible:border-foreground focus-visible:ring-0 focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_22%,transparent)]'
 
 /** Full-width 42px primary action. */
+export const AUTH_PASSWORD_CLASS =
+  '[&_input]:bg-card [&_input]:focus-visible:border-foreground [&_input]:h-10 [&_input]:rounded-lg [&_input]:px-3 [&_input]:pe-9 [&_input]:text-sm [&_input]:focus-visible:shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_22%,transparent)] [&_input]:focus-visible:ring-0'
+
 export const AUTH_SUBMIT_CLASS =
   'mt-1.5 h-[42px] w-full justify-center gap-2 rounded-lg px-4 text-sm'
 

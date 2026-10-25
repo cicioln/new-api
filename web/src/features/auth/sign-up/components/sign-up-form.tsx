@@ -39,6 +39,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { register, wechatLoginByCode } from '@/features/auth/api'
+import {
+  AUTH_FIELD_CLASS,
+  AUTH_FORM_CLASS,
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+  AUTH_LABEL_LINK_CLASS,
+  AUTH_PASSWORD_CLASS,
+  AUTH_SUBMIT_CLASS,
+  AuthDivider,
+} from '@/features/auth/components/auth-ui'
 import { LegalConsent } from '@/features/auth/components/legal-consent'
 import { OAuthProviders } from '@/features/auth/components/oauth-providers'
 import { registerFormSchema } from '@/features/auth/constants'
@@ -55,11 +65,9 @@ import { AuthOperationError } from '@/lib/secure-verification'
 import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
-export function SignUpForm({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLFormElement>) {
+export function SignUpForm(props: { className?: string }) {
   const { t } = useTranslation()
+  const [affCode, setAffCode] = useState(getAffiliateCode)
   const [isLoading, setIsLoading] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
   const [agreedToLegal, setAgreedToLegal] = useState(false)
@@ -136,6 +144,7 @@ export function SignUpForm({
     const aff = new URLSearchParams(window.location.search).get('aff')?.trim()
     if (aff) {
       saveAffiliateCode(aff)
+      setAffCode(aff)
     }
   }, [])
 
@@ -166,7 +175,7 @@ export function SignUpForm({
         password: data.password,
         email: data.email || undefined,
         verification_code: verificationCode || undefined,
-        aff_code: getAffiliateCode(),
+        aff_code: affCode.trim() || undefined,
         turnstile: turnstileToken,
       })
 
@@ -235,7 +244,7 @@ export function SignUpForm({
     }
   }
 
-  let verificationCodeAction: ReactNode = t('Send code')
+  let verificationCodeAction: ReactNode = t('Get code')
   if (isActive) {
     verificationCodeAction = t('Resend ({{seconds}}s)', {
       seconds: secondsLeft,
@@ -244,38 +253,52 @@ export function SignUpForm({
     verificationCodeAction = <Loader2 className='h-4 w-4 animate-spin' />
   }
 
+  const hasOAuthRegister =
+    oauthRegisterEnabled &&
+    Boolean(
+      hasWeChatLogin ||
+      status?.github_oauth ||
+      status?.discord_oauth ||
+      status?.oidc_enabled ||
+      status?.linuxdo_oauth ||
+      status?.telegram_oauth ||
+      (status?.custom_oauth_providers?.length ?? 0) > 0
+    )
+  const dividerLabel = emailVerificationRequired
+    ? t('Or sign up with email')
+    : t('Or sign up with a username')
+
   return (
     <Form {...form}>
+      {hasOAuthRegister && (
+        <>
+          <OAuthProviders
+            status={status}
+            disabled={isLoading || (requiresLegalConsent && !agreedToLegal)}
+            onWeChatLogin={hasWeChatLogin ? handleOpenWeChatDialog : undefined}
+            isWeChatLoading={isWeChatSubmitting}
+          />
+          <AuthDivider>{dividerLabel}</AuthDivider>
+        </>
+      )}
+
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className={cn('grid gap-4', className)}
-        {...props}
+        className={cn(AUTH_FORM_CLASS, props.className)}
       >
-        {/* Username Field */}
         <FormField
           control={form.control}
           name='username'
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Username')}</FormLabel>
+            <FormItem className={AUTH_FIELD_CLASS}>
+              <FormLabel className={AUTH_LABEL_CLASS}>
+                {t('Username')}
+              </FormLabel>
               <FormControl>
-                <Input placeholder={t('Enter your username')} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Password Field */}
-        <FormField
-          control={form.control}
-          name='password'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Password')}</FormLabel>
-              <FormControl>
-                <PasswordInput
-                  placeholder={t('Enter password (8–128 characters)')}
+                <Input
+                  placeholder={t('3–20 letters, digits or underscores')}
+                  autoComplete='username'
+                  className={AUTH_INPUT_CLASS}
                   {...field}
                 />
               </FormControl>
@@ -284,94 +307,136 @@ export function SignUpForm({
           )}
         />
 
-        {/* Confirm Password Field */}
+        {emailVerificationRequired && (
+          <>
+            <FormField
+              control={form.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem className={AUTH_FIELD_CLASS}>
+                  <FormLabel className={AUTH_LABEL_CLASS}>
+                    {t('Email')}
+                  </FormLabel>
+                  <div className='flex gap-2'>
+                    <FormControl>
+                      <Input
+                        placeholder='you@example.com'
+                        type='email'
+                        autoComplete='email'
+                        className={cn(AUTH_INPUT_CLASS, 'flex-1')}
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      variant='outline'
+                      type='button'
+                      className='h-10 shrink-0 rounded-lg px-3.5 text-sm'
+                      disabled={
+                        isLoading ||
+                        isSendingCode ||
+                        isActive ||
+                        !emailValue ||
+                        !turnstileReady
+                      }
+                      onClick={handleSendVerificationCode}
+                    >
+                      {verificationCodeAction}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className={cn('grid', AUTH_FIELD_CLASS)}>
+              <Label htmlFor='sign-up-code' className={AUTH_LABEL_CLASS}>
+                {t('Email verification code')}
+              </Label>
+              <Input
+                id='sign-up-code'
+                placeholder={t('6 digits')}
+                inputMode='numeric'
+                autoComplete='one-time-code'
+                className={AUTH_INPUT_CLASS}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+
         <FormField
           control={form.control}
-          name='confirmPassword'
+          name='password'
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Confirm password')}</FormLabel>
+            <FormItem className={AUTH_FIELD_CLASS}>
+              <FormLabel className={AUTH_LABEL_CLASS}>
+                {t('Password')}
+              </FormLabel>
               <FormControl>
-                <PasswordInput placeholder={t('Confirm password')} {...field} />
+                <PasswordInput
+                  placeholder={t('At least 8 characters')}
+                  autoComplete='new-password'
+                  className={AUTH_PASSWORD_CLASS}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Email Verification Section */}
-        {emailVerificationRequired && (
-          <>
-            {/* Email Field */}
-            <FormField
-              control={form.control}
-              name='email'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {t('Email (required for verification)')}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('name@example.com')}
-                      type='email'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Verification Code Field */}
-            <div className='flex items-end gap-2'>
-              <div className='flex-1'>
-                <Input
-                  placeholder={t('Verification code')}
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
+        <FormField
+          control={form.control}
+          name='confirmPassword'
+          render={({ field }) => (
+            <FormItem className={AUTH_FIELD_CLASS}>
+              <FormLabel className={AUTH_LABEL_CLASS}>
+                {t('Confirm password')}
+              </FormLabel>
+              <FormControl>
+                <PasswordInput
+                  autoComplete='new-password'
+                  className={AUTH_PASSWORD_CLASS}
+                  {...field}
                 />
-              </div>
-              <Button
-                variant='outline'
-                type='button'
-                disabled={
-                  isLoading ||
-                  isSendingCode ||
-                  isActive ||
-                  !emailValue ||
-                  !turnstileReady
-                }
-                onClick={handleSendVerificationCode}
-              >
-                {verificationCodeAction}
-              </Button>
-            </div>
-          </>
-        )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        {/* Turnstile */}
+        <div className={cn('grid', AUTH_FIELD_CLASS)}>
+          <Label htmlFor='sign-up-aff' className={AUTH_LABEL_CLASS}>
+            {t('Invitation code')}
+            <span className={AUTH_LABEL_LINK_CLASS}>{t('Optional')}</span>
+          </Label>
+          <Input
+            id='sign-up-aff'
+            placeholder={t('Both of you get bonus credit when filled in')}
+            className={AUTH_INPUT_CLASS}
+            value={affCode}
+            onChange={(e) => setAffCode(e.target.value)}
+          />
+        </div>
+
         {isTurnstileEnabled && (
-          <div className='mt-2'>
-            <Turnstile
-              key={turnstileWidgetKey}
-              siteKey={turnstileSiteKey}
-              onVerify={setTurnstileToken}
-            />
-          </div>
+          <Turnstile
+            key={turnstileWidgetKey}
+            siteKey={turnstileSiteKey}
+            onVerify={setTurnstileToken}
+          />
         )}
 
         <LegalConsent
           status={status}
           checked={agreedToLegal}
           onCheckedChange={setAgreedToLegal}
-          className='mt-1'
         />
 
-        {/* Submit Button */}
         <Button
           type='submit'
-          className='mt-2 w-full justify-center gap-2'
+          className={AUTH_SUBMIT_CLASS}
           disabled={
             isLoading ||
             (requiresLegalConsent && !agreedToLegal) ||
@@ -379,18 +444,8 @@ export function SignUpForm({
           }
         >
           {isLoading ? <Loader2 className='h-4 w-4 animate-spin' /> : null}
-          {t('Create account')}
+          {t('Sign up')}
         </Button>
-
-        {oauthRegisterEnabled && (
-          <OAuthProviders
-            status={status}
-            disabled={isLoading || (requiresLegalConsent && !agreedToLegal)}
-            onWeChatLogin={hasWeChatLogin ? handleOpenWeChatDialog : undefined}
-            isWeChatLoading={isWeChatSubmitting}
-            className='pt-2'
-          />
-        )}
       </form>
 
       {hasWeChatLogin && (

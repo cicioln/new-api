@@ -7707,6 +7707,20 @@
     "Username or email": "ユーザー名またはメール",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>を読み、同意します",
     "I have read and agree to the <terms>User Agreement</terms>": "<terms>利用規約</terms>を読み、同意します",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "<privacy>プライバシーポリシー</privacy>を読み、同意します"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "<privacy>プライバシーポリシー</privacy>を読み、同意します",
+    "Get code": "コードを取得",
+    "Or sign up with email": "またはメールで登録",
+    "Or sign up with a username": "またはユーザー名で登録",
+    "3–20 letters, digits or underscores": "3〜20 文字の英数字またはアンダースコア",
+    "Email verification code": "メール認証コード",
+    "6 digits": "6 桁の数字",
+    "At least 8 characters": "8 文字以上",
+    "Invitation code": "招待コード",
+    "Optional": "任意",
+    "Both of you get bonus credit when filled in": "入力すると双方にボーナスクレジットが付与されます",
+    "Sign in directly": "ログイン",
+    "After signing up you can create API keys. New users join the default group.": "登録後すぐに API キーを作成できます。新規ユーザーは default グループに入ります。",
+    "Registration is closed": "現在登録を受け付けていません",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "管理者が新規登録を停止しています。アカウントが必要な場合は管理者に連絡するか、連携済みの外部アカウントでログインしてください。"
   }
 }

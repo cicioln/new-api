@@ -7707,6 +7707,20 @@
     "Username or email": "Tên người dùng hoặc email",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "Tôi đã đọc và đồng ý với <terms>Thỏa thuận người dùng</terms> và <privacy>Chính sách bảo mật</privacy>",
     "I have read and agree to the <terms>User Agreement</terms>": "Tôi đã đọc và đồng ý với <terms>Thỏa thuận người dùng</terms>",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Tôi đã đọc và đồng ý với <privacy>Chính sách bảo mật</privacy>"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "Tôi đã đọc và đồng ý với <privacy>Chính sách bảo mật</privacy>",
+    "Get code": "Lấy mã",
+    "Or sign up with email": "Hoặc đăng ký bằng email",
+    "Or sign up with a username": "Hoặc đăng ký bằng tên người dùng",
+    "3–20 letters, digits or underscores": "3–20 chữ cái, chữ số hoặc dấu gạch dưới",
+    "Email verification code": "Mã xác minh email",
+    "6 digits": "6 chữ số",
+    "At least 8 characters": "Ít nhất 8 ký tự",
+    "Invitation code": "Mã mời",
+    "Optional": "Không bắt buộc",
+    "Both of you get bonus credit when filled in": "Cả hai đều nhận tín dụng thưởng khi điền",
+    "Sign in directly": "Đăng nhập",
+    "After signing up you can create API keys. New users join the default group.": "Sau khi đăng ký, bạn có thể tạo khóa API. Người dùng mới vào nhóm default.",
+    "Registration is closed": "Tạm thời chưa mở đăng ký",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "Quản trị viên đã tắt đăng ký người dùng mới. Liên hệ quản trị viên để có tài khoản, hoặc đăng nhập bằng tài khoản bên thứ ba đã liên kết."
   }
 }

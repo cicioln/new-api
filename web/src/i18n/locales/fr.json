@@ -7707,6 +7707,20 @@
     "Username or email": "Nom d'utilisateur ou e-mail",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "J'ai lu et j'accepte les <terms>Conditions d'utilisation</terms> et la <privacy>Politique de confidentialité</privacy>",
     "I have read and agree to the <terms>User Agreement</terms>": "J'ai lu et j'accepte les <terms>Conditions d'utilisation</terms>",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "J'ai lu et j'accepte la <privacy>Politique de confidentialité</privacy>"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "J'ai lu et j'accepte la <privacy>Politique de confidentialité</privacy>",
+    "Get code": "Obtenir le code",
+    "Or sign up with email": "Ou inscrivez-vous par e-mail",
+    "Or sign up with a username": "Ou inscrivez-vous avec un nom d'utilisateur",
+    "3–20 letters, digits or underscores": "3 à 20 lettres, chiffres ou tirets bas",
+    "Email verification code": "Code de vérification e-mail",
+    "6 digits": "6 chiffres",
+    "At least 8 characters": "Au moins 8 caractères",
+    "Invitation code": "Code d'invitation",
+    "Optional": "Facultatif",
+    "Both of you get bonus credit when filled in": "Vous recevez tous deux un crédit bonus",
+    "Sign in directly": "Se connecter",
+    "After signing up you can create API keys. New users join the default group.": "Après l'inscription, vous pouvez créer des clés API. Les nouveaux utilisateurs rejoignent le groupe default.",
+    "Registration is closed": "Les inscriptions sont fermées",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "L'administrateur a désactivé les inscriptions. Contactez-le pour obtenir un compte, ou connectez-vous avec un compte tiers lié."
   }
 }

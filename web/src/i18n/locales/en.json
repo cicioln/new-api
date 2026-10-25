@@ -7707,6 +7707,20 @@
     "Username or email": "Username or email",
     "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>": "I have read and agree to the <terms>User Agreement</terms> and <privacy>Privacy Policy</privacy>",
     "I have read and agree to the <terms>User Agreement</terms>": "I have read and agree to the <terms>User Agreement</terms>",
-    "I have read and agree to the <privacy>Privacy Policy</privacy>": "I have read and agree to the <privacy>Privacy Policy</privacy>"
+    "I have read and agree to the <privacy>Privacy Policy</privacy>": "I have read and agree to the <privacy>Privacy Policy</privacy>",
+    "Get code": "Get code",
+    "Or sign up with email": "Or sign up with email",
+    "Or sign up with a username": "Or sign up with a username",
+    "3–20 letters, digits or underscores": "3–20 letters, digits or underscores",
+    "Email verification code": "Email verification code",
+    "6 digits": "6 digits",
+    "At least 8 characters": "At least 8 characters",
+    "Invitation code": "Invitation code",
+    "Optional": "Optional",
+    "Both of you get bonus credit when filled in": "Both of you get bonus credit when filled in",
+    "Sign in directly": "Sign in",
+    "After signing up you can create API keys. New users join the default group.": "After signing up you can create API keys. New users join the default group.",
+    "Registration is closed": "Registration is closed",
+    "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.": "The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account."
   }
 }
