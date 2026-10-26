@@ -104,9 +104,12 @@ function Thumbs(props: {
 function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const { t } = useTranslation()
   const ago = useTimeAgo()
-  const isAuthenticated = useAuthStore((state) => Boolean(state.auth.user))
+  const userId = useAuthStore((state) => state.auth.user?.id)
+  const isAuthenticated = userId !== undefined
   const { sendStreamRequest, stopStream, isStreaming } = useStreamRequest()
-  const [history, setHistory] = useState<PelicanRecord[]>(loadPelicanHistory)
+  const [history, setHistory] = useState<PelicanRecord[]>(() =>
+    loadPelicanHistory(userId)
+  )
   const [scope, setScope] = useState<Scope>('model')
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [view, setView] = useState<'img' | 'code'>('img')
@@ -197,7 +200,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             totalMs: performance.now() - started,
             outputTokens,
           }
-          setHistory((prev) => savePelicanHistory([record, ...prev]))
+          setHistory((prev) => savePelicanHistory([record, ...prev], userId))
           setScope('model')
           setView('img')
           select(record)

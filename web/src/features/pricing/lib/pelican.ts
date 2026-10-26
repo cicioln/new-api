@@ -24,6 +24,8 @@ For commercial licensing, please contact support@quantumnous.com
 export const PELICAN_PROMPT = 'Generate an SVG of a pelican riding a bicycle'
 
 const STORAGE_KEY = 'pricing-pelican-history'
+// Pre-scoping key shared by every account on the browser; dropped on load.
+const LEGACY_STORAGE_KEY = STORAGE_KEY
 const HISTORY_LIMIT = 60
 
 export type PelicanRecord = {
@@ -65,9 +67,16 @@ function isRecord(value: unknown): value is PelicanRecord {
   )
 }
 
-export function loadPelicanHistory(): PelicanRecord[] {
+/** Records are private to each account, never shared across users. */
+function storageKey(userId: number): string {
+  return `${STORAGE_KEY}:${userId}`
+}
+
+export function loadPelicanHistory(userId?: number): PelicanRecord[] {
+  if (userId === undefined) return []
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+    const raw = window.localStorage.getItem(storageKey(userId))
     const parsed: unknown = raw ? JSON.parse(raw) : []
     return Array.isArray(parsed) ? parsed.filter(isRecord) : []
   } catch {
@@ -75,10 +84,14 @@ export function loadPelicanHistory(): PelicanRecord[] {
   }
 }
 
-export function savePelicanHistory(records: PelicanRecord[]): PelicanRecord[] {
+export function savePelicanHistory(
+  records: PelicanRecord[],
+  userId?: number
+): PelicanRecord[] {
   const next = records.slice(0, HISTORY_LIMIT)
+  if (userId === undefined) return next
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.localStorage.setItem(storageKey(userId), JSON.stringify(next))
   } catch {
     // Storage may be unavailable (private mode); keep the in-memory copy.
   }
