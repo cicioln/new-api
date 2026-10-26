@@ -106,7 +106,7 @@ export function Home() {
 
     return (
       <PublicLayout>
-        <div className='mx-auto max-w-6xl px-4 py-8'>
+        <div className='px-4 py-8 md:px-7'>
           <RichContent
             mode='markdown'
             content={content}
@@ -120,7 +120,7 @@ export function Home() {
   return (
     <PublicLayout showMainContainer={false}>
       <Hero />
-      <div className='mx-auto max-w-[1360px] px-4 sm:px-6'>
+      <div className='px-4 md:px-7'>
         <QuickStart />
         <GroupTable />
         <Features />

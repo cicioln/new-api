@@ -192,7 +192,7 @@ export function PublicHeader(props: PublicHeaderProps) {
           props.className
         )}
       >
-        <div className='relative mx-auto flex h-[60px] max-w-[1360px] items-center gap-8 px-4 sm:px-6'>
+        <div className='relative flex h-[60px] items-center gap-8 px-4 md:px-7'>
           <Link
             to={homeUrl}
             className='flex min-w-0 items-center gap-2.5 text-base font-bold tracking-[-0.01em]'

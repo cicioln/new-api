@@ -105,7 +105,7 @@ export function Footer(props: FooterProps) {
   if (footerHtml) {
     return (
       <footer className={cn('mt-24 border-t pt-10 pb-24', props.className)}>
-        <div className='text-subtle-foreground mx-auto max-w-[1360px] px-4 text-[13px] leading-[1.8] sm:px-6'>
+        <div className='text-subtle-foreground px-4 text-[13px] leading-[1.8] md:px-7'>
           <div
             className='custom-footer [&_a]:text-muted-foreground [&_a]:underline [&_a]:underline-offset-[3px]'
             dangerouslySetInnerHTML={{ __html: footerHtml }}
@@ -120,7 +120,7 @@ export function Footer(props: FooterProps) {
 
   return (
     <footer className={cn('mt-24 border-t pt-10 pb-24', props.className)}>
-      <div className='mx-auto flex max-w-[1360px] flex-wrap items-center gap-6 px-4 text-[13px] sm:px-6'>
+      <div className='flex flex-wrap items-center gap-6 px-4 text-[13px] md:px-7'>
         <Link
           to='/'
           className='flex items-center gap-2.5 text-base font-bold tracking-[-0.01em]'
