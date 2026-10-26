@@ -21,6 +21,7 @@ import { describe, expect, it } from 'vitest'
 import type { PricingModel } from '../../types'
 import {
   filterMarketModels,
+  getMarketGroups,
   getStatusBars,
   getStatusLevel,
   type MarketFilterOptions,
@@ -74,6 +75,19 @@ const base: MarketFilterOptions = {
 const names = (list: PricingModel[]) => list.map((m) => m.model_name)
 
 describe('model market filters', () => {
+  it('hides usable groups that are not in group pricing', () => {
+    const usable = {
+      default: { desc: 'User group', ratio: 1 },
+      vip: { desc: 'VIP', ratio: 0.1 },
+      auto: { desc: 'Auto', ratio: 1 },
+    }
+    expect(getMarketGroups(usable, { vip: 0.1, auto: 1 })).toEqual(['vip'])
+    expect(getMarketGroups(usable, { default: 1, vip: 0 })).toEqual([
+      'default',
+      'vip',
+    ])
+  })
+
   it('grades success rates into normal, busy and maintenance', () => {
     expect(getStatusLevel(99)).toBe('ok')
     expect(getStatusLevel(90)).toBe('warn')

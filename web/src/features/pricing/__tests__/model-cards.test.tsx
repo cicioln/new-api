@@ -266,7 +266,10 @@ describe('model cards', () => {
     const groups = ['default', 'vip', 'svip', 'enterprise', 'azure', 'cn']
     render(
       <ModelCard
-        model={pricingModel({ enable_groups: groups })}
+        model={pricingModel({
+          enable_groups: groups,
+          group_ratio: Object.fromEntries(groups.map((g) => [g, 1])),
+        })}
         onClick={vi.fn()}
       />
     )

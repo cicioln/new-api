@@ -71,7 +71,10 @@ export function Pricing() {
   } = usePricingData()
   const perf = useMarketPerf()
 
-  const groupNames = useMemo(() => getMarketGroups(usableGroup), [usableGroup])
+  const groupNames = useMemo(
+    () => getMarketGroups(usableGroup, groupRatio),
+    [usableGroup, groupRatio]
+  )
   const defaultGroup = getDefaultMarketGroup(groupNames)
   const filters = useFilters(models, perf, defaultGroup)
 

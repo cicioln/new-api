@@ -57,7 +57,11 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     usdExchangeRate: props.usdExchangeRate ?? 1,
     group: props.selectedGroup,
   })
-  const groups = props.model.enable_groups || []
+  // Hide groups that were removed from group pricing.
+  const groups = (props.model.enable_groups || []).filter(
+    (group) =>
+      !props.model.group_ratio || Object.hasOwn(props.model.group_ratio, group)
+  )
   const open = () => props.onClick(props.model.model_name)
 
   return (

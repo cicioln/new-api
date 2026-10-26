@@ -175,11 +175,18 @@ export function getVendorAvatar(vendorName: string): {
   return { color, letter: name.charAt(0).toUpperCase() }
 }
 
-/** Groups a viewer can price against, in configured order. */
+/**
+ * Groups a viewer can price against, in configured order. A group removed
+ * from group pricing is hidden even though the viewer's own group stays
+ * usable, matching the backend rule for selectable groups.
+ */
 export function getMarketGroups(
-  usableGroup: Record<string, { desc: string; ratio: number }>
+  usableGroup: Record<string, { desc: string; ratio: number }>,
+  groupRatio: Record<string, number>
 ): string[] {
-  return Object.keys(usableGroup).filter((g) => !EXCLUDED_GROUPS.includes(g))
+  return Object.keys(usableGroup).filter(
+    (g) => !EXCLUDED_GROUPS.includes(g) && Object.hasOwn(groupRatio, g)
+  )
 }
 
 export function getDefaultMarketGroup(groups: string[]): string | undefined {

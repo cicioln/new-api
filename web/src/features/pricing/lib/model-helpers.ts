@@ -34,9 +34,13 @@ export function getAvailableGroups(
     ? model.enable_groups
     : []
 
+  // Groups removed from group pricing stay hidden even when usable.
+  const groupRatio = model.group_ratio
+
   return Object.keys(usableGroup)
     .filter((g) => !EXCLUDED_GROUPS.includes(g))
     .filter((g) => modelEnableGroups.includes(g))
+    .filter((g) => !groupRatio || Object.hasOwn(groupRatio, g))
 }
 
 /**
