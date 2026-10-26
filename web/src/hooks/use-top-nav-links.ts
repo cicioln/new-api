@@ -67,6 +67,15 @@ export function useTopNavLinks(): TopNavLink[] {
     links.push({ title: t('Home page'), href: '/' })
   }
 
+  // Console
+  if (modules?.console !== false) {
+    links.push({
+      title: t('Console'),
+      href: '/dashboard',
+      requiresAuth: !isAuthed,
+    })
+  }
+
   // Pricing
   const pricing = modules?.pricing
   if (pricing && typeof pricing === 'object' && pricing.enabled) {

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link, useLocation } from '@tanstack/react-router'
+import { useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { ConfigDrawer } from '@/components/config-drawer'
@@ -27,12 +27,10 @@ import { Search } from '@/components/search'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSidebarView } from '@/hooks/use-sidebar-view'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
-import { cn } from '@/lib/utils'
 
 import { checkIsActive } from '../lib/url-utils'
 import { Header } from './header'
-
-const CONSOLE_HREF = '/dashboard'
+import { CONSOLE_HREF, SiteNav } from './site-nav'
 
 /**
  * Console top bar: page title on mobile, centered site navigation,
@@ -56,57 +54,17 @@ export function AppHeader() {
   }
   if (!crumb && pathname.startsWith('/chat')) crumb = t('Chat')
 
-  // Every page under this header is part of the console, so its entry is
-  // always the active one; it sits right after the home link.
-  const links = [...navLinks]
-  const homeIndex = links.findIndex((link) => link.href === '/')
-  links.splice(homeIndex + 1, 0, { title: t('Console'), href: CONSOLE_HREF })
-
   return (
     <Header>
       <div className='min-w-0 flex-1'>
         <b className='block truncate text-sm font-medium lg:hidden'>{crumb}</b>
       </div>
 
-      <nav
-        aria-label={t('Site navigation')}
-        className='bg-muted/70 hidden shrink-0 items-center gap-0.5 rounded-full border p-1 lg:flex'
-      >
-        {links.map((link) => {
-          const active = link.href === CONSOLE_HREF
-          const className = cn(
-            'rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors',
-            active
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-            link.disabled && 'pointer-events-none opacity-50'
-          )
-          if (link.external) {
-            return (
-              <a
-                key={link.href}
-                href={link.href}
-                target='_blank'
-                rel='noopener noreferrer'
-                className={className}
-              >
-                {link.title}
-              </a>
-            )
-          }
-          return (
-            <Link
-              key={link.href}
-              to={link.href}
-              disabled={link.disabled}
-              aria-current={active ? 'page' : undefined}
-              className={className}
-            >
-              {link.title}
-            </Link>
-          )
-        })}
-      </nav>
+      <SiteNav
+        links={navLinks}
+        activeHref={CONSOLE_HREF}
+        className='hidden shrink-0 lg:flex'
+      />
 
       <div className='flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4'>
         <Search

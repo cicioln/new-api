@@ -40,6 +40,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
 import { LogoMark } from './logo-mark'
+import { SiteNav } from './site-nav'
 
 const AUTH_PROMPT_SECONDS = 5
 
@@ -192,7 +193,7 @@ export function PublicHeader(props: PublicHeaderProps) {
           props.className
         )}
       >
-        <div className='mx-auto flex h-[60px] max-w-[1360px] items-center gap-8 px-4 sm:px-6'>
+        <div className='relative mx-auto flex h-[60px] max-w-[1360px] items-center gap-8 px-4 sm:px-6'>
           <Link
             to={homeUrl}
             className='flex min-w-0 items-center gap-2.5 text-base font-bold tracking-[-0.01em]'
@@ -203,20 +204,11 @@ export function PublicHeader(props: PublicHeaderProps) {
             </span>
           </Link>
 
-          <nav className='hidden gap-1 sm:flex'>
-            {links.map((link) =>
-              renderLink(
-                link,
-                cn(
-                  'rounded-[7px] px-3 py-1.5 text-sm transition-colors',
-                  pathname === link.href
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  link.disabled && 'pointer-events-none opacity-50'
-                )
-              )
-            )}
-          </nav>
+          <SiteNav
+            links={links}
+            onLinkClick={(event, link) => handleNavLinkClick(event, link)}
+            className='absolute left-1/2 hidden -translate-x-1/2 lg:flex'
+          />
 
           <div className='ms-auto flex items-center gap-2'>
             {showLanguageSwitcher && <LanguageSwitcher />}
@@ -238,7 +230,7 @@ export function PublicHeader(props: PublicHeaderProps) {
             )}
             <button
               type='button'
-              className='bg-card text-muted-foreground grid size-[34px] shrink-0 place-items-center rounded-lg border sm:hidden'
+              className='bg-card text-muted-foreground grid size-[34px] shrink-0 place-items-center rounded-lg border lg:hidden'
               onClick={() => setMobileOpen(true)}
               aria-label={t('Open menu')}
             >
