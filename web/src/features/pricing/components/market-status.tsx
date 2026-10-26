@@ -26,6 +26,7 @@ import {
   getStatusLevel,
   type MarketPerf,
   type MarketStatus,
+  type MarketStatusFilter,
 } from '../lib/market'
 
 const STATUS_TEXT: Record<MarketStatus, string> = {
@@ -44,13 +45,13 @@ function getStatusTextClass(status: MarketStatus | null): string {
   return status ? STATUS_TEXT[status] : 'text-subtle-foreground'
 }
 
-export function MarketStatusDot(props: { status: MarketStatus }) {
+export function MarketStatusDot(props: { status: MarketStatusFilter }) {
   return (
     <span
       aria-hidden
       className={cn(
         'inline-block size-1.5 shrink-0 rounded-full',
-        STATUS_BG[props.status]
+        props.status === 'none' ? 'bg-border' : STATUS_BG[props.status]
       )}
     />
   )

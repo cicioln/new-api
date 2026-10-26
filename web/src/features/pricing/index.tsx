@@ -42,7 +42,7 @@ import {
   getMarketGroups,
   getStatusLabelKey,
   getStatusLevel,
-  type MarketStatus,
+  type MarketStatusFilter,
 } from './lib/market'
 
 export function Pricing() {
@@ -110,10 +110,16 @@ export function Pricing() {
   }, [models, vendors])
 
   const statusCounts = useMemo(() => {
-    const counts: Record<MarketStatus, number> = { ok: 0, warn: 0, bad: 0 }
+    const counts: Record<MarketStatusFilter, number> = {
+      ok: 0,
+      warn: 0,
+      bad: 0,
+      none: 0,
+    }
     for (const model of models) {
-      const status = getStatusLevel(perf.get(model.model_name)?.successRate)
-      if (status) counts[status] += 1
+      const status =
+        getStatusLevel(perf.get(model.model_name)?.successRate) ?? 'none'
+      counts[status] += 1
     }
     return counts
   }, [models, perf])
@@ -152,11 +158,11 @@ export function Pricing() {
       onRemove: () => filters.toggleVendor(vendor),
     })
   }
-  for (const status of filters.statuses) {
+  if (filters.status) {
     chips.push({
-      key: `s-${status}`,
-      label: t(getStatusLabelKey(status)),
-      onRemove: () => filters.toggleStatus(status),
+      key: 's',
+      label: t(getStatusLabelKey(filters.status)),
+      onRemove: filters.clearStatus,
     })
   }
   if (filters.group && !filters.isDefaultGroup) {
@@ -282,8 +288,9 @@ export function Pricing() {
             group={filters.group}
             onGroupChange={filters.setGroup}
             statusCounts={statusCounts}
-            selectedStatuses={filters.statuses}
+            status={filters.status}
             onToggleStatus={filters.toggleStatus}
+            onClearStatus={filters.clearStatus}
             trailing={
               <MarketSeg<ViewMode>
                 value={filters.viewMode}

@@ -24,8 +24,8 @@ import { cn } from '@/lib/utils'
 
 import {
   getStatusLabelKey,
-  MARKET_STATUSES,
-  type MarketStatus,
+  MARKET_STATUS_FILTERS,
+  type MarketStatusFilter,
 } from '../lib/market'
 import { MarketStatusDot } from './market-status'
 
@@ -38,9 +38,10 @@ export interface MarketFiltersProps {
   groups: { name: string; ratio: number }[]
   group?: string
   onGroupChange: (group: string) => void
-  statusCounts: Record<MarketStatus, number>
-  selectedStatuses: MarketStatus[]
-  onToggleStatus: (status: MarketStatus) => void
+  statusCounts: Record<MarketStatusFilter, number>
+  status?: MarketStatusFilter
+  onToggleStatus: (status: MarketStatusFilter) => void
+  onClearStatus: () => void
   trailing?: ReactNode
   className?: string
 }
@@ -151,17 +152,28 @@ export function MarketFilters(props: MarketFiltersProps) {
       )}
 
       <FilterRow label={t('Status')}>
-        {MARKET_STATUSES.map((status) => (
+        <div role='radiogroup' aria-label={t('Status')} className='contents'>
           <FilterChip
-            key={status}
-            checked={props.selectedStatuses.includes(status)}
-            onSelect={() => props.onToggleStatus(status)}
-            count={props.statusCounts[status]}
+            radio
+            checked={!props.status}
+            onSelect={props.onClearStatus}
+            count={props.total}
           >
-            <MarketStatusDot status={status} />
-            {t(getStatusLabelKey(status))}
+            {t('All')}
           </FilterChip>
-        ))}
+          {MARKET_STATUS_FILTERS.map((status) => (
+            <FilterChip
+              key={status}
+              radio
+              checked={props.status === status}
+              onSelect={() => props.onToggleStatus(status)}
+              count={props.statusCounts[status]}
+            >
+              <MarketStatusDot status={status} />
+              {t(getStatusLabelKey(status))}
+            </FilterChip>
+          ))}
+        </div>
         {props.trailing && <div className='ml-auto'>{props.trailing}</div>}
       </FilterRow>
     </section>

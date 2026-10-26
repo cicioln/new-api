@@ -32,6 +32,10 @@ export type MarketSort = (typeof MARKET_SORTS)[number]
 export const MARKET_STATUSES = ['ok', 'warn', 'bad'] as const
 export type MarketStatus = (typeof MARKET_STATUSES)[number]
 
+/** Status filter options; `none` matches models without perf data. */
+export const MARKET_STATUS_FILTERS = [...MARKET_STATUSES, 'none'] as const
+export type MarketStatusFilter = (typeof MARKET_STATUS_FILTERS)[number]
+
 /** Number of status bars shown for the last 24 hours. */
 export const STATUS_BAR_COUNT = 24
 
@@ -70,13 +74,14 @@ export function toMarketPerf(summary: {
   }
 }
 
-const STATUS_LABEL_KEYS: Record<MarketStatus, string> = {
+const STATUS_LABEL_KEYS: Record<MarketStatusFilter, string> = {
   ok: 'Normal',
   warn: 'Busy',
   bad: 'Under maintenance',
+  none: 'No data',
 }
 
-export function getStatusLabelKey(status: MarketStatus): string {
+export function getStatusLabelKey(status: MarketStatusFilter): string {
   return STATUS_LABEL_KEYS[status]
 }
 
@@ -215,7 +220,7 @@ export function supportsPelicanTest(model: PricingModel): boolean {
 export type MarketFilterOptions = {
   search: string
   vendors: string[]
-  statuses: MarketStatus[]
+  status?: MarketStatusFilter
   group?: string
   sort: MarketSort
   perf: Map<string, MarketPerf>
@@ -237,11 +242,11 @@ export function filterMarketModels(
       ) {
         return false
       }
-      if (options.statuses.length > 0) {
-        const status = getStatusLevel(
-          options.perf.get(model.model_name)?.successRate
-        )
-        if (!status || !options.statuses.includes(status)) return false
+      if (options.status) {
+        const status =
+          getStatusLevel(options.perf.get(model.model_name)?.successRate) ??
+          'none'
+        if (status !== options.status) return false
       }
       return !options.group || model.enable_groups?.includes(options.group)
     }

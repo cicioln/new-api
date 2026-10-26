@@ -27,7 +27,7 @@ import {
   MARKET_SORTS,
   type MarketPerf,
   type MarketSort,
-  type MarketStatus,
+  type MarketStatusFilter,
 } from '../lib/market'
 import type { PricingModel, TokenUnit } from '../types'
 
@@ -47,7 +47,7 @@ export function useFilters(
   const [vendors, setVendors] = useState<string[]>(
     search.vendor ? [search.vendor] : []
   )
-  const [statuses, setStatuses] = useState<MarketStatus[]>([])
+  const [status, setStatus] = useState<MarketStatusFilter | undefined>()
   const [selectedGroup, setGroup] = useState<string | undefined>(search.group)
   const [sortBy, setSortBy] = useState<MarketSort>(
     MARKET_SORTS.find((sort) => sort === search.sort) ?? 'hot'
@@ -69,16 +69,18 @@ export function useFilters(
     []
   )
   const toggleStatus = useCallback(
-    (status: MarketStatus) => setStatuses((prev) => toggle(prev, status)),
+    (next: MarketStatusFilter) =>
+      setStatus((prev) => (prev === next ? undefined : next)),
     []
   )
+  const clearStatus = useCallback(() => setStatus(undefined), [])
   const clearVendors = useCallback(() => setVendors([]), [])
   const resetGroup = useCallback(() => setGroup(undefined), [])
   const clearSearch = useCallback(() => setSearchInput(''), [])
   const clearAll = useCallback(() => {
     setSearchInput('')
     setVendors([])
-    setStatuses([])
+    setStatus(undefined)
     setGroup(undefined)
   }, [])
 
@@ -87,18 +89,18 @@ export function useFilters(
       filterMarketModels(models, {
         search: debouncedSearch,
         vendors,
-        statuses,
+        status,
         group,
         sort: sortBy,
         perf,
       }),
-    [models, debouncedSearch, vendors, statuses, group, sortBy, perf]
+    [models, debouncedSearch, vendors, status, group, sortBy, perf]
   )
 
   return {
     searchInput,
     vendors,
-    statuses,
+    status,
     group,
     isDefaultGroup: group === defaultGroup,
     sortBy,
@@ -109,6 +111,7 @@ export function useFilters(
     toggleVendor,
     clearVendors,
     toggleStatus,
+    clearStatus,
     setGroup,
     resetGroup,
     setSortBy,

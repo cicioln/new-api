@@ -62,7 +62,6 @@ const models = [
 const base: MarketFilterOptions = {
   search: '',
   vendors: [],
-  statuses: [],
   group: 'default',
   sort: 'hot',
   perf: new Map([
@@ -129,8 +128,8 @@ describe('model market filters', () => {
       )
     ).toEqual(['alpha', 'gamma'])
     expect(
-      names(filterMarketModels(models, { ...base, statuses: ['warn', 'bad'] }))
-    ).toEqual(['beta', 'gamma'])
+      names(filterMarketModels(models, { ...base, status: 'warn' }))
+    ).toEqual(['beta'])
     expect(
       names(filterMarketModels(models, { ...base, group: 'vip' }))
     ).toEqual(['beta'])
