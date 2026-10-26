@@ -42,10 +42,8 @@ import {
   getMarketGroups,
   getStatusLabelKey,
   getStatusLevel,
-  type MarketSort,
   type MarketStatus,
 } from './lib/market'
-import type { TokenUnit } from './types'
 
 export function Pricing() {
   const { t } = useTranslation()
@@ -272,25 +270,6 @@ export function Pricing() {
                 /
               </kbd>
             </label>
-            <MarketSeg<ViewMode>
-              value={filters.viewMode}
-              onChange={filters.setViewMode}
-              aria-label={t('View')}
-              options={[
-                { value: VIEW_MODES.CARD, label: t('Cards') },
-                { value: VIEW_MODES.TABLE, label: t('Table') },
-              ]}
-            />
-            <MarketSeg<MarketSort>
-              value={filters.sortBy}
-              onChange={filters.setSortBy}
-              aria-label={t('Sort')}
-              options={[
-                { value: 'hot', label: t('Popular') },
-                { value: 'price', label: t('Price ↑') },
-                { value: 'new', label: t('Newest') },
-              ]}
-            />
           </div>
 
           <MarketFilters
@@ -305,6 +284,17 @@ export function Pricing() {
             statusCounts={statusCounts}
             selectedStatuses={filters.statuses}
             onToggleStatus={filters.toggleStatus}
+            trailing={
+              <MarketSeg<ViewMode>
+                value={filters.viewMode}
+                onChange={filters.setViewMode}
+                aria-label={t('View')}
+                options={[
+                  { value: VIEW_MODES.CARD, label: t('Cards') },
+                  { value: VIEW_MODES.TABLE, label: t('Table') },
+                ]}
+              />
+            }
             className={cn('mb-4 max-sm:hidden', filtersOpen && 'max-sm:block')}
           />
 
@@ -343,28 +333,6 @@ export function Pricing() {
                   {t('Clear all')}
                 </button>
               )}
-            </div>
-            <div className='flex gap-2'>
-              <MarketSeg
-                value={filters.showRechargePrice ? 'rch' : 'std'}
-                onChange={(value) =>
-                  filters.setShowRechargePrice(value === 'rch')
-                }
-                aria-label={t('Price basis')}
-                options={[
-                  { value: 'std', label: t('Standard rate') },
-                  { value: 'rch', label: t('Recharge rate') },
-                ]}
-              />
-              <MarketSeg<TokenUnit>
-                value={filters.tokenUnit}
-                onChange={filters.setTokenUnit}
-                aria-label={t('Pricing unit')}
-                options={[
-                  { value: 'M', label: '/ 1M' },
-                  { value: 'K', label: '/ 1K' },
-                ]}
-              />
             </div>
           </div>
 

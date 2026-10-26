@@ -41,6 +41,7 @@ export interface MarketFiltersProps {
   statusCounts: Record<MarketStatus, number>
   selectedStatuses: MarketStatus[]
   onToggleStatus: (status: MarketStatus) => void
+  trailing?: ReactNode
   className?: string
 }
 
@@ -146,11 +147,6 @@ export function MarketFilters(props: MarketFiltersProps) {
               </FilterChip>
             ))}
           </div>
-          <span className='text-subtle-foreground text-[11.5px]'>
-            {t(
-              'Prices use the selected group ratio, and only models available in that group are shown'
-            )}
-          </span>
         </FilterRow>
       )}
 
@@ -166,6 +162,7 @@ export function MarketFilters(props: MarketFiltersProps) {
             {t(getStatusLabelKey(status))}
           </FilterChip>
         ))}
+        {props.trailing && <div className='ml-auto'>{props.trailing}</div>}
       </FilterRow>
     </section>
   )
