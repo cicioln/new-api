@@ -16,6 +16,8 @@ type Sample struct {
 	Success      bool
 	OutputTokens int64
 	GenerationMs int64
+	// Probe marks a health-probe sample, which does not count as real traffic.
+	Probe        bool
 }
 
 type QueryParams struct {

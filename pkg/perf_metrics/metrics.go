@@ -20,6 +20,9 @@ import (
 
 var hotBuckets sync.Map
 
+// lastTraffic holds the unix time of the latest real (non-probe) sample per model.
+var lastTraffic sync.Map
+
 // seriesSchema is a stable client cache/schema marker. Do not change it when
 // hiding fields or making response-only privacy hardening changes.
 const seriesSchema = "dbcd0a3c01b55203"
@@ -115,6 +118,9 @@ func Record(sample Sample) {
 	if sample.LatencyMs < 0 {
 		sample.LatencyMs = 0
 	}
+	if !sample.Probe {
+		lastTraffic.Store(sample.Model, time.Now().Unix())
+	}
 
 	key := bucketKey{
 		model:    sample.Model,
@@ -126,6 +132,16 @@ func Record(sample Sample) {
 	gopool.Go(func() {
 		recordRedis(key, sample)
 	})
+}
+
+// HasRecentTraffic reports whether this node saw a real sample for the model
+// within the duration, so the health probe can skip models that already have data.
+func HasRecentTraffic(modelName string, within time.Duration) bool {
+	value, ok := lastTraffic.Load(modelName)
+	if !ok {
+		return false
+	}
+	return time.Now().Unix()-value.(int64) < int64(within.Seconds())
 }
 
 // queryWindow covers the current partial hour plus the preceding complete

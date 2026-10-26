@@ -37,9 +37,11 @@ import (
 )
 
 type testResult struct {
-	context     *gin.Context
-	localErr    error
-	newAPIError *types.NewAPIError
+	context          *gin.Context
+	localErr         error
+	newAPIError      *types.NewAPIError
+	// completionTokens is set on success for perf probe throughput.
+	completionTokens int
 }
 
 func normalizeChannelTestEndpoint(channel *model.Channel, endpointType string) string {
@@ -518,9 +520,10 @@ func testChannel(ctx context.Context, channel *model.Channel, testUserID int, te
 	})
 	common.SysLog(common.LogText("testing channel #%d, response: \n%s", channel.Id, string(respBody)))
 	return testResult{
-		context:     c,
-		localErr:    nil,
-		newAPIError: nil,
+		context:          c,
+		localErr:         nil,
+		newAPIError:      nil,
+		completionTokens: usage.CompletionTokens,
 	}
 }
 

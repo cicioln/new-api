@@ -7,6 +7,10 @@ type PerfMetricsSetting struct {
 	FlushInterval int    `json:"flush_interval"`
 	BucketTime    string `json:"bucket_time"`
 	RetentionDays int    `json:"retention_days"`
+	// ProbeEnabled sends a minimal test request for models without recent
+	// traffic, so the model square always has status data.
+	ProbeEnabled  bool   `json:"probe_enabled"`
+	ProbeInterval int    `json:"probe_interval"`
 }
 
 var perfMetricsSetting = PerfMetricsSetting{
@@ -14,6 +18,8 @@ var perfMetricsSetting = PerfMetricsSetting{
 	FlushInterval: 5,
 	BucketTime:    "hour",
 	RetentionDays: 0,
+	ProbeEnabled:  false,
+	ProbeInterval: 60,
 }
 
 func init() {
@@ -42,4 +48,11 @@ func GetFlushIntervalMinutes() int {
 		return 1
 	}
 	return perfMetricsSetting.FlushInterval
+}
+
+func GetProbeIntervalMinutes() int {
+	if perfMetricsSetting.ProbeInterval < 5 {
+		return 5
+	}
+	return perfMetricsSetting.ProbeInterval
 }

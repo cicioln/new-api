@@ -67,6 +67,8 @@ const monitoringSchema = z.object({
     flush_interval: z.coerce.number().min(1),
     bucket_time: z.enum(['minute', '5min', 'hour']),
     retention_days: z.coerce.number().min(0),
+    probe_enabled: z.boolean(),
+    probe_interval: z.coerce.number().min(5),
   }),
 })
 
@@ -79,6 +81,8 @@ type FlatMonitoringDefaults = {
   'perf_metrics_setting.flush_interval': number
   'perf_metrics_setting.bucket_time': 'minute' | '5min' | 'hour'
   'perf_metrics_setting.retention_days': number
+  'perf_metrics_setting.probe_enabled': boolean
+  'perf_metrics_setting.probe_interval': number
 }
 
 type MonitoringSettingsSectionProps = {
@@ -94,6 +98,8 @@ const buildFormDefaults = (
     flush_interval: defaults['perf_metrics_setting.flush_interval'],
     bucket_time: defaults['perf_metrics_setting.bucket_time'],
     retention_days: defaults['perf_metrics_setting.retention_days'],
+    probe_enabled: defaults['perf_metrics_setting.probe_enabled'],
+    probe_interval: defaults['perf_metrics_setting.probe_interval'],
   },
 })
 
@@ -108,6 +114,10 @@ const normalizeDefaults = (
     defaults['perf_metrics_setting.bucket_time'],
   'perf_metrics_setting.retention_days':
     defaults['perf_metrics_setting.retention_days'],
+  'perf_metrics_setting.probe_enabled':
+    defaults['perf_metrics_setting.probe_enabled'],
+  'perf_metrics_setting.probe_interval':
+    defaults['perf_metrics_setting.probe_interval'],
 })
 
 const normalizeFormValues = (
@@ -120,6 +130,10 @@ const normalizeFormValues = (
   'perf_metrics_setting.bucket_time': values.perf_metrics_setting.bucket_time,
   'perf_metrics_setting.retention_days':
     values.perf_metrics_setting.retention_days,
+  'perf_metrics_setting.probe_enabled':
+    values.perf_metrics_setting.probe_enabled,
+  'perf_metrics_setting.probe_interval':
+    values.perf_metrics_setting.probe_interval,
 })
 
 export function MonitoringSettingsSection({
@@ -155,6 +169,7 @@ export function MonitoringSettingsSection({
   }, [defaultValues])
 
   const perfMetricsEnabled = form.watch('perf_metrics_setting.enabled')
+  const probeEnabled = form.watch('perf_metrics_setting.probe_enabled')
 
   const onSubmit = async (values: MonitoringFormValues) => {
     const normalized = normalizeFormValues(values)
@@ -308,6 +323,51 @@ export function MonitoringSettingsSection({
                   <FormDescription>
                     {t('0 means data is kept permanently')}
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+            <FormField
+              control={form.control}
+              name='perf_metrics_setting.probe_enabled'
+              render={({ field }) => (
+                <SettingsSwitchItem className='md:col-span-2'>
+                  <SettingsSwitchContent>
+                    <FormLabel>{t('Probe idle models')}</FormLabel>
+                    <FormDescription>
+                      {t(
+                        'Send a minimal test request to models without recent traffic, so the model square shows their status'
+                      )}
+                    </FormDescription>
+                  </SettingsSwitchContent>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={!perfMetricsEnabled}
+                    />
+                  </FormControl>
+                </SettingsSwitchItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='perf_metrics_setting.probe_interval'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Probe interval (minutes)')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={5}
+                      step={1}
+                      {...safeNumberFieldProps(field)}
+                      disabled={!perfMetricsEnabled || !probeEnabled}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
