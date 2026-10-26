@@ -230,6 +230,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
 	common.SysLog(common.LogText("received signal: %v, shutting down...", sig))
+	// docker stop 默认只等 10s 就 SIGKILL，先落库一次，避免等待长连接期间被杀导致丢失
+	perfmetrics.Flush()
+	if common.DataExportEnabled {
+		model.SaveQuotaDataCache()
+	}
+	if common.BatchUpdateEnabled {
+		model.FlushBatchUpdates()
+	}
 
 	// SSE streams may run for minutes; give them time to finish before forced exit
 	shutdownTimeout := time.Duration(common.GetEnvOrDefault("SHUTDOWN_TIMEOUT_SECONDS", 120)) * time.Second
@@ -241,6 +249,12 @@ func main() {
 	// 内存中的看板数据保存入库，避免重启丢失未落库数据 (issue #5679)
 	if common.DataExportEnabled {
 		model.SaveQuotaDataCache()
+	}
+	// 模型广场性能指标（状态/延迟/吞吐）同样缓存在内存，退出前落库
+	perfmetrics.Flush()
+	// 批量更新模式下尚未写入的额度/用量增量
+	if common.BatchUpdateEnabled {
+		model.FlushBatchUpdates()
 	}
 	common.SysLog(common.LogText("server exited"))
 }

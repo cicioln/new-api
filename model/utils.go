@@ -40,6 +40,12 @@ func InitBatchUpdater() {
 	})
 }
 
+// FlushBatchUpdates writes pending batched quota/usage deltas to the database.
+// Call it on shutdown so buffered updates are not lost on restart.
+func FlushBatchUpdates() {
+	batchUpdate()
+}
+
 func addNewRecord(type_ int, id int, value int) {
 	batchUpdateLocks[type_].Lock()
 	defer batchUpdateLocks[type_].Unlock()

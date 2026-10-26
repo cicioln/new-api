@@ -17,16 +17,31 @@ func flushLoop() {
 		if !setting.Enabled {
 			continue
 		}
-		flushCompletedBuckets()
+		// Persist the in-progress bucket too, so a restart loses at most one
+		// flush interval of samples instead of the whole current bucket.
+		flushBuckets(true)
 		cleanupExpiredMetrics(setting.RetentionDays)
 	}
 }
 
+// Flush persists every hot bucket, including the in-progress one. Call it on
+// shutdown so samples held in memory survive a restart.
+func Flush() {
+	flushBuckets(true)
+}
+
 func flushCompletedBuckets() {
+	flushBuckets(false)
+}
+
+// flushBuckets drains hot buckets into the database. Upserts are additive and
+// drained counters reset to zero, so flushing a bucket that is still
+// receiving samples never double counts.
+func flushBuckets(includeCurrent bool) {
 	currentBucket := bucketStart(time.Now().Unix())
 	hotBuckets.Range(func(key, value any) bool {
 		k := key.(bucketKey)
-		if k.bucketTs >= currentBucket {
+		if !includeCurrent && k.bucketTs >= currentBucket {
 			return true
 		}
 
