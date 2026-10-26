@@ -7651,6 +7651,7 @@
     "This model": "このモデル",
     "Total <num>{{count}}</num> models": "全 <num>{{count}}</num> モデル",
     "Try another keyword, or loosen the filters on the left": "別のキーワードを試すか、左側の条件を緩めてください",
+    "Try another keyword, or loosen the filters": "別のキーワードを試すか、条件を緩めてください",
     "Under maintenance": "メンテナンス中",
     "Unit price": "単価",
     "Use key": "使用するキー",

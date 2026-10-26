@@ -44,20 +44,24 @@ export interface MarketFiltersProps {
   className?: string
 }
 
-function FilterTitle(props: { children: ReactNode; first?: boolean }) {
+function FilterRow(props: { label: string; children: ReactNode }) {
   return (
-    <h4
-      className={cn(
-        'text-subtle-foreground mb-2 text-xs font-medium',
-        !props.first && 'mt-[18px]'
-      )}
+    <div
+      role='group'
+      aria-label={props.label}
+      className='flex items-start gap-3 py-2.5 not-first:border-t max-sm:flex-col max-sm:gap-2'
     >
-      {props.children}
-    </h4>
+      <span className='text-subtle-foreground w-16 shrink-0 pt-[5px] text-xs font-medium'>
+        {props.label}
+      </span>
+      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-1.5'>
+        {props.children}
+      </div>
+    </div>
   )
 }
 
-function FilterOption(props: {
+function FilterChip(props: {
   checked: boolean
   radio?: boolean
   onSelect: () => void
@@ -70,22 +74,23 @@ function FilterOption(props: {
       role={props.radio ? 'radio' : 'checkbox'}
       aria-checked={props.checked}
       onClick={props.onSelect}
-      className='text-muted-foreground flex w-full cursor-pointer items-center gap-2 py-[5px] text-left text-[13.5px]'
+      className={cn(
+        'inline-flex h-7 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] transition-colors',
+        props.checked
+          ? 'border-foreground bg-foreground text-background'
+          : 'bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+      )}
     >
-      <i
-        aria-hidden
-        className={cn(
-          'border-input inline-block size-[15px] shrink-0 border-[1.5px]',
-          props.radio ? 'rounded-full' : 'rounded-[4px]',
-          props.checked &&
-            'border-foreground bg-foreground shadow-[inset_0_0_0_2.5px_var(--card)]'
-        )}
-      />
-      <span className='flex min-w-0 items-center gap-2 truncate'>
+      <span className='flex min-w-0 items-center gap-1.5 truncate'>
         {props.children}
       </span>
       {props.count != null && (
-        <span className='text-subtle-foreground ml-auto font-mono text-[11.5px]'>
+        <span
+          className={cn(
+            'font-mono text-[11px]',
+            props.checked ? 'text-background/70' : 'text-subtle-foreground'
+          )}
+        >
           {props.count}
         </span>
       )}
@@ -97,33 +102,40 @@ export function MarketFilters(props: MarketFiltersProps) {
   const { t } = useTranslation()
 
   return (
-    <aside aria-label={t('Filters')} className={props.className}>
-      <FilterTitle first>{t('Model vendor')}</FilterTitle>
-      <FilterOption
-        checked={props.selectedVendors.length === 0}
-        onSelect={props.onClearVendors}
-        count={props.total}
-      >
-        {t('All')}
-      </FilterOption>
-      {props.vendors.map((vendor) => (
-        <FilterOption
-          key={vendor.name}
-          checked={props.selectedVendors.includes(vendor.name)}
-          onSelect={() => props.onToggleVendor(vendor.name)}
-          count={vendor.count}
+    <section
+      aria-label={t('Filters')}
+      className={cn('bg-card rounded-xl border px-4 py-1', props.className)}
+    >
+      <FilterRow label={t('Model vendor')}>
+        <FilterChip
+          checked={props.selectedVendors.length === 0}
+          onSelect={props.onClearVendors}
+          count={props.total}
         >
-          {vendor.icon && getLobeIcon(vendor.icon, 16)}
-          <span className='truncate'>{vendor.name}</span>
-        </FilterOption>
-      ))}
+          {t('All')}
+        </FilterChip>
+        {props.vendors.map((vendor) => (
+          <FilterChip
+            key={vendor.name}
+            checked={props.selectedVendors.includes(vendor.name)}
+            onSelect={() => props.onToggleVendor(vendor.name)}
+            count={vendor.count}
+          >
+            {vendor.icon && getLobeIcon(vendor.icon, 14)}
+            <span className='truncate'>{vendor.name}</span>
+          </FilterChip>
+        ))}
+      </FilterRow>
 
       {props.groups.length > 0 && (
-        <>
-          <FilterTitle>{t('Pricing group')}</FilterTitle>
-          <div role='radiogroup' aria-label={t('Pricing group')}>
+        <FilterRow label={t('Pricing group')}>
+          <div
+            role='radiogroup'
+            aria-label={t('Pricing group')}
+            className='contents'
+          >
             {props.groups.map((group) => (
-              <FilterOption
+              <FilterChip
                 key={group.name}
                 radio
                 checked={props.group === group.name}
@@ -131,29 +143,30 @@ export function MarketFilters(props: MarketFiltersProps) {
                 count={`×${group.ratio.toFixed(1)}`}
               >
                 {group.name}
-              </FilterOption>
+              </FilterChip>
             ))}
           </div>
-          <p className='text-subtle-foreground mt-1 text-[11.5px] leading-normal'>
+          <span className='text-subtle-foreground text-[11.5px]'>
             {t(
               'Prices use the selected group ratio, and only models available in that group are shown'
             )}
-          </p>
-        </>
+          </span>
+        </FilterRow>
       )}
 
-      <FilterTitle>{t('Status')}</FilterTitle>
-      {MARKET_STATUSES.map((status) => (
-        <FilterOption
-          key={status}
-          checked={props.selectedStatuses.includes(status)}
-          onSelect={() => props.onToggleStatus(status)}
-          count={props.statusCounts[status]}
-        >
-          <MarketStatusDot status={status} />
-          {t(getStatusLabelKey(status))}
-        </FilterOption>
-      ))}
-    </aside>
+      <FilterRow label={t('Status')}>
+        {MARKET_STATUSES.map((status) => (
+          <FilterChip
+            key={status}
+            checked={props.selectedStatuses.includes(status)}
+            onSelect={() => props.onToggleStatus(status)}
+            count={props.statusCounts[status]}
+          >
+            <MarketStatusDot status={status} />
+            {t(getStatusLabelKey(status))}
+          </FilterChip>
+        ))}
+      </FilterRow>
+    </section>
   )
 }

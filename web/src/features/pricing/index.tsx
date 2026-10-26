@@ -223,7 +223,7 @@ export function Pricing() {
         <b className='text-foreground mb-1.5 block text-[15px]'>
           {t('No models match the filters')}
         </b>
-        {t('Try another keyword, or loosen the filters on the left')}
+        {t('Try another keyword, or loosen the filters')}
         <br />
         <Button
           size='sm'
@@ -243,8 +243,56 @@ export function Pricing() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='w-full px-4 pb-16 md:px-7'>
-        <div className='grid grid-cols-[220px_minmax(0,1fr)] gap-7 pt-8 max-[1000px]:grid-cols-[minmax(0,1fr)]'>
+      <div className='w-full px-4 pt-8 pb-16 md:px-7'>
+        <div className='min-w-0'>
+          <div className='mb-4 flex flex-wrap items-center gap-2.5'>
+            <Button
+              variant='outline'
+              className='hidden max-sm:inline-flex'
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((prev) => !prev)}
+            >
+              {t('Filter')}
+            </Button>
+            <label className='relative min-w-[200px] flex-1'>
+              <Search
+                aria-hidden
+                className='text-subtle-foreground absolute top-3 left-3 size-4'
+                strokeWidth={2}
+              />
+              <input
+                ref={searchRef}
+                value={filters.searchInput}
+                onChange={(event) => filters.setSearchInput(event.target.value)}
+                placeholder={t('Search models, e.g. claude, gpt, deepseek')}
+                aria-label={t('Search models')}
+                className='border-input bg-card focus:border-foreground focus:ring-primary/20 h-10 w-full rounded-lg border pr-10 pl-9 text-sm transition-[border-color,box-shadow] outline-none focus:ring-3'
+              />
+              <kbd className='text-subtle-foreground bg-background absolute top-2.5 right-2.5 rounded border px-1.5 py-px font-mono text-[11px]'>
+                /
+              </kbd>
+            </label>
+            <MarketSeg<ViewMode>
+              value={filters.viewMode}
+              onChange={filters.setViewMode}
+              aria-label={t('View')}
+              options={[
+                { value: VIEW_MODES.CARD, label: t('Cards') },
+                { value: VIEW_MODES.TABLE, label: t('Table') },
+              ]}
+            />
+            <MarketSeg<MarketSort>
+              value={filters.sortBy}
+              onChange={filters.setSortBy}
+              aria-label={t('Sort')}
+              options={[
+                { value: 'hot', label: t('Popular') },
+                { value: 'price', label: t('Price ↑') },
+                { value: 'new', label: t('Newest') },
+              ]}
+            />
+          </div>
+
           <MarketFilters
             total={models.length}
             vendors={vendorCounts}
@@ -257,125 +305,70 @@ export function Pricing() {
             statusCounts={statusCounts}
             selectedStatuses={filters.statuses}
             onToggleStatus={filters.toggleStatus}
-            className={cn(
-              'max-[1000px]:hidden',
-              filtersOpen &&
-                'max-[1000px]:bg-card max-[1000px]:block max-[1000px]:rounded-xl max-[1000px]:border max-[1000px]:p-4'
-            )}
+            className={cn('mb-4 max-sm:hidden', filtersOpen && 'max-sm:block')}
           />
-          <div className='min-w-0'>
-            <div className='mb-4 flex flex-wrap items-center gap-2.5'>
-              <Button
-                variant='outline'
-                className='hidden max-[1000px]:inline-flex'
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((prev) => !prev)}
-              >
-                {t('Filter')}
-              </Button>
-              <label className='relative min-w-[200px] flex-1'>
-                <Search
-                  aria-hidden
-                  className='text-subtle-foreground absolute top-3 left-3 size-4'
-                  strokeWidth={2}
+
+          <div className='mb-3.5 flex min-h-8 flex-wrap items-center justify-between gap-2.5'>
+            <div className='text-subtle-foreground flex flex-wrap items-center gap-1.5 text-[13px]'>
+              <span>
+                <Trans
+                  i18nKey='Total <num>{{count}}</num> models'
+                  values={{ count: filters.filteredModels.length }}
+                  components={{
+                    num: (
+                      <b className='text-foreground font-mono font-medium' />
+                    ),
+                  }}
                 />
-                <input
-                  ref={searchRef}
-                  value={filters.searchInput}
-                  onChange={(event) =>
-                    filters.setSearchInput(event.target.value)
-                  }
-                  placeholder={t('Search models, e.g. claude, gpt, deepseek')}
-                  aria-label={t('Search models')}
-                  className='border-input bg-card focus:border-foreground focus:ring-primary/20 h-10 w-full rounded-lg border pr-10 pl-9 text-sm transition-[border-color,box-shadow] outline-none focus:ring-3'
-                />
-                <kbd className='text-subtle-foreground bg-background absolute top-2.5 right-2.5 rounded border px-1.5 py-px font-mono text-[11px]'>
-                  /
-                </kbd>
-              </label>
-              <MarketSeg<ViewMode>
-                value={filters.viewMode}
-                onChange={filters.setViewMode}
-                aria-label={t('View')}
+              </span>
+              {chips.map((chip) => (
+                <button
+                  key={chip.key}
+                  type='button'
+                  onClick={chip.onRemove}
+                  className='bg-muted text-foreground group inline-flex h-[26px] items-center gap-1.5 rounded-md pr-2 pl-2.5 text-[12.5px]'
+                >
+                  {chip.label}
+                  <i className='text-subtle-foreground group-hover:text-foreground not-italic'>
+                    ×
+                  </i>
+                </button>
+              ))}
+              {chips.length > 0 && (
+                <button
+                  type='button'
+                  onClick={filters.clearAll}
+                  className='text-primary text-[12.5px]'
+                >
+                  {t('Clear all')}
+                </button>
+              )}
+            </div>
+            <div className='flex gap-2'>
+              <MarketSeg
+                value={filters.showRechargePrice ? 'rch' : 'std'}
+                onChange={(value) =>
+                  filters.setShowRechargePrice(value === 'rch')
+                }
+                aria-label={t('Price basis')}
                 options={[
-                  { value: VIEW_MODES.CARD, label: t('Cards') },
-                  { value: VIEW_MODES.TABLE, label: t('Table') },
+                  { value: 'std', label: t('Standard rate') },
+                  { value: 'rch', label: t('Recharge rate') },
                 ]}
               />
-              <MarketSeg<MarketSort>
-                value={filters.sortBy}
-                onChange={filters.setSortBy}
-                aria-label={t('Sort')}
+              <MarketSeg<TokenUnit>
+                value={filters.tokenUnit}
+                onChange={filters.setTokenUnit}
+                aria-label={t('Pricing unit')}
                 options={[
-                  { value: 'hot', label: t('Popular') },
-                  { value: 'price', label: t('Price ↑') },
-                  { value: 'new', label: t('Newest') },
+                  { value: 'M', label: '/ 1M' },
+                  { value: 'K', label: '/ 1K' },
                 ]}
               />
             </div>
-
-            <div className='mb-3.5 flex min-h-8 flex-wrap items-center justify-between gap-2.5'>
-              <div className='text-subtle-foreground flex flex-wrap items-center gap-1.5 text-[13px]'>
-                <span>
-                  <Trans
-                    i18nKey='Total <num>{{count}}</num> models'
-                    values={{ count: filters.filteredModels.length }}
-                    components={{
-                      num: (
-                        <b className='text-foreground font-mono font-medium' />
-                      ),
-                    }}
-                  />
-                </span>
-                {chips.map((chip) => (
-                  <button
-                    key={chip.key}
-                    type='button'
-                    onClick={chip.onRemove}
-                    className='bg-muted text-foreground group inline-flex h-[26px] items-center gap-1.5 rounded-md pr-2 pl-2.5 text-[12.5px]'
-                  >
-                    {chip.label}
-                    <i className='text-subtle-foreground group-hover:text-foreground not-italic'>
-                      ×
-                    </i>
-                  </button>
-                ))}
-                {chips.length > 0 && (
-                  <button
-                    type='button'
-                    onClick={filters.clearAll}
-                    className='text-primary text-[12.5px]'
-                  >
-                    {t('Clear all')}
-                  </button>
-                )}
-              </div>
-              <div className='flex gap-2'>
-                <MarketSeg
-                  value={filters.showRechargePrice ? 'rch' : 'std'}
-                  onChange={(value) =>
-                    filters.setShowRechargePrice(value === 'rch')
-                  }
-                  aria-label={t('Price basis')}
-                  options={[
-                    { value: 'std', label: t('Standard rate') },
-                    { value: 'rch', label: t('Recharge rate') },
-                  ]}
-                />
-                <MarketSeg<TokenUnit>
-                  value={filters.tokenUnit}
-                  onChange={filters.setTokenUnit}
-                  aria-label={t('Pricing unit')}
-                  options={[
-                    { value: 'M', label: '/ 1M' },
-                    { value: 'K', label: '/ 1K' },
-                  ]}
-                />
-              </div>
-            </div>
-
-            {content}
           </div>
+
+          {content}
         </div>
       </div>
 
