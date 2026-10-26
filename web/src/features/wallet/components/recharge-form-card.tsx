@@ -140,7 +140,6 @@ export function RechargeFormCard({
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
-  const [customActive, setCustomActive] = useState(false)
   const [methodType, setMethodType] = useState<string | null>(null)
 
   useEffect(() => {
@@ -228,7 +227,8 @@ export function RechargeFormCard({
   const selectedMethodMin = selectedMethod
     ? Math.max(selectedMethod.min_topup || 0, minTopup)
     : minTopup
-  const showCustomInput = customActive || presetAmounts.length === 0
+  // Custom amounts are only offered when no preset is configured.
+  const showCustomInput = presetAmounts.length === 0
 
   return (
     <section className='bg-card space-y-4 rounded-lg border p-[18px]'>
@@ -258,8 +258,7 @@ export function RechargeFormCard({
                       discount,
                       usdExchangeRate
                     )
-                    const selected =
-                      !customActive && selectedPreset === preset.value
+                    const selected = selectedPreset === preset.value
                     return (
                       <button
                         key={preset.value}
@@ -271,10 +270,7 @@ export function RechargeFormCard({
                             ? 'border-primary ring-primary/15 ring-[3px]'
                             : 'border-border'
                         )}
-                        onClick={() => {
-                          setCustomActive(false)
-                          onSelectPreset(preset)
-                        }}
+                        onClick={() => onSelectPreset(preset)}
                       >
                         <b className='block text-[17px] font-semibold tabular-nums'>
                           {formatTileAmount(preset.value)}
@@ -293,26 +289,6 @@ export function RechargeFormCard({
                       </button>
                     )
                   })}
-                  <button
-                    type='button'
-                    aria-pressed={customActive}
-                    className={cn(
-                      'bg-card rounded-[9px] border p-3 text-left transition-shadow',
-                      customActive
-                        ? 'border-primary ring-primary/15 ring-[3px]'
-                        : 'border-border'
-                    )}
-                    onClick={() => setCustomActive(true)}
-                  >
-                    <b className='block text-[17px] font-semibold'>
-                      {t('Custom')}
-                    </b>
-                    <small className='text-muted-foreground text-xs'>
-                      {t('Minimum {{amount}}', {
-                        amount: formatTileAmount(minTopup),
-                      })}
-                    </small>
-                  </button>
                 </div>
               )}
 
