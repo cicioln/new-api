@@ -243,7 +243,7 @@ export function Pricing() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='w-full px-4 pt-8 pb-16 md:px-7'>
+      <div className='mx-auto w-full max-w-[1600px] px-4 pt-8 pb-16 md:px-7'>
         <div className='min-w-0'>
           <div className='mb-4 flex flex-wrap items-center gap-2.5'>
             <Button

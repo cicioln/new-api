@@ -47,7 +47,9 @@ export function PublicLayout(props: PublicLayoutProps) {
       />
 
       {props.showMainContainer !== false ? (
-        <main className='px-4 py-6 md:px-7'>{props.children}</main>
+        <main className='mx-auto w-full max-w-[1600px] px-4 py-6 md:px-7'>
+          {props.children}
+        </main>
       ) : (
         props.children
       )}

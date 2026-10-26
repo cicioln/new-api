@@ -120,7 +120,7 @@ export function Home() {
   return (
     <PublicLayout showMainContainer={false}>
       <Hero />
-      <div className='px-4 md:px-7'>
+      <div className='mx-auto w-full max-w-[1600px] px-4 md:px-7'>
         <QuickStart />
         <GroupTable />
         <Features />

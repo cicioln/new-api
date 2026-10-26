@@ -105,7 +105,7 @@ export function Rankings() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='w-full px-4 pb-16 md:px-7'>
+      <div className='mx-auto w-full max-w-[1600px] px-4 pb-16 md:px-7'>
         <div className='flex flex-wrap items-end justify-between gap-4 pt-10 pb-5'>
           <div>
             <h1 className='text-[30px] font-[650] tracking-[-0.02em]'>

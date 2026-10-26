@@ -137,9 +137,10 @@ export function Hero() {
       cv.height = H * dpr
       g.setTransform(dpr, 0, 0, dpr, 0, 0)
       // Clients hug the left, groups the right, gateway in the middle, all
-      // inside the full-width page gutters (px-4 / md:px-7).
+      // inside the shared 1600px content width (px-4 / md:px-7 gutters).
       const sm = W < 640
-      const bl = W < 768 ? 16 : 28
+      const gutter = W < 768 ? 16 : 28
+      const bl = Math.max(gutter, (W - 1600) / 2 + gutter)
       br = W - bl
       let sx = bl + 150
       let dx = Math.max(sx + 300, br - 270)
