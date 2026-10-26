@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { Menu, X } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -34,6 +34,7 @@ import { useTheme } from '@/context/theme-provider'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 import { cn } from '@/lib/utils'
+import { openAuthDialog } from '@/stores/auth-dialog-store'
 import { useAuthStore } from '@/stores/auth-store'
 
 import { defaultTopNavLinks } from '../config/top-nav.config'
@@ -72,7 +73,6 @@ export function PublicHeader(props: PublicHeaderProps) {
   const homeUrl = props.homeUrl ?? '/'
 
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [authPromptTarget, setAuthPromptTarget] =
     useState<AuthPromptTarget | null>(null)
@@ -103,14 +103,14 @@ export function PublicHeader(props: PublicHeaderProps) {
     const timeoutId = window.setTimeout(() => {
       const redirect = authPromptTarget.href
       setAuthPromptTarget(null)
-      navigate({ to: '/sign-in', search: { redirect } })
+      openAuthDialog('sign-in', redirect)
     }, AUTH_PROMPT_SECONDS * 1000)
 
     return () => {
       window.clearInterval(intervalId)
       window.clearTimeout(timeoutId)
     }
-  }, [authPromptTarget, navigate])
+  }, [authPromptTarget])
 
   const closeAuthPrompt = useCallback(() => {
     setAuthPromptTarget(null)
@@ -120,8 +120,8 @@ export function PublicHeader(props: PublicHeaderProps) {
   const navigateToSignIn = useCallback(() => {
     const redirect = authPromptTarget?.href || '/'
     setAuthPromptTarget(null)
-    navigate({ to: '/sign-in', search: { redirect } })
-  }, [authPromptTarget?.href, navigate])
+    openAuthDialog('sign-in', redirect)
+  }, [authPromptTarget?.href])
 
   const handleNavLinkClick = useCallback(
     (
@@ -268,8 +268,10 @@ export function PublicHeader(props: PublicHeaderProps) {
               <Button
                 variant='outline'
                 className='h-9'
-                render={<Link to='/sign-in' />}
-                onClick={() => setMobileOpen(false)}
+                onClick={() => {
+                  setMobileOpen(false)
+                  openAuthDialog('sign-in')
+                }}
               >
                 {t('Sign in')}
               </Button>

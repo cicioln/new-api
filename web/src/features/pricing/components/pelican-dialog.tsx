@@ -17,7 +17,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { ChevronRight, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,6 +27,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStreamRequest } from '@/features/playground/hooks/use-stream-request'
 import { ROLE } from '@/lib/roles'
 import { cn } from '@/lib/utils'
+import { openAuthDialog } from '@/stores/auth-dialog-store'
 import { useAuthStore } from '@/stores/auth-store'
 
 import {
@@ -342,7 +342,13 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
               {isStreaming ? t('Generating…') : t('Start test')}
             </Button>
           ) : (
-            <Button className='w-full' render={<Link to='/sign-in' />}>
+            <Button
+              className='w-full'
+              onClick={() => {
+                props.onOpenChange(false)
+                openAuthDialog('sign-in')
+              }}
+            >
               {t('Sign in to run a test')}
             </Button>
           )}

@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button'
 import { useNotifications } from '@/hooks/use-notifications'
 import { formatQuota } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { openAuthDialog } from '@/stores/auth-dialog-store'
 import { useAuthStore } from '@/stores/auth-store'
 
 /**
@@ -70,7 +71,11 @@ export function HeaderActions(props: { className?: string }) {
           <ProfileDropdown />
         </>
       ) : (
-        <Button size='sm' className='ms-1' render={<Link to='/sign-in' />}>
+        <Button
+          size='sm'
+          className='ms-1'
+          onClick={() => openAuthDialog('sign-in')}
+        >
           {t('Sign in')}
         </Button>
       )}

@@ -65,7 +65,7 @@ import { AuthOperationError } from '@/lib/secure-verification'
 import { createServerError } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
-export function SignUpForm(props: { className?: string }) {
+export function SignUpForm(props: { className?: string; redirectTo?: string }) {
   const { t } = useTranslation()
   const [affCode, setAffCode] = useState(getAffiliateCode)
   const [isLoading, setIsLoading] = useState(false)
@@ -85,7 +85,7 @@ export function SignUpForm(props: { className?: string }) {
     setTurnstileToken,
     validateTurnstile,
   } = useTurnstile()
-  const { redirectToLogin, handleLoginResult } = useAuthRedirect()
+  const { handleLoginResult } = useAuthRedirect()
   const {
     isSending: isSendingCode,
     secondsLeft,
@@ -180,8 +180,9 @@ export function SignUpForm(props: { className?: string }) {
       })
 
       if (res?.success) {
-        toast.success(t('Account created! Please sign in'))
-        redirectToLogin()
+        // Registration signs the new user in, possibly via a verification step.
+        toast.success(t('Account created'))
+        await handleLoginResult(res.data, props.redirectTo, data.username)
       } else {
         handleServerError(createServerError(res, t('Failed to create account')))
       }

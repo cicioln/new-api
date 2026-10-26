@@ -328,11 +328,10 @@ func Register(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-	})
-	return
+	// Sign the new user in right away through the shared login policy, so a
+	// required verification still applies before a session is issued.
+	c.Set("login_method", "password")
+	setupLogin(&insertedUser, nil, c)
 }
 
 func GetAllUsers(c *gin.Context) {

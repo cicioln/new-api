@@ -93,7 +93,7 @@ export function AuthAlt(props: {
   return (
     <div
       className={cn(
-        'text-subtle-foreground mt-5 text-center text-[13px] [&_a]:text-foreground [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-[3px]',
+        'text-subtle-foreground mt-5 text-center text-[13px] [&_a,&_button]:text-foreground [&_a,&_button]:cursor-pointer [&_a,&_button]:font-medium [&_a,&_button]:underline [&_a,&_button]:underline-offset-[3px]',
         props.className
       )}
     >
