@@ -7385,6 +7385,7 @@
     "{{group}} group · {{role}}": "{{group}} 分組 · {{role}}",
     "Search pages, models, keys": "搜尋頁面、模型、金鑰",
     "Breadcrumb": "麵包屑",
+    "Site navigation": "網站導覽",
     "Account menu": "帳戶選單",
     "New key": "新增金鑰",
     "{{count}} requests in the past {{period}}.": "過去 {{period}}共 {{count}} 次呼叫。",

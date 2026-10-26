@@ -7385,6 +7385,7 @@
     "{{group}} group · {{role}}": "Groupe {{group}} · {{role}}",
     "Search pages, models, keys": "Rechercher pages, modèles, clés",
     "Breadcrumb": "Fil d'Ariane",
+    "Site navigation": "Navigation du site",
     "Account menu": "Menu du compte",
     "New key": "Nouvelle clé",
     "{{count}} requests in the past {{period}}.": "{{count}} requêtes sur les dernières {{period}}.",

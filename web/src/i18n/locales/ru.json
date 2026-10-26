@@ -7385,6 +7385,7 @@
     "{{group}} group · {{role}}": "Группа {{group}} · {{role}}",
     "Search pages, models, keys": "Поиск страниц, моделей, ключей",
     "Breadcrumb": "Навигационная цепочка",
+    "Site navigation": "Навигация по сайту",
     "Account menu": "Меню аккаунта",
     "New key": "Новый ключ",
     "{{count}} requests in the past {{period}}.": "{{count}} запросов за последние {{period}}.",

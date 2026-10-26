@@ -7385,6 +7385,7 @@
     "{{group}} group · {{role}}": "{{group}} 分组 · {{role}}",
     "Search pages, models, keys": "搜索页面、模型、密钥",
     "Breadcrumb": "面包屑",
+    "Site navigation": "站点导航",
     "Account menu": "账户菜单",
     "New key": "新建密钥",
     "{{count}} requests in the past {{period}}.": "过去 {{period}}共 {{count}} 次调用。",

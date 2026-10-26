@@ -26,7 +26,6 @@ import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
 import { NavGroup } from './nav-group'
 import { SidebarBalance } from './sidebar-balance'
 import { SidebarViewHeader } from './sidebar-view-header'
-import { SidebarWorkspace } from './sidebar-workspace'
 import { SystemBrand } from './system-brand'
 
 /**
@@ -55,7 +54,6 @@ export function AppSidebar() {
     <Sidebar collapsible={collapsible} variant={variant}>
       <SidebarContent className='px-3 py-3.5 group-data-[collapsible=icon]:px-1.5'>
         <SystemBrand />
-        <SidebarWorkspace />
         {view && <SidebarViewHeader view={view} />}
         <AnimatePresence mode='wait' initial={false}>
           <motion.div

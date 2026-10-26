@@ -7385,6 +7385,7 @@
     "{{group}} group · {{role}}": "{{group}} グループ · {{role}}",
     "Search pages, models, keys": "ページ・モデル・キーを検索",
     "Breadcrumb": "パンくずリスト",
+    "Site navigation": "サイトナビゲーション",
     "Account menu": "アカウントメニュー",
     "New key": "新しいキー",
     "{{count}} requests in the past {{period}}.": "過去 {{period}}で {{count}} 件のリクエスト。",
