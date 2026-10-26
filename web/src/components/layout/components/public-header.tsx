@@ -58,6 +58,8 @@ export interface PublicHeaderProps {
   showLanguageSwitcher?: boolean
   logo?: React.ReactNode
   siteName?: string
+  /** Pins the highlighted nav entry instead of following the URL. */
+  activeNavHref?: string
   homeUrl?: string
   leftContent?: React.ReactNode
   rightContent?: React.ReactNode
@@ -193,6 +195,7 @@ export function PublicHeader(props: PublicHeaderProps) {
         )}
       >
         <div className='relative flex h-[60px] items-center gap-8 px-4 md:px-7'>
+          {props.leftContent}
           <Link
             to={homeUrl}
             className='flex min-w-0 items-center gap-2.5 text-base font-bold tracking-[-0.01em]'
@@ -205,6 +208,7 @@ export function PublicHeader(props: PublicHeaderProps) {
 
           <SiteNav
             links={links}
+            activeHref={props.activeNavHref}
             onLinkClick={(event, link) => handleNavLinkClick(event, link)}
             className='absolute left-1/2 hidden -translate-x-1/2 lg:flex'
           />

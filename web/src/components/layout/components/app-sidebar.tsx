@@ -26,7 +26,6 @@ import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
 import { NavGroup } from './nav-group'
 import { SidebarBalance } from './sidebar-balance'
 import { SidebarViewHeader } from './sidebar-view-header'
-import { SystemBrand } from './system-brand'
 
 /**
  * Application sidebar.
@@ -51,9 +50,13 @@ export function AppSidebar() {
   const shouldReduce = useReducedMotion()
 
   return (
-    <Sidebar collapsible={collapsible} variant={variant}>
+    <Sidebar
+      collapsible={collapsible}
+      variant={variant}
+      // Start below the shared site header (60px + 1px border).
+      className='top-[61px] h-[calc(100svh-61px)]'
+    >
       <SidebarContent className='px-3 py-3.5 group-data-[collapsible=icon]:px-1.5'>
-        <SystemBrand />
         {view && <SidebarViewHeader view={view} />}
         <AnimatePresence mode='wait' initial={false}>
           <motion.div

@@ -18,13 +18,18 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { AnimatedOutlet } from '@/components/page-transition'
 import { SkipToMain } from '@/components/skip-to-main'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
 import { LayoutProvider } from '@/context/layout-provider'
 import { SearchProvider } from '@/context/search-provider'
 import { getCookie } from '@/lib/cookies'
 
-import { AppHeader } from './app-header'
 import { AppSidebar } from './app-sidebar'
+import { PublicHeader } from './public-header'
+import { CONSOLE_HREF } from './site-nav'
 
 type AuthenticatedLayoutProps = {
   children?: React.ReactNode
@@ -36,15 +41,30 @@ export function AuthenticatedLayout(props: AuthenticatedLayoutProps) {
   return (
     <LayoutProvider>
       <SearchProvider>
-        <SidebarProvider defaultOpen={defaultOpen}>
+        <SidebarProvider
+          defaultOpen={defaultOpen}
+          className='h-svh min-h-0 flex-col overflow-hidden'
+        >
           <SkipToMain />
-          <AppSidebar />
-          <SidebarInset className='@container/content h-svh min-h-0 overflow-hidden'>
-            <AppHeader />
-            <div className='flex min-h-0 flex-1 flex-col'>
-              {props.children ?? <AnimatedOutlet />}
-            </div>
-          </SidebarInset>
+          {/* The console shares the site header; the sidebar sits below it. */}
+          <PublicHeader
+            activeNavHref={CONSOLE_HREF}
+            leftContent={
+              <SidebarTrigger
+                variant='ghost'
+                className='bg-card [&_svg]:text-muted-foreground -me-4 size-[34px] shrink-0 rounded-lg border md:hidden'
+              />
+            }
+            className='shrink-0'
+          />
+          <div className='flex min-h-0 flex-1'>
+            <AppSidebar />
+            <SidebarInset className='@container/content min-h-0 overflow-hidden'>
+              <div className='flex min-h-0 flex-1 flex-col'>
+                {props.children ?? <AnimatedOutlet />}
+              </div>
+            </SidebarInset>
+          </div>
         </SidebarProvider>
       </SearchProvider>
     </LayoutProvider>
