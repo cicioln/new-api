@@ -16,14 +16,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useQuery } from '@tanstack/react-query'
 import { Bird } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
+import { getPelicanRecords } from '../api'
+import { useTimeAgo } from '../hooks/use-time-ago'
 import { getVendorAvatar, supportsPelicanTest } from '../lib/market'
+import { PELICAN_QUERY_KEY, svgDataUrl } from '../lib/pelican'
 import type { PricingModel } from '../types'
 
 export function VendorAvatar(props: {
@@ -128,29 +138,119 @@ export function MarketGroupTags(props: {
   )
 }
 
+const PELICAN_BUTTON_CLASS =
+  'bg-card text-muted-foreground hover:border-primary hover:text-primary disabled:hover:text-subtle-foreground disabled:hover:border-border inline-flex h-7 items-center gap-[5px] rounded-[7px] border px-2.5 text-[12.5px] whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-45'
+
+/** Hover preview of the latest pelicans drawn by one model. */
+function PelicanPreview(props: { modelName: string }) {
+  const { t } = useTranslation()
+  const ago = useTimeAgo()
+  const query = useQuery({
+    queryKey: PELICAN_QUERY_KEY,
+    queryFn: getPelicanRecords,
+    staleTime: 60_000,
+  })
+  const records = (query.data ?? [])
+    .filter((record) => record.model === props.modelName)
+    .slice(0, 4)
+  const latest = records[0]
+
+  if (query.isLoading) {
+    return (
+      <p className='text-subtle-foreground py-6 text-center text-xs'>
+        {t('Loading...')}
+      </p>
+    )
+  }
+  if (!latest) {
+    return (
+      <p className='text-subtle-foreground py-6 text-center text-xs'>
+        {t('No test records yet')}
+      </p>
+    )
+  }
+  return (
+    <div className='flex flex-col gap-2'>
+      <img
+        src={svgDataUrl(latest.svg)}
+        alt={t('Pelican riding a bicycle by {{model}}', {
+          model: latest.model,
+        })}
+        className='bg-muted block aspect-[4/3] w-full rounded-md object-contain'
+      />
+      <div className='text-subtle-foreground flex justify-between gap-2 font-mono text-[11px]'>
+        <span className='truncate'>
+          {latest.mine ? t('Me') : latest.username}
+        </span>
+        <span className='shrink-0'>{ago(latest.createdAt)}</span>
+      </div>
+      {records.length > 1 && (
+        <div className='grid grid-cols-3 gap-1.5'>
+          {records.slice(1).map((record) => (
+            <img
+              key={record.id}
+              src={svgDataUrl(record.svg)}
+              alt={t('Pelican riding a bicycle by {{model}}', {
+                model: record.model,
+              })}
+              className='bg-muted block aspect-[4/3] w-full rounded object-contain'
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function PelicanButton(props: {
   model: PricingModel
   onTest: (modelName: string) => void
 }) {
   const { t } = useTranslation()
+  const [previewOpen, setPreviewOpen] = useState(false)
   const supported = supportsPelicanTest(props.model)
-  return (
-    <button
-      type='button'
-      disabled={!supported}
-      title={
-        supported
-          ? t('Ask the model to draw a pelican riding a bicycle')
-          : t('Embedding models do not support generation tests')
-      }
-      onClick={(event) => {
-        event.stopPropagation()
-        props.onTest(props.model.model_name)
-      }}
-      className='bg-card text-muted-foreground hover:border-primary hover:text-primary disabled:hover:text-subtle-foreground disabled:hover:border-border inline-flex h-7 items-center gap-[5px] rounded-[7px] border px-2.5 text-[12.5px] whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-45'
-    >
+  const label = (
+    <>
       <Bird aria-hidden className='size-3.5' strokeWidth={1.8} />
       {t('Pelican test')}
-    </button>
+    </>
+  )
+
+  if (!supported) {
+    return (
+      <button
+        type='button'
+        disabled
+        title={t('Embedding models do not support generation tests')}
+        className={PELICAN_BUTTON_CLASS}
+      >
+        {label}
+      </button>
+    )
+  }
+
+  return (
+    <HoverCard open={previewOpen} onOpenChange={setPreviewOpen}>
+      <HoverCardTrigger
+        delay={300}
+        render={
+          <button
+            type='button'
+            title={t('Ask the model to draw a pelican riding a bicycle')}
+            onClick={(event) => {
+              event.stopPropagation()
+              setPreviewOpen(false)
+              props.onTest(props.model.model_name)
+            }}
+            className={PELICAN_BUTTON_CLASS}
+          />
+        }
+      >
+        {label}
+      </HoverCardTrigger>
+      <HoverCardContent side='top' className='w-60'>
+        {previewOpen && <PelicanPreview modelName={props.model.model_name} />}
+      </HoverCardContent>
+    </HoverCard>
   )
 }

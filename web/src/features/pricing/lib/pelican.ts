@@ -21,6 +21,8 @@ For commercial licensing, please contact support@quantumnous.com
 // Pelican test: ask a model to draw "a pelican riding a bicycle" as SVG
 // ----------------------------------------------------------------------------
 
+export const PELICAN_QUERY_KEY = ['pelican-records']
+
 export const PELICAN_PROMPT = 'Generate an SVG of a pelican riding a bicycle'
 
 export type PelicanRecord = {

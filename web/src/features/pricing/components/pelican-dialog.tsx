@@ -35,6 +35,7 @@ import {
   deletePelicanRecord,
   getPelicanRecords,
 } from '../api'
+import { useTimeAgo } from '../hooks/use-time-ago'
 import {
   formatMarketLatency,
   getVendorAvatarIcon,
@@ -43,6 +44,7 @@ import {
 import {
   extractSvg,
   PELICAN_PROMPT,
+  PELICAN_QUERY_KEY,
   svgDataUrl,
   type PelicanRecord,
 } from '../lib/pelican'
@@ -58,21 +60,6 @@ export interface PelicanDialogProps {
 }
 
 type Scope = 'model' | 'all'
-
-const PELICAN_QUERY_KEY = ['pelican-records']
-
-function useTimeAgo() {
-  const { t } = useTranslation()
-  return (ts: number) => {
-    const minutes = Math.floor((Date.now() - ts) / 60000)
-    if (minutes < 1) return t('Just now')
-    if (minutes < 60) return t('{{count}} minutes ago', { count: minutes })
-    if (minutes < 1440) {
-      return t('{{count}} hours ago', { count: Math.floor(minutes / 60) })
-    }
-    return t('{{count}} days ago', { count: Math.floor(minutes / 1440) })
-  }
-}
 
 function Thumbs(props: {
   records: PelicanRecord[]
