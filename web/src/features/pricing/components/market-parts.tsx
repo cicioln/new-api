@@ -20,12 +20,30 @@ import { Bird } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
+import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
 import { getVendorAvatar, supportsPelicanTest } from '../lib/market'
 import type { PricingModel } from '../types'
 
-export function VendorAvatar(props: { name: string; className?: string }) {
+export function VendorAvatar(props: {
+  name: string
+  icon?: string
+  className?: string
+}) {
+  if (props.icon) {
+    return (
+      <span
+        aria-hidden
+        className={cn(
+          'bg-muted grid size-[34px] shrink-0 place-items-center rounded-[9px] border',
+          props.className
+        )}
+      >
+        {getLobeIcon(props.icon, 20)}
+      </span>
+    )
+  }
   const avatar = getVendorAvatar(props.name)
   return (
     <span

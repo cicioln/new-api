@@ -262,6 +262,21 @@ describe('model cards', () => {
     expect(onClick).toHaveBeenCalledWith(name)
   })
 
+  it('shows the vendor icon instead of the letter avatar when set', () => {
+    const { container } = render(
+      <ModelCard
+        model={pricingModel({
+          vendor_name: 'Anthropic',
+          vendor_icon: 'Claude.Color',
+        })}
+        onClick={vi.fn()}
+      />
+    )
+    const avatar = container.querySelector('[aria-hidden].bg-muted')
+    expect(avatar).not.toBeNull()
+    expect(avatar).not.toHaveTextContent('A')
+  })
+
   it('shows up to four group tags and folds the rest into +N', () => {
     const groups = ['default', 'vip', 'svip', 'enterprise', 'azure', 'cn']
     render(

@@ -160,6 +160,11 @@ export function getVendorAvatarName(model: PricingModel): string {
   return model.vendor_name || model.model_name || '?'
 }
 
+/** Vendor icon for the avatar, falling back to the model's own icon. */
+export function getVendorAvatarIcon(model: PricingModel): string | undefined {
+  return model.vendor_icon || model.icon || undefined
+}
+
 /** Avatar color and letter for a vendor name, stable across renders. */
 export function getVendorAvatar(vendorName: string): {
   color: string

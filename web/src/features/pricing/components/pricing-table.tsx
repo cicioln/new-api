@@ -26,6 +26,7 @@ import { useMarketPrice } from '../hooks/use-market-price'
 import {
   formatMarketLatency,
   formatMarketTps,
+  getVendorAvatarIcon,
   getVendorAvatarName,
   type MarketPerf,
 } from '../lib/market'
@@ -86,6 +87,7 @@ const PricingTableRow = memo(function PricingTableRow(props: RowProps) {
         <div className='flex items-center gap-2.5'>
           <VendorAvatar
             name={getVendorAvatarName(props.model)}
+            icon={getVendorAvatarIcon(props.model)}
             className='size-7 rounded-[7px] text-xs'
           />
           <div className='min-w-0'>

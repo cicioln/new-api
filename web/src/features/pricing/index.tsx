@@ -102,10 +102,13 @@ export function Pricing() {
         counts.set(model.vendor_name, (counts.get(model.vendor_name) ?? 0) + 1)
       }
     }
-    const ordered = vendors
-      .map((vendor) => vendor.name)
-      .filter((name) => counts.has(name))
-    return ordered.map((name) => ({ name, count: counts.get(name) ?? 0 }))
+    return vendors
+      .filter((vendor) => counts.has(vendor.name))
+      .map((vendor) => ({
+        name: vendor.name,
+        icon: vendor.icon,
+        count: counts.get(vendor.name) ?? 0,
+      }))
   }, [models, vendors])
 
   const statusCounts = useMemo(() => {

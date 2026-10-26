@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 
 import {
@@ -30,7 +31,7 @@ import { MarketStatusDot } from './market-status'
 
 export interface MarketFiltersProps {
   total: number
-  vendors: { name: string; count: number }[]
+  vendors: { name: string; icon?: string; count: number }[]
   selectedVendors: string[]
   onToggleVendor: (vendor: string) => void
   onClearVendors: () => void
@@ -112,7 +113,8 @@ export function MarketFilters(props: MarketFiltersProps) {
           onSelect={() => props.onToggleVendor(vendor.name)}
           count={vendor.count}
         >
-          {vendor.name}
+          {vendor.icon && getLobeIcon(vendor.icon, 16)}
+          <span className='truncate'>{vendor.name}</span>
         </FilterOption>
       ))}
 
