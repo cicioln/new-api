@@ -24,6 +24,8 @@ export type AuthDialogMode = 'sign-in' | 'sign-up'
 type AuthDialogState = {
   mode: AuthDialogMode | null
   redirect?: string
+  /** Path the dialog was opened on; leaving it closes the dialog. */
+  openedAt?: string
   open: (mode: AuthDialogMode, redirect?: string) => void
   close: () => void
 }
@@ -32,8 +34,9 @@ type AuthDialogState = {
 export const useAuthDialogStore = create<AuthDialogState>()((set) => ({
   mode: null,
   redirect: undefined,
-  open: (mode, redirect) => set({ mode, redirect }),
-  close: () => set({ mode: null, redirect: undefined }),
+  open: (mode, redirect) =>
+    set({ mode, redirect, openedAt: window.location.pathname }),
+  close: () => set({ mode: null, redirect: undefined, openedAt: undefined }),
 }))
 
 /** Opens the auth dialog and returns to `redirect` (or the current page). */

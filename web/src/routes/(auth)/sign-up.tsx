@@ -18,11 +18,11 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { SignUp } from '@/features/auth/sign-up'
+import { AuthDialogRoute } from '@/features/auth/components/auth-dialog-route'
 import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/(auth)/sign-up')({
-  component: SignUp,
+  component: () => <AuthDialogRoute mode='sign-up' />,
   beforeLoad: async () => {
     const { auth } = useAuthStore.getState()
 

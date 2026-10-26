@@ -41,6 +41,7 @@ export function AuthDialog() {
   const redirect = useAuthDialogStore((state) => state.redirect)
   const openMode = useAuthDialogStore((state) => state.open)
   const close = useAuthDialogStore((state) => state.close)
+  const openedAt = useAuthDialogStore((state) => state.openedAt)
   const signedIn = useAuthStore((state) => Boolean(state.auth.user))
   const pathname = useLocation({ select: (location) => location.pathname })
   const { status } = useStatus()
@@ -51,8 +52,8 @@ export function AuthDialog() {
     if (signedIn) close()
   }, [signedIn, close])
   useEffect(() => {
-    close()
-  }, [pathname, close])
+    if (openedAt && pathname !== openedAt) close()
+  }, [pathname, openedAt, close])
 
   let title = t('Sign in to your account')
   let description = t('Welcome back. Pick up where you left off.')
