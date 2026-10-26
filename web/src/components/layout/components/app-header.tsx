@@ -32,8 +32,10 @@ import { cn } from '@/lib/utils'
 import { checkIsActive } from '../lib/url-utils'
 import { Header } from './header'
 
+const CONSOLE_HREF = '/dashboard'
+
 /**
- * Console top bar: breadcrumb for the current page, site navigation,
+ * Console top bar: page title on mobile, centered site navigation,
  * command search, language, notifications, appearance and the account menu.
  */
 export function AppHeader() {
@@ -54,63 +56,59 @@ export function AppHeader() {
   }
   if (!crumb && pathname.startsWith('/chat')) crumb = t('Chat')
 
+  // Every page under this header is part of the console, so its entry is
+  // always the active one; it sits right after the home link.
+  const links = [...navLinks]
+  const homeIndex = links.findIndex((link) => link.href === '/')
+  links.splice(homeIndex + 1, 0, { title: t('Console'), href: CONSOLE_HREF })
+
   return (
     <Header>
-      <nav
-        aria-label={t('Breadcrumb')}
-        className='text-subtle-foreground hidden min-w-0 truncate text-[13px] sm:block'
-      >
-        {t('Console')}
-        {crumb && (
-          <>
-            {' / '}
-            <b className='text-foreground font-medium'>{crumb}</b>
-          </>
-        )}
-      </nav>
-      <b className='min-w-0 truncate text-sm font-medium sm:hidden'>{crumb}</b>
+      <div className='min-w-0 flex-1'>
+        <b className='block truncate text-sm font-medium lg:hidden'>{crumb}</b>
+      </div>
 
-      {navLinks.length > 0 && (
-        <nav
-          aria-label={t('Site navigation')}
-          className='hidden items-center gap-1 border-s ps-4 lg:flex'
-        >
-          {navLinks.map((link) => {
-            const className = cn(
-              'rounded-[7px] px-3 py-1.5 text-sm transition-colors',
-              pathname === link.href
-                ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              link.disabled && 'pointer-events-none opacity-50'
-            )
-            if (link.external) {
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className={className}
-                >
-                  {link.title}
-                </a>
-              )
-            }
+      <nav
+        aria-label={t('Site navigation')}
+        className='bg-muted/70 hidden shrink-0 items-center gap-0.5 rounded-full border p-1 lg:flex'
+      >
+        {links.map((link) => {
+          const active = link.href === CONSOLE_HREF
+          const className = cn(
+            'rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors',
+            active
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+            link.disabled && 'pointer-events-none opacity-50'
+          )
+          if (link.external) {
             return (
-              <Link
+              <a
                 key={link.href}
-                to={link.href}
-                disabled={link.disabled}
+                href={link.href}
+                target='_blank'
+                rel='noopener noreferrer'
                 className={className}
               >
                 {link.title}
-              </Link>
+              </a>
             )
-          })}
-        </nav>
-      )}
+          }
+          return (
+            <Link
+              key={link.href}
+              to={link.href}
+              disabled={link.disabled}
+              aria-current={active ? 'page' : undefined}
+              className={className}
+            >
+              {link.title}
+            </Link>
+          )
+        })}
+      </nav>
 
-      <div className='ms-auto flex min-w-0 items-center gap-2 sm:gap-4'>
+      <div className='flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4'>
         <Search
           className='hidden sm:flex'
           placeholder={t('Search pages, models, keys')}
