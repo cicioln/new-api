@@ -43,6 +43,12 @@ func SetApiRouter(router *gin.Engine) {
 			perfMetricsRoute.GET("/summary", controller.GetPerfMetricsSummary)
 			perfMetricsRoute.GET("", controller.GetPerfMetrics)
 		}
+		pelicanRoute := apiRouter.Group("/pelican")
+		{
+			pelicanRoute.GET("", middleware.HeaderNavModulePublicOrUserAuth("pricing"), controller.GetPelicanRecords)
+			pelicanRoute.POST("", middleware.UserAuth(), middleware.UserCriticalRateLimit("pelican"), controller.CreatePelicanRecord)
+			pelicanRoute.DELETE("/:id", middleware.UserAuth(), controller.DeletePelicanRecord)
+		}
 		apiRouter.GET("/rankings", middleware.HeaderNavModuleAuth("rankings"), controller.GetRankings)
 		apiRouter.GET("/verification", middleware.EmailVerificationRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)

@@ -23,13 +23,8 @@ For commercial licensing, please contact support@quantumnous.com
 
 export const PELICAN_PROMPT = 'Generate an SVG of a pelican riding a bicycle'
 
-const STORAGE_KEY = 'pricing-pelican-history'
-// Pre-scoping key shared by every account on the browser; dropped on load.
-const LEGACY_STORAGE_KEY = STORAGE_KEY
-const HISTORY_LIMIT = 60
-
 export type PelicanRecord = {
-  id: string
+  id: number
   model: string
   vendor?: string
   prompt: string
@@ -39,6 +34,8 @@ export type PelicanRecord = {
   firstTokenMs?: number
   totalMs: number
   outputTokens?: number
+  username: string
+  mine: boolean
 }
 
 /** Extract the first complete `<svg>…</svg>` element from model output. */
@@ -53,47 +50,4 @@ export function extractSvg(text: string): string | null {
  */
 export function svgDataUrl(svg: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-}
-
-function isRecord(value: unknown): value is PelicanRecord {
-  if (!value || typeof value !== 'object') return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.model === 'string' &&
-    typeof record.svg === 'string' &&
-    typeof record.createdAt === 'number' &&
-    typeof record.totalMs === 'number'
-  )
-}
-
-/** Records are private to each account, never shared across users. */
-function storageKey(userId: number): string {
-  return `${STORAGE_KEY}:${userId}`
-}
-
-export function loadPelicanHistory(userId?: number): PelicanRecord[] {
-  if (userId === undefined) return []
-  try {
-    window.localStorage.removeItem(LEGACY_STORAGE_KEY)
-    const raw = window.localStorage.getItem(storageKey(userId))
-    const parsed: unknown = raw ? JSON.parse(raw) : []
-    return Array.isArray(parsed) ? parsed.filter(isRecord) : []
-  } catch {
-    return []
-  }
-}
-
-export function savePelicanHistory(
-  records: PelicanRecord[],
-  userId?: number
-): PelicanRecord[] {
-  const next = records.slice(0, HISTORY_LIMIT)
-  if (userId === undefined) return next
-  try {
-    window.localStorage.setItem(storageKey(userId), JSON.stringify(next))
-  } catch {
-    // Storage may be unavailable (private mode); keep the in-memory copy.
-  }
-  return next
 }

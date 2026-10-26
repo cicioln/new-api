@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ChevronRight, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -25,9 +26,15 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStreamRequest } from '@/features/playground/hooks/use-stream-request'
+import { ROLE } from '@/lib/roles'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
+import {
+  createPelicanRecord,
+  deletePelicanRecord,
+  getPelicanRecords,
+} from '../api'
 import {
   formatMarketLatency,
   getVendorAvatarIcon,
@@ -35,9 +42,7 @@ import {
 } from '../lib/market'
 import {
   extractSvg,
-  loadPelicanHistory,
   PELICAN_PROMPT,
-  savePelicanHistory,
   svgDataUrl,
   type PelicanRecord,
 } from '../lib/pelican'
@@ -53,6 +58,8 @@ export interface PelicanDialogProps {
 }
 
 type Scope = 'model' | 'all'
+
+const PELICAN_QUERY_KEY = ['pelican-records']
 
 function useTimeAgo() {
   const { t } = useTranslation()
@@ -94,7 +101,7 @@ function Thumbs(props: {
             className='bg-muted block aspect-[4/3] w-full rounded object-contain'
           />
           <small className='text-subtle-foreground block truncate px-0.5 pt-0.5 font-mono text-[10px]'>
-            {t('Me')}
+            {record.mine ? t('Me') : record.username}
           </small>
           <small className='text-subtle-foreground block truncate px-0.5 font-mono text-[10px]'>
             {ago(record.createdAt)}
@@ -108,12 +115,41 @@ function Thumbs(props: {
 function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const { t } = useTranslation()
   const ago = useTimeAgo()
-  const userId = useAuthStore((state) => state.auth.user?.id)
-  const isAuthenticated = userId !== undefined
+  const user = useAuthStore((state) => state.auth.user)
+  const isAuthenticated = Boolean(user)
+  const isAdmin = (user?.role ?? 0) >= ROLE.ADMIN
   const { sendStreamRequest, stopStream, isStreaming } = useStreamRequest()
-  const [history, setHistory] = useState<PelicanRecord[]>(() =>
-    loadPelicanHistory(userId)
-  )
+  const queryClient = useQueryClient()
+  const historyQuery = useQuery({
+    queryKey: PELICAN_QUERY_KEY,
+    queryFn: getPelicanRecords,
+  })
+  const history = useMemo(() => historyQuery.data ?? [], [historyQuery.data])
+  const saveRecord = useMutation({
+    mutationFn: createPelicanRecord,
+    onSuccess: (record) => {
+      queryClient.setQueryData<PelicanRecord[]>(PELICAN_QUERY_KEY, (prev) => [
+        record,
+        ...(prev ?? []),
+      ])
+      setScope('model')
+      setView('img')
+      select(record)
+      toast.success(t('Test complete, added to the test records'))
+    },
+    onError: (error) => toast.error(error.message),
+  })
+  const removeRecord = useMutation({
+    mutationFn: deletePelicanRecord,
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<PelicanRecord[]>(PELICAN_QUERY_KEY, (prev) =>
+        (prev ?? []).filter((record) => record.id !== id)
+      )
+      setSelectedId(undefined)
+      toast.success(t('Deleted successfully'))
+    },
+    onError: (error) => toast.error(error.message),
+  })
   const [scope, setScope] = useState<Scope>('model')
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [view, setView] = useState<'img' | 'code'>('img')
@@ -133,12 +169,12 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
     () => history.filter((record) => record.model === props.model.model_name),
     [history, props.model.model_name]
   )
-  const [selectedId, setSelectedId] = useState<string | undefined>(
-    () => mine[0]?.id
-  )
-  const [mode, setMode] = useState<'run' | 'view'>(
-    mine.length > 0 ? 'view' : 'run'
-  )
+  const [selectedId, setSelectedId] = useState<number | undefined>()
+  // Until the viewer picks a mode, open on the runner only when this model
+  // has no records yet.
+  const [pickedMode, setMode] = useState<'run' | 'view'>()
+  const hasRecords = mine.length > 0 || historyQuery.isPending
+  const mode = pickedMode ?? (hasRecords ? 'view' : 'run')
   const list = scope === 'all' ? history : mine
   const selected =
     mode === 'view'
@@ -192,23 +228,17 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             toast.error(t('The model did not return an SVG'))
             return
           }
-          const record: PelicanRecord = {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          saveRecord.mutate({
             model: props.model.model_name,
             vendor: props.model.vendor_name,
             prompt,
             group,
             svg,
-            createdAt: Date.now(),
-            firstTokenMs,
+            firstTokenMs:
+              firstTokenMs === undefined ? undefined : Math.round(firstTokenMs),
             totalMs: performance.now() - started,
             outputTokens,
-          }
-          setHistory((prev) => savePelicanHistory([record, ...prev], userId))
-          setScope('model')
-          setView('img')
-          select(record)
-          toast.success(t('Test complete, added to the test records'))
+          })
         },
         onError: (error) => toast.error(error),
       }
@@ -235,7 +265,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
     URL.revokeObjectURL(url)
   }
 
-  const users = mine.length > 0 ? 1 : 0
+  const users = new Set(mine.map((record) => record.username)).size
   const fieldClass =
     'bg-background w-full rounded-lg border px-2.5 py-2 text-[13px] outline-none disabled:opacity-60'
 
@@ -247,7 +277,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
           <span>
             {t('My test')} · {props.model.model_name}
           </span>
-          {mine.length > 0 && !isStreaming && (
+          {mine.length > 0 && !isStreaming && !saveRecord.isPending && (
             <Button size='sm' variant='outline' onClick={() => setMode('view')}>
               {t('Back to records')}
             </Button>
@@ -306,7 +336,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
           {isAuthenticated ? (
             <Button
               className='w-full'
-              disabled={isStreaming || !prompt.trim()}
+              disabled={isStreaming || saveRecord.isPending || !prompt.trim()}
               onClick={run}
             >
               {isStreaming ? t('Generating…') : t('Start test')}
@@ -348,17 +378,20 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
       </>
     )
   } else if (selected) {
+    const author = selected.mine ? t('Me') : selected.username
     right = (
       <>
         <h5 className='text-subtle-foreground flex min-h-[34px] items-center justify-between text-xs font-medium'>
           <span className='text-muted-foreground flex items-center gap-2'>
             <i className='bg-primary grid size-[22px] place-items-center rounded-full text-[11px] text-white not-italic'>
-              {t('Me').charAt(0).toUpperCase()}
+              {author.charAt(0).toUpperCase()}
             </i>
-            {t('Me')}
-            <span className='border-primary text-primary rounded-full border px-1.5 text-[10px]'>
-              {t('Mine')}
-            </span>
+            {author}
+            {selected.mine && (
+              <span className='border-primary text-primary rounded-full border px-1.5 text-[10px]'>
+                {t('Mine')}
+              </span>
+            )}
             · {ago(selected.createdAt)}
           </span>
           <MarketSeg
@@ -534,6 +567,16 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
         </div>
       </div>
       <div className='flex justify-end gap-2 border-t px-5 py-3'>
+        {selected && (selected.mine || isAdmin) && (
+          <Button
+            variant='outline'
+            className='text-destructive me-auto'
+            disabled={removeRecord.isPending}
+            onClick={() => removeRecord.mutate(selected.id)}
+          >
+            {t('Delete')}
+          </Button>
+        )}
         <Button variant='outline' disabled={!selected} onClick={copySvg}>
           {t('Copy SVG')}
         </Button>
