@@ -25,13 +25,21 @@ type perfProbeTarget struct {
 // without recent real traffic and records the result as a perf sample, so the
 // model square shows status, latency and throughput for idle models too.
 func StartPerfProbe() {
+	// Tick every minute so enabling the probe or changing the interval takes
+	// effect without waiting out the previous interval.
+	var lastRun time.Time
 	for {
-		time.Sleep(time.Duration(perf_metrics_setting.GetProbeIntervalMinutes()) * time.Minute)
+		time.Sleep(time.Minute)
 		setting := perf_metrics_setting.GetSetting()
 		if !common.IsMasterNode || !setting.Enabled || !setting.ProbeEnabled {
 			continue
 		}
-		runPerfProbe(time.Duration(perf_metrics_setting.GetProbeIntervalMinutes()) * time.Minute)
+		interval := time.Duration(perf_metrics_setting.GetProbeIntervalMinutes()) * time.Minute
+		if time.Since(lastRun) < interval {
+			continue
+		}
+		lastRun = time.Now()
+		runPerfProbe(interval)
 	}
 }
 
