@@ -22,7 +22,6 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Dialog } from '@/components/dialog'
-import { LanguageSwitcher } from '@/components/language-switcher'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -39,6 +38,7 @@ import { useAuthStore } from '@/stores/auth-store'
 
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
+import { HeaderActions } from './header-actions'
 import { LogoMark } from './logo-mark'
 import { SiteNav } from './site-nav'
 
@@ -68,7 +68,6 @@ export interface PublicHeaderProps {
 
 export function PublicHeader(props: PublicHeaderProps) {
   const navLinks = props.navLinks ?? defaultTopNavLinks
-  const showLanguageSwitcher = props.showLanguageSwitcher ?? true
   const showAuthButtons = props.showAuthButtons ?? true
   const homeUrl = props.homeUrl ?? '/'
 
@@ -211,23 +210,7 @@ export function PublicHeader(props: PublicHeaderProps) {
           />
 
           <div className='ms-auto flex items-center gap-2'>
-            {showLanguageSwitcher && <LanguageSwitcher />}
-            {showAuthButtons && (
-              <div className='hidden items-center gap-2 sm:flex'>
-                {!isAuthenticated && (
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    render={<Link to='/sign-in' />}
-                  >
-                    {t('Sign in')}
-                  </Button>
-                )}
-                <Button size='sm' render={<Link to='/dashboard' />}>
-                  {t('Enter console')}
-                </Button>
-              </div>
-            )}
+            <HeaderActions />
             <button
               type='button'
               className='bg-card text-muted-foreground grid size-[34px] shrink-0 place-items-center rounded-lg border lg:hidden'

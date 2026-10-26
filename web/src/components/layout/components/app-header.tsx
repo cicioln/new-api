@@ -19,17 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 import { useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { ConfigDrawer } from '@/components/config-drawer'
-import { LanguageSwitcher } from '@/components/language-switcher'
-import { NotificationPopover } from '@/components/notification-popover'
-import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
-import { useNotifications } from '@/hooks/use-notifications'
 import { useSidebarView } from '@/hooks/use-sidebar-view'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 
 import { checkIsActive } from '../lib/url-utils'
 import { Header } from './header'
+import { HeaderActions } from './header-actions'
 import { CONSOLE_HREF, SiteNav } from './site-nav'
 
 /**
@@ -41,7 +37,6 @@ export function AppHeader() {
   const href = useLocation({ select: (location) => location.href })
   const pathname = useLocation({ select: (location) => location.pathname })
   const { navGroups } = useSidebarView()
-  const notifications = useNotifications()
   const navLinks = useTopNavLinks()
 
   let crumb = ''
@@ -66,24 +61,12 @@ export function AppHeader() {
         className='hidden shrink-0 lg:flex'
       />
 
-      <div className='flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-4'>
+      <div className='flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3'>
         <Search
           className='hidden sm:flex'
           placeholder={t('Search pages, models, keys')}
         />
-        <LanguageSwitcher />
-        <NotificationPopover
-          open={notifications.popoverOpen}
-          onOpenChange={notifications.setPopoverOpen}
-          unreadCount={notifications.unreadCount}
-          activeTab={notifications.activeTab}
-          onTabChange={notifications.setActiveTab}
-          notice={notifications.notice}
-          announcements={notifications.announcements}
-          loading={notifications.loading}
-        />
-        <ConfigDrawer />
-        <ProfileDropdown />
+        <HeaderActions />
       </div>
     </Header>
   )

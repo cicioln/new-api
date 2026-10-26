@@ -62,13 +62,12 @@ export function LanguageSwitcher() {
         render={
           <Button
             variant='ghost'
-            className='text-muted-foreground h-[30px] gap-1.5 rounded-[7px] px-2 text-[13px] font-normal'
-            aria-label={t('Change language')}
+            className='text-muted-foreground size-8 rounded-[7px] p-0'
+            aria-label={`${t('Change language')}: ${currentLabel}`}
           />
         }
       >
         <Globe className='size-4 stroke-[1.7]' aria-hidden='true' />
-        <span className='hidden sm:inline'>{currentLabel}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         {INTERFACE_LANGUAGE_OPTIONS.map((lang) => (
