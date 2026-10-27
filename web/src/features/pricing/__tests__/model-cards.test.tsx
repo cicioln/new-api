@@ -299,8 +299,24 @@ describe('model cards', () => {
     )
   })
 
-  it('shows dashes and muted bars when metrics are unavailable', () => {
+  it('collapses the metrics into a no-data note when perf is missing', () => {
     render(<ModelCard model={pricingModel()} onClick={vi.fn()} />)
+    const metrics = screen.getByLabelText(
+      'Performance metrics for the last 24 hours'
+    )
+    expect(metrics).toHaveTextContent('No performance data available')
+    expect(within(metrics).queryByText('—')).not.toBeInTheDocument()
+    expect(within(metrics).queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('shows dashes and muted bars when perf has no samples', () => {
+    render(
+      <ModelCard
+        model={pricingModel()}
+        onClick={vi.fn()}
+        perf={{ requests: 0, series: [] }}
+      />
+    )
     const metrics = screen.getByLabelText(
       'Performance metrics for the last 24 hours'
     )

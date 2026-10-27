@@ -53,6 +53,12 @@ function formatGroupRatio(ratio: number) {
   return text.includes('.') ? text : ratio.toFixed(1)
 }
 
+const RATIO_TONE: Record<number, string> = {
+  [-1]: 'bg-success/12 text-success',
+  0: 'bg-muted text-foreground',
+  1: 'bg-warning/15 text-warning',
+}
+
 function FilterRow(props: { label: string; children: ReactNode }) {
   return (
     <div
@@ -75,6 +81,8 @@ function FilterChip(props: {
   radio?: boolean
   onSelect: () => void
   count?: ReactNode
+  /** Group price ratio, shown as a tinted badge: green below 1, amber above. */
+  ratio?: number
   children: ReactNode
 }) {
   return (
@@ -101,6 +109,18 @@ function FilterChip(props: {
           )}
         >
           {props.count}
+        </span>
+      )}
+      {props.ratio != null && (
+        <span
+          className={cn(
+            'rounded-full px-1.5 py-px font-mono text-[11.5px] leading-4 font-semibold',
+            props.checked
+              ? 'bg-background/20 text-background'
+              : RATIO_TONE[Math.sign(props.ratio - 1)]
+          )}
+        >
+          ×{formatGroupRatio(props.ratio)}
         </span>
       )}
     </button>
@@ -157,7 +177,7 @@ export function MarketFilters(props: MarketFiltersProps) {
                 radio
                 checked={props.group === group.name}
                 onSelect={() => props.onGroupChange(group.name)}
-                count={`×${formatGroupRatio(group.ratio)}`}
+                ratio={group.ratio}
               >
                 {group.name}
               </FilterChip>
