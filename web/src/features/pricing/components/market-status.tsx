@@ -113,6 +113,7 @@ export function MarketStatusBars(props: {
         bar ? (
           <Tooltip key={bar.ts}>
             <TooltipTrigger
+              delay={0}
               render={
                 <i
                   aria-hidden
