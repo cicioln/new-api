@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import i18next from 'i18next'
-import { CircleDollarSign, CreditCard, Landmark } from 'lucide-react'
+import { CreditCard, Landmark } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { IconAlipay, IconWeChat, IconStripe } from '@/assets/brand-icons'
@@ -128,8 +128,10 @@ export function getPaymentIcon(
       )
     case PAYMENT_TYPES.USDT:
       return (
-        <CircleDollarSign
+        <ReactIconByName
+          name='SiTether'
           className={className}
+          title='USDT'
           style={{ color: PAYMENT_ICON_COLORS[PAYMENT_TYPES.USDT] }}
         />
       )

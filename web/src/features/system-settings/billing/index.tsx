@@ -82,6 +82,7 @@ const defaultBillingSettings: BillingSettings = {
   'payment_setting.xingye_wxpay_bankcode': '',
   'payment_setting.usdt_enabled': false,
   'payment_setting.usdt_addresses': '[]',
+  'payment_setting.usdt_icon': '',
   StripeApiSecret: '',
   StripeWebhookSecret: '',
   StripePriceId: '',

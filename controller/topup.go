@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -100,11 +101,15 @@ func GetTopUpInfo(c *gin.Context) {
 
 	usdtChains := usdtReceivers()
 	if len(usdtChains) > 0 {
-		payMethods = append(slices.Clone(payMethods), map[string]string{
+		usdtMethod := map[string]string{
 			"name":  "USDT",
 			"type":  "usdt",
 			"color": "#26A17B",
-		})
+		}
+		if icon := strings.TrimSpace(operation_setting.GetPaymentSetting().UsdtIcon); icon != "" {
+			usdtMethod["icon"] = icon
+		}
+		payMethods = append(slices.Clone(payMethods), usdtMethod)
 	}
 
 	data := gin.H{

@@ -170,6 +170,7 @@ const BILLING_SECTIONS = [
             settings['payment_setting.xingye_wxpay_bankcode'] ?? '',
           UsdtEnabled: settings['payment_setting.usdt_enabled'] ?? false,
           UsdtAddresses: settings['payment_setting.usdt_addresses'] || '[]',
+          UsdtIcon: settings['payment_setting.usdt_icon'] ?? '',
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,

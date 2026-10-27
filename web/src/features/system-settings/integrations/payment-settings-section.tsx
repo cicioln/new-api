@@ -47,6 +47,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getPaymentErrorTranslation } from '@/features/wallet/lib/payment'
+import { getPaymentIcon } from '@/features/wallet/lib/ui'
 import { handleServerError } from '@/lib/handle-server-error'
 import { cn } from '@/lib/utils'
 
@@ -189,6 +190,7 @@ const paymentSchema = z.object({
         ),
       'Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address'
     ),
+  UsdtIcon: z.string(),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -474,6 +476,7 @@ export function PaymentSettingsSection({
       XingyeAlipayBankcode: values.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: values.XingyeWxpayBankcode.trim(),
       UsdtEnabled: values.UsdtEnabled,
+      UsdtIcon: values.UsdtIcon.trim(),
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(values.UsdtAddresses)
           .map((entry) => ({
@@ -534,6 +537,7 @@ export function PaymentSettingsSection({
       XingyeAlipayBankcode: initialRef.current.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: initialRef.current.XingyeWxpayBankcode.trim(),
       UsdtEnabled: initialRef.current.UsdtEnabled,
+      UsdtIcon: initialRef.current.UsdtIcon.trim(),
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(initialRef.current.UsdtAddresses)
       ),
@@ -733,6 +737,13 @@ export function PaymentSettingsSection({
       updates.push({
         key: 'payment_setting.usdt_enabled',
         value: sanitized.UsdtEnabled,
+      })
+    }
+
+    if (sanitized.UsdtIcon !== initial.UsdtIcon) {
+      updates.push({
+        key: 'payment_setting.usdt_icon',
+        value: sanitized.UsdtIcon,
       })
     }
 
@@ -1563,6 +1574,42 @@ export function PaymentSettingsSection({
                         />
                       </FormControl>
                     </SettingsSwitchItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='UsdtIcon'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Icon')}</FormLabel>
+                      <div className='flex items-center gap-3'>
+                        <span className='bg-muted/50 flex size-9 shrink-0 items-center justify-center rounded-md border'>
+                          {getPaymentIcon(
+                            'usdt',
+                            'size-5',
+                            field.value,
+                            'USDT'
+                          )}
+                        </span>
+                        <FormControl>
+                          <Input
+                            placeholder='SiTether'
+                            autoComplete='off'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                      </div>
+                      <FormDescription>
+                        {t(
+                          'A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
 
