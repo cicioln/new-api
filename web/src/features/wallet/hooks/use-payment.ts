@@ -131,8 +131,9 @@ export function usePayment() {
           return false
         }
 
-        // Handle Stripe payment
-        if (isStripe && response.data?.pay_link) {
+        // Handle hosted links (Stripe, and HTTP-only gateways such as Xingye
+        // whose form POST from an HTTPS page triggers a browser warning)
+        if (response.data?.pay_link) {
           window.open(response.data.pay_link as string, '_blank')
           toast.success(i18next.t('Redirecting to payment page...'))
           return true

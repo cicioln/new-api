@@ -173,7 +173,11 @@ export function SubscriptionPurchaseDialog(props: Props) {
         plan_id: plan.id,
         payment_method: selectedEpayMethod,
       })
-      if (res.message === 'success' && res.url) {
+      if (res.message === 'success' && res.data?.pay_link) {
+        window.open(res.data.pay_link, '_blank')
+        toast.success(t('Payment initiated'))
+        props.onOpenChange(false)
+      } else if (res.message === 'success' && res.url) {
         const form = document.createElement('form')
         form.action = res.url
         form.method = 'POST'

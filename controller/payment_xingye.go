@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// 星烨支付原生协议：下单 POST {gateway}/Pay_Index.html，异步通知回复 "OK"。
+// 星烨支付原生协议：下单 GET/POST {gateway}/Pay_Index.html，异步通知回复 "OK"。
 // 签名：非空参数按 ASCII 升序拼成 k=v&k=v，末尾追加 &key=密钥，MD5 后转大写。
 var (
 	xingyePurchaseSignKeys = []string{"pay_amount", "pay_applydate", "pay_bankcode", "pay_callbackurl", "pay_memberid", "pay_notifyurl", "pay_orderid"}
@@ -68,8 +69,9 @@ func xingyeSign(params map[string]string, keys []string, secret string) string {
 	return strings.ToUpper(hex.EncodeToString(sum[:]))
 }
 
-// xingyePurchase 生成浏览器表单提交到星烨收银台所需的地址与已签名参数。
-func xingyePurchase(tradeNo string, money float64, bankcode string, notifyPath string, returnPath string, productName string) (string, map[string]string) {
+// xingyePurchase 生成带签名参数的星烨收银台链接。网关只提供 HTTP，HTTPS 站点向其提交表单会被
+// 浏览器拦截提示"信息不安全"，因此改为直接打开 GET 链接。
+func xingyePurchase(tradeNo string, money float64, bankcode string, notifyPath string, returnPath string, productName string) string {
 	setting := operation_setting.GetPaymentSetting()
 	gateway := strings.TrimRight(strings.TrimSpace(setting.XingyeGateway), "/")
 	gateway = strings.TrimSuffix(gateway, "/Pay_Index.html")
@@ -85,7 +87,11 @@ func xingyePurchase(tradeNo string, money float64, bankcode string, notifyPath s
 		"pay_productname": productName,
 	}
 	params["pay_md5sign"] = xingyeSign(params, xingyePurchaseSignKeys, strings.TrimSpace(setting.XingyeSecret))
-	return gateway + "/Pay_Index.html", params
+	query := url.Values{}
+	for k, v := range params {
+		query.Set(k, v)
+	}
+	return gateway + "/Pay_Index.html?" + query.Encode()
 }
 
 // xingyeVerifiedCallback 解析星烨的异步通知或页面回跳，签名正确时返回参数。
@@ -150,9 +156,9 @@ func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, payMoney floa
 		paymentError(c, common.NewMessage("Failed to create order"))
 		return
 	}
-	uri, params := xingyePurchase(tradeNo, payMoney, bankcode, "/api/user/xingye/notify", "/api/user/xingye/return", fmt.Sprintf("TUC%d", req.Amount))
+	payLink := xingyePurchase(tradeNo, payMoney, bankcode, "/api/user/xingye/notify", "/api/user/xingye/return", fmt.Sprintf("TUC%d", req.Amount))
 	logger.LogInfo(c.Request.Context(), common.LogText("Xingye top-up order created user_id=%d trade_no=%s payment_method=%s amount=%d money=%.2f", userId, tradeNo, req.PaymentMethod, req.Amount, payMoney))
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{"pay_link": payLink}})
 }
 
 func startXingyeSubscription(c *gin.Context, userId int, plan *model.SubscriptionPlan, paymentMethod string, bankcode string) {
@@ -171,8 +177,8 @@ func startXingyeSubscription(c *gin.Context, userId int, plan *model.Subscriptio
 		common.ApiErrorT(c, "Failed to create order")
 		return
 	}
-	uri, params := xingyePurchase(tradeNo, plan.PriceAmount, bankcode, "/api/subscription/xingye/notify", "/api/subscription/xingye/return", fmt.Sprintf("SUB%d", plan.Id))
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
+	payLink := xingyePurchase(tradeNo, plan.PriceAmount, bankcode, "/api/subscription/xingye/notify", "/api/subscription/xingye/return", fmt.Sprintf("SUB%d", plan.Id))
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{"pay_link": payLink}})
 }
 
 // completeXingyeTopUp 在签名校验通过后入账，返回是否已成功（含幂等重复回调）。
