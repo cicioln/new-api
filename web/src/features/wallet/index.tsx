@@ -29,6 +29,7 @@ import { BillingHistoryDialog } from './components/dialogs/billing-history-dialo
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
 import { TransferDialog } from './components/dialogs/transfer-dialog'
+import { UsdtPayDialog } from './components/dialogs/usdt-pay-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { TopupRecordsCard } from './components/topup-records-card'
@@ -73,6 +74,7 @@ export function Wallet(props: WalletProps) {
   >(null)
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [usdtDialogOpen, setUsdtDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [redemptionCode, setRedemptionCode] = useState('')
@@ -180,6 +182,12 @@ export function Wallet(props: WalletProps) {
       // Validate minimum topup
       const minTopup = getMinTopupAmount(topupInfo)
       if (topupAmount < minTopup) {
+        return
+      }
+
+      // USDT has its own checkout with chain choice, address and QR code
+      if (method.type === PAYMENT_TYPES.USDT) {
+        setUsdtDialogOpen(true)
         return
       }
 
@@ -383,6 +391,14 @@ export function Wallet(props: WalletProps) {
         processing={processing || waffoProcessing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={effectiveUsdExchangeRate}
+      />
+
+      <UsdtPayDialog
+        open={usdtDialogOpen}
+        onOpenChange={setUsdtDialogOpen}
+        topupAmount={topupAmount}
+        chains={topupInfo?.usdt_chains ?? []}
+        onPaid={() => void fetchUser()}
       />
 
       <TransferDialog

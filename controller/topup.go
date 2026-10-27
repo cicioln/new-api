@@ -6,6 +6,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -97,7 +98,17 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	usdtChains := usdtEnabledChains()
+	if len(usdtChains) > 0 {
+		payMethods = append(slices.Clone(payMethods), map[string]string{
+			"name":  "USDT",
+			"type":  "usdt",
+			"color": "#26A17B",
+		})
+	}
+
 	data := gin.H{
+		"usdt_chains":                      usdtChains,
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
 		"enable_creem_topup":               isCreemTopUpEnabled(),

@@ -39,6 +39,8 @@ import type {
   WaffoPaymentResponse,
   WaffoPancakePaymentRequest,
   WaffoPancakePaymentResponse,
+  UsdtChain,
+  UsdtOrderResponse,
 } from './types'
 
 // ============================================================================
@@ -119,6 +121,31 @@ export async function requestPayment(
     ...res.data,
     url: res.data.url || (res as unknown as { url?: string }).url,
   }
+}
+
+/**
+ * Create a USDT order; the response carries the exact amount and address
+ */
+export async function requestUsdtPayment(request: {
+  amount: number
+  chain: UsdtChain
+}): Promise<UsdtOrderResponse> {
+  const res = await api.post('/api/user/usdt/pay', request, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Poll a USDT order's status
+ */
+export async function getUsdtOrder(
+  tradeNo: string
+): Promise<UsdtOrderResponse> {
+  const res = await api.get(
+    `/api/user/usdt/order/${encodeURIComponent(tradeNo)}`
+  )
+  return res.data
 }
 
 /**

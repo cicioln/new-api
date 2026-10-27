@@ -377,6 +377,9 @@ func migrateDB() error {
 		&AuthzRole{},
 		&UserAccessToken{},
 		&PelicanRecord{},
+		&UsdtOrder{},
+		&UsdtAmountSlot{},
+		&UsdtScanCursor{},
 	)
 	if err != nil {
 		return err

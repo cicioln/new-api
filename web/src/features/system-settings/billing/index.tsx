@@ -80,6 +80,17 @@ const defaultBillingSettings: BillingSettings = {
   'payment_setting.xingye_secret': '',
   'payment_setting.xingye_alipay_bankcode': '',
   'payment_setting.xingye_wxpay_bankcode': '',
+  'payment_setting.usdt_enabled': false,
+  'payment_setting.usdt_bsc_address': '',
+  'payment_setting.usdt_aptos_address': '',
+  'payment_setting.usdt_rate': 1,
+  'payment_setting.usdt_order_timeout_minutes': 30,
+  'payment_setting.usdt_bsc_rpc': 'https://bsc-rpc.publicnode.com',
+  'payment_setting.usdt_bsc_confirmations': 5,
+  'payment_setting.usdt_aptos_indexer':
+    'https://api.mainnet.aptoslabs.com/v1/graphql',
+  'payment_setting.usdt_aptos_asset':
+    '0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b',
   StripeApiSecret: '',
   StripeWebhookSecret: '',
   StripePriceId: '',

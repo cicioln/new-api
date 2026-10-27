@@ -41,6 +41,27 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
+export type UsdtChain = 'bsc' | 'aptos'
+
+export interface UsdtChainInfo {
+  chain: UsdtChain
+  name: string
+  network: string
+}
+
+export interface UsdtOrder {
+  trade_no: string
+  chain: UsdtChain
+  address: string
+  /** Exact amount to transfer, as a fixed 4-decimal string. */
+  pay_amount: string
+  status: 'pending' | 'paid' | 'expired'
+  /** Unix seconds. */
+  expire_at: number
+}
+
+export type UsdtOrderResponse = ApiResponse<UsdtOrder>
+
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -126,6 +147,8 @@ export interface TopupInfo {
   enable_stripe_topup: boolean
   /** Available payment methods */
   pay_methods: PaymentMethod[]
+  /** Chains with a configured USDT receiving address */
+  usdt_chains?: UsdtChainInfo[] | null
   /** Minimum topup amount for online topup */
   min_topup: number
   /** Minimum topup amount for Stripe */

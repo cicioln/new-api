@@ -41,6 +41,7 @@ const (
 	PaymentProviderWaffoPancake = "waffo_pancake"
 	PaymentProviderBalance      = "balance"
 	PaymentProviderXingye       = "xingye"
+	PaymentProviderUsdt         = "usdt"
 )
 
 var (
