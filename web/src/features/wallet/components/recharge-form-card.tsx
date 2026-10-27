@@ -36,7 +36,7 @@ import {
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 
-import { PAYMENT_ICON_COLORS } from '../constants'
+import { PAYMENT_ICON_COLORS, PAYMENT_TYPES } from '../constants'
 import {
   formatCurrency,
   getBonusLabel,
@@ -227,8 +227,9 @@ export function RechargeFormCard({
   const selectedMethodMin = selectedMethod
     ? Math.max(selectedMethod.min_topup || 0, minTopup)
     : minTopup
-  // Custom amounts are only offered when no preset is configured.
-  const showCustomInput = presetAmounts.length === 0
+  // Custom amounts are offered when no preset is configured, and always for USDT.
+  const showCustomInput =
+    presetAmounts.length === 0 || selectedMethod?.type === PAYMENT_TYPES.USDT
 
   return (
     <section className='bg-card space-y-4 rounded-lg border p-[18px]'>
