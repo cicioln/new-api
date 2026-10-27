@@ -150,6 +150,9 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
       : (modelGroups[0] ?? '')
   )
   const [stream, setStream] = useState('')
+  // Reasoning models think before writing any SVG; show that text so the
+  // preview does not look frozen.
+  const [reasoning, setReasoning] = useState('')
   const preRef = useRef<HTMLPreElement>(null)
 
   const mine = useMemo(
@@ -171,7 +174,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   useEffect(() => () => stopStream(), [stopStream])
   useEffect(() => {
     if (preRef.current) preRef.current.scrollTop = preRef.current.scrollHeight
-  }, [stream])
+  }, [stream, reasoning])
 
   const byModel = useMemo(() => {
     const map = new Map<string, PelicanRecord[]>()
@@ -190,8 +193,10 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
     const started = performance.now()
     let firstTokenMs: number | undefined
     let content = ''
+    let thinking = ''
     let outputTokens: number | undefined
     setStream('')
+    setReasoning('')
     void sendStreamRequest(
       {
         model: props.model.model_name,
@@ -201,8 +206,12 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
       },
       {
         onUpdate: (type, chunk) => {
-          if (type !== 'content') return
           firstTokenMs ??= performance.now() - started
+          if (type === 'reasoning') {
+            thinking += chunk
+            setReasoning(thinking)
+            return
+          }
           content += chunk
           setStream(content)
         },
@@ -320,15 +329,21 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
               </select>
             </div>
           </div>
-          {isAuthenticated ? (
+          {isAuthenticated && isStreaming && (
+            <Button className='w-full' variant='outline' onClick={stopStream}>
+              {t('Stop')}
+            </Button>
+          )}
+          {isAuthenticated && !isStreaming && (
             <Button
               className='w-full'
-              disabled={isStreaming || saveRecord.isPending || !prompt.trim()}
+              disabled={saveRecord.isPending || !prompt.trim()}
               onClick={run}
             >
-              {isStreaming ? t('Generating…') : t('Start test')}
+              {t('Start test')}
             </Button>
-          ) : (
+          )}
+          {!isAuthenticated && (
             <Button
               className='w-full'
               onClick={() => {
@@ -350,9 +365,12 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             <>
               <pre
                 ref={preRef}
-                className='bg-card text-muted-foreground absolute inset-0 m-0 overflow-auto p-3.5 font-mono text-[11.5px] leading-[1.55] break-all whitespace-pre-wrap'
+                className={cn(
+                  'bg-card text-muted-foreground absolute inset-0 m-0 overflow-auto p-3.5 font-mono text-[11.5px] leading-[1.55] break-all whitespace-pre-wrap',
+                  !stream && 'text-subtle-foreground italic'
+                )}
               >
-                {stream}
+                {stream || reasoning}
               </pre>
               <span className='bg-card text-primary absolute top-2.5 right-2.5 rounded-full border px-2 py-0.5 text-xs'>
                 {t('Generating…')}

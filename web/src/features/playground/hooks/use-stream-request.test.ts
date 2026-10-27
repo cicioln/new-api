@@ -197,6 +197,37 @@ describe('latest-wins stream request coordination', () => {
     expect(updates).toEqual(['current'])
   })
 
+  test('a clean close without [DONE] completes the request once', async () => {
+    const sources: FakeStreamSource[] = []
+    const streamingStates: boolean[] = []
+    let completions = 0
+    const controller = createStreamRequestController({
+      getHeaders: () => Promise.resolve({}),
+      createSource: () => {
+        const source = new FakeStreamSource()
+        sources.push(source)
+        return source
+      },
+      setStreaming: (streaming) => streamingStates.push(streaming),
+    })
+
+    await controller.send(payload, {
+      ...noopCallbacks,
+      onComplete: () => {
+        completions += 1
+      },
+    })
+    const source = sources[0]
+    if (!source) throw new Error('missing source')
+    source.readyState = 2
+    source.emit('readystatechange')
+    source.emit('readystatechange')
+
+    expect(completions).toBe(1)
+    expect(source.closed).toBe(true)
+    expect(streamingStates.at(-1)).toBe(false)
+  })
+
   test('a final chunk carrying usage reports token usage to the caller', async () => {
     const sources: FakeStreamSource[] = []
     const usages: unknown[] = []

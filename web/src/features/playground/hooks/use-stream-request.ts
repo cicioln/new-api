@@ -156,6 +156,14 @@ export function createStreamRequestController(
 
       if (errorMessage) {
         handleError(errorMessage)
+        return
+      }
+      // Some upstreams end the response without a [DONE] message; a clean
+      // close still finishes the request instead of streaming forever.
+      if (isStreamClosedReadyState(event.readyState)) {
+        completed = true
+        closeActiveSource(nextSource)
+        callbacks.onComplete()
       }
     })
 
