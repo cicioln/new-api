@@ -70,14 +70,25 @@ export function VendorAvatar(props: {
 }
 
 /** Model name with a copy button that appears on row / card hover. */
-export function MarketModelName(props: { name: string; className?: string }) {
+export function MarketModelName(props: {
+  name: string
+  className?: string
+  /** Wrap long names onto multiple lines instead of truncating. */
+  wrap?: boolean
+}) {
   const { t } = useTranslation()
   return (
-    <div className='flex min-w-0 items-center gap-0.5'>
+    <div
+      className={cn(
+        'flex min-w-0 gap-0.5',
+        props.wrap ? 'items-start' : 'items-center'
+      )}
+    >
       <b
         title={props.name}
         className={cn(
-          'min-w-0 truncate font-mono font-medium',
+          'min-w-0 font-mono font-medium',
+          props.wrap ? 'break-all' : 'truncate',
           props.className
         )}
       >

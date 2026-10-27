@@ -71,7 +71,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       aria-label={props.model.model_name}
       className='group/market bg-card hover:border-input hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border p-[18px] transition-[border-color,box-shadow] duration-150'
     >
-      <div className='flex items-center gap-3'>
+      <div className='flex items-start gap-3'>
         <VendorAvatar
           name={getVendorAvatarName(props.model)}
           icon={getVendorAvatarIcon(props.model)}
@@ -79,7 +79,8 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         <div className='min-w-0 flex-1'>
           <MarketModelName
             name={props.model.model_name}
-            className='text-[14.5px]'
+            className='text-[14.5px] leading-[22px]'
+            wrap
           />
           <small className='text-subtle-foreground block truncate text-xs'>
             {props.model.vendor_name || '—'}
