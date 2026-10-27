@@ -39,7 +39,6 @@ import type {
   WaffoPaymentResponse,
   WaffoPancakePaymentRequest,
   WaffoPancakePaymentResponse,
-  UsdtChain,
   UsdtOrderResponse,
 } from './types'
 
@@ -128,7 +127,7 @@ export async function requestPayment(
  */
 export async function requestUsdtPayment(request: {
   amount: number
-  chain: UsdtChain
+  address: string
 }): Promise<UsdtOrderResponse> {
   const res = await api.post('/api/user/usdt/pay', request, {
     skipBusinessError: true,

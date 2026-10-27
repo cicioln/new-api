@@ -325,14 +325,7 @@ export type BillingSettings = {
   'payment_setting.xingye_alipay_bankcode': string
   'payment_setting.xingye_wxpay_bankcode': string
   'payment_setting.usdt_enabled': boolean
-  'payment_setting.usdt_bsc_address': string
-  'payment_setting.usdt_aptos_address': string
-  'payment_setting.usdt_rate': number
-  'payment_setting.usdt_order_timeout_minutes': number
-  'payment_setting.usdt_bsc_rpc': string
-  'payment_setting.usdt_bsc_confirmations': number
-  'payment_setting.usdt_aptos_indexer': string
-  'payment_setting.usdt_aptos_asset': string
+  'payment_setting.usdt_addresses': string
   StripeApiSecret: string
   StripeWebhookSecret: string
   StripePriceId: string

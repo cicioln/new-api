@@ -43,10 +43,11 @@ export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
 export type UsdtChain = 'bsc' | 'aptos'
 
+/** A receiving address configured by the admin; name is the admin's label. */
 export interface UsdtChainInfo {
-  chain: UsdtChain
   name: string
-  network: string
+  address: string
+  chain: UsdtChain
 }
 
 export interface UsdtOrder {
@@ -147,7 +148,7 @@ export interface TopupInfo {
   enable_stripe_topup: boolean
   /** Available payment methods */
   pay_methods: PaymentMethod[]
-  /** Chains with a configured USDT receiving address */
+  /** Configured USDT receiving addresses */
   usdt_chains?: UsdtChainInfo[] | null
   /** Minimum topup amount for online topup */
   min_topup: number

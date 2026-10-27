@@ -98,7 +98,7 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
-	usdtChains := usdtEnabledChains()
+	usdtChains := usdtReceivers()
 	if len(usdtChains) > 0 {
 		payMethods = append(slices.Clone(payMethods), map[string]string{
 			"name":  "USDT",

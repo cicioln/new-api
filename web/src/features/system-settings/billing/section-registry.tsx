@@ -22,7 +22,6 @@ import { CheckinSettingsSection } from '../general/checkin-settings-section'
 import { PricingSection } from '../general/pricing-section'
 import { QuotaSettingsSection } from '../general/quota-settings-section'
 import { PaymentSettingsSection } from '../integrations/payment-settings-section'
-import { UsdtSettingsSection } from '../integrations/usdt-settings-section'
 import { RatioSettingsCard } from '../models/ratio-settings-card'
 import type { BillingSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
@@ -169,6 +168,8 @@ const BILLING_SECTIONS = [
             settings['payment_setting.xingye_alipay_bankcode'] ?? '',
           XingyeWxpayBankcode:
             settings['payment_setting.xingye_wxpay_bankcode'] ?? '',
+          UsdtEnabled: settings['payment_setting.usdt_enabled'] ?? false,
+          UsdtAddresses: settings['payment_setting.usdt_addresses'] || '[]',
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,
@@ -200,28 +201,6 @@ const BILLING_SECTIONS = [
             settings['payment_setting.compliance_terms_version'] ?? '',
           confirmedAt: settings['payment_setting.compliance_confirmed_at'] ?? 0,
           confirmedBy: settings['payment_setting.compliance_confirmed_by'] ?? 0,
-        }}
-      />
-    ),
-  },
-  {
-    id: 'usdt',
-    titleKey: 'USDT Payments',
-    descriptionKey: 'Receive USDT on BSC and Aptos, confirmed on-chain.',
-    build: (settings: BillingSettings) => (
-      <UsdtSettingsSection
-        defaultValues={{
-          enabled: settings['payment_setting.usdt_enabled'] ?? false,
-          bscAddress: settings['payment_setting.usdt_bsc_address'] ?? '',
-          aptosAddress: settings['payment_setting.usdt_aptos_address'] ?? '',
-          rate: settings['payment_setting.usdt_rate'] ?? 1,
-          timeoutMinutes:
-            settings['payment_setting.usdt_order_timeout_minutes'] ?? 30,
-          bscRpc: settings['payment_setting.usdt_bsc_rpc'] ?? '',
-          bscConfirmations:
-            settings['payment_setting.usdt_bsc_confirmations'] ?? 5,
-          aptosIndexer: settings['payment_setting.usdt_aptos_indexer'] ?? '',
-          aptosAsset: settings['payment_setting.usdt_aptos_asset'] ?? '',
         }}
       />
     ),

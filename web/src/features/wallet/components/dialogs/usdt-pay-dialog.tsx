@@ -31,12 +31,12 @@ import { handleServerError } from '@/lib/handle-server-error'
 import { cn } from '@/lib/utils'
 
 import { getUsdtOrder, isApiSuccess, requestUsdtPayment } from '../../api'
-import type { UsdtChain, UsdtChainInfo, UsdtOrder } from '../../types'
+import type { UsdtChainInfo, UsdtOrder } from '../../types'
 
 const POLL_INTERVAL_MS = 5000
 
 /**
- * USDT checkout: pick a chain, then transfer the exact amount to the shown
+ * USDT checkout: pick a receiving address, then transfer the exact amount to the shown
  * address. The dialog polls the order until the backend sees the transfer.
  */
 export function UsdtPayDialog(props: {
@@ -47,9 +47,9 @@ export function UsdtPayDialog(props: {
   onPaid: () => void
 }) {
   const { t } = useTranslation()
-  const [pickedChain, setChain] = useState<UsdtChain>()
-  // Top-up info may load after mount, so fall back to the first chain lazily.
-  const chain = pickedChain ?? props.chains[0]?.chain
+  const [pickedAddress, setAddress] = useState<string>()
+  // Top-up info may load after mount, so fall back to the first address lazily.
+  const address = pickedAddress ?? props.chains[0]?.address
   const [order, setOrder] = useState<UsdtOrder | null>(null)
   const [creating, setCreating] = useState(false)
   const [now, setNow] = useState(() => Date.now())
@@ -86,12 +86,12 @@ export function UsdtPayDialog(props: {
   }
 
   const handleCreate = async () => {
-    if (!chain) return
+    if (!address) return
     setCreating(true)
     try {
       const res = await requestUsdtPayment({
         amount: Math.floor(props.topupAmount),
-        chain,
+        address,
       })
       if (!isApiSuccess(res) || !res.data) {
         handleServerError(res, i18next.t('Payment request failed'))
@@ -106,7 +106,7 @@ export function UsdtPayDialog(props: {
     }
   }
 
-  const network = props.chains.find((c) => c.chain === current?.chain)
+  const receiver = props.chains.find((c) => c.address === current?.address)
   const secondsLeft = current
     ? Math.max(0, current.expire_at - Math.floor(now / 1000))
     : 0
@@ -122,14 +122,14 @@ export function UsdtPayDialog(props: {
           className='grid gap-2 sm:grid-cols-2'
         >
           {props.chains.map((option) => {
-            const selected = option.chain === chain
+            const selected = option.address === address
             return (
               <button
-                key={option.chain}
+                key={option.address}
                 type='button'
                 role='radio'
                 aria-checked={selected}
-                onClick={() => setChain(option.chain)}
+                onClick={() => setAddress(option.address)}
                 className={cn(
                   'rounded-lg border px-4 py-3 text-left transition-colors',
                   selected
@@ -138,8 +138,8 @@ export function UsdtPayDialog(props: {
                 )}
               >
                 <b className='block text-sm font-semibold'>{option.name}</b>
-                <small className='text-muted-foreground text-xs'>
-                  {option.network}
+                <small className='text-muted-foreground block truncate font-mono text-xs'>
+                  {option.address.slice(0, 8)}…{option.address.slice(-6)}
                 </small>
               </button>
             )
@@ -190,7 +190,7 @@ export function UsdtPayDialog(props: {
           <div className='bg-muted/50 rounded-lg px-3.5 py-2.5'>
             <dt className='text-muted-foreground text-xs'>{t('Network')}</dt>
             <dd className='mt-0.5 font-medium'>
-              {network?.network ?? current.chain}
+              {receiver?.name ?? current.chain}
             </dd>
           </div>
           <div className='bg-muted/50 flex items-center gap-2 rounded-lg px-3.5 py-2.5'>
@@ -230,7 +230,7 @@ export function UsdtPayDialog(props: {
               'Transfer exactly {{amount}} USDT on {{network}}. A different amount or network cannot be credited automatically.',
               {
                 amount: current.pay_amount,
-                network: network?.name ?? current.chain,
+                network: receiver?.name ?? current.chain,
               }
             )}
           </AlertDescription>
@@ -251,7 +251,7 @@ export function UsdtPayDialog(props: {
             {t('Close')}
           </Button>
         ) : (
-          <Button disabled={!chain || creating} onClick={handleCreate}>
+          <Button disabled={!address || creating} onClick={handleCreate}>
             {creating && <Loader2 className='size-4 animate-spin' />}
             {t('Create order')}
           </Button>

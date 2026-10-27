@@ -19,48 +19,47 @@ import (
 // 内置 USDT 收款：下单时分配本单唯一的转账金额，前端展示地址与二维码，service.StartUsdtPaymentTask
 // 扫描链上转账确认到账。
 
+const usdtOrderTimeout = 30 * 60
+
 var (
 	bscAddressPattern   = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
-	aptosAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{1,64}$`)
+	aptosAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`)
 )
 
-type usdtChainInfo struct {
-	Chain   string `json:"chain"`
+// usdtReceiver 是后台配置的一个收款地址。Name 由管理员填写，只用于展示；Chain 由地址格式推断，
+// 决定由哪条链的扫描任务确认到账。
+type usdtReceiver struct {
 	Name    string `json:"name"`
-	Network string `json:"network"`
+	Address string `json:"address"`
+	Chain   string `json:"chain"`
 }
 
-// usdtChainAddress 返回后台为该链配置的收款地址；格式不对视为未配置。
-func usdtChainAddress(chain string) string {
+// usdtReceivers 返回可用的收款地址；格式无法识别的地址会被忽略。
+func usdtReceivers() []usdtReceiver {
 	setting := operation_setting.GetPaymentSetting()
-	switch chain {
-	case model.UsdtChainBsc:
-		address := strings.TrimSpace(setting.UsdtBscAddress)
-		if bscAddressPattern.MatchString(address) {
-			return strings.ToLower(address)
-		}
-	case model.UsdtChainAptos:
-		address := strings.TrimSpace(setting.UsdtAptosAddress)
-		if aptosAddressPattern.MatchString(address) {
-			return service.NormalizeAptosAddress(address)
-		}
-	}
-	return ""
-}
-
-func usdtEnabledChains() []usdtChainInfo {
-	if !isPaymentComplianceConfirmed() || !operation_setting.GetPaymentSetting().UsdtEnabled ||
-		operation_setting.GetPaymentSetting().UsdtRate <= 0 {
+	if !isPaymentComplianceConfirmed() || !setting.UsdtEnabled {
 		return nil
 	}
-	chains := []usdtChainInfo{}
-	if usdtChainAddress(model.UsdtChainBsc) != "" {
-		chains = append(chains, usdtChainInfo{Chain: model.UsdtChainBsc, Name: "BSC", Network: "BNB Smart Chain (BEP20)"})
+	receivers := []usdtReceiver{}
+	for _, entry := range setting.UsdtAddresses {
+		address := strings.TrimSpace(entry.Address)
+		receiver := usdtReceiver{Name: strings.TrimSpace(entry.Name)}
+		switch {
+		case bscAddressPattern.MatchString(address):
+			receiver.Chain = model.UsdtChainBsc
+			receiver.Address = strings.ToLower(address)
+		case aptosAddressPattern.MatchString(address):
+			receiver.Chain = model.UsdtChainAptos
+			receiver.Address = service.NormalizeAptosAddress(address)
+		default:
+			continue
+		}
+		if receiver.Name == "" {
+			receiver.Name = "USDT"
+		}
+		receivers = append(receivers, receiver)
 	}
-	if usdtChainAddress(model.UsdtChainAptos) != "" {
-		chains = append(chains, usdtChainInfo{Chain: model.UsdtChainAptos, Name: "Aptos", Network: "Aptos"})
-	}
-	return chains
+	return receivers
 }
 
 func usdtOrderResponse(order *model.UsdtOrder) gin.H {
@@ -75,8 +74,8 @@ func usdtOrderResponse(order *model.UsdtOrder) gin.H {
 }
 
 type UsdtPayRequest struct {
-	Amount int64  `json:"amount"`
-	Chain  string `json:"chain"`
+	Amount  int64  `json:"amount"`
+	Address string `json:"address"`
 }
 
 func RequestUsdtPay(c *gin.Context) {
@@ -85,13 +84,14 @@ func RequestUsdtPay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Invalid parameters"))
 		return
 	}
-	enabled := false
-	for _, chain := range usdtEnabledChains() {
-		if chain.Chain == req.Chain {
-			enabled = true
+	var receiver *usdtReceiver
+	for _, item := range usdtReceivers() {
+		if strings.EqualFold(item.Address, strings.TrimSpace(req.Address)) {
+			receiver = &item
+			break
 		}
 	}
-	if !enabled {
+	if receiver == nil {
 		paymentError(c, common.NewMessage("Payment method does not exist"))
 		return
 	}
@@ -119,15 +119,18 @@ func RequestUsdtPay(c *gin.Context) {
 		amount = decimal.NewFromInt(amount).Div(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
 	}
 	now := time.Now().Unix()
-	if order := model.FindReusableUsdtOrder(id, req.Chain, amount, now); order != nil {
+	if order := model.FindReusableUsdtOrder(id, receiver.Chain, receiver.Address, amount, now); order != nil {
 		common.ApiSuccess(c, usdtOrderResponse(order))
 		return
 	}
 
-	setting := operation_setting.GetPaymentSetting()
-	// 应付 USDT 向上取整到 0.01，再由 CreateUsdtOrder 加上 0.0001 级尾数。
-	baseUnits := decimal.NewFromFloat(payMoney).
-		Div(decimal.NewFromFloat(setting.UsdtRate)).
+	// USDT 与美元 1:1：应付金额按本单的美元价值（应付金额 / 充值价格）计算，向上取整到 0.01，
+	// 再由 CreateUsdtOrder 加上 0.0001 级尾数。
+	usdValue := decimal.NewFromFloat(payMoney)
+	if operation_setting.Price > 0 {
+		usdValue = usdValue.Div(decimal.NewFromFloat(operation_setting.Price))
+	}
+	baseUnits := usdValue.
 		Mul(decimal.NewFromInt(100)).
 		Ceil().
 		Mul(decimal.NewFromInt(model.UsdtUnitsPerCoin / 100)).
@@ -135,10 +138,6 @@ func RequestUsdtPay(c *gin.Context) {
 	if baseUnits <= 0 {
 		paymentError(c, common.NewMessage("Payment amount is too low"))
 		return
-	}
-	timeout := setting.UsdtOrderTimeoutMinutes
-	if timeout <= 0 {
-		timeout = 30
 	}
 	tradeNo := xingyeTradeNo("UT")
 	topUp := &model.TopUp{
@@ -154,11 +153,11 @@ func RequestUsdtPay(c *gin.Context) {
 	order := &model.UsdtOrder{
 		TradeNo:    tradeNo,
 		UserId:     id,
-		Chain:      req.Chain,
-		Address:    usdtChainAddress(req.Chain),
+		Chain:      receiver.Chain,
+		Address:    receiver.Address,
 		Amount:     amount,
 		CreateTime: now,
-		ExpireAt:   now + int64(timeout)*60,
+		ExpireAt:   now + usdtOrderTimeout,
 	}
 	if err := model.CreateUsdtOrder(topUp, order, baseUnits); err != nil {
 		if errors.Is(err, model.ErrUsdtAmountExhausted) || errors.Is(err, model.ErrUsdtTooManyPending) {
@@ -169,7 +168,7 @@ func RequestUsdtPay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Failed to create order"))
 		return
 	}
-	logger.LogInfo(c.Request.Context(), common.LogText("USDT top-up order created user_id=%d trade_no=%s chain=%s units=%d money=%.2f", id, tradeNo, req.Chain, order.PayUnits, payMoney))
+	logger.LogInfo(c.Request.Context(), common.LogText("USDT top-up order created user_id=%d trade_no=%s chain=%s units=%d money=%.2f", id, tradeNo, receiver.Chain, order.PayUnits, payMoney))
 	common.ApiSuccess(c, usdtOrderResponse(order))
 }
 

@@ -73,11 +73,11 @@ type UsdtScanCursor struct {
 	Position int64  `gorm:"column:scan_position"`
 }
 
-// FindReusableUsdtOrder 返回同一用户、同一条链、同一充值数量且仍可支付的订单，重复点击下单时直接复用。
-func FindReusableUsdtOrder(userId int, chain string, amount int64, now int64) *UsdtOrder {
+// FindReusableUsdtOrder 返回同一用户、同一收款地址、同一充值数量且仍可支付的订单，重复点击下单时直接复用。
+func FindReusableUsdtOrder(userId int, chain string, address string, amount int64, now int64) *UsdtOrder {
 	var order UsdtOrder
-	err := DB.Where("user_id = ? AND pay_chain = ? AND amount = ? AND status = ? AND expire_at > ?",
-		userId, chain, amount, UsdtOrderStatusPending, now+60).
+	err := DB.Where("user_id = ? AND pay_chain = ? AND address = ? AND amount = ? AND status = ? AND expire_at > ?",
+		userId, chain, address, amount, UsdtOrderStatusPending, now+60).
 		Order("id desc").First(&order).Error
 	if err != nil {
 		return nil

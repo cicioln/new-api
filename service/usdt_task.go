@@ -16,7 +16,6 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
-	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/bytedance/gopkg/util/gopool"
 )
@@ -31,7 +30,12 @@ const (
 	usdtBscToken    = "0x55d398326f99059ff775485246999027b3197955"
 	usdtBscDecimals = 18
 
+	usdtBscRpc           = "https://bsc-rpc.publicnode.com"
+	usdtBscConfirmations = 5
+
 	// Aptos 原生 USDt 为 fungible asset，6 位小数。
+	usdtAptosAsset    = "0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b"
+	usdtAptosIndexer  = "https://api.mainnet.aptoslabs.com/v1/graphql"
 	usdtAptosDecimals = 6
 
 	// BSC 首次扫描或游标丢失时回看的块数；每段最多扫描的块数与每轮最多扫描的段数。
@@ -93,15 +97,14 @@ func runUsdtPaymentOnce() {
 	for _, order := range orders {
 		byChain[order.Chain] = append(byChain[order.Chain], order)
 	}
-	setting := operation_setting.GetPaymentSetting()
 	for chain, chainOrders := range byChain {
 		var transfers []usdtTransfer
 		var scanErr error
 		switch chain {
 		case model.UsdtChainBsc:
-			transfers, scanErr = scanBscTransfers(setting, chainOrders)
+			transfers, scanErr = scanBscTransfers(chainOrders)
 		case model.UsdtChainAptos:
-			transfers, scanErr = scanAptosTransfers(setting, chainOrders)
+			transfers, scanErr = scanAptosTransfers(chainOrders)
 		default:
 			continue
 		}
@@ -109,14 +112,14 @@ func runUsdtPaymentOnce() {
 			logger.LogWarn(ctx, common.LogText("usdt %s scan failed: %v", chain, scanErr))
 		}
 		for _, transfer := range transfers {
-			settleUsdtTransfer(ctx, setting, chain, chainOrders, transfer)
+			settleUsdtTransfer(ctx, chain, chainOrders, transfer)
 		}
 	}
 }
 
 // settleUsdtTransfer 把转账匹配到订单并入账。尾数分配保证同一地址上待支付订单的金额互不相同，
 // 冷却期保证迟到的转账不会命中新订单，所以地址与金额一致即可确定订单。
-func settleUsdtTransfer(ctx context.Context, setting *operation_setting.PaymentSetting, chain string, orders []model.UsdtOrder, transfer usdtTransfer) {
+func settleUsdtTransfer(ctx context.Context, chain string, orders []model.UsdtOrder, transfer usdtTransfer) {
 	var matched *model.UsdtOrder
 	for i := range orders {
 		if strings.EqualFold(orders[i].Address, transfer.To) && orders[i].PayUnits == transfer.Units {
@@ -130,7 +133,7 @@ func settleUsdtTransfer(ctx context.Context, setting *operation_setting.PaymentS
 	transferTime := transfer.Time
 	if transfer.Block != "" {
 		var err error
-		transferTime, err = bscBlockTime(setting, transfer.Block)
+		transferTime, err = bscBlockTime(transfer.Block)
 		if err != nil {
 			logger.LogWarn(ctx, common.LogText("usdt bsc block time failed block=%s: %v", transfer.Block, err))
 			return
@@ -161,7 +164,7 @@ func usdtUnits(value *big.Int, decimals int) int64 {
 	return new(big.Int).Quo(value, divisor).Int64()
 }
 
-func usdtPost(url string, headers map[string]string, payload any, out any) error {
+func usdtPost(url string, payload any, out any) error {
 	body, err := common.Marshal(payload)
 	if err != nil {
 		return err
@@ -171,9 +174,6 @@ func usdtPost(url string, headers map[string]string, payload any, out any) error
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
 	resp, err := usdtHTTPClient.Do(req)
 	if err != nil {
 		return err
@@ -194,10 +194,10 @@ type evmRPCResponse struct {
 	} `json:"error"`
 }
 
-func bscRPC(setting *operation_setting.PaymentSetting, method string, params []any, out any) error {
+func bscRPC(method string, params []any, out any) error {
 	var resp evmRPCResponse
 	payload := map[string]any{"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
-	if err := usdtPost(strings.TrimSpace(setting.UsdtBscRpc), nil, payload, &resp); err != nil {
+	if err := usdtPost(usdtBscRpc, payload, &resp); err != nil {
 		return fmt.Errorf("%s: %w", method, err)
 	}
 	if resp.Error != nil {
@@ -210,26 +210,26 @@ func parseHexInt(hex string) (int64, error) {
 	return strconv.ParseInt(strings.TrimPrefix(hex, "0x"), 16, 64)
 }
 
-func bscBlockTime(setting *operation_setting.PaymentSetting, block string) (int64, error) {
+func bscBlockTime(block string) (int64, error) {
 	var header struct {
 		Timestamp string `json:"timestamp"`
 	}
-	if err := bscRPC(setting, "eth_getBlockByNumber", []any{block, false}, &header); err != nil {
+	if err := bscRPC("eth_getBlockByNumber", []any{block, false}, &header); err != nil {
 		return 0, err
 	}
 	return parseHexInt(header.Timestamp)
 }
 
-func scanBscTransfers(setting *operation_setting.PaymentSetting, orders []model.UsdtOrder) ([]usdtTransfer, error) {
+func scanBscTransfers(orders []model.UsdtOrder) ([]usdtTransfer, error) {
 	var headHex string
-	if err := bscRPC(setting, "eth_blockNumber", []any{}, &headHex); err != nil {
+	if err := bscRPC("eth_blockNumber", []any{}, &headHex); err != nil {
 		return nil, err
 	}
 	head, err := parseHexInt(headHex)
 	if err != nil {
 		return nil, err
 	}
-	head -= int64(max(setting.UsdtBscConfirmations, 0))
+	head -= usdtBscConfirmations
 	from := model.GetUsdtScanCursor(model.UsdtChainBsc)
 	if from <= 0 || from < head-usdtBscLookback*20 {
 		// 没有游标或停机过久：从最近的块开始，过久未扫描的订单由管理员手动补单。
@@ -263,7 +263,7 @@ func scanBscTransfers(setting *operation_setting.PaymentSetting, orders []model.
 			"address":   usdtBscToken,
 			"topics":    []any{usdtTransferTopic, nil, topics},
 		}
-		if err := bscRPC(setting, "eth_getLogs", []any{filter}, &logs); err != nil {
+		if err := bscRPC("eth_getLogs", []any{filter}, &logs); err != nil {
 			return transfers, err
 		}
 		for _, l := range logs {
@@ -319,7 +319,7 @@ func NormalizeAptosAddress(address string) string {
 	return "0x" + strings.Repeat("0", max(64-len(hex), 0)) + hex
 }
 
-func scanAptosTransfers(setting *operation_setting.PaymentSetting, orders []model.UsdtOrder) ([]usdtTransfer, error) {
+func scanAptosTransfers(orders []model.UsdtOrder) ([]usdtTransfer, error) {
 	owners := []string{}
 	seen := map[string]bool{}
 	since := orders[0].CreateTime
@@ -330,15 +330,11 @@ func scanAptosTransfers(setting *operation_setting.PaymentSetting, orders []mode
 			owners = append(owners, order.Address)
 		}
 	}
-	headers := map[string]string{}
-	if key := strings.TrimSpace(setting.UsdtAptosApiKey); key != "" {
-		headers["Authorization"] = "Bearer " + key
-	}
 	payload := map[string]any{
 		"query": aptosDepositQuery,
 		"variables": map[string]any{
 			"owners":     owners,
-			"asset":      NormalizeAptosAddress(setting.UsdtAptosAsset),
+			"asset":      usdtAptosAsset,
 			"minVersion": model.GetUsdtScanCursor(model.UsdtChainAptos),
 			"since":      time.Unix(since-60, 0).UTC().Format("2006-01-02T15:04:05"),
 		},
@@ -357,7 +353,7 @@ func scanAptosTransfers(setting *operation_setting.PaymentSetting, orders []mode
 			Message string `json:"message"`
 		} `json:"errors"`
 	}
-	if err := usdtPost(strings.TrimSpace(setting.UsdtAptosIndexer), headers, payload, &resp); err != nil {
+	if err := usdtPost(usdtAptosIndexer, payload, &resp); err != nil {
 		return nil, err
 	}
 	if len(resp.Errors) > 0 {

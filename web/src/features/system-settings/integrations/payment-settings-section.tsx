@@ -65,6 +65,10 @@ import { AmountOptionsVisualEditor } from './amount-options-visual-editor'
 import { CreemProductsVisualEditor } from './creem-products-visual-editor'
 import { PaymentMethodsVisualEditor } from './payment-methods-visual-editor'
 import {
+  parseUsdtAddresses,
+  UsdtAddressesEditor,
+} from './usdt-addresses-editor'
+import {
   formatJsonForEditor,
   getJsonError,
   normalizeJsonForComparison,
@@ -171,6 +175,18 @@ const paymentSchema = z.object({
   XingyeSecret: z.string(),
   XingyeAlipayBankcode: z.string(),
   XingyeWxpayBankcode: z.string(),
+  UsdtEnabled: z.boolean(),
+  UsdtAddresses: z
+    .string()
+    .refine(
+      (value) =>
+        parseUsdtAddresses(value).every(
+          (entry) =>
+            !entry.address.trim() ||
+            /^0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/.test(entry.address.trim())
+        ),
+      'Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address'
+    ),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -455,6 +471,15 @@ export function PaymentSettingsSection({
       XingyeSecret: values.XingyeSecret.trim(),
       XingyeAlipayBankcode: values.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: values.XingyeWxpayBankcode.trim(),
+      UsdtEnabled: values.UsdtEnabled,
+      UsdtAddresses: JSON.stringify(
+        parseUsdtAddresses(values.UsdtAddresses)
+          .map((entry) => ({
+            name: entry.name.trim(),
+            address: entry.address.trim(),
+          }))
+          .filter((entry) => entry.address)
+      ),
       WaffoEnabled: values.WaffoEnabled,
       WaffoSandbox: values.WaffoSandbox,
       WaffoMerchantId: values.WaffoMerchantId.trim(),
@@ -506,6 +531,10 @@ export function PaymentSettingsSection({
       XingyeSecret: initialRef.current.XingyeSecret.trim(),
       XingyeAlipayBankcode: initialRef.current.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: initialRef.current.XingyeWxpayBankcode.trim(),
+      UsdtEnabled: initialRef.current.UsdtEnabled,
+      UsdtAddresses: JSON.stringify(
+        parseUsdtAddresses(initialRef.current.UsdtAddresses)
+      ),
       WaffoEnabled: initialRef.current.WaffoEnabled,
       WaffoSandbox: initialRef.current.WaffoSandbox,
       WaffoMerchantId: initialRef.current.WaffoMerchantId.trim(),
@@ -695,6 +724,20 @@ export function PaymentSettingsSection({
       updates.push({
         key: 'payment_setting.xingye_wxpay_bankcode',
         value: sanitized.XingyeWxpayBankcode,
+      })
+    }
+
+    if (sanitized.UsdtEnabled !== initial.UsdtEnabled) {
+      updates.push({
+        key: 'payment_setting.usdt_enabled',
+        value: sanitized.UsdtEnabled,
+      })
+    }
+
+    if (sanitized.UsdtAddresses !== initial.UsdtAddresses) {
+      updates.push({
+        key: 'payment_setting.usdt_addresses',
+        value: sanitized.UsdtAddresses,
       })
     }
 
@@ -949,10 +992,11 @@ export function PaymentSettingsSection({
           />
           <Tabs defaultValue='general' className='min-w-0'>
             <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[50rem] grid-cols-7'>
+              <TabsList className='grid min-w-[56rem] grid-cols-8'>
                 <TabsTrigger value='general'>{t('General')}</TabsTrigger>
                 <TabsTrigger value='epay'>Epay</TabsTrigger>
                 <TabsTrigger value='xingye'>{t('Xingye Pay')}</TabsTrigger>
+                <TabsTrigger value='usdt'>USDT</TabsTrigger>
                 <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
                 <TabsTrigger value='creem'>Creem</TabsTrigger>
                 <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
@@ -1483,6 +1527,57 @@ export function PaymentSettingsSection({
                     )}
                   />
                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value='usdt' className={paymentTabContentClassName}>
+              <div className='space-y-4'>
+                <div>
+                  <h3 className='text-lg font-medium'>{t('USDT Payments')}</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    {t(
+                      'Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.'
+                    )}
+                  </p>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name='UsdtEnabled'
+                  render={({ field }) => (
+                    <SettingsSwitchItem>
+                      <SettingsSwitchContent>
+                        <FormLabel>{t('Enable USDT payments')}</FormLabel>
+                        <FormDescription>
+                          {t(
+                            'The USDT amount equals the top-up amount divided by the top-up price.'
+                          )}
+                        </FormDescription>
+                      </SettingsSwitchContent>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </SettingsSwitchItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='UsdtAddresses'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Receiving addresses')}</FormLabel>
+                      <UsdtAddressesEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </TabsContent>
 
