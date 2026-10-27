@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { Bird } from 'lucide-react'
+import { Bird, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -199,6 +199,24 @@ function PelicanPreview(props: { modelName: string }) {
         </div>
       )}
     </div>
+  )
+}
+
+/** Opens the model details side panel. */
+export function MarketDetailsButton(props: {
+  modelName: string
+  onClick: (modelName: string) => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type='button'
+      onClick={() => props.onClick(props.modelName)}
+      className={cn(PELICAN_BUTTON_CLASS, 'shrink-0 gap-0.5 pr-1.5 pl-2')}
+    >
+      {t('Details')}
+      <ChevronRight aria-hidden className='size-3.5' strokeWidth={1.8} />
+    </button>
   )
 }
 

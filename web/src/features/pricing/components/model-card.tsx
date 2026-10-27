@@ -30,6 +30,7 @@ import {
 } from '../lib/market'
 import type { PricingModel, TokenUnit } from '../types'
 import {
+  MarketDetailsButton,
   MarketGroupTags,
   MarketModelName,
   PelicanButton,
@@ -63,22 +64,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     (group) =>
       !props.model.group_ratio || Object.hasOwn(props.model.group_ratio, group)
   )
-  const open = () => props.onClick(props.model.model_name)
-
   return (
-    <div
-      role='button'
-      tabIndex={0}
+    // Only the Details button opens the side panel, so the card itself is a
+    // plain region with a default cursor and text selection.
+    <article
       aria-label={props.model.model_name}
-      onClick={open}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget) return
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          open()
-        }
-      }}
-      className='group/market bg-card hover:border-input hover:shadow-card relative flex min-w-0 cursor-pointer flex-col gap-3 rounded-xl border p-[18px] transition-all duration-150 hover:-translate-y-px'
+      className='group/market bg-card hover:border-input hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border p-[18px] transition-[border-color,box-shadow] duration-150'
     >
       <div className='flex items-center gap-3'>
         <VendorAvatar
@@ -94,6 +85,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             {props.model.vendor_name || '—'}
           </small>
         </div>
+        <MarketDetailsButton
+          modelName={props.model.model_name}
+          onClick={props.onClick}
+        />
       </div>
 
       {groups.length > 0 && (
@@ -166,6 +161,6 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           <PelicanButton model={props.model} onTest={props.onTest} />
         )}
       </div>
-    </div>
+    </article>
   )
 })

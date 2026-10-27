@@ -248,7 +248,7 @@ describe('model cards', () => {
     }
   )
 
-  it('copies the model name without opening details and opens details on click', async () => {
+  it('opens details only from the Details button, not from a card click', async () => {
     const user = userEvent.setup()
     const onClick = vi.fn()
     const name = 'provider/model-with-a-long-name-and-a-version-suffix-20260906'
@@ -257,8 +257,9 @@ describe('model cards', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Copy model name' }))
     expect(await navigator.clipboard.readText()).toBe(name)
-    expect(onClick).not.toHaveBeenCalled()
     await user.click(screen.getByText(name))
+    expect(onClick).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Details' }))
     expect(onClick).toHaveBeenCalledWith(name)
   })
 
