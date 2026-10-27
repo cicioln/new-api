@@ -7799,7 +7799,6 @@
     "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}",
     "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)",
     "The upstream did not report token usage, so the tokenizer cannot be checked": "The upstream did not report token usage, so the tokenizer cannot be checked",
-    "After creating the order you will get an exact USDT amount and a receiving address. Transfer within the time limit and the balance is credited automatically.": "After creating the order you will get an exact USDT amount and a receiving address. Transfer within the time limit and the balance is credited automatically.",
     "Copy amount": "Copy amount",
     "Create order": "Create order",
     "Enable USDT payments": "Enable USDT payments",
@@ -7823,7 +7822,9 @@
     "Add address": "Add address",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.",
-    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).",
-    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo."
+    "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "The USDT amount is the payable CNY amount divided by the USDT exchange rate.",
+    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.",
+    "USDT exchange rate": "USDT exchange rate",
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}})."
   }
 }

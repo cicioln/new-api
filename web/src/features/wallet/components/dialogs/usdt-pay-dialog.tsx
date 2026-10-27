@@ -115,41 +115,32 @@ export function UsdtPayDialog(props: {
   let body: React.ReactNode
   if (!current) {
     body = (
-      <div className='grid gap-4'>
-        <div
-          role='radiogroup'
-          aria-label={t('Network')}
-          className='grid gap-2 sm:grid-cols-2'
-        >
-          {props.chains.map((option) => {
-            const selected = option.address === address
-            return (
-              <button
-                key={option.address}
-                type='button'
-                role='radio'
-                aria-checked={selected}
-                onClick={() => setAddress(option.address)}
-                className={cn(
-                  'rounded-lg border px-4 py-3 text-left transition-colors',
-                  selected
-                    ? 'border-foreground bg-muted/60'
-                    : 'hover:bg-muted/40'
-                )}
-              >
-                <b className='block text-sm font-semibold'>{option.name}</b>
-                <small className='text-muted-foreground block truncate font-mono text-xs'>
-                  {option.address.slice(0, 8)}…{option.address.slice(-6)}
-                </small>
-              </button>
-            )
-          })}
-        </div>
-        <p className='text-muted-foreground text-[13px]'>
-          {t(
-            'After creating the order you will get an exact USDT amount and a receiving address. Transfer within the time limit and the balance is credited automatically.'
-          )}
-        </p>
+      <div
+        role='radiogroup'
+        aria-label={t('Network')}
+        className='grid gap-2 sm:grid-cols-2'
+      >
+        {props.chains.map((option) => {
+          const selected = option.address === address
+          return (
+            <button
+              key={option.address}
+              type='button'
+              role='radio'
+              aria-checked={selected}
+              onClick={() => setAddress(option.address)}
+              className={cn(
+                'rounded-lg border px-4 py-3 text-left transition-colors',
+                selected ? 'border-foreground bg-muted/60' : 'hover:bg-muted/40'
+              )}
+            >
+              <b className='block text-sm font-semibold'>{option.name}</b>
+              <small className='text-muted-foreground block truncate font-mono text-xs'>
+                {option.address.slice(0, 8)}…{option.address.slice(-6)}
+              </small>
+            </button>
+          )
+        })}
       </div>
     )
   } else if (status === 'paid') {

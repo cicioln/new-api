@@ -129,12 +129,16 @@ func RequestUsdtPay(c *gin.Context) {
 		return
 	}
 
-	// 应付金额是充值价格所用的本地货币（人民币），按站点美元汇率换成 USDT（1 USDT = 1 美元），
-	// 这样充值折扣、分组倍率和低于汇率的充值价格都按实际收款折算。向上取整到 0.01，
+	// 应付金额是充值价格所用的本地货币（人民币），按 USDT 汇率换成 USDT；未设置时沿用站点美元汇率
+	// （1 USDT = 1 美元）。充值折扣、分组倍率都已包含在应付金额里。向上取整到 0.01，
 	// 再由 CreateUsdtOrder 加上 0.0001 级尾数。
+	rate := operation_setting.GetPaymentSetting().UsdtExchangeRate
+	if rate <= 0 {
+		rate = operation_setting.USDExchangeRate
+	}
 	usdValue := decimal.NewFromFloat(payMoney)
-	if operation_setting.USDExchangeRate > 0 {
-		usdValue = usdValue.Div(decimal.NewFromFloat(operation_setting.USDExchangeRate))
+	if rate > 0 {
+		usdValue = usdValue.Div(decimal.NewFromFloat(rate))
 	}
 	baseUnits := usdValue.
 		Mul(decimal.NewFromInt(100)).

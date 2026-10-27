@@ -190,6 +190,7 @@ const paymentSchema = z.object({
         ),
       'Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address'
     ),
+  UsdtExchangeRate: z.coerce.number().min(0),
   UsdtIcon: z.string(),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
@@ -234,6 +235,8 @@ type PaymentSettingsSectionProps = {
   waffoPancakeProvisionedStoreID?: string
   waffoPancakeProvisionedProductID?: string
   complianceDefaults: PaymentComplianceDefaults
+  /** Site USD exchange rate, the fallback for the USDT exchange rate */
+  usdExchangeRate: number
 }
 
 function parseWaffoPayMethods(value: string): PayMethod[] {
@@ -252,6 +255,7 @@ export function PaymentSettingsSection({
   waffoPancakeProvisionedStoreID,
   waffoPancakeProvisionedProductID,
   complianceDefaults,
+  usdExchangeRate,
 }: PaymentSettingsSectionProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -476,6 +480,7 @@ export function PaymentSettingsSection({
       XingyeAlipayBankcode: values.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: values.XingyeWxpayBankcode.trim(),
       UsdtEnabled: values.UsdtEnabled,
+      UsdtExchangeRate: values.UsdtExchangeRate,
       UsdtIcon: values.UsdtIcon.trim(),
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(values.UsdtAddresses)
@@ -537,6 +542,7 @@ export function PaymentSettingsSection({
       XingyeAlipayBankcode: initialRef.current.XingyeAlipayBankcode.trim(),
       XingyeWxpayBankcode: initialRef.current.XingyeWxpayBankcode.trim(),
       UsdtEnabled: initialRef.current.UsdtEnabled,
+      UsdtExchangeRate: initialRef.current.UsdtExchangeRate,
       UsdtIcon: initialRef.current.UsdtIcon.trim(),
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(initialRef.current.UsdtAddresses)
@@ -737,6 +743,13 @@ export function PaymentSettingsSection({
       updates.push({
         key: 'payment_setting.usdt_enabled',
         value: sanitized.UsdtEnabled,
+      })
+    }
+
+    if (sanitized.UsdtExchangeRate !== initial.UsdtExchangeRate) {
+      updates.push({
+        key: 'payment_setting.usdt_exchange_rate',
+        value: sanitized.UsdtExchangeRate,
       })
     }
 
@@ -1563,7 +1576,7 @@ export function PaymentSettingsSection({
                         <FormLabel>{t('Enable USDT payments')}</FormLabel>
                         <FormDescription>
                           {t(
-                            'The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).'
+                            'The USDT amount is the payable CNY amount divided by the USDT exchange rate.'
                           )}
                         </FormDescription>
                       </SettingsSwitchContent>
@@ -1574,6 +1587,31 @@ export function PaymentSettingsSection({
                         />
                       </FormControl>
                     </SettingsSwitchItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='UsdtExchangeRate'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('USDT exchange rate')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          step='0.0001'
+                          min={0}
+                          {...safeNumberFieldProps(field)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).',
+                          { rate: usdExchangeRate }
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
                   )}
                 />
 

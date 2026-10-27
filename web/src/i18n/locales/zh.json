@@ -7799,7 +7799,6 @@
     "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "分词器与 {{claimed}} 不一致：实测 {{measured}} tokens，预期 {{expected}}（偏差 {{deviation}}%）。最接近：{{closest}}",
     "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "该模型没有参考分词器：实测 {{measured}} tokens，最接近 {{closest}}（偏差 {{deviation}}%）",
     "The upstream did not report token usage, so the tokenizer cannot be checked": "上游没有返回 token 用量，无法检查分词器",
-    "After creating the order you will get an exact USDT amount and a receiving address. Transfer within the time limit and the balance is credited automatically.": "下单后会得到一个精确的 USDT 金额和收款地址，在有效期内转账，到账后余额自动增加。",
     "Copy amount": "复制金额",
     "Create order": "创建订单",
     "Enable USDT payments": "启用 USDT 收款",
@@ -7823,7 +7822,9 @@
     "Add address": "添加地址",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "请填写 BSC（0x + 40 位十六进制）、Aptos（0x + 64 位十六进制）或 TRON（T 开头共 34 位）地址",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "用户向下列任一地址转账本单的精确 USDT 金额，链上确认后自动到账。BSC（0x + 40 位）、Aptos（0x + 64 位）与 TRON（T 开头）地址会自动识别，名称即用户看到的网络名。",
-    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "USDT 金额 = 人民币应付金额 ÷ 美元汇率（1 USDT 按 1 美元计）。",
-    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons 图标名（如 SiTether）或图片 URL，留空使用 Tether 图标。"
+    "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "USDT 金额 = 人民币应付金额 ÷ USDT 汇率。",
+    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons 图标名（如 SiTether）或图片 URL，留空使用 Tether 图标。",
+    "USDT exchange rate": "USDT 汇率",
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT 折合多少人民币，例如 7.2。填 0 则使用美元汇率（{{rate}}）。"
   }
 }

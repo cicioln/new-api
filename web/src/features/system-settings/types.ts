@@ -326,6 +326,7 @@ export type BillingSettings = {
   'payment_setting.xingye_wxpay_bankcode': string
   'payment_setting.usdt_enabled': boolean
   'payment_setting.usdt_addresses': string
+  'payment_setting.usdt_exchange_rate': number
   'payment_setting.usdt_icon': string
   StripeApiSecret: string
   StripeWebhookSecret: string

@@ -7799,7 +7799,6 @@
     "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "トークナイザーは {{claimed}} と不一致：実測 {{measured}} トークン、想定 {{expected}}（誤差 {{deviation}}%）。最も近い：{{closest}}",
     "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "このモデルには参照トークナイザーがありません：実測 {{measured}} トークン、最も近いのは {{closest}}（誤差 {{deviation}}%）",
     "The upstream did not report token usage, so the tokenizer cannot be checked": "上流がトークン使用量を返さなかったため、トークナイザーを確認できません",
-    "After creating the order you will get an exact USDT amount and a receiving address. Transfer within the time limit and the balance is credited automatically.": "注文を作成すると、正確な USDT 金額と受取アドレスが表示されます。期限内に送金すると残高に自動で反映されます。",
     "Copy amount": "金額をコピー",
     "Create order": "注文を作成",
     "Enable USDT payments": "USDT 決済を有効化",
@@ -7823,7 +7822,9 @@
     "Add address": "アドレスを追加",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "BSC（0x + 16進40桁）、Aptos（0x + 16進64桁）または TRON（T + 33文字）のアドレスを入力してください",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "ユーザーはいずれかのアドレスに正確な USDT 金額を送金し、オンチェーンで確認されると残高に反映されます。BSC（0x + 40桁）、Aptos（0x + 64桁）、TRON（T で始まる）のアドレスは自動判別され、名前はユーザーに表示されます。",
-    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "USDT 金額 = 人民元の支払額 ÷ 米ドル為替レート（1 USDT = 1 米ドル）。",
-    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons のアイコン名（例: SiTether）または画像 URL。空欄なら Tether のロゴを使います。"
+    "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "USDT 金額 = 人民元の支払額 ÷ USDT レート。",
+    "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons のアイコン名（例: SiTether）または画像 URL。空欄なら Tether のロゴを使います。",
+    "USDT exchange rate": "USDT レート",
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT が何人民元か（例: 7.2）。0 にすると米ドル為替レート（{{rate}}）を使います。"
   }
 }

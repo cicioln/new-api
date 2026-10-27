@@ -170,6 +170,7 @@ const BILLING_SECTIONS = [
             settings['payment_setting.xingye_wxpay_bankcode'] ?? '',
           UsdtEnabled: settings['payment_setting.usdt_enabled'] ?? false,
           UsdtAddresses: settings['payment_setting.usdt_addresses'] || '[]',
+          UsdtExchangeRate: settings['payment_setting.usdt_exchange_rate'] ?? 0,
           UsdtIcon: settings['payment_setting.usdt_icon'] ?? '',
         }}
         waffoDefaultValues={{
@@ -194,6 +195,7 @@ const BILLING_SECTIONS = [
           WaffoPancakePrivateKey: settings.WaffoPancakePrivateKey ?? '',
           WaffoPancakeReturnURL: settings.WaffoPancakeReturnURL ?? '',
         }}
+        usdExchangeRate={settings.USDExchangeRate}
         waffoPancakeProvisionedStoreID={settings.WaffoPancakeStoreID ?? ''}
         waffoPancakeProvisionedProductID={settings.WaffoPancakeProductID ?? ''}
         complianceDefaults={{
