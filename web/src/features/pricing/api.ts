@@ -42,6 +42,8 @@ type PelicanRecordDto = {
   prompt: string
   group: string
   svg: string
+  reasoning?: string
+  reasoning_ms?: number | null
   created_at: number
   first_token_ms: number | null
   total_ms: number
@@ -58,6 +60,8 @@ function toPelicanRecord(dto: PelicanRecordDto): PelicanRecord {
     prompt: dto.prompt,
     group: dto.group,
     svg: dto.svg,
+    reasoning: dto.reasoning || undefined,
+    reasoningMs: dto.reasoning_ms ?? undefined,
     createdAt: dto.created_at,
     firstTokenMs: dto.first_token_ms ?? undefined,
     totalMs: dto.total_ms,
@@ -90,6 +94,11 @@ export async function createPelicanRecord(
     prompt: input.prompt,
     group: input.group,
     svg: input.svg,
+    reasoning: input.reasoning,
+    reasoning_ms:
+      input.reasoningMs === undefined
+        ? undefined
+        : Math.round(input.reasoningMs),
     first_token_ms: input.firstTokenMs,
     total_ms: Math.round(input.totalMs),
     output_tokens: input.outputTokens,

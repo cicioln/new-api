@@ -3,6 +3,10 @@ package model
 // PelicanRecordSvgMaxBytes keeps SVG markup within a MySQL TEXT column.
 const PelicanRecordSvgMaxBytes = 60000
 
+// PelicanRecordReasoningMaxBytes keeps the stored thinking text within a
+// MySQL TEXT column.
+const PelicanRecordReasoningMaxBytes = 60000
+
 // PelicanRecord is one "pelican riding a bicycle" SVG test shared on the
 // model market. Every viewer can see every record.
 type PelicanRecord struct {
@@ -13,6 +17,8 @@ type PelicanRecord struct {
 	Prompt       string `json:"prompt" gorm:"type:text"`
 	Group        string `json:"group" gorm:"type:varchar(64)"`
 	Svg          string `json:"svg" gorm:"type:text"`
+	Reasoning    string `json:"reasoning" gorm:"type:text"`
+	ReasoningMs  *int64 `json:"reasoning_ms"`
 	FirstTokenMs *int64 `json:"first_token_ms"`
 	TotalMs      int64  `json:"total_ms" gorm:"bigint"`
 	OutputTokens *int   `json:"output_tokens"`

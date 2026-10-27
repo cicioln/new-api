@@ -22,6 +22,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from '@/components/ai-elements/reasoning'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useStreamRequest } from '@/features/playground/hooks/use-stream-request'
@@ -45,6 +50,7 @@ import {
   extractSvg,
   PELICAN_PROMPT,
   PELICAN_QUERY_KEY,
+  PELICAN_REASONING_MAX_CHARS,
   svgDataUrl,
   type PelicanRecord,
 } from '../lib/pelican'
@@ -154,6 +160,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   // preview does not look frozen.
   const [reasoning, setReasoning] = useState('')
   const preRef = useRef<HTMLPreElement>(null)
+  const reasoningRef = useRef<HTMLDivElement>(null)
 
   const mine = useMemo(
     () => history.filter((record) => record.model === props.model.model_name),
@@ -174,7 +181,11 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   useEffect(() => () => stopStream(), [stopStream])
   useEffect(() => {
     if (preRef.current) preRef.current.scrollTop = preRef.current.scrollHeight
-  }, [stream, reasoning])
+  }, [stream])
+  useEffect(() => {
+    const node = reasoningRef.current
+    if (node) node.scrollTop = node.scrollHeight
+  }, [reasoning])
 
   const byModel = useMemo(() => {
     const map = new Map<string, PelicanRecord[]>()
@@ -194,6 +205,10 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
     let firstTokenMs: number | undefined
     let content = ''
     let thinking = ''
+    // Thinking time runs from the first reasoning chunk to the first answer
+    // chunk, or to the end when the model never writes an answer.
+    let thinkingStarted: number | undefined
+    let thinkingEnded: number | undefined
     let outputTokens: number | undefined
     setStream('')
     setReasoning('')
@@ -208,10 +223,12 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
         onUpdate: (type, chunk) => {
           firstTokenMs ??= performance.now() - started
           if (type === 'reasoning') {
+            thinkingStarted ??= performance.now()
             thinking += chunk
             setReasoning(thinking)
             return
           }
+          if (thinkingStarted !== undefined) thinkingEnded ??= performance.now()
           content += chunk
           setStream(content)
         },
@@ -230,6 +247,12 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             prompt,
             group,
             svg,
+            reasoning:
+              thinking.slice(0, PELICAN_REASONING_MAX_CHARS) || undefined,
+            reasoningMs:
+              thinkingStarted === undefined
+                ? undefined
+                : (thinkingEnded ?? performance.now()) - thinkingStarted,
             firstTokenMs:
               firstTokenMs === undefined ? undefined : Math.round(firstTokenMs),
             totalMs: performance.now() - started,
@@ -360,17 +383,25 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             )}
           </p>
         </div>
+        {isStreaming && reasoning && (
+          <Reasoning isStreaming={!stream}>
+            <ReasoningTrigger />
+            <ReasoningContent
+              ref={reasoningRef}
+              className='max-h-40 overflow-auto'
+            >
+              {reasoning}
+            </ReasoningContent>
+          </Reasoning>
+        )}
         <div className='bg-muted relative grid aspect-[4/3] place-items-center overflow-hidden rounded-[10px] border'>
           {isStreaming ? (
             <>
               <pre
                 ref={preRef}
-                className={cn(
-                  'bg-card text-muted-foreground absolute inset-0 m-0 overflow-auto p-3.5 font-mono text-[11.5px] leading-[1.55] break-all whitespace-pre-wrap',
-                  !stream && 'text-subtle-foreground italic'
-                )}
+                className='bg-card text-muted-foreground absolute inset-0 m-0 overflow-auto p-3.5 font-mono text-[11.5px] leading-[1.55] break-all whitespace-pre-wrap'
               >
-                {stream || reasoning}
+                {stream}
               </pre>
               <span className='bg-card text-primary absolute top-2.5 right-2.5 rounded-full border px-2 py-0.5 text-xs'>
                 {t('Generating…')}
@@ -434,9 +465,26 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
           <span className='text-subtle-foreground'>{t('Test prompt')}: </span>
           {selected.prompt}
         </div>
-        <div className='bg-muted grid grid-cols-4 rounded-lg px-3 py-2.5 max-[720px]:grid-cols-2 max-[720px]:gap-2'>
+        {selected.reasoning && (
+          <Reasoning
+            key={selected.id}
+            defaultOpen={false}
+            duration={
+              selected.reasoningMs === undefined
+                ? undefined
+                : Math.round(selected.reasoningMs / 1000)
+            }
+          >
+            <ReasoningTrigger />
+            <ReasoningContent className='max-h-60 overflow-auto'>
+              {selected.reasoning}
+            </ReasoningContent>
+          </Reasoning>
+        )}
+        <div className='bg-muted grid grid-cols-5 rounded-lg px-3 py-2.5 max-[720px]:grid-cols-2 max-[720px]:gap-2'>
           {[
             [t('First token'), formatMarketLatency(selected.firstTokenMs)],
+            [t('Thinking time'), formatMarketLatency(selected.reasoningMs)],
             [t('Total time'), `${(selected.totalMs / 1000).toFixed(1)}s`],
             [t('Output tokens'), selected.outputTokens ?? '—'],
             [t('Group'), selected.group || '—'],
@@ -445,7 +493,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
               key={String(label)}
               className={cn(
                 index > 0 && 'border-l pl-3',
-                index === 2 && 'max-[720px]:border-l-0 max-[720px]:pl-0'
+                index % 2 === 0 && 'max-[720px]:border-l-0 max-[720px]:pl-0'
               )}
             >
               <small className='text-subtle-foreground block text-[11px]'>

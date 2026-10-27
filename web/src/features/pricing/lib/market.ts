@@ -57,6 +57,7 @@ function finite(value: number | undefined): number | undefined {
 }
 
 export function toMarketPerf(summary: {
+  avg_ttft_ms?: number
   avg_latency_ms: number
   avg_tps: number
   success_rate: number
@@ -65,7 +66,10 @@ export function toMarketPerf(summary: {
 }): MarketPerf {
   const rate = summary.success_rate
   return {
-    latencyMs: finite(summary.avg_latency_ms),
+    // Total latency grows with output length (and with long reasoning), so
+    // time to first token is the fairer number; non-stream-only models
+    // have no TTFT and fall back to total latency.
+    latencyMs: finite(summary.avg_ttft_ms) ?? finite(summary.avg_latency_ms),
     tps: finite(summary.avg_tps),
     successRate:
       Number.isFinite(rate) && rate >= 0 && rate <= 100 ? rate : undefined,

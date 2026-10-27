@@ -25,6 +25,10 @@ export const PELICAN_QUERY_KEY = ['pelican-records']
 
 export const PELICAN_PROMPT = 'Generate an SVG of a pelican riding a bicycle'
 
+// The server stores at most 60000 bytes of thinking text; 20000 characters
+// stays under that even when every character takes three UTF-8 bytes.
+export const PELICAN_REASONING_MAX_CHARS = 20000
+
 export type PelicanRecord = {
   id: number
   model: string
@@ -33,6 +37,8 @@ export type PelicanRecord = {
   group: string
   svg: string
   createdAt: number
+  reasoning?: string
+  reasoningMs?: number
   firstTokenMs?: number
   totalMs: number
   outputTokens?: number

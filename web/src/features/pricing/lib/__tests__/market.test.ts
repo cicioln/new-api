@@ -26,6 +26,7 @@ import {
   getStatusLevel,
   type MarketFilterOptions,
   type MarketPerf,
+  toMarketPerf,
 } from '../market'
 import { extractSvg } from '../pelican'
 
@@ -136,6 +137,13 @@ describe('model market filters', () => {
     expect(
       names(filterMarketModels(models, { ...base, search: ' GOOGLE ' }))
     ).toEqual(['gamma'])
+  })
+
+  it('shows time to first token as latency, falling back to total latency without TTFT', () => {
+    const summary = { avg_latency_ms: 244300, avg_tps: 21, success_rate: 90 }
+
+    expect(toMarketPerf({ ...summary, avg_ttft_ms: 1800 }).latencyMs).toBe(1800)
+    expect(toMarketPerf({ ...summary, avg_ttft_ms: 0 }).latencyMs).toBe(244300)
   })
 
   it('extracts the first SVG element from model output', () => {

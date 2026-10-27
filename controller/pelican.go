@@ -28,6 +28,8 @@ type pelicanRecordRequest struct {
 	Prompt       string `json:"prompt"`
 	Group        string `json:"group"`
 	Svg          string `json:"svg"`
+	Reasoning    string `json:"reasoning"`
+	ReasoningMs  *int64 `json:"reasoning_ms"`
 	FirstTokenMs *int64 `json:"first_token_ms"`
 	TotalMs      int64  `json:"total_ms"`
 	OutputTokens *int   `json:"output_tokens"`
@@ -74,7 +76,8 @@ func CreatePelicanRecord(c *gin.Context) {
 	// shape check only rejects payloads that are not an SVG document.
 	validSvg := strings.HasPrefix(strings.ToLower(svg), "<svg") && strings.HasSuffix(strings.ToLower(svg), "</svg>")
 	if req.Model == "" || len(req.Model) > 255 || !validSvg || len(svg) > model.PelicanRecordSvgMaxBytes ||
-		len(req.Prompt) > 4000 || len(req.Vendor) > 255 || len(req.Group) > 64 || req.TotalMs < 0 {
+		len(req.Prompt) > 4000 || len(req.Vendor) > 255 || len(req.Group) > 64 || req.TotalMs < 0 ||
+		len(req.Reasoning) > model.PelicanRecordReasoningMaxBytes || (req.ReasoningMs != nil && *req.ReasoningMs < 0) {
 		common.ApiErrorT(c, "Invalid parameters")
 		return
 	}
@@ -85,6 +88,8 @@ func CreatePelicanRecord(c *gin.Context) {
 		Prompt:       req.Prompt,
 		Group:        req.Group,
 		Svg:          svg,
+		Reasoning:    req.Reasoning,
+		ReasoningMs:  req.ReasoningMs,
 		FirstTokenMs: req.FirstTokenMs,
 		TotalMs:      req.TotalMs,
 		OutputTokens: req.OutputTokens,
