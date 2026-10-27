@@ -46,7 +46,7 @@ export function VendorAvatar(props: {
       <span
         aria-hidden
         className={cn(
-          'bg-muted grid size-[34px] shrink-0 place-items-center rounded-[9px] border',
+          'grid size-[34px] shrink-0 place-items-center',
           props.className
         )}
       >
