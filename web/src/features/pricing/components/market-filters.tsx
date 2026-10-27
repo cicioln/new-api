@@ -47,6 +47,12 @@ export interface MarketFiltersProps {
   className?: string
 }
 
+// 倍率最多保留 3 位小数（最小可显示 0.001），去掉末尾多余的 0，整数保留一位小数
+function formatGroupRatio(ratio: number) {
+  const text = String(Number(ratio.toFixed(3)))
+  return text.includes('.') ? text : ratio.toFixed(1)
+}
+
 function FilterRow(props: { label: string; children: ReactNode }) {
   return (
     <div
@@ -151,7 +157,7 @@ export function MarketFilters(props: MarketFiltersProps) {
                 radio
                 checked={props.group === group.name}
                 onSelect={() => props.onGroupChange(group.name)}
-                count={`×${group.ratio.toFixed(1)}`}
+                count={`×${formatGroupRatio(group.ratio)}`}
               >
                 {group.name}
               </FilterChip>
