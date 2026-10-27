@@ -311,6 +311,10 @@ func RequestEpay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Payment method does not exist"))
 		return
 	}
+	if bankcode := xingyeBankcode(req.PaymentMethod); bankcode != "" {
+		startXingyeTopUp(c, id, req, payMoney, bankcode)
+		return
+	}
 
 	callBackAddress := service.GetCallbackAddress()
 	returnUrl, _ := url.Parse(paymentReturnPath("/usage-logs"))

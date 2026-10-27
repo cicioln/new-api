@@ -96,7 +96,19 @@ func isEpayTopUpEnabled() bool {
 	if !isPaymentComplianceConfirmed() {
 		return false
 	}
-	return isEpayWebhookConfigured() && len(operation_setting.PayMethods) > 0
+	return (isEpayWebhookConfigured() || isXingyeTopUpEnabled()) && len(operation_setting.PayMethods) > 0
+}
+
+// isXingyeTopUpEnabled 表示星烨支付原生网关已配置；启用后支付宝/微信订单改走星烨。
+func isXingyeTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() {
+		return false
+	}
+	setting := operation_setting.GetPaymentSetting()
+	return setting.XingyeEnabled &&
+		strings.TrimSpace(setting.XingyeGateway) != "" &&
+		strings.TrimSpace(setting.XingyeMemberId) != "" &&
+		strings.TrimSpace(setting.XingyeSecret) != ""
 }
 
 func isEpayWebhookConfigured() bool {

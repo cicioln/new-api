@@ -160,6 +160,14 @@ const BILLING_SECTIONS = [
           CreemWebhookSecret: settings.CreemWebhookSecret,
           CreemTestMode: settings.CreemTestMode,
           CreemProducts: settings.CreemProducts,
+          XingyeEnabled: settings['payment_setting.xingye_enabled'] ?? false,
+          XingyeGateway: settings['payment_setting.xingye_gateway'] ?? '',
+          XingyeMemberId: settings['payment_setting.xingye_member_id'] ?? '',
+          XingyeSecret: settings['payment_setting.xingye_secret'] ?? '',
+          XingyeAlipayBankcode:
+            settings['payment_setting.xingye_alipay_bankcode'] ?? '',
+          XingyeWxpayBankcode:
+            settings['payment_setting.xingye_wxpay_bankcode'] ?? '',
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,

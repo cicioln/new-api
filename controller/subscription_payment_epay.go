@@ -63,6 +63,11 @@ func SubscriptionRequestEpay(c *gin.Context) {
 		}
 	}
 
+	if bankcode := xingyeBankcode(req.PaymentMethod); bankcode != "" {
+		startXingyeSubscription(c, userId, plan, req.PaymentMethod, bankcode)
+		return
+	}
+
 	callBackAddress := service.GetCallbackAddress()
 	returnUrl, err := url.Parse(callBackAddress + "/api/subscription/epay/return")
 	if err != nil {

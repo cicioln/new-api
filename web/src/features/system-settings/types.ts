@@ -318,6 +318,12 @@ export type BillingSettings = {
   'payment_setting.compliance_confirmed_at': number
   'payment_setting.compliance_confirmed_by': number
   'payment_setting.compliance_confirmed_ip': string
+  'payment_setting.xingye_enabled': boolean
+  'payment_setting.xingye_gateway': string
+  'payment_setting.xingye_member_id': string
+  'payment_setting.xingye_secret': string
+  'payment_setting.xingye_alipay_bankcode': string
+  'payment_setting.xingye_wxpay_bankcode': string
   StripeApiSecret: string
   StripeWebhookSecret: string
   StripePriceId: string

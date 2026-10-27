@@ -161,6 +161,16 @@ const paymentSchema = z.object({
       })
     }
   }),
+  XingyeEnabled: z.boolean(),
+  XingyeGateway: z.string().refine((value) => {
+    const trimmed = value.trim()
+    if (!trimmed) return true
+    return /^https?:\/\//.test(trimmed)
+  }, 'Provide a valid callback URL starting with http:// or https://'),
+  XingyeMemberId: z.string(),
+  XingyeSecret: z.string(),
+  XingyeAlipayBankcode: z.string(),
+  XingyeWxpayBankcode: z.string(),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -439,6 +449,12 @@ export function PaymentSettingsSection({
       CreemWebhookSecret: values.CreemWebhookSecret.trim(),
       CreemTestMode: values.CreemTestMode,
       CreemProducts: values.CreemProducts.trim(),
+      XingyeEnabled: values.XingyeEnabled,
+      XingyeGateway: removeTrailingSlash(values.XingyeGateway),
+      XingyeMemberId: values.XingyeMemberId.trim(),
+      XingyeSecret: values.XingyeSecret.trim(),
+      XingyeAlipayBankcode: values.XingyeAlipayBankcode.trim(),
+      XingyeWxpayBankcode: values.XingyeWxpayBankcode.trim(),
       WaffoEnabled: values.WaffoEnabled,
       WaffoSandbox: values.WaffoSandbox,
       WaffoMerchantId: values.WaffoMerchantId.trim(),
@@ -484,6 +500,12 @@ export function PaymentSettingsSection({
       CreemWebhookSecret: initialRef.current.CreemWebhookSecret.trim(),
       CreemTestMode: initialRef.current.CreemTestMode,
       CreemProducts: initialRef.current.CreemProducts.trim(),
+      XingyeEnabled: initialRef.current.XingyeEnabled,
+      XingyeGateway: removeTrailingSlash(initialRef.current.XingyeGateway),
+      XingyeMemberId: initialRef.current.XingyeMemberId.trim(),
+      XingyeSecret: initialRef.current.XingyeSecret.trim(),
+      XingyeAlipayBankcode: initialRef.current.XingyeAlipayBankcode.trim(),
+      XingyeWxpayBankcode: initialRef.current.XingyeWxpayBankcode.trim(),
       WaffoEnabled: initialRef.current.WaffoEnabled,
       WaffoSandbox: initialRef.current.WaffoSandbox,
       WaffoMerchantId: initialRef.current.WaffoMerchantId.trim(),
@@ -629,6 +651,51 @@ export function PaymentSettingsSection({
       normalizeJsonForComparison(initial.CreemProducts)
     ) {
       updates.push({ key: 'CreemProducts', value: sanitized.CreemProducts })
+    }
+
+    if (sanitized.XingyeEnabled !== initial.XingyeEnabled) {
+      updates.push({
+        key: 'payment_setting.xingye_enabled',
+        value: sanitized.XingyeEnabled,
+      })
+    }
+
+    if (sanitized.XingyeGateway !== initial.XingyeGateway) {
+      updates.push({
+        key: 'payment_setting.xingye_gateway',
+        value: sanitized.XingyeGateway,
+      })
+    }
+
+    if (sanitized.XingyeMemberId !== initial.XingyeMemberId) {
+      updates.push({
+        key: 'payment_setting.xingye_member_id',
+        value: sanitized.XingyeMemberId,
+      })
+    }
+
+    if (
+      sanitized.XingyeSecret &&
+      sanitized.XingyeSecret !== initial.XingyeSecret
+    ) {
+      updates.push({
+        key: 'payment_setting.xingye_secret',
+        value: sanitized.XingyeSecret,
+      })
+    }
+
+    if (sanitized.XingyeAlipayBankcode !== initial.XingyeAlipayBankcode) {
+      updates.push({
+        key: 'payment_setting.xingye_alipay_bankcode',
+        value: sanitized.XingyeAlipayBankcode,
+      })
+    }
+
+    if (sanitized.XingyeWxpayBankcode !== initial.XingyeWxpayBankcode) {
+      updates.push({
+        key: 'payment_setting.xingye_wxpay_bankcode',
+        value: sanitized.XingyeWxpayBankcode,
+      })
     }
 
     if (sanitized.WaffoEnabled !== initial.WaffoEnabled) {
@@ -882,9 +949,10 @@ export function PaymentSettingsSection({
           />
           <Tabs defaultValue='general' className='min-w-0'>
             <div className='overflow-x-auto pb-1'>
-              <TabsList className='grid min-w-[44rem] grid-cols-6'>
+              <TabsList className='grid min-w-[50rem] grid-cols-7'>
                 <TabsTrigger value='general'>{t('General')}</TabsTrigger>
                 <TabsTrigger value='epay'>Epay</TabsTrigger>
+                <TabsTrigger value='xingye'>{t('Xingye Pay')}</TabsTrigger>
                 <TabsTrigger value='stripe'>{t('Stripe')}</TabsTrigger>
                 <TabsTrigger value='creem'>Creem</TabsTrigger>
                 <TabsTrigger value='waffo-pancake'>Waffo Pancake</TabsTrigger>
@@ -1249,6 +1317,166 @@ export function PaymentSettingsSection({
                         </FormControl>
                         <FormDescription>
                           {t('Leave blank unless rotating the secret')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value='xingye' className={paymentTabContentClassName}>
+              <div className='space-y-4'>
+                <div>
+                  <h3 className='text-lg font-medium'>
+                    {t('Xingye Pay Gateway')}
+                  </h3>
+                  <p className='text-muted-foreground text-sm'>
+                    {t(
+                      'Native Xingye Pay protocol (Pay_Index.html). When enabled, Alipay and WeChat orders use this gateway instead of Epay, and the browser returns to the wallet after payment.'
+                    )}
+                  </p>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name='XingyeEnabled'
+                  render={({ field }) => (
+                    <SettingsSwitchItem>
+                      <SettingsSwitchContent>
+                        <FormLabel>{t('Enable Xingye Pay')}</FormLabel>
+                        <FormDescription>
+                          {t(
+                            'Callback URLs use the callback address from the Epay tab, or the server address when it is blank.'
+                          )}
+                        </FormDescription>
+                      </SettingsSwitchContent>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </SettingsSwitchItem>
+                  )}
+                />
+
+                <div className='grid gap-6 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='XingyeGateway'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Gateway address')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='https://pay.example.com'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('Site origin only, without /Pay_Index.html')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='XingyeMemberId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Merchant ID')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete='off'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name='XingyeSecret'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Merchant secret key')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder={t('Enter new key to update')}
+                          autoComplete='new-password'
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(event.target.value)
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t('Leave blank unless rotating the secret')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='grid gap-6 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='XingyeAlipayBankcode'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('Alipay channel code')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete='off'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'pay_bankcode from the merchant backend. Leave blank to keep this method on Epay.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='XingyeWxpayBankcode'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('WeChat channel code')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete='off'
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'pay_bankcode from the merchant backend. Leave blank to keep this method on Epay.'
+                          )}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

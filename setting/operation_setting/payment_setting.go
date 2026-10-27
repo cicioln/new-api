@@ -11,6 +11,14 @@ type PaymentSetting struct {
 	ComplianceConfirmedAt  int64  `json:"compliance_confirmed_at"`
 	ComplianceConfirmedBy  int    `json:"compliance_confirmed_by"`
 	ComplianceConfirmedIP  string `json:"compliance_confirmed_ip"`
+
+	// 星烨支付原生网关（Pay_Index.html 协议）。密钥字段的 json 名以 secret 结尾，GetOptions 不会下发。
+	XingyeEnabled        bool   `json:"xingye_enabled"`
+	XingyeGateway        string `json:"xingye_gateway"`
+	XingyeMemberId       string `json:"xingye_member_id"`
+	XingyeSecret         string `json:"xingye_secret"`
+	XingyeAlipayBankcode string `json:"xingye_alipay_bankcode"`
+	XingyeWxpayBankcode  string `json:"xingye_wxpay_bankcode"`
 }
 
 const CurrentComplianceTermsVersion = "v1"
