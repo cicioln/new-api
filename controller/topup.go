@@ -326,7 +326,7 @@ func RequestEpay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Payment information has not been configured by administrator"))
 		return
 	}
-	uri, params, err := client.Purchase(&epay.PurchaseArgs{
+	purchaseArgs := &epay.PurchaseArgs{
 		Type:           req.PaymentMethod,
 		ServiceTradeNo: tradeNo,
 		Name:           fmt.Sprintf("TUC%d", req.Amount),
@@ -334,7 +334,8 @@ func RequestEpay(c *gin.Context) {
 		Device:         epay.PC,
 		NotifyUrl:      notifyUrl,
 		ReturnUrl:      returnUrl,
-	})
+	}
+	uri, params, err := client.Purchase(purchaseArgs)
 	if err != nil {
 		logger.LogError(c.Request.Context(), common.LogText("Epay failed to start payment user_id=%d trade_no=%s payment_method=%s amount=%d error=%q", id, tradeNo, req.PaymentMethod, req.Amount, err.Error()))
 		paymentError(c, common.NewMessage("Failed to start payment"))
@@ -363,6 +364,19 @@ func RequestEpay(c *gin.Context) {
 		return
 	}
 	logger.LogInfo(c.Request.Context(), common.LogText("Epay top-up order created user_id=%d trade_no=%s payment_method=%s amount=%d money=%.2f uri=%q params=%q", id, tradeNo, req.PaymentMethod, req.Amount, payMoney, uri, common.GetJsonString(params)))
+	// 优先走 mapi.php 服务端下单拿支付链接，网关不支持时回退到 submit.php 表单提交
+	payLink, err := epayMapiPurchase(c.Request.Context(), purchaseArgs, c.ClientIP())
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{"pay_link": payLink}})
+		return
+	}
+	var rejected *epayMapiError
+	if errors.As(err, &rejected) {
+		logger.LogWarn(c.Request.Context(), common.LogText("Epay mapi purchase rejected trade_no=%s msg=%q", tradeNo, rejected.Msg))
+		paymentError(c, errors.New("支付下单失败："+rejected.Msg))
+		return
+	}
+	logger.LogWarn(c.Request.Context(), common.LogText("Epay mapi purchase unavailable, falling back to submit.php trade_no=%s error=%q", tradeNo, err.Error()))
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
 }
 

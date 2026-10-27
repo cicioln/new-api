@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -103,7 +104,7 @@ func SubscriptionRequestEpay(c *gin.Context) {
 		common.ApiErrorT(c, "Failed to create order")
 		return
 	}
-	uri, params, err := client.Purchase(&epay.PurchaseArgs{
+	purchaseArgs := &epay.PurchaseArgs{
 		Type:           req.PaymentMethod,
 		ServiceTradeNo: tradeNo,
 		Name:           fmt.Sprintf("SUB:%s", plan.Title),
@@ -111,10 +112,23 @@ func SubscriptionRequestEpay(c *gin.Context) {
 		Device:         epay.PC,
 		NotifyUrl:      notifyUrl,
 		ReturnUrl:      returnUrl,
-	})
+	}
+	uri, params, err := client.Purchase(purchaseArgs)
 	if err != nil {
 		_ = model.ExpireSubscriptionOrder(tradeNo, model.PaymentProviderEpay)
 		common.ApiErrorT(c, "Failed to start payment")
+		return
+	}
+	// 优先走 mapi.php 服务端下单拿支付链接，网关不支持时回退到 submit.php 表单提交
+	payLink, err := epayMapiPurchase(c.Request.Context(), purchaseArgs, c.ClientIP())
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{"pay_link": payLink}})
+		return
+	}
+	var rejected *epayMapiError
+	if errors.As(err, &rejected) {
+		_ = model.ExpireSubscriptionOrder(tradeNo, model.PaymentProviderEpay)
+		common.ApiError(c, errors.New("支付下单失败："+rejected.Msg))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
