@@ -19,22 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
-import { useApiInfo } from '@/features/dashboard/hooks/use-status-data'
-import { useStatus } from '@/hooks/use-status'
 
-/** The primary API base URL, shown above the key list so it can be copied in one click. */
+/** The API base URL, shown above the key list so it can be copied in one click. */
 export function ApiEndpointHint() {
   const { t } = useTranslation()
-  const { status } = useStatus()
-  const { items } = useApiInfo()
-  const serverAddress =
-    (typeof status?.server_address === 'string' &&
-      status.server_address.trim()) ||
-    ''
-  const base = (items[0]?.url || serverAddress || window.location.origin)
-    .trim()
-    .replace(/\/+$/, '')
-  const endpoint = base.endsWith('/v1') ? base : `${base}/v1`
+  // The configured server address defaults to localhost and is often left
+  // unset, so use the domain the user is actually browsing.
+  const endpoint = window.location.origin
 
   return (
     <div className='mb-3.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg border bg-[linear-gradient(90deg,color-mix(in_srgb,var(--primary)_14%,var(--card)),var(--card)_60%)] px-[18px] py-4'>
