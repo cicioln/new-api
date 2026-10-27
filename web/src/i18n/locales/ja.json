@@ -7823,7 +7823,7 @@
     "Add address": "アドレスを追加",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "BSC（0x + 16進40桁）、Aptos（0x + 16進64桁）または TRON（T + 33文字）のアドレスを入力してください",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "ユーザーはいずれかのアドレスに正確な USDT 金額を送金し、オンチェーンで確認されると残高に反映されます。BSC（0x + 40桁）、Aptos（0x + 64桁）、TRON（T で始まる）のアドレスは自動判別され、名前はユーザーに表示されます。",
-    "The USDT amount equals the top-up amount divided by the top-up price.": "USDT 金額 = チャージ金額 ÷ チャージ単価。",
+    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "USDT 金額 = 人民元の支払額 ÷ 米ドル為替レート（1 USDT = 1 米ドル）。",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons のアイコン名（例: SiTether）または画像 URL。空欄なら Tether のロゴを使います。"
   }
 }

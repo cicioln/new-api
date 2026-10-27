@@ -7823,7 +7823,7 @@
     "Add address": "Thêm địa chỉ",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Dùng địa chỉ BSC (0x + 40 hex), Aptos (0x + 64 hex) hoặc TRON (T + 33 ký tự)",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Người dùng chuyển chính xác số USDT tới một trong các địa chỉ này, số dư được cộng khi giao dịch xuất hiện trên chuỗi. Địa chỉ BSC (0x + 40 hex), Aptos (0x + 64 hex) và TRON (bắt đầu bằng T) được nhận diện tự động; tên là thứ người dùng nhìn thấy.",
-    "The USDT amount equals the top-up amount divided by the top-up price.": "Số USDT bằng số tiền nạp chia cho giá nạp.",
+    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "Số USDT là số tiền CNY phải trả quy đổi theo tỷ giá USD (1 USDT = 1 USD).",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "Tên biểu tượng react-icons (vd. SiTether) hoặc URL hình ảnh. Để trống để dùng logo Tether."
   }
 }

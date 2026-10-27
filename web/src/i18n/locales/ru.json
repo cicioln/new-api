@@ -7823,7 +7823,7 @@
     "Add address": "Добавить адрес",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Укажите адрес BSC (0x + 40 hex), Aptos (0x + 64 hex) или TRON (T + 33 символа)",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Пользователи переводят точную сумму USDT на один из этих адресов, баланс зачисляется после появления перевода в сети. Адреса BSC (0x + 40 hex), Aptos (0x + 64 hex) и TRON (начинаются с T) определяются автоматически; название видят пользователи.",
-    "The USDT amount equals the top-up amount divided by the top-up price.": "Сумма в USDT равна сумме пополнения, делённой на цену пополнения.",
+    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "Сумма в USDT — это сумма к оплате в CNY, пересчитанная по курсу доллара (1 USDT = 1 USD).",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "Имя иконки react-icons (например, SiTether) или URL изображения. Оставьте пустым для логотипа Tether."
   }
 }

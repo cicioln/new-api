@@ -7823,7 +7823,7 @@
     "Add address": "添加地址",
     "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "请填写 BSC（0x + 40 位十六进制）、Aptos（0x + 64 位十六进制）或 TRON（T 开头共 34 位）地址",
     "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "用户向下列任一地址转账本单的精确 USDT 金额，链上确认后自动到账。BSC（0x + 40 位）、Aptos（0x + 64 位）与 TRON（T 开头）地址会自动识别，名称即用户看到的网络名。",
-    "The USDT amount equals the top-up amount divided by the top-up price.": "USDT 金额 = 充值应付金额 ÷ 充值价格。",
+    "The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).": "USDT 金额 = 人民币应付金额 ÷ 美元汇率（1 USDT 按 1 美元计）。",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons 图标名（如 SiTether）或图片 URL，留空使用 Tether 图标。"
   }
 }

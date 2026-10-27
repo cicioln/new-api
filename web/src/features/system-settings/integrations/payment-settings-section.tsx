@@ -1563,7 +1563,7 @@ export function PaymentSettingsSection({
                         <FormLabel>{t('Enable USDT payments')}</FormLabel>
                         <FormDescription>
                           {t(
-                            'The USDT amount equals the top-up amount divided by the top-up price.'
+                            'The USDT amount is the payable CNY amount converted at the USD exchange rate (1 USDT = 1 USD).'
                           )}
                         </FormDescription>
                       </SettingsSwitchContent>
