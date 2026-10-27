@@ -38,6 +38,7 @@ export interface MarketFiltersProps {
   groups: { name: string; ratio: number }[]
   group?: string
   onGroupChange: (group: string) => void
+  onClearGroup: () => void
   statusCounts: Record<MarketStatusFilter, number>
   status?: MarketStatusFilter
   onToggleStatus: (status: MarketStatusFilter) => void
@@ -136,6 +137,14 @@ export function MarketFilters(props: MarketFiltersProps) {
             aria-label={t('Pricing group')}
             className='contents'
           >
+            <FilterChip
+              radio
+              checked={!props.group}
+              onSelect={props.onClearGroup}
+              count={props.total}
+            >
+              {t('All')}
+            </FilterChip>
             {props.groups.map((group) => (
               <FilterChip
                 key={group.name}

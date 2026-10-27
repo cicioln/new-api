@@ -39,8 +39,7 @@ function toggle<T>(list: T[], value: T): T[] {
 
 export function useFilters(
   models: PricingModel[],
-  perf: Map<string, MarketPerf>,
-  defaultGroup: string | undefined
+  perf: Map<string, MarketPerf>
 ) {
   const search = useSearch({ from: '/pricing/' })
   const [searchInput, setSearchInput] = useState(search.search ?? '')
@@ -62,7 +61,8 @@ export function useFilters(
     search.rechargePrice === true
   )
   const debouncedSearch = useDebounce(searchInput, 200)
-  const group = selectedGroup ?? defaultGroup
+  // 未选分组即「全部」：不按分组过滤，价格按各模型可用的最低分组倍率展示
+  const group = selectedGroup
 
   const toggleVendor = useCallback(
     (vendor: string) => setVendors((prev) => toggle(prev, vendor)),
@@ -102,7 +102,6 @@ export function useFilters(
     vendors,
     status,
     group,
-    isDefaultGroup: group === defaultGroup,
     sortBy,
     viewMode,
     tokenUnit,

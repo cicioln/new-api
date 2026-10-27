@@ -74,7 +74,7 @@ export function Pricing() {
     [usableGroup, groupRatio]
   )
   const defaultGroup = getDefaultMarketGroup(groupNames)
-  const filters = useFilters(models, perf, defaultGroup)
+  const filters = useFilters(models, perf)
 
   // "/" focuses the search box, as hinted by the kbd in the design.
   useEffect(() => {
@@ -165,7 +165,7 @@ export function Pricing() {
       onRemove: filters.clearStatus,
     })
   }
-  if (filters.group && !filters.isDefaultGroup) {
+  if (filters.group) {
     chips.push({
       key: 'g',
       label: t('Group {{name}} ×{{ratio}}', {
@@ -287,6 +287,7 @@ export function Pricing() {
             groups={groups}
             group={filters.group}
             onGroupChange={filters.setGroup}
+            onClearGroup={filters.resetGroup}
             statusCounts={statusCounts}
             status={filters.status}
             onToggleStatus={filters.toggleStatus}
@@ -369,7 +370,7 @@ export function Pricing() {
       <PelicanDialog
         model={testModel}
         groups={groupNames}
-        defaultGroup={filters.group}
+        defaultGroup={filters.group ?? defaultGroup}
         onOpenChange={(open) => {
           if (!open) setTestModelName(null)
         }}
