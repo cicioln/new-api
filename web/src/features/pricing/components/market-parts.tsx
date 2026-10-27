@@ -219,14 +219,17 @@ export function MarketDetailsButton(props: {
   onClick: (modelName: string) => void
 }) {
   const { t } = useTranslation()
+  // Icon-only, with a hit area wider than the arrow; the negative margins
+  // keep it from pushing the header layout.
   return (
     <button
       type='button'
+      aria-label={t('Details')}
+      title={t('Details')}
       onClick={() => props.onClick(props.modelName)}
-      className={cn(PELICAN_BUTTON_CLASS, 'shrink-0 gap-0.5 pr-1.5 pl-2')}
+      className='text-subtle-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring -my-1.5 -mr-2.5 grid h-10 w-11 shrink-0 cursor-pointer place-items-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:outline-none'
     >
-      {t('Details')}
-      <ChevronRight aria-hidden className='size-3.5' strokeWidth={1.8} />
+      <ChevronRight aria-hidden className='size-[18px]' strokeWidth={1.8} />
     </button>
   )
 }
