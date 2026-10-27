@@ -36,15 +36,13 @@ export function ApiKeys() {
           {t('Each key can have its own quota, allowed models and expiry.')}
         </SectionPageLayout.Description>
         <SectionPageLayout.Actions>
-          <ApiKeysPrimaryButtons />
+          <div className='flex min-w-0 flex-wrap items-center gap-2'>
+            <ApiEndpointHint />
+            <ApiKeysPrimaryButtons />
+          </div>
         </SectionPageLayout.Actions>
         <SectionPageLayout.Content>
-          <div className='flex h-full min-h-0 flex-col'>
-            <ApiEndpointHint />
-            <div className='min-h-0 flex-1'>
-              <ApiKeysTable />
-            </div>
-          </div>
+          <ApiKeysTable />
         </SectionPageLayout.Content>
       </SectionPageLayout>
 

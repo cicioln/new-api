@@ -20,7 +20,9 @@ import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
 
-/** The API base URL, shown above the key list so it can be copied in one click. */
+/**
+ * Compact API base URL chip for the page header, copyable in one click.
+ */
 export function ApiEndpointHint() {
   const { t } = useTranslation()
   // The configured server address defaults to localhost and is often left
@@ -28,23 +30,24 @@ export function ApiEndpointHint() {
   const endpoint = window.location.origin
 
   return (
-    <div className='mb-3.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg border bg-[linear-gradient(90deg,color-mix(in_srgb,var(--primary)_14%,var(--card)),var(--card)_60%)] px-[18px] py-4'>
-      <div className='min-w-0'>
-        <b className='text-sm'>{t('API endpoint')}</b>
-        <p className='text-muted-foreground mt-0.5 truncate font-mono text-[13px]'>
-          {endpoint} · {t('Compatible with OpenAI / Claude / Gemini SDKs')}
-        </p>
-      </div>
+    <div
+      title={t('Compatible with OpenAI / Claude / Gemini SDKs')}
+      className='bg-card inline-flex h-[30px] max-w-full min-w-0 items-center gap-2 rounded-[7px] border pr-0.5 pl-2.5 text-[13px]'
+    >
+      <span className='text-subtle-foreground shrink-0'>
+        {t('API endpoint')}
+      </span>
+      <span aria-hidden className='bg-border h-3.5 w-px shrink-0' />
+      <code className='min-w-0 truncate font-mono text-[12.5px]'>
+        {endpoint}
+      </code>
       <CopyButton
         value={endpoint}
-        variant='outline'
-        size='sm'
-        hideIcon
+        className='size-6'
+        iconClassName='size-3.5'
         tooltip={t('Copy API URL')}
         aria-label={`${t('Copy API URL')}: ${endpoint}`}
-      >
-        {t('Copy address')}
-      </CopyButton>
+      />
     </div>
   )
 }
