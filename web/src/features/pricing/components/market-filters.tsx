@@ -176,18 +176,21 @@ export function MarketFilters(props: MarketFiltersProps) {
           >
             {t('All')}
           </FilterChip>
-          {MARKET_STATUS_FILTERS.map((status) => (
-            <FilterChip
-              key={status}
-              radio
-              checked={props.status === status}
-              onSelect={() => props.onToggleStatus(status)}
-              count={props.statusCounts[status]}
-            >
-              <MarketStatusDot status={status} />
-              {t(getStatusLabelKey(status))}
-            </FilterChip>
-          ))}
+          {/* The maintenance chip is hidden from the filter bar. */}
+          {MARKET_STATUS_FILTERS.filter((status) => status !== 'bad').map(
+            (status) => (
+              <FilterChip
+                key={status}
+                radio
+                checked={props.status === status}
+                onSelect={() => props.onToggleStatus(status)}
+                count={props.statusCounts[status]}
+              >
+                <MarketStatusDot status={status} />
+                {t(getStatusLabelKey(status))}
+              </FilterChip>
+            )
+          )}
         </div>
         {props.trailing && <div className='ml-auto'>{props.trailing}</div>}
       </FilterRow>
