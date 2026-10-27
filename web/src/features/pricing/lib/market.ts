@@ -96,13 +96,20 @@ export function getStatusLevel(rate: number | undefined): MarketStatus | null {
   return 'bad'
 }
 
+export type MarketStatusBar = {
+  /** Start of the hour, in Unix seconds. */
+  ts: number
+  rate: number
+  status: MarketStatus
+}
+
 /**
- * Latest valid success samples in chronological order, padded on the left
- * with `null` so the strip always has {@link STATUS_BAR_COUNT} slots.
+ * Latest valid hourly success samples in chronological order, padded on the
+ * left with `null` so the strip always has {@link STATUS_BAR_COUNT} slots.
  */
 export function getStatusBars(
   series: SuccessRatePoint[] | undefined
-): (MarketStatus | null)[] {
+): (MarketStatusBar | null)[] {
   const samples = (series ?? [])
     .filter(
       (point) =>
@@ -113,7 +120,11 @@ export function getStatusBars(
     )
     .sort((a, b) => a.ts - b.ts)
     .slice(-STATUS_BAR_COUNT)
-    .map((point) => getStatusLevel(point.success_rate))
+    .map((point): MarketStatusBar => ({
+      ts: point.ts,
+      rate: point.success_rate,
+      status: getStatusLevel(point.success_rate) ?? 'bad',
+    }))
   return [
     ...Array.from<null>({ length: STATUS_BAR_COUNT - samples.length }).fill(
       null

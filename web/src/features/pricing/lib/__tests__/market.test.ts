@@ -101,11 +101,16 @@ describe('model market filters', () => {
       { ts: 1, success_rate: 100 },
     ])
     expect(bars).toHaveLength(24)
-    expect(bars.slice(-3)).toEqual([null, 'ok', 'bad'])
+    expect(bars.slice(-3)).toEqual([
+      null,
+      { ts: 1, rate: 100, status: 'ok' },
+      { ts: 2, rate: 50, status: 'bad' },
+    ])
     const full = getStatusBars(
       Array.from({ length: 30 }, (_, ts) => ({ ts, success_rate: 100 }))
     )
-    expect(full.every((bar) => bar === 'ok')).toBe(true)
+    expect(full.every((bar) => bar?.status === 'ok')).toBe(true)
+    expect(full[0]?.ts).toBe(6)
   })
 
   it('sorts popular models by 24h traffic, by input price and by newest', () => {

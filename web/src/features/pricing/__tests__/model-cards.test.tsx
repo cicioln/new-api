@@ -335,8 +335,9 @@ describe('model cards', () => {
       name: 'Success rate',
     }).children
     expect(bars[21]).toHaveClass('bg-border')
-    expect(bars[22]).toHaveClass('bg-success')
-    expect(bars[23]).toHaveClass('bg-destructive')
+    expect(bars[22].firstElementChild).toHaveClass('bg-success', 'h-full')
+    expect(bars[23].firstElementChild).toHaveClass('bg-destructive')
+    expect(bars[23].firstElementChild).not.toHaveClass('h-full')
   })
 
   it('opens the pelican test without opening details and disables it for embeddings', async () => {
