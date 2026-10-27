@@ -1,5 +1,10 @@
 package constant
 
+import (
+	"net/url"
+	"strings"
+)
+
 const (
 	ChannelTypeUnknown        = 0
 	ChannelTypeOpenAI         = 1
@@ -233,6 +238,23 @@ var ChannelSpecialBases = map[string]ChannelSpecialBase{
 		ClaudeBaseURL: "https://ark.cn-beijing.volces.com/api/coding",
 		OpenAIBaseURL: "https://ark.cn-beijing.volces.com/api/coding/v3",
 	},
+}
+
+// IsZhipuOfficialBaseURL reports whether a Zhipu GLM base URL points at Zhipu's
+// own hosts, which serve the /api/paas/v4 paths. Third-party proxies configured
+// on a Zhipu channel usually expose OpenAI-style /v1 paths instead.
+func IsZhipuOfficialBaseURL(baseURL string) bool {
+	u, err := url.Parse(strings.TrimSpace(baseURL))
+	if err != nil || u.Host == "" {
+		return true
+	}
+	host := strings.ToLower(u.Hostname())
+	for _, official := range []string{"bigmodel.cn", "z.ai"} {
+		if host == official || strings.HasSuffix(host, "."+official) {
+			return true
+		}
+	}
+	return false
 }
 
 // IsAdvancedCustomChannel includes named channels backed by route presets.

@@ -415,6 +415,9 @@ func fetchChannelUpstreamModelIDs(channel *model.Channel) ([]string, error) {
 	case constant.ChannelTypeZhipu_v4:
 		if plan, ok := constant.ChannelSpecialBases[baseURL]; ok && plan.OpenAIBaseURL != "" {
 			url = fmt.Sprintf("%s/models", plan.OpenAIBaseURL)
+		} else if !constant.IsZhipuOfficialBaseURL(baseURL) {
+			// 第三方中转（如自定义 API 地址）走 OpenAI 风格 /v1/models，官方路径会 404。
+			url = fmt.Sprintf("%s/v1/models", baseURL)
 		} else {
 			url = fmt.Sprintf("%s/api/paas/v4/models", baseURL)
 		}

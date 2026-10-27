@@ -60,6 +60,23 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 	}
 	specialPlan, hasSpecialPlan := channelconstant.ChannelSpecialBases[baseURL]
 
+	// Third-party proxies serve OpenAI/Anthropic-style /v1 paths, not /api/paas/v4.
+	if !hasSpecialPlan && !channelconstant.IsZhipuOfficialBaseURL(baseURL) {
+		if info.RelayFormat == types.RelayFormatClaude {
+			return fmt.Sprintf("%s/v1/messages", baseURL), nil
+		}
+		switch info.RelayMode {
+		case relayconstant.RelayModeEmbeddings:
+			return fmt.Sprintf("%s/v1/embeddings", baseURL), nil
+		case relayconstant.RelayModeImagesGenerations:
+			return fmt.Sprintf("%s/v1/images/generations", baseURL), nil
+		case relayconstant.RelayModeResponses:
+			return fmt.Sprintf("%s/v1/responses", baseURL), nil
+		default:
+			return fmt.Sprintf("%s/v1/chat/completions", baseURL), nil
+		}
+	}
+
 	switch info.RelayFormat {
 	case types.RelayFormatClaude:
 		if hasSpecialPlan && specialPlan.ClaudeBaseURL != "" {
