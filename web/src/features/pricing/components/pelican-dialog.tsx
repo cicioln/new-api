@@ -29,11 +29,11 @@ import {
 } from '@/components/ai-elements/reasoning'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { useStreamRequest } from '@/features/playground/hooks/use-stream-request'
 import { ROLE } from '@/lib/roles'
 import { cn } from '@/lib/utils'
 import { openAuthDialog } from '@/stores/auth-dialog-store'
 import { useAuthStore } from '@/stores/auth-store'
+import { usePelicanRunStore } from '@/stores/pelican-run-store'
 
 import {
   createPelicanRecord,
@@ -111,27 +111,21 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const user = useAuthStore((state) => state.auth.user)
   const isAuthenticated = Boolean(user)
   const isAdmin = (user?.role ?? 0) >= ROLE.ADMIN
-  const { sendStreamRequest, stopStream, isStreaming } = useStreamRequest()
+  const modelName = props.model.model_name
+  // The run lives in a store so closing the dialog keeps it going.
+  const activeRun = usePelicanRunStore((state) => state.runs[modelName])
+  const lastSavedId = usePelicanRunStore((state) => state.lastSaved[modelName])
+  const startRun = usePelicanRunStore((state) => state.start)
+  const stopRun = usePelicanRunStore((state) => state.stop)
+  const isStreaming = Boolean(activeRun)
+  const stream = activeRun?.stream ?? ''
+  const reasoning = activeRun?.reasoning ?? ''
   const queryClient = useQueryClient()
   const historyQuery = useQuery({
     queryKey: PELICAN_QUERY_KEY,
     queryFn: getPelicanRecords,
   })
   const history = useMemo(() => historyQuery.data ?? [], [historyQuery.data])
-  const saveRecord = useMutation({
-    mutationFn: createPelicanRecord,
-    onSuccess: (record) => {
-      queryClient.setQueryData<PelicanRecord[]>(PELICAN_QUERY_KEY, (prev) => [
-        record,
-        ...(prev ?? []),
-      ])
-      setScope('model')
-      setView('img')
-      select(record)
-      toast.success(t('Test complete, added to the test records'))
-    },
-    onError: (error) => toast.error(error.message),
-  })
   const removeRecord = useMutation({
     mutationFn: deletePelicanRecord,
     onSuccess: (_, id) => {
@@ -146,19 +140,16 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const [scope, setScope] = useState<Scope>('model')
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const [view, setView] = useState<'img' | 'code'>('img')
-  const [prompt, setPrompt] = useState(PELICAN_PROMPT)
+  const [prompt, setPrompt] = useState(activeRun?.prompt ?? PELICAN_PROMPT)
   const modelGroups = props.groups.filter((group) =>
     props.model.enable_groups?.includes(group)
   )
   const [group, setGroup] = useState(
-    props.defaultGroup && modelGroups.includes(props.defaultGroup)
-      ? props.defaultGroup
-      : (modelGroups[0] ?? '')
+    activeRun?.group ??
+      (props.defaultGroup && modelGroups.includes(props.defaultGroup)
+        ? props.defaultGroup
+        : (modelGroups[0] ?? ''))
   )
-  const [stream, setStream] = useState('')
-  // Reasoning models think before writing any SVG; show that text so the
-  // preview does not look frozen.
-  const [reasoning, setReasoning] = useState('')
   const preRef = useRef<HTMLPreElement>(null)
   const reasoningRef = useRef<HTMLDivElement>(null)
 
@@ -169,7 +160,9 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const [selectedId, setSelectedId] = useState<number | undefined>()
   // Until the viewer picks a mode, open on the runner only when this model
   // has no records yet.
-  const [pickedMode, setMode] = useState<'run' | 'view'>()
+  const [pickedMode, setMode] = useState<'run' | 'view' | undefined>(
+    activeRun ? 'run' : undefined
+  )
   const hasRecords = mine.length > 0 || historyQuery.isPending
   const mode = pickedMode ?? (hasRecords ? 'view' : 'run')
   const list = scope === 'all' ? history : mine
@@ -178,7 +171,14 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
       ? (history.find((record) => record.id === selectedId) ?? list[0])
       : undefined
 
-  useEffect(() => () => stopStream(), [stopStream])
+  // Show the record a finished run saved, even if it finished while closed.
+  useEffect(() => {
+    if (lastSavedId === undefined) return
+    setScope('model')
+    setView('img')
+    setSelectedId(lastSavedId)
+    setMode('view')
+  }, [lastSavedId])
   useEffect(() => {
     if (preRef.current) preRef.current.scrollTop = preRef.current.scrollHeight
   }, [stream])
@@ -201,67 +201,45 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   }
 
   const run = () => {
-    const started = performance.now()
-    let firstTokenMs: number | undefined
-    let content = ''
-    let thinking = ''
-    // Thinking time runs from the first reasoning chunk to the first answer
-    // chunk, or to the end when the model never writes an answer.
-    let thinkingStarted: number | undefined
-    let thinkingEnded: number | undefined
-    let outputTokens: number | undefined
-    setStream('')
-    setReasoning('')
-    void sendStreamRequest(
-      {
-        model: props.model.model_name,
-        group: group || undefined,
-        messages: [{ role: 'user', content: prompt }],
-        stream: true,
-      },
-      {
-        onUpdate: (type, chunk) => {
-          firstTokenMs ??= performance.now() - started
-          if (type === 'reasoning') {
-            thinkingStarted ??= performance.now()
-            thinking += chunk
-            setReasoning(thinking)
-            return
-          }
-          if (thinkingStarted !== undefined) thinkingEnded ??= performance.now()
-          content += chunk
-          setStream(content)
-        },
-        onUsage: (usage) => {
-          outputTokens = usage.completion_tokens
-        },
-        onComplete: () => {
-          const svg = extractSvg(content)
-          if (!svg) {
-            toast.error(t('The model did not return an SVG'))
-            return
-          }
-          saveRecord.mutate({
-            model: props.model.model_name,
-            vendor: props.model.vendor_name,
+    const model = props.model
+    startRun({
+      model: model.model_name,
+      prompt,
+      group,
+      onComplete: async (result) => {
+        const svg = extractSvg(result.content)
+        if (!svg) {
+          toast.error(t('The model did not return an SVG'))
+          return undefined
+        }
+        try {
+          const record = await createPelicanRecord({
+            model: model.model_name,
+            vendor: model.vendor_name,
             prompt,
             group,
             svg,
             reasoning:
-              thinking.slice(0, PELICAN_REASONING_MAX_CHARS) || undefined,
-            reasoningMs:
-              thinkingStarted === undefined
-                ? undefined
-                : (thinkingEnded ?? performance.now()) - thinkingStarted,
-            firstTokenMs:
-              firstTokenMs === undefined ? undefined : Math.round(firstTokenMs),
-            totalMs: performance.now() - started,
-            outputTokens,
+              result.reasoning.slice(0, PELICAN_REASONING_MAX_CHARS) ||
+              undefined,
+            reasoningMs: result.reasoningMs,
+            firstTokenMs: result.firstTokenMs,
+            totalMs: result.totalMs,
+            outputTokens: result.outputTokens,
           })
-        },
-        onError: (error) => toast.error(error),
-      }
-    )
+          queryClient.setQueryData<PelicanRecord[]>(
+            PELICAN_QUERY_KEY,
+            (prev) => [record, ...(prev ?? [])]
+          )
+          toast.success(t('Test complete, added to the test records'))
+          return record.id
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : String(error))
+          return undefined
+        }
+      },
+      onError: (error) => toast.error(error),
+    })
   }
 
   const copySvg = () => {
@@ -296,7 +274,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
           <span>
             {t('My test')} · {props.model.model_name}
           </span>
-          {mine.length > 0 && !isStreaming && !saveRecord.isPending && (
+          {mine.length > 0 && !isStreaming && (
             <Button size='sm' variant='outline' onClick={() => setMode('view')}>
               {t('Back to records')}
             </Button>
@@ -353,14 +331,18 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             </div>
           </div>
           {isAuthenticated && isStreaming && (
-            <Button className='w-full' variant='outline' onClick={stopStream}>
+            <Button
+              className='w-full'
+              variant='outline'
+              onClick={() => stopRun(modelName)}
+            >
               {t('Stop')}
             </Button>
           )}
           {isAuthenticated && !isStreaming && (
             <Button
               className='w-full'
-              disabled={saveRecord.isPending || !prompt.trim()}
+              disabled={!prompt.trim()}
               onClick={run}
             >
               {t('Start test')}

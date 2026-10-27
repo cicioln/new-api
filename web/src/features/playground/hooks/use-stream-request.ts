@@ -31,7 +31,7 @@ import {
 } from '../lib'
 import type { ChatCompletionRequest, ChatCompletionUsage } from '../types'
 
-interface StreamEventSource {
+export interface StreamEventSource {
   readyState?: number
   addEventListener: (
     type: string,
