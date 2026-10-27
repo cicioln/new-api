@@ -69,7 +69,7 @@ func TestCreateUsdtOrderGivesConcurrentOrdersDistinctAmounts(t *testing.T) {
 		assert.False(t, seen[u], "amount %d assigned twice", u)
 		seen[u] = true
 		assert.GreaterOrEqual(t, u, int64(100_000))
-		assert.Less(t, u, int64(100_000+usdtAmountSlots))
+		assert.Less(t, u, int64(100_000+usdtPreferredSlots), "tail should stay within 0.0099 USDT")
 	}
 }
 

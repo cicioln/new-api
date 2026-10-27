@@ -19,7 +19,7 @@ import (
 // 内置 USDT 收款：下单时分配本单唯一的转账金额，前端展示地址与二维码，service.StartUsdtPaymentTask
 // 扫描链上转账确认到账。
 
-const usdtOrderTimeout = 30 * 60
+const usdtOrderTimeout = 5 * 60
 
 var (
 	bscAddressPattern   = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)

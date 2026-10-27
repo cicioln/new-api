@@ -28,6 +28,10 @@ const (
 	// usdtAmountSlots 是同一基础金额可用的尾数个数（0.0000–0.0999 USDT）。
 	usdtAmountSlots = 1000
 
+	// usdtPreferredSlots 是优先分配的尾数个数（0.0000–0.0099 USDT），让实际金额尽量贴近应付金额；
+	// 这些都被占用时才从 0.0100 起依次往上找。
+	usdtPreferredSlots = 100
+
 	// UsdtConfirmGraceSeconds：订单到期后继续等待链上确认的时间，临近到期才转账的订单不会被误关。
 	UsdtConfirmGraceSeconds = 10 * 60
 
@@ -87,7 +91,7 @@ func FindReusableUsdtOrder(userId int, chain string, address string, amount int6
 }
 
 // CreateUsdtOrder 为订单分配唯一的转账金额并写入充值记录与 USDT 订单。baseUnits 是按汇率换算并
-// 取整到 0.01 USDT 的金额，实际金额是 baseUnits 加上 0–999 的尾数。
+// 取整到 0.01 USDT 的金额，实际金额是 baseUnits 加上 0–999 的尾数，优先使用 0–99。
 //
 // 并发安全不依赖先查后插：每个候选金额先尝试接管已过期的占用行（UPDATE ... WHERE locked_until < now），
 // 不存在时再 INSERT ... ON CONFLICT DO NOTHING，影响行数为 1 才算抢到。两个请求抢同一金额时数据库
@@ -118,10 +122,14 @@ func createUsdtOrderOnce(topUp *TopUp, order *UsdtOrder, baseUnits int64) error 
 		}
 
 		lockedUntil := order.ExpireAt + UsdtConfirmGraceSeconds + usdtAmountCooldownSeconds
-		start := rand.IntN(usdtAmountSlots)
+		start := rand.IntN(usdtPreferredSlots)
 		claimed := int64(0)
 		for k := range usdtAmountSlots {
-			units := baseUnits + int64((start+k)%usdtAmountSlots)
+			tail := k
+			if k < usdtPreferredSlots {
+				tail = (start + k) % usdtPreferredSlots
+			}
+			units := baseUnits + int64(tail)
 			res := tx.Model(&UsdtAmountSlot{}).
 				Where("pay_chain = ? AND address = ? AND pay_units = ? AND locked_until < ?", order.Chain, order.Address, units, order.CreateTime).
 				Updates(map[string]any{"trade_no": order.TradeNo, "locked_until": lockedUntil})
