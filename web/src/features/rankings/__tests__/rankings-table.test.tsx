@@ -60,6 +60,7 @@ describe('rankings table', () => {
           }),
           row({ rank: 3, previous_rank: undefined, model_name: 'new-model' }),
         ]}
+        showTrend
       />
     )
     const rows = screen.getAllByRole('row').slice(1)
@@ -72,9 +73,20 @@ describe('rankings table', () => {
     expect(within(rows[2]).getByText('NEW')).toBeVisible()
   })
 
+  it('hides the trend columns when no previous period exists', () => {
+    render(
+      <RankingsTable
+        rows={[row({ previous_rank: undefined })]}
+        showTrend={false}
+      />
+    )
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4)
+    expect(screen.queryByText('NEW')).not.toBeInTheDocument()
+  })
+
   it('opens the model details when a row is clicked or activated by Enter', async () => {
     const user = userEvent.setup()
-    render(<RankingsTable rows={[row()]} />)
+    render(<RankingsTable rows={[row()]} showTrend />)
     const target = screen.getAllByRole('row')[1]
     await user.click(target)
     target.focus()

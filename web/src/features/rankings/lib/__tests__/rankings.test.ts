@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { describe, expect, it } from 'vitest'
 
 import type { ModelRanking, RankingMover } from '../../types'
-import { filterRankingCategory, getRankChange, getTopRisers } from '../rankings'
+import { getRankChange, getTopRisers } from '../rankings'
 
 function row(overrides: Partial<ModelRanking> = {}): ModelRanking {
   return {
@@ -62,17 +62,6 @@ describe('rankings helpers', () => {
       delta: 1,
     })
     expect(getRankChange(row())).toEqual({ kind: 'same' })
-  })
-
-  it('keeps every row for the all category and filters the others', () => {
-    const rows = [
-      row({ model_name: 'a', category: 'programming' }),
-      row({ model_name: 'b', category: 'roleplay' }),
-    ]
-    expect(filterRankingCategory(rows, 'all')).toHaveLength(2)
-    expect(
-      filterRankingCategory(rows, 'roleplay').map((r) => r.model_name)
-    ).toEqual(['b'])
   })
 
   it('lists at most four climbers and drops non-positive deltas', () => {

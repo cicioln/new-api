@@ -17,30 +17,28 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MarketSeg } from '@/features/pricing/components/market-seg'
-import { cn } from '@/lib/utils'
+import { toIntlLocale } from '@/i18n/languages'
+import { formatNumber } from '@/lib/format'
 
+import { RankingsPodium } from './components/rankings-podium'
 import { TopRisersCard, VendorShareCard } from './components/rankings-side'
 import { RankingsTable } from './components/rankings-table'
 import { useRankings } from './hooks/use-rankings'
-import {
-  RANKING_CATEGORIES,
-  RANKING_PERIODS,
-  filterRankingCategory,
-} from './lib/rankings'
-import type { RankingCategoryId, RankingPeriod } from './types'
+import { formatTokens } from './lib/format'
+import { RANKING_PERIODS, getTopRisers } from './lib/rankings'
+import type { RankingPeriod } from './types'
 
 export function Rankings() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const search = useSearch({ from: '/rankings/' })
   const navigate = useNavigate()
-  const [category, setCategory] = useState<RankingCategoryId>('all')
 
   const period: RankingPeriod = search.period ?? 'week'
   const rankingsQuery = useRankings(period)
@@ -56,11 +54,16 @@ export function Rankings() {
   let content: React.ReactNode
   if (rankingsQuery.isLoading) {
     content = (
-      <div aria-busy='true' className={GRID}>
-        <Skeleton className='h-[420px] rounded-xl' />
-        <div className='grid gap-3.5'>
+      <div aria-busy='true' className='grid gap-3.5'>
+        <Skeleton className='h-[74px] rounded-xl' />
+        <div className='grid gap-3.5 md:grid-cols-3'>
+          <Skeleton className='h-[150px] rounded-xl' />
+          <Skeleton className='h-[150px] rounded-xl' />
+          <Skeleton className='h-[150px] rounded-xl' />
+        </div>
+        <div className={GRID}>
+          <Skeleton className='h-[420px] rounded-xl' />
           <Skeleton className='h-[200px] rounded-xl' />
-          <Skeleton className='h-[180px] rounded-xl' />
         </div>
       </div>
     )
@@ -85,22 +88,53 @@ export function Rankings() {
       </div>
     )
   } else {
-    const rows = filterRankingCategory(snapshot.models, category)
-    content = (
-      <div className={GRID}>
-        {rows.length === 0 ? (
-          <div className='bg-card text-subtle-foreground rounded-xl border px-5 py-16 text-center text-[13px]'>
-            {t('No data')}
-          </div>
-        ) : (
-          <RankingsTable rows={rows} />
-        )}
-        <div className='grid gap-3.5'>
-          <VendorShareCard vendors={snapshot.vendors} />
-          <TopRisersCard movers={snapshot.top_movers} />
+    const models = snapshot.models
+    // Trend columns are noise until a previous period exists for any model.
+    const showTrend = models.some((row) => row.previous_rank != null)
+    const hasRisers = getTopRisers(snapshot.top_movers).length > 0
+    const totalTokens = models.reduce((sum, row) => sum + row.total_tokens, 0)
+    const stats = [
+      { label: t('Total tokens'), value: formatTokens(totalTokens) },
+      { label: t('Active models'), value: formatNumber(models.length, locale) },
+      {
+        label: t('Vendors'),
+        value: formatNumber(snapshot.vendors.length, locale),
+      },
+    ]
+    content =
+      models.length === 0 ? (
+        <div className='bg-card text-subtle-foreground rounded-xl border px-5 py-16 text-center text-[13px]'>
+          {t('No data')}
         </div>
-      </div>
-    )
+      ) : (
+        <>
+          <dl className='bg-card mb-3.5 grid grid-cols-3 divide-x rounded-xl border'>
+            {stats.map((stat) => (
+              <div key={stat.label} className='px-[18px] py-3.5'>
+                <dt className='text-subtle-foreground text-xs'>{stat.label}</dt>
+                <dd className='mt-1 font-mono text-xl font-semibold tabular-nums'>
+                  {stat.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <RankingsPodium
+            rows={models.slice(0, 3)}
+            showRankChange={showTrend}
+          />
+          <div className={GRID}>
+            {models.length > 3 ? (
+              <RankingsTable rows={models.slice(3)} showTrend={showTrend} />
+            ) : (
+              <div />
+            )}
+            <div className='grid gap-3.5'>
+              <VendorShareCard vendors={snapshot.vendors} />
+              {hasRisers && <TopRisersCard movers={snapshot.top_movers} />}
+            </div>
+          </div>
+        </>
+      )
   }
 
   return (
@@ -126,32 +160,6 @@ export function Rankings() {
             onChange={handlePeriodChange}
             aria-label={t('Period')}
           />
-        </div>
-        <div
-          role='radiogroup'
-          aria-label={t('Category')}
-          className='mb-4 flex flex-wrap gap-1.5'
-        >
-          {RANKING_CATEGORIES.map((option) => {
-            const on = option.value === category
-            return (
-              <button
-                key={option.value}
-                type='button'
-                role='radio'
-                aria-checked={on}
-                onClick={() => setCategory(option.value)}
-                className={cn(
-                  'h-[30px] rounded-full border px-3 text-[13px] transition-colors',
-                  on
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'bg-card text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {t(option.labelKey)}
-              </button>
-            )
-          })}
         </div>
         {content}
       </div>

@@ -16,34 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type {
-  ModelRanking,
-  RankingCategoryId,
-  RankingMover,
-  RankingPeriod,
-} from '../types'
+import type { ModelRanking, RankingMover, RankingPeriod } from '../types'
 
 export const RANKING_PERIODS: { value: RankingPeriod; labelKey: string }[] = [
   { value: 'today', labelKey: 'Today' },
   { value: 'week', labelKey: 'This week' },
   { value: 'month', labelKey: 'Current month' },
   { value: 'year', labelKey: 'Ranking period this year' },
-]
-
-export const RANKING_CATEGORIES: {
-  value: RankingCategoryId
-  labelKey: string
-}[] = [
-  { value: 'all', labelKey: 'All' },
-  { value: 'programming', labelKey: 'Programming' },
-  { value: 'roleplay', labelKey: 'Roleplay' },
-  { value: 'translation', labelKey: 'Translation' },
-  { value: 'marketing', labelKey: 'Ranking category marketing' },
-  { value: 'science', labelKey: 'Science' },
-  { value: 'finance', labelKey: 'Finance' },
-  { value: 'education', labelKey: 'Education' },
-  { value: 'productivity', labelKey: 'Ranking category productivity' },
-  { value: 'multimodal', labelKey: 'Multimodal' },
 ]
 
 export type RankChange =
@@ -58,15 +37,6 @@ export function getRankChange(row: ModelRanking): RankChange {
   if (delta > 0) return { kind: 'up', delta }
   if (delta < 0) return { kind: 'down', delta: -delta }
   return { kind: 'same' }
-}
-
-/** Models of one category; the backend tags every row as "all" today. */
-export function filterRankingCategory(
-  rows: ModelRanking[],
-  category: RankingCategoryId
-): ModelRanking[] {
-  if (category === 'all') return rows
-  return rows.filter((row) => row.category === category)
 }
 
 /** Fastest climbers shown in the side card. */

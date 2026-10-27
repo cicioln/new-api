@@ -20,6 +20,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { VendorAvatar } from '@/features/pricing/components/market-parts'
+import { getVendorAvatar } from '@/features/pricing/lib/market'
 import { cn } from '@/lib/utils'
 
 import { formatShare, formatTokens } from '../lib/format'
@@ -27,9 +28,9 @@ import { getRankChange } from '../lib/rankings'
 import type { ModelRanking } from '../types'
 
 const TH =
-  'text-subtle-foreground bg-background border-b px-[18px] py-2.5 text-left text-xs font-medium whitespace-nowrap'
-const TD = 'border-b px-[18px] py-[11px] whitespace-nowrap'
-const NUM = 'text-right font-mono text-[12.5px] tabular-nums'
+  'text-subtle-foreground border-b px-[18px] py-3 text-left text-xs font-medium whitespace-nowrap'
+const TD = 'border-b border-border/60 px-[18px] py-3.5 whitespace-nowrap'
+const NUM = 'text-right font-mono text-[13px] tabular-nums'
 const HIDE_NARROW = 'max-[640px]:hidden'
 
 export function RankChangeText(props: { row: ModelRanking }) {
@@ -69,10 +70,17 @@ function GrowthText(props: { row: ModelRanking }) {
   )
 }
 
-export function RankingsTable(props: { rows: ModelRanking[] }) {
+/**
+ * Ranked models below the podium. Trend columns only appear once the backend
+ * has a previous period to compare against; otherwise every row would read
+ * "—" and "NEW".
+ */
+export function RankingsTable(props: {
+  rows: ModelRanking[]
+  showTrend: boolean
+}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const topShare = props.rows[0]?.share || 1
   const open = (modelName: string) =>
     navigate({ to: '/pricing/$modelId', params: { modelId: modelName } })
 
@@ -81,18 +89,22 @@ export function RankingsTable(props: { rows: ModelRanking[] }) {
       <table className='w-full border-collapse text-[13px]'>
         <thead>
           <tr>
-            <th className={TH}>#</th>
+            <th className={cn(TH, 'w-14 text-center')}>#</th>
             <th className={TH}>{t('Model')}</th>
             <th className={cn(TH, 'text-right')}>Token</th>
-            <th className={TH}>{t('Token share')}</th>
-            <th className={cn(TH, 'text-right', HIDE_NARROW)}>
-              {t('Period over period')}
-            </th>
-            <th className={cn(TH, 'text-right')}>{t('Rank change')}</th>
+            <th className={cn(TH, HIDE_NARROW)}>{t('Token share')}</th>
+            {props.showTrend && (
+              <>
+                <th className={cn(TH, 'text-right', HIDE_NARROW)}>
+                  {t('Period over period')}
+                </th>
+                <th className={cn(TH, 'text-right')}>{t('Rank change')}</th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
-          {props.rows.map((row, index) => (
+          {props.rows.map((row) => (
             <tr
               key={row.model_name}
               tabIndex={0}
@@ -100,57 +112,62 @@ export function RankingsTable(props: { rows: ModelRanking[] }) {
               onKeyDown={(event) => {
                 if (event.key === 'Enter') open(row.model_name)
               }}
-              className='hover:[&>td]:bg-muted/50 cursor-pointer [&:last-child>td]:border-b-0'
+              className='hover:[&>td]:bg-muted/50 focus-visible:[&>td]:bg-muted/50 cursor-pointer outline-none [&:last-child>td]:border-b-0'
             >
               <td
                 className={cn(
                   TD,
-                  'w-9 font-mono',
-                  index < 3
-                    ? 'text-primary font-semibold'
-                    : 'text-subtle-foreground'
+                  'text-subtle-foreground text-center font-mono text-[13px] tabular-nums'
                 )}
               >
-                {index + 1}
+                {row.rank}
               </td>
               <td className={TD}>
-                <div className='flex items-center gap-2.5'>
+                <div className='flex items-center gap-3'>
                   <VendorAvatar
                     name={row.vendor}
-                    className='size-7 rounded-[7px] text-xs'
+                    icon={row.vendor_icon}
+                    className='size-8 rounded-lg text-xs'
                   />
                   <div className='min-w-0'>
-                    <b className='block font-mono text-[13px] font-medium'>
+                    <b className='block font-mono text-[13.5px] font-medium'>
                       {row.model_name}
                     </b>
-                    <small className='text-subtle-foreground text-[11.5px]'>
+                    <small className='text-subtle-foreground text-xs'>
                       {row.vendor}
                     </small>
                   </div>
                 </div>
               </td>
-              <td className={cn(TD, NUM)}>{formatTokens(row.total_tokens)}</td>
-              <td className={TD}>
-                <div className='flex items-center gap-2'>
-                  <span className='bg-muted h-1.5 w-[90px] overflow-hidden rounded-md'>
+              <td className={cn(TD, NUM, 'font-medium')}>
+                {formatTokens(row.total_tokens)}
+              </td>
+              <td className={cn(TD, HIDE_NARROW)}>
+                <div className='flex items-center gap-2.5'>
+                  <span className='bg-muted h-1.5 w-[120px] overflow-hidden rounded-full'>
                     <i
-                      className='bg-primary block h-full'
+                      className='block h-full rounded-full'
                       style={{
-                        width: `${Math.min(100, (row.share / topShare) * 100)}%`,
+                        width: `${Math.min(100, row.share * 100)}%`,
+                        background: getVendorAvatar(row.vendor).color,
                       }}
                     />
                   </span>
-                  <small className='text-muted-foreground font-mono text-xs'>
+                  <small className='text-muted-foreground w-12 font-mono text-xs tabular-nums'>
                     {formatShare(row.share)}
                   </small>
                 </div>
               </td>
-              <td className={cn(TD, NUM, HIDE_NARROW)}>
-                <GrowthText row={row} />
-              </td>
-              <td className={cn(TD, NUM)}>
-                <RankChangeText row={row} />
-              </td>
+              {props.showTrend && (
+                <>
+                  <td className={cn(TD, NUM, HIDE_NARROW)}>
+                    <GrowthText row={row} />
+                  </td>
+                  <td className={cn(TD, NUM)}>
+                    <RankChangeText row={row} />
+                  </td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>
