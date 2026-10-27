@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "Приглашено: {{count}}",
     "Bonus {{percent}}%": "Бонус {{percent}}%",
     "Credited {{amount}}": "Зачислено {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "Способ оплаты (показаны только каналы, настроенные администратором)",
+    "Payment method": "Способ оплаты",
     "Go to pay": "Перейти к оплате",
     "Redeem code": "Погасить",
     "Earn 10% of the first top-up when a friend registers and tops up.": "Получайте 10% от первого пополнения, когда друг зарегистрируется и пополнит баланс.",

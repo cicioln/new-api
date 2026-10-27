@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "已邀請 {{count}} 人",
     "Bonus {{percent}}%": "贈送 {{percent}}%",
     "Credited {{amount}}": "到帳 {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "支付方式（只顯示後台已設定的支付渠道）",
+    "Payment method": "支付方式",
     "Go to pay": "去支付",
     "Redeem code": "兌換",
     "Earn 10% of the first top-up when a friend registers and tops up.": "好友註冊並儲值後，你獲得其首次儲值 10% 的獎勵。",

@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "{{count}} personnes invitées",
     "Bonus {{percent}}%": "Bonus {{percent}} %",
     "Credited {{amount}}": "Crédité {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "Moyen de paiement (seuls les canaux configurés par l'administrateur sont affichés)",
+    "Payment method": "Moyen de paiement",
     "Go to pay": "Payer",
     "Redeem code": "Échanger",
     "Earn 10% of the first top-up when a friend registers and tops up.": "Gagnez 10 % de la première recharge lorsqu'un ami s'inscrit et recharge.",

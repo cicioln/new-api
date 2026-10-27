@@ -323,9 +323,7 @@ export function RechargeFormCard({
 
               <div>
                 <p className='text-muted-foreground mb-2 text-[12.5px]'>
-                  {t(
-                    'Payment method (only channels configured by the administrator are shown)'
-                  )}
+                  {t('Payment method')}
                 </p>
                 {hasStandardPaymentMethods ? (
                   <>

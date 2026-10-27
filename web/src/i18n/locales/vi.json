@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "Đã mời {{count}} người",
     "Bonus {{percent}}%": "Tặng {{percent}}%",
     "Credited {{amount}}": "Nhận {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "Phương thức thanh toán (chỉ hiển thị kênh do quản trị viên cấu hình)",
+    "Payment method": "Phương thức thanh toán",
     "Go to pay": "Thanh toán",
     "Redeem code": "Đổi mã",
     "Earn 10% of the first top-up when a friend registers and tops up.": "Nhận 10% lần nạp đầu khi bạn bè đăng ký và nạp tiền.",

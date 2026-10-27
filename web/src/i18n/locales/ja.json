@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "{{count}} 人を招待済み",
     "Bonus {{percent}}%": "{{percent}}% ボーナス",
     "Credited {{amount}}": "入金 {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "支払い方法（管理者が設定した決済チャネルのみ表示）",
+    "Payment method": "支払い方法",
     "Go to pay": "支払いへ進む",
     "Redeem code": "引き換え",
     "Earn 10% of the first top-up when a friend registers and tops up.": "友達が登録してチャージすると、初回チャージの 10% を獲得できます。",

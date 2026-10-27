@@ -7447,7 +7447,7 @@
     "Invited {{count}} people": "Invited {{count}} people",
     "Bonus {{percent}}%": "Bonus {{percent}}%",
     "Credited {{amount}}": "Credited {{amount}}",
-    "Payment method (only channels configured by the administrator are shown)": "Payment method (only channels configured by the administrator are shown)",
+    "Payment method": "Payment method",
     "Go to pay": "Go to pay",
     "Redeem code": "Redeem code",
     "Earn 10% of the first top-up when a friend registers and tops up.": "Earn 10% of the first top-up when a friend registers and tops up.",
