@@ -7821,8 +7821,8 @@
     "Network name": "Network name",
     "e.g. BSC (BEP20)": "e.g. BSC (BEP20)",
     "Add address": "Add address",
-    "Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address": "Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address",
-    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.": "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.",
+    "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address",
+    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.",
     "The USDT amount equals the top-up amount divided by the top-up price.": "The USDT amount equals the top-up amount divided by the top-up price."
   }
 }

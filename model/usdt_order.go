@@ -16,6 +16,7 @@ import (
 const (
 	UsdtChainBsc   = "bsc"
 	UsdtChainAptos = "aptos"
+	UsdtChainTron  = "tron"
 
 	UsdtOrderStatusPending = "pending"
 	UsdtOrderStatusPaid    = "paid"

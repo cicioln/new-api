@@ -24,6 +24,7 @@ const usdtOrderTimeout = 30 * 60
 var (
 	bscAddressPattern   = regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
 	aptosAddressPattern = regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`)
+	tronAddressPattern  = regexp.MustCompile(`^T[1-9A-HJ-NP-Za-km-z]{33}$`)
 )
 
 // usdtReceiver 是后台配置的一个收款地址。Name 由管理员填写，只用于展示；Chain 由地址格式推断，
@@ -51,6 +52,10 @@ func usdtReceivers() []usdtReceiver {
 		case aptosAddressPattern.MatchString(address):
 			receiver.Chain = model.UsdtChainAptos
 			receiver.Address = service.NormalizeAptosAddress(address)
+		case tronAddressPattern.MatchString(address):
+			// TRON Base58 地址区分大小写，原样保存。
+			receiver.Chain = model.UsdtChainTron
+			receiver.Address = address
 		default:
 			continue
 		}

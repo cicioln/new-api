@@ -72,7 +72,7 @@ export function UsdtAddressesEditor(props: {
           <Input
             className='min-w-0 flex-1 font-mono'
             aria-label={t('Receiving address')}
-            placeholder='0x...'
+            placeholder='0x... / T...'
             autoComplete='off'
             value={entry.address}
             onChange={(event) =>

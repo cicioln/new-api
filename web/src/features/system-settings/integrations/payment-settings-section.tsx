@@ -183,9 +183,11 @@ const paymentSchema = z.object({
         parseUsdtAddresses(value).every(
           (entry) =>
             !entry.address.trim() ||
-            /^0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/.test(entry.address.trim())
+            /^(0x([0-9a-fA-F]{40}|[0-9a-fA-F]{64})|T[1-9A-HJ-NP-Za-km-z]{33})$/.test(
+              entry.address.trim()
+            )
         ),
-      'Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address'
+      'Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address'
     ),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
@@ -1536,7 +1538,7 @@ export function PaymentSettingsSection({
                   <h3 className='text-lg font-medium'>{t('USDT Payments')}</h3>
                   <p className='text-muted-foreground text-sm'>
                     {t(
-                      'Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.'
+                      'Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.'
                     )}
                   </p>
                 </div>

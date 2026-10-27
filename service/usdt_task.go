@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -37,6 +38,12 @@ const (
 	usdtAptosAsset    = "0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b"
 	usdtAptosIndexer  = "https://api.mainnet.aptoslabs.com/v1/graphql"
 	usdtAptosDecimals = 6
+
+	// TRON USDT（TRC20）合约，6 位小数，经 TronGrid 查询已确认的转入记录。
+	usdtTronToken    = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+	usdtTronGrid     = "https://api.trongrid.io"
+	usdtTronDecimals = 6
+	usdtTronMaxPages = 5
 
 	// BSC 首次扫描或游标丢失时回看的块数；每段最多扫描的块数与每轮最多扫描的段数。
 	usdtBscLookback  = 1200
@@ -105,6 +112,8 @@ func runUsdtPaymentOnce() {
 			transfers, scanErr = scanBscTransfers(chainOrders)
 		case model.UsdtChainAptos:
 			transfers, scanErr = scanAptosTransfers(chainOrders)
+		case model.UsdtChainTron:
+			transfers, scanErr = scanTronTransfers(chainOrders)
 		default:
 			continue
 		}
@@ -164,12 +173,24 @@ func usdtUnits(value *big.Int, decimals int) int64 {
 	return new(big.Int).Quo(value, divisor).Int64()
 }
 
-func usdtPost(url string, payload any, out any) error {
+func usdtGet(endpoint string, out any) error {
+	resp, err := usdtHTTPClient.Get(endpoint)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+	return common.DecodeJson(resp.Body, out)
+}
+
+func usdtPost(endpoint string, payload any, out any) error {
 	body, err := common.Marshal(payload)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -385,6 +406,74 @@ func scanAptosTransfers(orders []model.UsdtOrder) ([]usdtTransfer, error) {
 	if maxVersion > 0 {
 		if err := model.SetUsdtScanCursor(model.UsdtChainAptos, maxVersion); err != nil {
 			return transfers, err
+		}
+	}
+	return transfers, nil
+}
+
+// ---- TRON ----
+
+type tronTRC20Response struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
+	Data    []struct {
+		TransactionId  string `json:"transaction_id"`
+		To             string `json:"to"`
+		Value          string `json:"value"`
+		BlockTimestamp int64  `json:"block_timestamp"`
+	} `json:"data"`
+	Meta struct {
+		Fingerprint string `json:"fingerprint"`
+	} `json:"meta"`
+}
+
+// scanTronTransfers 按收款地址查询下单以来已确认的 TRC20 USDT 转入。TronGrid 按地址过滤，
+// 不需要游标；重复返回的转账由 ClaimUsdtTransfer 的 (链, 交易) 唯一约束挡住。
+func scanTronTransfers(orders []model.UsdtOrder) ([]usdtTransfer, error) {
+	since := orders[0].CreateTime
+	seen := map[string]bool{}
+	addresses := []string{}
+	for _, order := range orders {
+		since = min(since, order.CreateTime)
+		if !seen[order.Address] {
+			seen[order.Address] = true
+			addresses = append(addresses, order.Address)
+		}
+	}
+	var transfers []usdtTransfer
+	for _, address := range addresses {
+		query := url.Values{}
+		query.Set("only_to", "true")
+		query.Set("only_confirmed", "true")
+		query.Set("contract_address", usdtTronToken)
+		query.Set("min_timestamp", strconv.FormatInt((since-60)*1000, 10))
+		query.Set("order_by", "block_timestamp,asc")
+		query.Set("limit", "200")
+		for range usdtTronMaxPages {
+			var resp tronTRC20Response
+			endpoint := usdtTronGrid + "/v1/accounts/" + url.PathEscape(address) + "/transactions/trc20?" + query.Encode()
+			if err := usdtGet(endpoint, &resp); err != nil {
+				return transfers, err
+			}
+			if !resp.Success {
+				return transfers, fmt.Errorf("trongrid: %s", resp.Error)
+			}
+			for _, item := range resp.Data {
+				value, ok := new(big.Int).SetString(item.Value, 10)
+				if !ok || item.To != address {
+					continue
+				}
+				transfers = append(transfers, usdtTransfer{
+					Id:    item.TransactionId,
+					To:    item.To,
+					Units: usdtUnits(value, usdtTronDecimals),
+					Time:  item.BlockTimestamp / 1000,
+				})
+			}
+			if resp.Meta.Fingerprint == "" || len(resp.Data) == 0 {
+				break
+			}
+			query.Set("fingerprint", resp.Meta.Fingerprint)
 		}
 	}
 	return transfers, nil

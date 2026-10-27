@@ -41,7 +41,7 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
-export type UsdtChain = 'bsc' | 'aptos'
+export type UsdtChain = 'bsc' | 'aptos' | 'tron'
 
 /** A receiving address configured by the admin; name is the admin's label. */
 export interface UsdtChainInfo {

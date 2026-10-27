@@ -21,7 +21,7 @@ type PaymentSetting struct {
 	XingyeWxpayBankcode  string `json:"xingye_wxpay_bankcode"`
 
 	// 内置 USDT 收款：买家按本单唯一金额转账到收款地址，服务端扫描链上转账确认到账。
-	// 名称由管理员填写，仅用于展示；扫描哪条链由地址格式决定（0x+40 位为 BSC，0x+64 位为 Aptos）。
+	// 名称由管理员填写，仅用于展示；扫描哪条链由地址格式决定（0x+40 位为 BSC，0x+64 位为 Aptos，T 开头 34 位为 TRON）。
 	UsdtEnabled   bool          `json:"usdt_enabled"`
 	UsdtAddresses []UsdtAddress `json:"usdt_addresses"`
 }

@@ -7821,8 +7821,8 @@
     "Network name": "Tên mạng",
     "e.g. BSC (BEP20)": "vd. BSC (BEP20)",
     "Add address": "Thêm địa chỉ",
-    "Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address": "Dùng địa chỉ BSC (0x + 40 hex) hoặc Aptos (0x + 64 hex)",
-    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.": "Người dùng chuyển chính xác số USDT tới một trong các địa chỉ này, số dư được cộng khi giao dịch xuất hiện trên chuỗi. Địa chỉ BSC (0x + 40 hex) và Aptos (0x + 64 hex) được nhận diện tự động; tên là thứ người dùng nhìn thấy.",
+    "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Dùng địa chỉ BSC (0x + 40 hex), Aptos (0x + 64 hex) hoặc TRON (T + 33 ký tự)",
+    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Người dùng chuyển chính xác số USDT tới một trong các địa chỉ này, số dư được cộng khi giao dịch xuất hiện trên chuỗi. Địa chỉ BSC (0x + 40 hex), Aptos (0x + 64 hex) và TRON (bắt đầu bằng T) được nhận diện tự động; tên là thứ người dùng nhìn thấy.",
     "The USDT amount equals the top-up amount divided by the top-up price.": "Số USDT bằng số tiền nạp chia cho giá nạp."
   }
 }

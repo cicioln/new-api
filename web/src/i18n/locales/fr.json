@@ -7821,8 +7821,8 @@
     "Network name": "Nom du réseau",
     "e.g. BSC (BEP20)": "ex. BSC (BEP20)",
     "Add address": "Ajouter une adresse",
-    "Use a BSC (0x + 40 hex) or Aptos (0x + 64 hex) address": "Utilisez une adresse BSC (0x + 40 hex) ou Aptos (0x + 64 hex)",
-    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex) and Aptos (0x + 64 hex) addresses are detected automatically; the name is what users see.": "Les utilisateurs envoient un montant USDT exact à l'une de ces adresses ; le solde est crédité dès que le transfert est vu sur la chaîne. Les adresses BSC (0x + 40 hex) et Aptos (0x + 64 hex) sont détectées automatiquement ; le nom est ce que voient les utilisateurs.",
+    "Use a BSC (0x + 40 hex), Aptos (0x + 64 hex) or TRON (T + 33 characters) address": "Utilisez une adresse BSC (0x + 40 hex), Aptos (0x + 64 hex) ou TRON (T + 33 caractères)",
+    "Users transfer an exact USDT amount to one of these addresses and the balance is credited after the transfer is seen on-chain. BSC (0x + 40 hex), Aptos (0x + 64 hex) and TRON (starts with T) addresses are detected automatically; the name is what users see.": "Les utilisateurs envoient un montant USDT exact à l'une de ces adresses ; le solde est crédité dès que le transfert est vu sur la chaîne. Les adresses BSC (0x + 40 hex), Aptos (0x + 64 hex) et TRON (commençant par T) sont détectées automatiquement ; le nom est ce que voient les utilisateurs.",
     "The USDT amount equals the top-up amount divided by the top-up price.": "Le montant USDT est égal au montant de la recharge divisé par le prix de recharge."
   }
 }
