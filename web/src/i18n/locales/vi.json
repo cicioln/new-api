@@ -7792,6 +7792,12 @@
     "Model call ranking": "Xếp hạng lượt gọi mô hình",
     "By count": "Theo số lượt",
     "{{value}} calls": "{{value}} lượt",
-    "Table of contents": "Mục lục"
+    "Table of contents": "Mục lục",
+    "Tokenizer fingerprint": "Dấu vân tay tokenizer",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "Dấu vân tay tokenizer: gửi hai yêu cầu và kiểm tra tokenizer phía upstream có khớp với tên mô hình không",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "Tokenizer khớp với {{claimed}}: {{measured}} token, dự kiến {{expected}} (lệch {{deviation}}%)",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "Tokenizer không khớp với {{claimed}}: {{measured}} token, dự kiến {{expected}} (lệch {{deviation}}%). Gần nhất: {{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "Không có tokenizer tham chiếu cho mô hình này: {{measured}} token, gần nhất với {{closest}} (lệch {{deviation}}%)",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "Upstream không báo cáo lượng token sử dụng nên không thể kiểm tra tokenizer"
   }
 }

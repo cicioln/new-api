@@ -340,11 +340,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
             </Button>
           )}
           {isAuthenticated && !isStreaming && (
-            <Button
-              className='w-full'
-              disabled={!prompt.trim()}
-              onClick={run}
-            >
+            <Button className='w-full' disabled={!prompt.trim()} onClick={run}>
               {t('Start test')}
             </Button>
           )}

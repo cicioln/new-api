@@ -7792,6 +7792,12 @@
     "Model call ranking": "模型呼叫排行",
     "By count": "按次數",
     "{{value}} calls": "{{value}} 次",
-    "Table of contents": "目錄"
+    "Table of contents": "目錄",
+    "Tokenizer fingerprint": "分詞指紋",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "分詞指紋：發送兩次請求，檢查上游分詞器是否與模型名稱一致",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "分詞器與 {{claimed}} 一致：實測 {{measured}} tokens，預期 {{expected}}（偏差 {{deviation}}%）",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "分詞器與 {{claimed}} 不一致：實測 {{measured}} tokens，預期 {{expected}}（偏差 {{deviation}}%）。最接近：{{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "該模型沒有參考分詞器：實測 {{measured}} tokens，最接近 {{closest}}（偏差 {{deviation}}%）",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "上游沒有回傳 token 用量，無法檢查分詞器"
   }
 }

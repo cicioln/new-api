@@ -7792,6 +7792,12 @@
     "Model call ranking": "モデル呼び出しランキング",
     "By count": "回数順",
     "{{value}} calls": "{{value}} 回",
-    "Table of contents": "目次"
+    "Table of contents": "目次",
+    "Tokenizer fingerprint": "トークナイザー指紋",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "トークナイザー指紋：2 回リクエストを送り、上流のトークナイザーがモデル名と一致するか確認します",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "トークナイザーは {{claimed}} と一致：実測 {{measured}} トークン、想定 {{expected}}（誤差 {{deviation}}%）",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "トークナイザーは {{claimed}} と不一致：実測 {{measured}} トークン、想定 {{expected}}（誤差 {{deviation}}%）。最も近い：{{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "このモデルには参照トークナイザーがありません：実測 {{measured}} トークン、最も近いのは {{closest}}（誤差 {{deviation}}%）",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "上流がトークン使用量を返さなかったため、トークナイザーを確認できません"
   }
 }

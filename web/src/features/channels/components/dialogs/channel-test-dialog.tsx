@@ -26,6 +26,7 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  FingerprintPattern,
   Gauge,
   Info,
   Loader2,
@@ -81,7 +82,7 @@ import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { handleServerError } from '@/lib/handle-server-error'
 
-import { updateChannel } from '../../api'
+import { testChannelFingerprint, updateChannel } from '../../api'
 import {
   channelsQueryKeys,
   formatResponseTime,
@@ -89,6 +90,7 @@ import {
 } from '../../lib'
 import type {
   Channel,
+  ChannelFingerprint,
   GetChannelsResponse,
   SearchChannelsResponse,
 } from '../../types'
@@ -216,6 +218,17 @@ type FailureDetailsState = {
   details: string
 }
 
+const FINGERPRINT_FAMILY_LABELS: Record<string, string> = {
+  openai: 'OpenAI',
+  claude: 'Claude',
+  'claude4.7': 'Claude 4.7+',
+  gemini: 'Gemini',
+}
+
+function fingerprintFamilyLabel(family: string | undefined, unknown: string) {
+  return (family && FINGERPRINT_FAMILY_LABELS[family]) || unknown
+}
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 }
@@ -341,6 +354,9 @@ function ChannelTestDialogContent({
   const [isDeletingFailed, setIsDeletingFailed] = useState(false)
   const [failureDetails, setFailureDetails] =
     useState<FailureDetailsState | null>(null)
+  const [fingerprintingModels, setFingerprintingModels] = useState<Set<string>>(
+    () => new Set()
+  )
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 30,
@@ -402,6 +418,7 @@ function ChannelTestDialogContent({
     setIsDeleteFailedDialogOpen(false)
     setIsDeletingFailed(false)
     setFailureDetails(null)
+    setFingerprintingModels(() => new Set())
     setPagination({ pageIndex: 0, pageSize: 30 })
   }, [])
 
@@ -595,6 +612,81 @@ function ChannelTestDialogContent({
       t,
       updateTestResult,
     ]
+  )
+
+  const showFingerprint = useCallback(
+    (model: string, result: ChannelFingerprint) => {
+      const unknown = t('Unknown')
+      const claimed = fingerprintFamilyLabel(result.claimed_family, unknown)
+      const closest = fingerprintFamilyLabel(result.closest_family, unknown)
+      const deviation = Math.round(result.deviation * 100)
+      const expected = result.expected[result.claimed_family]
+      const title = `${t('Tokenizer fingerprint')} · ${model}`
+      switch (result.verdict) {
+        case 'match':
+          toast.success(title, {
+            description: t(
+              'Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)',
+              { claimed, measured: result.measured, expected, deviation }
+            ),
+          })
+          return
+        case 'mismatch':
+          toast.warning(title, {
+            description: t(
+              'Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}',
+              {
+                claimed,
+                closest,
+                measured: result.measured,
+                expected,
+                deviation,
+              }
+            ),
+          })
+          return
+        case 'no_reference':
+          toast.info(title, {
+            description: t(
+              'No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)',
+              { closest, measured: result.measured, deviation }
+            ),
+          })
+          return
+        default:
+          toast.info(title, {
+            description: t(
+              'The upstream did not report token usage, so the tokenizer cannot be checked'
+            ),
+          })
+      }
+    },
+    [t]
+  )
+
+  const runFingerprint = useCallback(
+    async (model: string) => {
+      setFingerprintingModels((prev) => new Set(prev).add(model))
+      try {
+        const response = await testChannelFingerprint(currentRow.id, { model })
+        if (!response.success || !response.data) {
+          toast.error(`${t('Tokenizer fingerprint')} · ${model}`, {
+            description: response.message || t('Test failed'),
+          })
+          return
+        }
+        showFingerprint(model, response.data)
+      } catch (error: unknown) {
+        handleServerError(error)
+      } finally {
+        setFingerprintingModels((prev) => {
+          const next = new Set(prev)
+          next.delete(model)
+          return next
+        })
+      }
+    },
+    [currentRow.id, showFingerprint, t]
   )
 
   const handleStopBatchTest = useCallback(() => {
@@ -907,28 +999,55 @@ function ChannelTestDialogContent({
         cell: ({ row }) => {
           const model = row.original.model
           const isTestingModel = testingModels.has(model)
+          const isFingerprinting = fingerprintingModels.has(model)
 
           return (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    onClick={() => testSingleModel(model)}
-                    disabled={isTestingModel || isBatchTesting}
-                    aria-label={t('Test Connection')}
-                  />
-                }
-              >
-                {isTestingModel ? (
-                  <Loader2 className='size-4 animate-spin' />
-                ) : (
-                  <Gauge className='size-4' />
-                )}
-              </TooltipTrigger>
-              <TooltipContent>{t('Test Connection')}</TooltipContent>
-            </Tooltip>
+            <div className='flex items-center gap-1'>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
+                      onClick={() => testSingleModel(model)}
+                      disabled={isTestingModel || isBatchTesting}
+                      aria-label={t('Test Connection')}
+                    />
+                  }
+                >
+                  {isTestingModel ? (
+                    <Loader2 className='size-4 animate-spin' />
+                  ) : (
+                    <Gauge className='size-4' />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>{t('Test Connection')}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
+                      onClick={() => runFingerprint(model)}
+                      disabled={isFingerprinting || isBatchTesting}
+                      aria-label={t('Tokenizer fingerprint')}
+                    />
+                  }
+                >
+                  {isFingerprinting ? (
+                    <Loader2 className='size-4 animate-spin' />
+                  ) : (
+                    <FingerprintPattern className='size-4' />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t(
+                    'Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name'
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )
         },
         enableSorting: false,
@@ -936,7 +1055,9 @@ function ChannelTestDialogContent({
     ],
     [
       defaultTestModel,
+      fingerprintingModels,
       isBatchTesting,
+      runFingerprint,
       t,
       testResults,
       testingModels,

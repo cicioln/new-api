@@ -27,6 +27,7 @@ import type {
   BatchSetTagParams,
   Channel,
   ChannelBalanceResponse,
+  ChannelFingerprintResponse,
   ChannelOpsResponse,
   ChannelTestResponse,
   CopyChannelParams,
@@ -267,6 +268,20 @@ export async function testChannel(
 ): Promise<ChannelTestResponse> {
   const res = await api.get(
     `/api/channel/test/${id}`,
+    channelActionConfig({ params })
+  )
+  return res.data
+}
+
+/**
+ * Compare the upstream tokenizer with the one the model name claims
+ */
+export async function testChannelFingerprint(
+  id: number,
+  params?: { model?: string }
+): Promise<ChannelFingerprintResponse> {
+  const res = await api.get(
+    `/api/channel/fingerprint/${id}`,
     channelActionConfig({ params })
   )
   return res.data

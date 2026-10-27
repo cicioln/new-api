@@ -37,11 +37,17 @@ import (
 )
 
 type testResult struct {
-	context          *gin.Context
-	localErr         error
-	newAPIError      *types.NewAPIError
+	context               *gin.Context
+	localErr              error
+	newAPIError           *types.NewAPIError
 	// completionTokens is set on success for perf probe throughput.
-	completionTokens int
+	completionTokens      int
+	// promptTokens and upstreamModel are set on success for the tokenizer
+	// fingerprint test. estimatedPromptTokens is the local estimate; a prompt
+	// count equal to it usually means the upstream reported no usage.
+	promptTokens          int
+	upstreamModel         string
+	estimatedPromptTokens int
 }
 
 func normalizeChannelTestEndpoint(channel *model.Channel, endpointType string) string {
@@ -72,7 +78,9 @@ func resolveChannelTestUserID(c *gin.Context) (int, error) {
 	return rootUser.Id, nil
 }
 
-func testChannel(ctx context.Context, channel *model.Channel, testUserID int, testModel string, endpointType string, isStream bool) testResult {
+// testChannel sends a minimal request through the channel. A non-empty prompt
+// replaces the default "hi" user message.
+func testChannel(ctx context.Context, channel *model.Channel, testUserID int, testModel string, endpointType string, isStream bool, prompt ...string) testResult {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -231,6 +239,16 @@ func testChannel(ctx context.Context, channel *model.Channel, testUserID int, te
 	}
 
 	request := buildTestRequest(testModel, endpointType, channel, isStream)
+	if len(prompt) > 0 && prompt[0] != "" {
+		switch req := request.(type) {
+		case *dto.GeneralOpenAIRequest:
+			req.Messages = []dto.Message{{Role: "user", Content: prompt[0]}}
+		case *dto.ClaudeRequest:
+			req.Messages = []dto.ClaudeMessage{{Role: "user", Content: prompt[0]}}
+		default:
+			return testResult{localErr: errors.New("fingerprint test requires a chat endpoint")}
+		}
+	}
 
 	info, err := relaycommon.GenRelayInfo(c, relayFormat, request, nil)
 
@@ -498,6 +516,7 @@ func testChannel(ctx context.Context, channel *model.Channel, testUserID int, te
 			newAPIError: types.NewOpenAIError(bodyErr, types.ErrorCodeBadResponseBody, http.StatusInternalServerError),
 		}
 	}
+	estimatedPromptTokens := info.GetEstimatePromptTokens()
 	info.SetEstimatePromptTokens(usage.PromptTokens)
 
 	quota, tieredResult := settleTestQuota(info, priceData, usage)
@@ -520,10 +539,13 @@ func testChannel(ctx context.Context, channel *model.Channel, testUserID int, te
 	})
 	common.SysLog(common.LogText("testing channel #%d, response: \n%s", channel.Id, string(respBody)))
 	return testResult{
-		context:          c,
-		localErr:         nil,
-		newAPIError:      nil,
-		completionTokens: usage.CompletionTokens,
+		context:               c,
+		localErr:              nil,
+		newAPIError:           nil,
+		completionTokens:      usage.CompletionTokens,
+		promptTokens:          usage.PromptTokens,
+		upstreamModel:         testModel,
+		estimatedPromptTokens: estimatedPromptTokens,
 	}
 }
 

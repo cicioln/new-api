@@ -7792,6 +7792,12 @@
     "Model call ranking": "Model call ranking",
     "By count": "By count",
     "{{value}} calls": "{{value}} calls",
-    "Table of contents": "Table of contents"
+    "Table of contents": "Table of contents",
+    "Tokenizer fingerprint": "Tokenizer fingerprint",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "The upstream did not report token usage, so the tokenizer cannot be checked"
   }
 }

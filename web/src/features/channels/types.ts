@@ -209,6 +209,30 @@ export interface ChannelTestResponse {
   }
 }
 
+export type ChannelFingerprintVerdict =
+  | 'match'
+  | 'mismatch'
+  | 'no_reference'
+  | 'no_usage'
+
+export interface ChannelFingerprint {
+  model: string
+  upstream_model: string
+  claimed_family: string
+  measured: number
+  expected: Record<string, number>
+  closest_family?: string
+  deviation: number
+  verdict: ChannelFingerprintVerdict
+}
+
+export interface ChannelFingerprintResponse {
+  success: boolean
+  message?: string
+  error_code?: string
+  data?: ChannelFingerprint
+}
+
 export interface ChannelBalanceResponse {
   success: boolean
   message?: string

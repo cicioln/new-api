@@ -7792,6 +7792,12 @@
     "Model call ranking": "Рейтинг вызовов моделей",
     "By count": "По количеству",
     "{{value}} calls": "{{value}} вызовов",
-    "Table of contents": "Содержание"
+    "Table of contents": "Содержание",
+    "Tokenizer fingerprint": "Отпечаток токенизатора",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "Отпечаток токенизатора: отправляет два запроса и проверяет, соответствует ли токенизатор upstream названию модели",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "Токенизатор соответствует {{claimed}}: {{measured}} токенов, ожидалось {{expected}} (отклонение {{deviation}}%)",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "Токенизатор не соответствует {{claimed}}: {{measured}} токенов, ожидалось {{expected}} (отклонение {{deviation}}%). Ближе всего: {{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "Нет эталонного токенизатора для этой модели: {{measured}} токенов, ближе всего к {{closest}} (отклонение {{deviation}}%)",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "Upstream не сообщил об использовании токенов, поэтому токенизатор проверить нельзя"
   }
 }

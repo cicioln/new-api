@@ -7792,6 +7792,12 @@
     "Model call ranking": "Classement des appels par modèle",
     "By count": "Par nombre",
     "{{value}} calls": "{{value}} appels",
-    "Table of contents": "Table des matières"
+    "Table of contents": "Table des matières",
+    "Tokenizer fingerprint": "Empreinte du tokenizer",
+    "Tokenizer fingerprint: sends two requests and checks whether the upstream tokenizer matches the model name": "Empreinte du tokenizer : envoie deux requêtes et vérifie que le tokenizer amont correspond au nom du modèle",
+    "Tokenizer matches {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off)": "Le tokenizer correspond à {{claimed}} : {{measured}} tokens, {{expected}} attendus ({{deviation}} % d'écart)",
+    "Tokenizer does not match {{claimed}}: {{measured}} tokens, expected {{expected}} ({{deviation}}% off). Closest: {{closest}}": "Le tokenizer ne correspond pas à {{claimed}} : {{measured}} tokens, {{expected}} attendus ({{deviation}} % d'écart). Le plus proche : {{closest}}",
+    "No reference tokenizer for this model: {{measured}} tokens, closest to {{closest}} ({{deviation}}% off)": "Aucun tokenizer de référence pour ce modèle : {{measured}} tokens, le plus proche de {{closest}} ({{deviation}} % d'écart)",
+    "The upstream did not report token usage, so the tokenizer cannot be checked": "L'amont n'a pas indiqué l'utilisation des tokens ; impossible de vérifier le tokenizer"
   }
 }
