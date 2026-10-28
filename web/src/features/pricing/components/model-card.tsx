@@ -26,6 +26,8 @@ import { useMarketPrice } from '../hooks/use-market-price'
 import {
   formatMarketLatency,
   formatMarketTps,
+  getVendorAvatarIcon,
+  getVendorAvatarName,
   type MarketPerf,
 } from '../lib/market'
 import { getFamilyColor, parseModelName } from '../lib/model-name'
@@ -35,6 +37,7 @@ import {
   MarketGroupTags,
   MarketModelName,
   PelicanButton,
+  VendorAvatar,
 } from './market-parts'
 import { MarketStatusBars, MarketSuccessRate } from './market-status'
 
@@ -84,9 +87,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       <div className='flex items-center gap-3'>
         <span
           aria-hidden
-          className='grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12 text-[22px] leading-none font-bold text-(--family)'
+          className='grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12'
         >
-          {parsed.label.charAt(0).toUpperCase()}
+          <VendorAvatar
+            name={getVendorAvatarName(props.model)}
+            icon={getVendorAvatarIcon(props.model)}
+          />
         </span>
         <div className='min-w-0 flex-1'>
           <div className='flex flex-wrap items-baseline gap-x-2 text-[19px] leading-tight tracking-[-0.01em]'>
