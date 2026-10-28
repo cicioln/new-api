@@ -48,6 +48,95 @@ func GetRankingQuotaBuckets(startTime int64, endTime int64, bucketSize int64) ([
 	return rows, err
 }
 
+// ResolveRankingVendors resolves vendors for logged model names, which may be
+// mapping aliases or models no longer listed in any channel. Order: model
+// metadata (exact/prefix/suffix/contains) on the name, metadata on its
+// channel model_mapping target, then the default name rules.
+func ResolveRankingVendors(names []string) map[string]PricingVendor {
+	var allMeta []Model
+	_ = DB.Find(&allMeta).Error
+	var vendors []Vendor
+	_ = DB.Find(&vendors).Error
+	vendorMap := make(map[int]*Vendor, len(vendors))
+	for i := range vendors {
+		vendorMap[vendors[i].Id] = &vendors[i]
+	}
+
+	aliasTargets := loadRankingAliasTargets()
+	lookup := make([]string, 0, len(names)*2)
+	lookup = append(lookup, names...)
+	for _, name := range names {
+		if target, ok := aliasTargets[name]; ok {
+			lookup = append(lookup, target)
+		}
+	}
+	metaMap := resolveModelMetadata(allMeta, lookup)
+
+	patterns := sortedDefaultVendorPatterns()
+	vendorFor := func(name string) *Vendor {
+		if meta, ok := metaMap[name]; ok && meta.VendorID != 0 {
+			if v, ok := vendorMap[meta.VendorID]; ok {
+				return v
+			}
+		}
+		return nil
+	}
+
+	result := make(map[string]PricingVendor, len(names))
+	for _, name := range names {
+		v := vendorFor(name)
+		if v == nil {
+			if target, ok := aliasTargets[name]; ok {
+				v = vendorFor(target)
+			}
+		}
+		if v == nil {
+			candidate := name
+			if target, ok := aliasTargets[name]; ok {
+				candidate = target
+			}
+			if id := defaultVendorIDForModel(candidate, patterns, vendorMap); id != 0 {
+				v = vendorMap[id]
+			}
+		}
+		if v != nil {
+			icon := v.Icon
+			if icon == "" {
+				icon = getDefaultVendorIcon(v.Name)
+			}
+			result[name] = PricingVendor{ID: v.Id, Name: v.Name, Icon: icon}
+		}
+	}
+	return result
+}
+
+func loadRankingAliasTargets() map[string]string {
+	targets := make(map[string]string)
+	var channels []Channel
+	if err := DB.Select("id", "model_mapping").Find(&channels).Error; err != nil {
+		return targets
+	}
+	for i := range channels {
+		mappingJSON := channels[i].GetModelMapping()
+		if mappingJSON == "" || mappingJSON == "{}" {
+			continue
+		}
+		modelMap := make(map[string]string)
+		if err := common.UnmarshalJsonStr(mappingJSON, &modelMap); err != nil {
+			continue
+		}
+		for alias := range modelMap {
+			if _, exists := targets[alias]; exists {
+				continue
+			}
+			if target, cyclic := followChannelModelMapping(modelMap, alias); !cyclic && target != "" && target != alias {
+				targets[alias] = target
+			}
+		}
+	}
+	return targets
+}
+
 func rankingBucketExpr(bucketSize int64) string {
 	if common.UsingMainDatabase(common.DatabaseTypeMySQL) {
 		return fmt.Sprintf("FLOOR(created_at / %d) * %d", bucketSize, bucketSize)

@@ -199,7 +199,7 @@ func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time) (*Rankings
 		}
 	}
 
-	meta := buildRankingModelMeta()
+	meta := buildRankingModelMeta(rankingModelNames(currentTotals, previousTotals, currentBuckets))
 	totalTokens := sumRankingTokens(currentTotals)
 	previousRankByModel := rankingRankMap(previousTotals)
 	previousTokensByModel := rankingTokenMap(previousTotals)
@@ -234,22 +234,39 @@ func previousRankingTimeRange(config rankingPeriodConfig, currentStart int64) (i
 	return previousStart, previousEnd
 }
 
-func buildRankingModelMeta() map[string]rankingModelMeta {
-	vendorByID := make(map[int]model.PricingVendor)
-	for _, vendor := range model.GetVendors() {
-		vendorByID[vendor.ID] = vendor
-	}
-
-	meta := make(map[string]rankingModelMeta)
-	for _, pricing := range model.GetPricing() {
-		item := rankingModelMeta{vendor: rankingUnknownVendor}
-		if vendor, ok := vendorByID[pricing.VendorID]; ok {
-			item.vendor = vendor.Name
-			item.vendorIcon = vendor.Icon
-		} else if pricing.OwnerBy != "" {
-			item.vendor = pricing.OwnerBy
+func rankingModelNames(currentTotals []model.RankingQuotaTotal, previousTotals []model.RankingQuotaTotal, buckets []model.RankingQuotaBucket) []string {
+	seen := make(map[string]struct{})
+	names := make([]string, 0, len(currentTotals))
+	add := func(name string) {
+		if _, ok := seen[name]; ok {
+			return
 		}
-		meta[pricing.ModelName] = item
+		seen[name] = struct{}{}
+		names = append(names, name)
+	}
+	for _, item := range currentTotals {
+		add(item.ModelName)
+	}
+	for _, item := range previousTotals {
+		add(item.ModelName)
+	}
+	for _, item := range buckets {
+		add(item.ModelName)
+	}
+	return names
+}
+
+// buildRankingModelMeta resolves vendors for every logged model name, not just
+// the ones currently listed in pricing: logs keep alias and retired names.
+func buildRankingModelMeta(names []string) map[string]rankingModelMeta {
+	meta := make(map[string]rankingModelMeta, len(names))
+	for name, vendor := range model.ResolveRankingVendors(names) {
+		meta[name] = rankingModelMeta{vendor: vendor.Name, vendorIcon: vendor.Icon}
+	}
+	for _, pricing := range model.GetPricing() {
+		if _, ok := meta[pricing.ModelName]; !ok && pricing.OwnerBy != "" {
+			meta[pricing.ModelName] = rankingModelMeta{vendor: pricing.OwnerBy}
+		}
 	}
 	return meta
 }

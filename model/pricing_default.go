@@ -71,6 +71,25 @@ var defaultVendorIcons = map[string]string{
 
 // initDefaultVendorMapping 简化的默认供应商映射
 func initDefaultVendorMapping(metaMap map[string]*Model, vendorMap map[int]*Vendor, enableAbilities []AbilityWithChannel) {
+	patterns := sortedDefaultVendorPatterns()
+	for _, ability := range enableAbilities {
+		modelName := ability.Model
+		if _, exists := metaMap[modelName]; exists {
+			continue
+		}
+
+		// 创建模型元数据
+		metaMap[modelName] = &Model{
+			ModelName: modelName,
+			VendorID:  defaultVendorIDForModel(modelName, patterns, vendorMap),
+			Status:    1,
+			NameRule:  NameRuleExact,
+		}
+	}
+}
+
+// sortedDefaultVendorPatterns 按长度降序排列，保证更具体的规则优先匹配
+func sortedDefaultVendorPatterns() []string {
 	patterns := make([]string, 0, len(defaultVendorRules))
 	for pattern := range defaultVendorRules {
 		patterns = append(patterns, pattern)
@@ -81,31 +100,18 @@ func initDefaultVendorMapping(metaMap map[string]*Model, vendorMap map[int]*Vend
 		}
 		return strings.Compare(a, b)
 	})
-	for _, ability := range enableAbilities {
-		modelName := ability.Model
-		if _, exists := metaMap[modelName]; exists {
-			continue
-		}
+	return patterns
+}
 
-		// 匹配供应商
-		vendorID := 0
-		modelLower := strings.ToLower(modelName)
-		for _, pattern := range patterns {
-			vendorName := defaultVendorRules[pattern]
-			if strings.Contains(modelLower, pattern) {
-				vendorID = getDisplayVendor(vendorName, vendorMap)
-				break
-			}
-		}
-
-		// 创建模型元数据
-		metaMap[modelName] = &Model{
-			ModelName: modelName,
-			VendorID:  vendorID,
-			Status:    1,
-			NameRule:  NameRuleExact,
+// defaultVendorIDForModel 按默认规则匹配供应商，未匹配返回 0
+func defaultVendorIDForModel(modelName string, patterns []string, vendorMap map[int]*Vendor) int {
+	modelLower := strings.ToLower(modelName)
+	for _, pattern := range patterns {
+		if strings.Contains(modelLower, pattern) {
+			return getDisplayVendor(defaultVendorRules[pattern], vendorMap)
 		}
 	}
+	return 0
 }
 
 // Default vendor entries are presentation data. Reading pricing must never
