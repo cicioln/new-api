@@ -25,81 +25,100 @@ import { cn } from '@/lib/utils'
 
 import { formatShare, formatTokens } from '../lib/format'
 import type { ModelRanking } from '../types'
+import { RankingModelName } from './ranking-model-name'
 import { RankChangeText } from './rankings-table'
 
-// Gold, silver and bronze badges for the top three.
-const MEDAL_TONE = [
-  'bg-amber-400/20 text-amber-700 dark:text-amber-300',
-  'bg-slate-400/20 text-slate-600 dark:text-slate-300',
-  'bg-orange-400/20 text-orange-700 dark:text-orange-300',
-]
+// Gold, silver and bronze for the top three.
+const MEDAL_COLORS = ['#f5b301', '#9aa4b2', '#d9793a']
+// On wide screens the winner stands in the middle: 2 · 1 · 3.
+const PODIUM_ORDER = ['md:order-2', 'md:order-1', 'md:order-3']
 
-/** The top three models as large cards above the full table. */
+/** The top three models as a podium above the full list. */
 export function RankingsPodium(props: {
   rows: ModelRanking[]
   showRankChange: boolean
 }) {
   return (
-    <ol className='mb-3.5 grid gap-3.5 md:grid-cols-3'>
+    <ol className='mb-3.5 grid items-end gap-3.5 md:grid-cols-3'>
       {props.rows.map((row, index) => {
         const color = getVendorAvatar(row.vendor).color
+        const first = index === 0
         return (
-          <li key={row.model_name} className='min-w-0'>
+          <li
+            key={row.model_name}
+            className={cn('min-w-0', PODIUM_ORDER[index])}
+          >
             <Link
               to='/pricing/$modelId'
               params={{ modelId: row.model_name }}
-              className='bg-card hover:shadow-card focus-visible:ring-ring flex h-full flex-col gap-4 rounded-xl border bg-no-repeat p-[18px] transition-[border-color,box-shadow] duration-150 outline-none hover:border-(--vendor)/45 focus-visible:ring-2'
+              className={cn(
+                'bg-card focus-visible:ring-ring relative flex flex-col gap-3.5 overflow-hidden rounded-[14px] border bg-no-repeat outline-none transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-(--vendor)/45 focus-visible:ring-2',
+                first
+                  ? 'px-[22px] pt-[26px] pb-[22px] shadow-[0_10px_30px_-18px_var(--vendor)]'
+                  : 'p-5'
+              )}
               style={
                 {
                   '--vendor': color,
-                  backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${color} 10%, transparent), transparent 96px)`,
+                  backgroundImage: `radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, ${color} 14%, transparent), transparent 70%)`,
                 } as CSSProperties
               }
             >
-              <div className='flex items-center gap-3'>
+              <span
+                aria-hidden
+                className='absolute inset-x-0 top-0 h-1'
+                style={{ background: MEDAL_COLORS[index] }}
+              />
+              <span
+                className='absolute top-4 right-4 grid size-[30px] place-items-center rounded-full font-mono text-sm font-extrabold text-white'
+                style={{ background: MEDAL_COLORS[index] }}
+              >
+                {row.rank}
+              </span>
+              <div className='flex min-w-0 items-center gap-3 pr-10'>
                 <VendorAvatar
                   name={row.vendor}
                   icon={row.vendor_icon}
-                  className='size-10 rounded-[10px] text-[15px]'
+                  className={cn(
+                    'rounded-xl',
+                    first ? 'size-[52px] text-[19px]' : 'size-11 text-base'
+                  )}
                 />
                 <div className='min-w-0 flex-1'>
-                  <b className='block truncate font-mono text-[14px] font-semibold'>
+                  <RankingModelName
+                    modelName={row.model_name}
+                    className={first ? 'text-lg' : 'text-base'}
+                  />
+                  <small className='text-subtle-foreground mt-0.5 block truncate font-mono text-[11.5px]'>
                     {row.model_name}
-                  </b>
-                  <small className='text-subtle-foreground text-xs'>
-                    {row.vendor}
                   </small>
                 </div>
-                <span
-                  className={cn(
-                    'grid size-8 shrink-0 place-items-center rounded-full font-mono text-sm font-bold',
-                    MEDAL_TONE[index]
-                  )}
-                >
-                  {row.rank}
-                </span>
               </div>
-              <div className='mt-auto'>
-                <div className='flex items-baseline justify-between gap-2'>
-                  <span className='font-mono text-[26px] leading-none font-semibold tracking-tight tabular-nums'>
-                    {formatTokens(row.total_tokens)}
-                  </span>
-                  {props.showRankChange && <RankChangeText row={row} />}
-                </div>
-                <div className='mt-3 flex items-center gap-2.5'>
-                  <span className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
-                    <i
-                      className='block h-full rounded-full'
-                      style={{
-                        width: `${Math.min(100, row.share * 100)}%`,
-                        background: color,
-                      }}
-                    />
-                  </span>
-                  <small className='text-muted-foreground font-mono text-xs tabular-nums'>
-                    {formatShare(row.share)}
-                  </small>
-                </div>
+              <span
+                className={cn(
+                  'font-mono leading-none font-semibold tracking-tight tabular-nums',
+                  first ? 'text-[34px]' : 'text-[28px]'
+                )}
+              >
+                {formatTokens(row.total_tokens)}
+                <span className='text-muted-foreground ml-1 text-xs font-normal tracking-normal'>
+                  tokens
+                </span>
+              </span>
+              <div className='text-muted-foreground flex items-center gap-2.5 text-xs'>
+                <span className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
+                  <i
+                    className='block h-full rounded-full'
+                    style={{
+                      width: `${Math.min(100, row.share * 100)}%`,
+                      background: color,
+                    }}
+                  />
+                </span>
+                <span className='font-mono tabular-nums'>
+                  {formatShare(row.share)}
+                </span>
+                {props.showRankChange && <RankChangeText row={row} />}
               </div>
             </Link>
           </li>

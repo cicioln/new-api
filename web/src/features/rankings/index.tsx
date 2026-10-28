@@ -56,10 +56,10 @@ export function Rankings() {
     content = (
       <div aria-busy='true' className='grid gap-3.5'>
         <Skeleton className='h-[74px] rounded-xl' />
-        <div className='grid gap-3.5 md:grid-cols-3'>
-          <Skeleton className='h-[150px] rounded-xl' />
-          <Skeleton className='h-[150px] rounded-xl' />
-          <Skeleton className='h-[150px] rounded-xl' />
+        <div className='grid items-end gap-3.5 md:grid-cols-3'>
+          <Skeleton className='h-[170px] rounded-[14px]' />
+          <Skeleton className='h-[190px] rounded-[14px]' />
+          <Skeleton className='h-[170px] rounded-[14px]' />
         </div>
         <div className={GRID}>
           <Skeleton className='h-[420px] rounded-xl' />
@@ -108,11 +108,11 @@ export function Rankings() {
         </div>
       ) : (
         <>
-          <dl className='bg-card mb-3.5 grid grid-cols-3 divide-x rounded-xl border'>
+          <dl className='bg-card mb-3.5 grid grid-cols-3 divide-x rounded-[14px] border'>
             {stats.map((stat) => (
               <div key={stat.label} className='px-[18px] py-3.5'>
                 <dt className='text-subtle-foreground text-xs'>{stat.label}</dt>
-                <dd className='mt-1 font-mono text-xl font-semibold tabular-nums'>
+                <dd className='mt-0.5 font-mono text-xl font-semibold tracking-tight tabular-nums max-[560px]:text-base'>
                   {stat.value}
                 </dd>
               </div>
@@ -124,7 +124,11 @@ export function Rankings() {
           />
           <div className={GRID}>
             {models.length > 3 ? (
-              <RankingsTable rows={models.slice(3)} showTrend={showTrend} />
+              <RankingsTable
+                rows={models.slice(3)}
+                showTrend={showTrend}
+                maxTokens={models[0].total_tokens}
+              />
             ) : (
               <div />
             )}

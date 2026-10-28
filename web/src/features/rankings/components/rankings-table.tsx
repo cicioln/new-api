@@ -26,10 +26,12 @@ import { cn } from '@/lib/utils'
 import { formatShare, formatTokens } from '../lib/format'
 import { getRankChange } from '../lib/rankings'
 import type { ModelRanking } from '../types'
+import { RankingModelName } from './ranking-model-name'
 
 const TH =
-  'text-subtle-foreground border-b px-[18px] py-3 text-left text-xs font-medium whitespace-nowrap'
-const TD = 'border-b border-border/60 px-[18px] py-3.5 whitespace-nowrap'
+  'text-subtle-foreground px-3 pt-3 pb-1.5 text-left text-xs font-normal whitespace-nowrap'
+const TD =
+  'px-3 py-2.5 whitespace-nowrap first:rounded-l-[10px] last:rounded-r-[10px]'
 const NUM = 'text-right font-mono text-[13px] tabular-nums'
 const HIDE_NARROW = 'max-[640px]:hidden'
 
@@ -78,18 +80,22 @@ function GrowthText(props: { row: ModelRanking }) {
 export function RankingsTable(props: {
   rows: ModelRanking[]
   showTrend: boolean
+  /** Token volume of the overall leader; share bars are drawn relative to it. */
+  maxTokens?: number
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const open = (modelName: string) =>
     navigate({ to: '/pricing/$modelId', params: { modelId: modelName } })
+  const maxTokens =
+    props.maxTokens ?? Math.max(1, ...props.rows.map((row) => row.total_tokens))
 
   return (
-    <div className='bg-card overflow-x-auto rounded-xl border'>
-      <table className='w-full border-collapse text-[13px]'>
+    <div className='bg-card overflow-x-auto rounded-[14px] border p-1.5'>
+      <table className='w-full border-separate border-spacing-0 text-[13px]'>
         <thead>
           <tr>
-            <th className={cn(TH, 'w-14 text-center')}>#</th>
+            <th className={cn(TH, 'w-12 text-center')}>#</th>
             <th className={TH}>{t('Model')}</th>
             <th className={cn(TH, 'text-right')}>Token</th>
             <th className={cn(TH, HIDE_NARROW)}>{t('Token share')}</th>
@@ -112,12 +118,12 @@ export function RankingsTable(props: {
               onKeyDown={(event) => {
                 if (event.key === 'Enter') open(row.model_name)
               }}
-              className='hover:[&>td]:bg-muted/50 focus-visible:[&>td]:bg-muted/50 cursor-pointer outline-none [&:last-child>td]:border-b-0'
+              className='hover:[&>td]:bg-muted/60 focus-visible:[&>td]:bg-muted/60 cursor-pointer outline-none'
             >
               <td
                 className={cn(
                   TD,
-                  'text-subtle-foreground text-center font-mono text-[13px] tabular-nums'
+                  'text-subtle-foreground text-center font-mono text-sm tabular-nums'
                 )}
               >
                 {row.rank}
@@ -127,33 +133,34 @@ export function RankingsTable(props: {
                   <VendorAvatar
                     name={row.vendor}
                     icon={row.vendor_icon}
-                    className='size-8 rounded-lg text-xs'
+                    className='size-[34px] rounded-[9px] text-[13px]'
                   />
                   <div className='min-w-0'>
-                    <b className='block font-mono text-[13.5px] font-medium'>
-                      {row.model_name}
-                    </b>
-                    <small className='text-subtle-foreground text-xs'>
-                      {row.vendor}
+                    <RankingModelName
+                      modelName={row.model_name}
+                      className='text-[14px]'
+                    />
+                    <small className='text-subtle-foreground mt-0.5 block font-mono text-[11.5px]'>
+                      {row.model_name} · {row.vendor}
                     </small>
                   </div>
                 </div>
               </td>
-              <td className={cn(TD, NUM, 'font-medium')}>
+              <td className={cn(TD, NUM, 'font-semibold')}>
                 {formatTokens(row.total_tokens)}
               </td>
               <td className={cn(TD, HIDE_NARROW)}>
                 <div className='flex items-center gap-2.5'>
-                  <span className='bg-muted h-1.5 w-[120px] overflow-hidden rounded-full'>
+                  <span className='bg-muted h-1.5 w-[140px] overflow-hidden rounded-full'>
                     <i
                       className='block h-full rounded-full'
                       style={{
-                        width: `${Math.min(100, row.share * 100)}%`,
+                        width: `${Math.min(100, (row.total_tokens / maxTokens) * 100)}%`,
                         background: getVendorAvatar(row.vendor).color,
                       }}
                     />
                   </span>
-                  <small className='text-muted-foreground w-12 font-mono text-xs tabular-nums'>
+                  <small className='text-muted-foreground w-11 text-right font-mono text-xs tabular-nums'>
                     {formatShare(row.share)}
                   </small>
                 </div>
