@@ -20,8 +20,9 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { DataTableColumnHeader } from '@/components/data-table/core/column-header'
 import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber } from '@/lib/format'
+import { formatNumber, formatTimestampToDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
@@ -33,6 +34,7 @@ import { UserQuotaCell } from './user-quota-cell'
 const tagClass =
   'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-[12px]! font-medium whitespace-nowrap'
 const numericCellClass = 'font-mono! text-[12.5px]! tabular-nums'
+const timeCellClass = 'font-mono! text-[12px]! tabular-nums whitespace-nowrap'
 
 function getRoleLabelKey(role: number) {
   if (role >= USER_ROLE.ROOT) return 'Super Admin'
@@ -160,6 +162,33 @@ export function useUsersColumns(): ColumnDef<User>[] {
           </span>
         ),
         meta: { mobileHidden: true },
+      },
+      {
+        accessorKey: 'created_at',
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Registration time')}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className={cn(timeCellClass, 'text-muted-foreground')}>
+            {formatTimestampToDate(row.original.created_at)}
+          </span>
+        ),
+        meta: { mobileOrder: 50 },
+      },
+      {
+        accessorKey: 'last_login_at',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Last Login')} />
+        ),
+        cell: ({ row }) => (
+          <span className={cn(timeCellClass, 'text-muted-foreground')}>
+            {formatTimestampToDate(row.original.last_login_at)}
+          </span>
+        ),
+        meta: { mobileOrder: 60 },
       },
       {
         id: 'actions',
