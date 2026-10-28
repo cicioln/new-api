@@ -189,6 +189,63 @@ func appendPricingEndpoint(endpoints []string, endpoint string) []string {
 	return append(endpoints, endpoint)
 }
 
+// dropMappedAliasAbilities hides abilities whose model is a channel
+// model_mapping alias of another model already listed in the same group, so the
+// model square shows one card per real model instead of one per alias.
+func dropMappedAliasAbilities(abilities []AbilityWithChannel) []AbilityWithChannel {
+	channelIDs := make([]int, 0)
+	seenChannel := make(map[int]struct{})
+	listed := make(map[string]struct{}, len(abilities))
+	for _, ability := range abilities {
+		listed[ability.Group+"\x00"+ability.Model] = struct{}{}
+		if _, ok := seenChannel[ability.ChannelId]; ok {
+			continue
+		}
+		seenChannel[ability.ChannelId] = struct{}{}
+		channelIDs = append(channelIDs, ability.ChannelId)
+	}
+	if len(channelIDs) == 0 {
+		return abilities
+	}
+
+	var channels []Channel
+	if err := DB.Select("id", "model_mapping").Where("id IN ?", channelIDs).Find(&channels).Error; err != nil {
+		common.SysLog(common.LogText("load channel model mappings for pricing error: %v", err))
+		return abilities
+	}
+	mappings := make(map[int]map[string]string)
+	for i := range channels {
+		mappingJSON := channels[i].GetModelMapping()
+		if mappingJSON == "" || mappingJSON == "{}" {
+			continue
+		}
+		modelMap := make(map[string]string)
+		if err := common.UnmarshalJsonStr(mappingJSON, &modelMap); err != nil {
+			continue
+		}
+		mappings[channels[i].Id] = modelMap
+	}
+	if len(mappings) == 0 {
+		return abilities
+	}
+
+	filtered := make([]AbilityWithChannel, 0, len(abilities))
+	for _, ability := range abilities {
+		if modelMap, ok := mappings[ability.ChannelId]; ok {
+			if _, isAlias := modelMap[ability.Model]; isAlias {
+				target, cyclic := followChannelModelMapping(modelMap, ability.Model)
+				if !cyclic && target != ability.Model {
+					if _, targetListed := listed[ability.Group+"\x00"+target]; targetListed {
+						continue
+					}
+				}
+			}
+		}
+		filtered = append(filtered, ability)
+	}
+	return filtered
+}
+
 func updatePricing() {
 	//modelRatios := common.GetModelRatios()
 	enableAbilities, err := GetAllEnableAbilityWithChannels()
@@ -196,6 +253,7 @@ func updatePricing() {
 		common.SysLog(common.LogText("GetAllEnableAbilityWithChannels error: %v", err))
 		return
 	}
+	enableAbilities = dropMappedAliasAbilities(enableAbilities)
 	// 预加载模型元数据与供应商一次，避免循环查询
 	var allMeta []Model
 	_ = DB.Find(&allMeta).Error
