@@ -91,7 +91,6 @@ import {
   isTimingLogType,
 } from '../../lib/utils'
 import { USAGE_BILLING_PATH, type LogOtherData } from '../../types'
-import { ResponseModelDetails } from '../model-badge'
 import { PluginAuthorLink } from '../plugin-author-link'
 import { DetailRow, DetailSection } from './log-detail-layout'
 
@@ -1142,11 +1141,6 @@ export function DetailsDialog(props: DetailsDialogProps) {
           />
         )}
 
-        {other?.response_model && (
-          <DetailSection label={t('Response Model')}>
-            <ResponseModelDetails observation={other.response_model} />
-          </DetailSection>
-        )}
         {/* Model mapping for logs without response observations */}
         {!other?.response_model &&
           other?.is_model_mapped &&
