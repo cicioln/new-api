@@ -106,7 +106,7 @@ export function AuditLogs() {
               {t('Audit access changed. Showing only your records.')}
             </p>
           )}
-          <div className='min-h-0 flex-1'>
+          <div className='min-h-0 flex-1 overflow-y-auto'>
             <AuditLogViewer
               key={`${userId}:${effectiveScope}`}
               scope={effectiveScope}

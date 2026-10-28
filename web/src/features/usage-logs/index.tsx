@@ -157,7 +157,9 @@ function UsageLogsContent() {
                 </TabsList>
               </Tabs>
             )}
-            <div className='min-h-0 flex-1'>
+            {/* The desktop design table grows with its rows, so this area
+                scrolls to keep the pager at the bottom of the card reachable. */}
+            <div className='min-h-0 flex-1 overflow-y-auto'>
               <UsageLogsTable logCategory={activeCategory} />
             </div>
           </div>
