@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { memo, type CSSProperties } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
@@ -26,18 +26,15 @@ import { useMarketPrice } from '../hooks/use-market-price'
 import {
   formatMarketLatency,
   formatMarketTps,
-  getVendorAvatar,
-  getVendorAvatarIcon,
-  getVendorAvatarName,
   type MarketPerf,
 } from '../lib/market'
+import { getFamilyColor, parseModelName } from '../lib/model-name'
 import type { PricingModel, TokenUnit } from '../types'
 import {
   MarketDetailsButton,
   MarketGroupTags,
   MarketModelName,
   PelicanButton,
-  VendorAvatar,
 } from './market-parts'
 import { MarketStatusBars, MarketSuccessRate } from './market-status'
 
@@ -51,6 +48,8 @@ export interface ModelCardProps {
   showRechargePrice?: boolean
   selectedGroup?: string
   perf?: MarketPerf
+  /** Newest version of its family in the current list. */
+  latest?: boolean
 }
 
 export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
@@ -67,36 +66,54 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
     (group) =>
       !props.model.group_ratio || Object.hasOwn(props.model.group_ratio, group)
   )
-  const vendorName = getVendorAvatarName(props.model)
-  // A faint wash of the vendor color at the top tells cards apart at a glance.
-  const vendorColor = getVendorAvatar(vendorName).color
+  const parsed = useMemo(
+    () => parseModelName(props.model.model_name),
+    [props.model.model_name]
+  )
+  // Each model family gets its own accent, so Opus / Sonnet / Haiku cards of
+  // the same vendor still look different at a glance.
+  const familyColor = getFamilyColor(parsed)
   return (
     // Only the Details button opens the side panel, so the card itself is a
     // plain region with a default cursor and text selection.
     <article
       aria-label={props.model.model_name}
-      className='group/market bg-card hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border bg-no-repeat p-[18px] transition-[border-color,box-shadow] duration-150 hover:border-(--vendor)/45'
-      style={
-        {
-          '--vendor': vendorColor,
-          backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${vendorColor} 9%, transparent), transparent 88px)`,
-        } as CSSProperties
-      }
+      className='group/market bg-card hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border p-4 transition-[border-color,box-shadow] duration-150 hover:border-(--family)/45'
+      style={{ '--family': familyColor } as CSSProperties}
     >
-      <div className='flex items-start gap-3'>
-        <VendorAvatar
-          name={vendorName}
-          icon={getVendorAvatarIcon(props.model)}
-        />
+      <div className='flex items-center gap-3'>
+        <span
+          aria-hidden
+          className='grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12 text-[22px] leading-none font-bold text-(--family)'
+        >
+          {parsed.label.charAt(0).toUpperCase()}
+        </span>
         <div className='min-w-0 flex-1'>
-          <MarketModelName
-            name={props.model.model_name}
-            className='text-[14.5px] leading-[22px]'
-            wrap
-          />
-          <small className='text-subtle-foreground block truncate text-xs'>
-            {props.model.vendor_name || '—'}
-          </small>
+          <div className='flex flex-wrap items-baseline gap-x-2 text-[19px] leading-tight tracking-[-0.01em]'>
+            <strong className='font-bold break-all'>{parsed.label}</strong>
+            {parsed.version && (
+              <span className='font-medium text-(--family) tabular-nums'>
+                {parsed.version}
+              </span>
+            )}
+          </div>
+          {(props.latest || parsed.tags.length > 0) && (
+            <div className='mt-1 flex flex-wrap gap-1'>
+              {props.latest && (
+                <span className='inline-flex h-5 items-center rounded-full bg-(--family)/12 px-2 text-[11px] font-medium text-(--family)'>
+                  {t('Latest')}
+                </span>
+              )}
+              {parsed.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className='text-muted-foreground inline-flex h-5 items-center rounded-full border px-2 text-[11px]'
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <MarketDetailsButton
           modelName={props.model.model_name}
@@ -104,54 +121,55 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         />
       </div>
 
+      <MarketModelName
+        name={props.model.model_name}
+        className='text-subtle-foreground text-[11.5px] font-normal'
+      />
+
       {groups.length > 0 && (
         <div className='flex flex-wrap items-center gap-1.5'>
-          <small className='text-subtle-foreground mr-0.5 text-[11.5px]'>
+          <small className='text-subtle-foreground mr-0.5 text-[11px]'>
             {t('Group')}
           </small>
-          <MarketGroupTags groups={groups} max={4} className='text-[11.5px]' />
+          <MarketGroupTags groups={groups} max={4} className='text-[11px]' />
         </div>
       )}
 
       {props.perf ? (
         <div
           aria-label={t('Performance metrics for the last 24 hours')}
-          className='bg-muted grid grid-cols-[1.6fr_1fr_1fr] rounded-lg px-3 py-2.5'
+          className='text-subtle-foreground flex flex-col gap-1.5 text-[11.5px]'
         >
-          <div className='min-w-0'>
-            <small className='text-subtle-foreground flex justify-between pr-3 text-[11px] whitespace-nowrap'>
-              {t('Status')}
-              <MarketSuccessRate perf={props.perf} />
-            </small>
-            <MarketStatusBars perf={props.perf} className='mt-[5px] pr-3' />
+          <div className='flex flex-wrap items-center gap-x-3.5 gap-y-1 whitespace-nowrap'>
+            <span>
+              {t('Status')}{' '}
+              <MarketSuccessRate perf={props.perf} className='font-medium' />
+            </span>
+            <span>
+              {t('Latency')}{' '}
+              <b className='text-foreground font-mono font-medium'>
+                {formatMarketLatency(props.perf?.latencyMs)}
+              </b>
+            </span>
+            <span>
+              {t('Throughput short')}{' '}
+              <b className='text-foreground font-mono font-medium'>
+                {formatMarketTps(props.perf?.tps)}
+                {props.perf?.tps != null && (
+                  <span className='text-subtle-foreground font-normal'>
+                    {' '}
+                    t/s
+                  </span>
+                )}
+              </b>
+            </span>
           </div>
-          <div className='min-w-0 border-l pl-3'>
-            <small className='text-subtle-foreground block text-[11px] whitespace-nowrap'>
-              {t('Latency')}
-            </small>
-            <b className='font-mono text-[13px] font-medium whitespace-nowrap'>
-              {formatMarketLatency(props.perf?.latencyMs)}
-            </b>
-          </div>
-          <div className='min-w-0 border-l pl-3'>
-            <small className='text-subtle-foreground block text-[11px] whitespace-nowrap'>
-              {t('Throughput short')}
-            </small>
-            <b className='font-mono text-[13px] font-medium whitespace-nowrap'>
-              {formatMarketTps(props.perf?.tps)}
-              {props.perf?.tps != null && (
-                <span className='text-subtle-foreground text-[11px] font-normal'>
-                  {' '}
-                  t/s
-                </span>
-              )}
-            </b>
-          </div>
+          <MarketStatusBars perf={props.perf} className='h-2.5' />
         </div>
       ) : (
         <div
           aria-label={t('Performance metrics for the last 24 hours')}
-          className='text-subtle-foreground rounded-lg border border-dashed px-3 py-2 text-center text-[11.5px]'
+          className='text-subtle-foreground text-[11.5px]'
         >
           {t('No performance data available')}
         </div>

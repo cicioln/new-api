@@ -16,11 +16,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { memo } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { DEFAULT_TOKEN_UNIT } from '../constants'
-import type { MarketPerf } from '../lib/market'
+import type { MarketPerf, MarketSort } from '../lib/market'
+import {
+  getFamilyColor,
+  parseModelName,
+  type ParsedModelName,
+} from '../lib/model-name'
 import type { PricingModel, TokenUnit } from '../types'
+import { VendorAvatar } from './market-parts'
 import { ModelCard } from './model-card'
 
 export interface ModelCardGridProps {
@@ -33,30 +40,163 @@ export interface ModelCardGridProps {
   tokenUnit?: TokenUnit
   showRechargePrice?: boolean
   selectedGroup?: string
+  sort?: MarketSort
+}
+
+type Entry = { model: PricingModel; parsed: ParsedModelName; latest: boolean }
+
+type VendorSection = {
+  vendor: string
+  icon?: string
+  entries: Entry[]
+  families: ParsedModelName[]
+}
+
+/**
+ * Splits models into vendor sections in the order the current sort puts
+ * them. Unless sorting by price, cards inside a section are clustered by
+ * family with the newest version first.
+ */
+function buildSections(
+  models: PricingModel[],
+  sort: MarketSort | undefined
+): VendorSection[] {
+  const sections = new Map<string, VendorSection>()
+  for (const model of models) {
+    const vendor = model.vendor_name ?? ''
+    let section = sections.get(vendor)
+    if (!section) {
+      section = {
+        vendor,
+        icon: model.vendor_icon || undefined,
+        entries: [],
+        families: [],
+      }
+      sections.set(vendor, section)
+    }
+    section.entries.push({
+      model,
+      parsed: parseModelName(model.model_name),
+      latest: false,
+    })
+  }
+
+  for (const section of sections.values()) {
+    const familyOrder = new Map<string, number>()
+    for (const entry of section.entries) {
+      if (!familyOrder.has(entry.parsed.family)) {
+        familyOrder.set(entry.parsed.family, familyOrder.size)
+        section.families.push(entry.parsed)
+      }
+    }
+
+    // The newest plain version (no Flash / Thinking / date suffix) of each
+    // family gets the "Latest" badge.
+    const newest = new Map<string, Entry>()
+    for (const entry of section.entries) {
+      if (entry.parsed.tags.length > 0 || !entry.parsed.version) continue
+      const current = newest.get(entry.parsed.family)
+      if (!current || entry.parsed.versionNum > current.parsed.versionNum) {
+        newest.set(entry.parsed.family, entry)
+      }
+    }
+    for (const [family, entry] of newest) {
+      const versions = section.entries.filter(
+        (e) => e.parsed.family === family && e.parsed.version
+      )
+      if (versions.length > 1) entry.latest = true
+    }
+
+    if (sort !== 'price') {
+      const index = new Map(section.entries.map((e, i) => [e, i]))
+      section.entries.sort(
+        (a, b) =>
+          (familyOrder.get(a.parsed.family) ?? 0) -
+            (familyOrder.get(b.parsed.family) ?? 0) ||
+          b.parsed.versionNum - a.parsed.versionNum ||
+          a.parsed.tags.length - b.parsed.tags.length ||
+          (index.get(a) ?? 0) - (index.get(b) ?? 0)
+      )
+    }
+  }
+
+  // Unknown vendors go last.
+  return [...sections.values()].sort(
+    (a, b) => Number(!a.vendor) - Number(!b.vendor)
+  )
 }
 
 export const ModelCardGrid = memo(function ModelCardGrid(
   props: ModelCardGridProps
 ) {
+  const { t } = useTranslation()
+  const sections = useMemo(
+    () => buildSections(props.models, props.sort),
+    [props.models, props.sort]
+  )
+
   if (props.models.length === 0) {
     return null
   }
 
   return (
-    <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-      {props.models.map((model) => (
-        <ModelCard
-          key={model.id ?? model.model_name}
-          model={model}
-          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
-          priceRate={props.priceRate}
-          usdExchangeRate={props.usdExchangeRate}
-          showRechargePrice={props.showRechargePrice}
-          selectedGroup={props.selectedGroup}
-          perf={props.perf.get(model.model_name)}
-          onClick={props.onModelClick}
-          onTest={props.onTest}
-        />
+    <div className='flex flex-col gap-7'>
+      {sections.map((section) => (
+        <section
+          key={section.vendor}
+          aria-label={section.vendor || t('Other')}
+          className='flex flex-col gap-3'
+        >
+          <header className='flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-b pb-2'>
+            <VendorAvatar
+              name={section.vendor || '?'}
+              icon={section.icon}
+              className='size-6 rounded-md text-[11px]'
+            />
+            <h3 className='text-[15px] font-semibold'>
+              {section.vendor || t('Other')}
+            </h3>
+            <span className='text-subtle-foreground text-xs tabular-nums'>
+              {t('{{count}} models', { count: section.entries.length })}
+            </span>
+            {section.families.length > 1 && (
+              <span className='text-muted-foreground ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs'>
+                {section.families.map((family) => (
+                  <span
+                    key={family.family}
+                    className='inline-flex items-center gap-1.5'
+                    style={
+                      { '--family': getFamilyColor(family) } as CSSProperties
+                    }
+                  >
+                    <i
+                      aria-hidden
+                      className='size-2 rounded-[2px] bg-(--family)'
+                    />
+                    {family.label}
+                  </span>
+                ))}
+              </span>
+            )}
+          </header>
+          <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+            {section.entries.map(({ model, latest }) => (
+              <ModelCard
+                key={model.id ?? model.model_name}
+                model={model}
+                latest={latest}
+                tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
+                priceRate={props.priceRate}
+                usdExchangeRate={props.usdExchangeRate}
+                showRechargePrice={props.showRechargePrice}
+                selectedGroup={props.selectedGroup}
+                perf={props.perf.get(model.model_name)}
+                onClick={props.onModelClick}
+                onTest={props.onTest}
+              />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   )

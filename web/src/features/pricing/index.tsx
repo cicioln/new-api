@@ -242,7 +242,13 @@ export function Pricing() {
   } else if (filters.viewMode === VIEW_MODES.TABLE) {
     content = <PricingTable {...shared} onModelClick={openModel} />
   } else {
-    content = <ModelCardGrid {...shared} onModelClick={openModel} />
+    content = (
+      <ModelCardGrid
+        {...shared}
+        sort={filters.sortBy}
+        onModelClick={openModel}
+      />
+    )
   }
 
   return (
