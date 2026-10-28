@@ -2942,6 +2942,10 @@
     "Go to last page": "前往末頁",
     "Go to next page": "前往下一頁",
     "Go to page {{page}}": "前往第 {{page}} 頁",
+
+    "Jump to": "跳至",
+
+    "Jump to page": "跳轉到頁碼",
     "Go to previous page": "前往上一頁",
     "Go to settings": "前往設定",
     "Go to Settings": "前往設定",

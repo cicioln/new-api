@@ -23,9 +23,11 @@ import {
   ChevronsLeft as DoubleArrowLeftIcon,
   ChevronsRight as DoubleArrowRightIcon,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -43,6 +45,46 @@ type DataTablePaginationProps<TData> = {
   simple?: boolean
   /** Replaces the default "Total: N" text in compact and simple modes. */
   totalLabel?: (total: number) => string
+}
+
+// Jumps to a typed page on Enter or blur, clamped to the valid range.
+function PageJumpInput({
+  totalPages,
+  onJump,
+}: {
+  totalPages: number
+  onJump: (page: number) => void
+}) {
+  const { t } = useTranslation()
+  const [value, setValue] = useState('')
+  const maxPage = Math.max(1, totalPages)
+
+  const submit = () => {
+    const page = Number.parseInt(value, 10)
+    setValue('')
+    if (!Number.isFinite(page)) return
+    onJump(Math.min(Math.max(page, 1), maxPage))
+  }
+
+  return (
+    <label className='ml-1 flex items-center gap-1.5 whitespace-nowrap'>
+      {t('Jump to')}
+      <Input
+        type='number'
+        inputMode='numeric'
+        min={1}
+        max={maxPage}
+        value={value}
+        aria-label={t('Jump to page')}
+        className='h-8 w-14 px-1.5 text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+        onChange={(event) => setValue(event.target.value)}
+        onBlur={submit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') submit()
+        }}
+      />
+    </label>
+  )
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50, 100] as const
@@ -80,7 +122,7 @@ export function DataTablePagination<TData>({
         className='flex w-full min-w-0 flex-wrap items-center justify-between gap-2'
       >
         <span className='min-w-0 [overflow-wrap:anywhere]'>{totalText}</span>
-        <div className='flex items-center gap-1'>
+        <div className='flex flex-wrap items-center gap-1'>
           <Button
             variant='outline'
             size='sm'
@@ -89,6 +131,25 @@ export function DataTablePagination<TData>({
           >
             {t('Previous page')}
           </Button>
+          {pageItems.map(({ page: pageNumber, key }) =>
+            pageNumber === '...' ? (
+              <span key={key} className='px-1'>
+                ...
+              </span>
+            ) : (
+              <Button
+                key={key}
+                variant={currentPage === pageNumber ? 'default' : 'outline'}
+                size='sm'
+                className='min-w-8 px-2 tabular-nums'
+                aria-label={t('Go to page {{page}}', { page: pageNumber })}
+                aria-current={currentPage === pageNumber ? 'page' : undefined}
+                onClick={() => table.setPageIndex((pageNumber as number) - 1)}
+              >
+                {pageNumber}
+              </Button>
+            )
+          )}
           <Button
             variant='outline'
             size='sm'
@@ -97,6 +158,11 @@ export function DataTablePagination<TData>({
           >
             {t('Next page')}
           </Button>
+          <PageJumpInput
+            key={currentPage}
+            totalPages={totalPages}
+            onJump={(page) => table.setPageIndex(page - 1)}
+          />
         </div>
       </nav>
     )
