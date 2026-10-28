@@ -170,7 +170,7 @@ export function AuditLogViewer(props: {
                 })
             : undefined
         }
-        fixedHeight={!designTable || isMobile}
+        autoColumnWidths={designTable}
         applyHeaderSize={!designTable}
         getColumnClassName={designTable ? undefined : () => 'py-2'}
         tableClassName={

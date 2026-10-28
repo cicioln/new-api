@@ -293,7 +293,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
         )}
         skeletonKeyPrefix='usage-log-skeleton'
         applyHeaderSize={!isDesignTable}
-        fixedHeight={!isDesignTable || isMobile}
+        autoColumnWidths={isDesignTable}
         tableClassName={
           isDesignTable
             ? undefined

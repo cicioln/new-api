@@ -245,6 +245,12 @@ export type DataTablePageProps<TData> = {
   fixedHeight?: boolean
 
   /**
+   * Size desktop columns from their content instead of the proportional
+   * colgroup that fixed-height tables use by default.
+   */
+  autoColumnWidths?: boolean
+
+  /**
    * Desktop table container className (the bordered scroll wrapper).
    */
   tableClassName?: string
@@ -596,6 +602,7 @@ function renderDesktop<TData>(
       renderRow={props.renderRow}
       applyHeaderSize={props.applyHeaderSize}
       splitHeader={fixedHeight}
+      autoColumnWidths={props.autoColumnWidths}
       tableContainerClassName={fixedHeight ? 'h-full min-h-0' : undefined}
       tableHeaderClassName={cn(
         fixedHeight && '[background-color:var(--table-header)]',

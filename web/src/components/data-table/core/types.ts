@@ -68,4 +68,6 @@ export type DataTableViewProps<TData> = {
   containerProps?: Omit<React.ComponentProps<'div'>, 'className' | 'children'>
   tableContainerClassName?: string
   colgroup?: React.ReactNode
+  /** Let the browser size columns from content even with a split header. */
+  autoColumnWidths?: boolean
 }

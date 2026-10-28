@@ -232,7 +232,10 @@ function getTableSizing<TData>(props: DataTableViewProps<TData>): {
     return { colgroup: props.colgroup }
   }
 
-  if (!props.splitHeader && !props.applyHeaderSize) {
+  if (
+    props.autoColumnWidths ||
+    (!props.splitHeader && !props.applyHeaderSize)
+  ) {
     return {}
   }
 
