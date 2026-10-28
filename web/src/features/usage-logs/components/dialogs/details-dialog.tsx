@@ -38,7 +38,6 @@ For commercial licensing, please contact support@quantumnous.com
 import {
   Copy,
   Check,
-  Route,
   Settings2,
   AlertTriangle,
   Headphones,
@@ -60,7 +59,6 @@ import { DynamicPricingBreakdown } from '@/features/pricing/components/dynamic-p
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import { BILLING_PRICING_VARS } from '@/features/pricing/lib/billing-expr'
 import { pluginUsageSchema } from '@/features/pricing/lib/plugin-pricing'
-import { PolicyDecisionRecord } from '@/features/system-settings/request-policies/decision-record'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { formatLogQuota, formatTokens, formatUseTime } from '@/lib/format'
@@ -606,19 +604,6 @@ export function DetailsDialog(props: DetailsDialogProps) {
       ].filter(Boolean) as Array<{ label: string; value: string }>)
     : []
 
-  const conversionChain =
-    other && Array.isArray(other.request_conversion)
-      ? other.request_conversion.filter(Boolean)
-      : []
-  const conversionLabel =
-    conversionChain.length <= 1
-      ? t('Native format')
-      : conversionChain.join(' -> ')
-  const showConversion =
-    props.isAdmin &&
-    props.log.type !== 6 &&
-    (other?.request_path || conversionChain.length > 0)
-
   const useChannel = other?.admin_info?.use_channel
   const channelChain =
     useChannel && useChannel.length > 0 ? useChannel.join(' → ') : undefined
@@ -759,55 +744,8 @@ export function DetailsDialog(props: DetailsDialogProps) {
           )}
         </div>
 
-        {/* Request conversion (admin only, not for refund) */}
-        {showConversion && (
-          <DetailSection label={t('Request Conversion')}>
-            <div className='relative min-w-0'>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='absolute top-0 right-0 h-5 w-5 p-0'
-                onClick={() => copyToClipboard(conversionLabel)}
-                title={t('Copy to clipboard')}
-                aria-label={t('Copy to clipboard')}
-              >
-                {copiedText === conversionLabel ? (
-                  <Check className='size-3 text-green-600' />
-                ) : (
-                  <Copy className='size-3' />
-                )}
-              </Button>
-              <div className='min-w-0 space-y-1 pr-6'>
-                {other?.request_path && (
-                  <DetailRow
-                    label={t('Path')}
-                    value={other.request_path}
-                    mono
-                  />
-                )}
-                <div className='flex min-w-0 items-center gap-1.5 text-xs'>
-                  <Route
-                    className='text-muted-foreground size-3'
-                    aria-hidden='true'
-                  />
-                  <span className='min-w-0 break-all sm:wrap-break-word'>
-                    {conversionLabel}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </DetailSection>
-        )}
 
         {/* Quota saturation marker (admin only) */}
-        {props.isAdmin && adminInfo?.request_policy?.length ? (
-          <DetailSection
-            label={t('Request policy decisions')}
-            icon={<Route className='size-4' />}
-          >
-            <PolicyDecisionRecord events={adminInfo.request_policy} />
-          </DetailSection>
-        ) : null}
         {props.isAdmin && other?.admin_info?.quota_saturation && (
           <DetailSection
             icon={<AlertTriangle className='size-3.5' aria-hidden='true' />}
