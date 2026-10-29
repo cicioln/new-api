@@ -59,9 +59,12 @@ export function useFilters(
   const group = selectedGroup
 
   const toggleVendor = useCallback(
-    // Single-select: picking a vendor replaces the current one.
-    (vendor: string) =>
-      setVendors((prev) => (prev.includes(vendor) ? [] : [vendor])),
+    // Single-select: picking a vendor replaces the current one. The group
+    // belongs to the previous vendor's models, so it is cleared too.
+    (vendor: string) => {
+      setVendors((prev) => (prev.includes(vendor) ? [] : [vendor]))
+      setGroup(undefined)
+    },
     []
   )
   const toggleStatus = useCallback(
@@ -70,7 +73,10 @@ export function useFilters(
     []
   )
   const clearStatus = useCallback(() => setStatus(undefined), [])
-  const clearVendors = useCallback(() => setVendors([]), [])
+  const clearVendors = useCallback(() => {
+    setVendors([])
+    setGroup(undefined)
+  }, [])
   const resetGroup = useCallback(() => setGroup(undefined), [])
   const clearSearch = useCallback(() => setSearchInput(''), [])
   const clearAll = useCallback(() => {
