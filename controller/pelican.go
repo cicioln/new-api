@@ -35,6 +35,24 @@ type pelicanRecordRequest struct {
 	OutputTokens *int   `json:"output_tokens"`
 }
 
+// maskPelicanUsername hides most of a username before it is shown to other
+// users, e.g. 584702675@qq.com -> 584****@qq.com.
+func maskPelicanUsername(name string) string {
+	local, domain := name, ""
+	if at := strings.LastIndex(name, "@"); at > 0 {
+		local, domain = name[:at], name[at:]
+	}
+	runes := []rune(local)
+	keep := 3
+	if len(runes) <= 4 {
+		keep = 1
+	}
+	if len(runes) <= keep {
+		return local + "****" + domain
+	}
+	return string(runes[:keep]) + "****" + domain
+}
+
 // GetPelicanRecords lists the shared pelican tests, newest first.
 func GetPelicanRecords(c *gin.Context) {
 	records, err := model.ListPelicanRecords(strings.TrimSpace(c.Query("model")), pelicanListLimit)
@@ -56,7 +74,7 @@ func GetPelicanRecords(c *gin.Context) {
 	for _, record := range records {
 		views = append(views, pelicanRecordView{
 			PelicanRecord: record,
-			Username:      names[record.UserId],
+			Username:      maskPelicanUsername(names[record.UserId]),
 			Mine:          viewerId != 0 && record.UserId == viewerId,
 		})
 	}
@@ -101,7 +119,7 @@ func CreatePelicanRecord(c *gin.Context) {
 	}
 	common.ApiSuccess(c, pelicanRecordView{
 		PelicanRecord: record,
-		Username:      c.GetString("username"),
+		Username:      maskPelicanUsername(c.GetString("username")),
 		Mine:          true,
 	})
 }
