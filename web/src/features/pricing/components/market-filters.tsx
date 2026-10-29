@@ -35,10 +35,6 @@ export interface MarketFiltersProps {
   selectedVendors: string[]
   onToggleVendor: (vendor: string) => void
   onClearVendors: () => void
-  groups: { name: string; ratio: number }[]
-  group?: string
-  onGroupChange: (group: string) => void
-  onClearGroup: () => void
   statusCounts: Record<MarketStatusFilter, number>
   status?: MarketStatusFilter
   onToggleStatus: (status: MarketStatusFilter) => void
@@ -48,12 +44,12 @@ export interface MarketFiltersProps {
 }
 
 // 倍率最多保留 3 位小数（最小可显示 0.001），去掉末尾多余的 0，整数保留一位小数
-function formatGroupRatio(ratio: number) {
+export function formatGroupRatio(ratio: number) {
   const text = String(Number(ratio.toFixed(3)))
   return text.includes('.') ? text : ratio.toFixed(1)
 }
 
-const RATIO_TONE: Record<number, string> = {
+export const RATIO_TONE: Record<number, string> = {
   [-1]: 'bg-success/12 text-success',
   0: 'bg-muted text-foreground',
   1: 'bg-warning/15 text-warning',
@@ -155,36 +151,6 @@ export function MarketFilters(props: MarketFiltersProps) {
           </FilterChip>
         ))}
       </FilterRow>
-
-      {props.groups.length > 0 && (
-        <FilterRow label={t('Pricing group')}>
-          <div
-            role='radiogroup'
-            aria-label={t('Pricing group')}
-            className='contents'
-          >
-            <FilterChip
-              radio
-              checked={!props.group}
-              onSelect={props.onClearGroup}
-              count={props.total}
-            >
-              {t('All')}
-            </FilterChip>
-            {props.groups.map((group) => (
-              <FilterChip
-                key={group.name}
-                radio
-                checked={props.group === group.name}
-                onSelect={() => props.onGroupChange(group.name)}
-                ratio={group.ratio}
-              >
-                {group.name}
-              </FilterChip>
-            ))}
-          </div>
-        </FilterRow>
-      )}
 
       <FilterRow label={t('Status')}>
         <div role='radiogroup' aria-label={t('Status')} className='contents'>

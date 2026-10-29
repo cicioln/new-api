@@ -19,6 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 import { memo, useMemo, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { cn } from '@/lib/utils'
+
 import { DEFAULT_TOKEN_UNIT } from '../constants'
 import type { MarketPerf, MarketSort } from '../lib/market'
 import {
@@ -27,6 +29,7 @@ import {
   type ParsedModelName,
 } from '../lib/model-name'
 import type { PricingModel, TokenUnit } from '../types'
+import { formatGroupRatio, RATIO_TONE } from './market-filters'
 import { VendorAvatar } from './market-parts'
 import { ModelCard } from './model-card'
 
@@ -41,6 +44,8 @@ export interface ModelCardGridProps {
   showRechargePrice?: boolean
   selectedGroup?: string
   sort?: MarketSort
+  /** Pricing groups shown in the market, in display order. */
+  groups?: { name: string; ratio: number }[]
 }
 
 type Entry = { model: PricingModel; parsed: ParsedModelName; latest: boolean }
@@ -50,6 +55,7 @@ type VendorSection = {
   icon?: string
   entries: Entry[]
   families: ParsedModelName[]
+  groups: { name: string; ratio: number }[]
 }
 
 /**
@@ -59,7 +65,8 @@ type VendorSection = {
  */
 function buildSections(
   models: PricingModel[],
-  sort: MarketSort | undefined
+  sort: MarketSort | undefined,
+  groups: { name: string; ratio: number }[]
 ): VendorSection[] {
   const sections = new Map<string, VendorSection>()
   for (const model of models) {
@@ -71,6 +78,7 @@ function buildSections(
         icon: model.vendor_icon || undefined,
         entries: [],
         families: [],
+        groups: [],
       }
       sections.set(vendor, section)
     }
@@ -82,6 +90,11 @@ function buildSections(
   }
 
   for (const section of sections.values()) {
+    const enabled = new Set(
+      section.entries.flatMap((e) => e.model.enable_groups ?? [])
+    )
+    section.groups = groups.filter((group) => enabled.has(group.name))
+
     const familyOrder = new Map<string, number>()
     for (const entry of section.entries) {
       if (!familyOrder.has(entry.parsed.family)) {
@@ -131,8 +144,8 @@ export const ModelCardGrid = memo(function ModelCardGrid(
 ) {
   const { t } = useTranslation()
   const sections = useMemo(
-    () => buildSections(props.models, props.sort),
-    [props.models, props.sort]
+    () => buildSections(props.models, props.sort, props.groups ?? []),
+    [props.models, props.sort, props.groups]
   )
 
   if (props.models.length === 0) {
@@ -159,6 +172,22 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             <span className='text-subtle-foreground text-xs tabular-nums'>
               {t('{{count}} models', { count: section.entries.length })}
             </span>
+            {section.groups.map((group) => (
+              <span
+                key={group.name}
+                className='bg-card text-muted-foreground inline-flex h-6 items-center gap-1 rounded-full border pr-1 pl-2.5 text-xs'
+              >
+                {group.name}
+                <span
+                  className={cn(
+                    'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
+                    RATIO_TONE[Math.sign(group.ratio - 1)]
+                  )}
+                >
+                  ×{formatGroupRatio(group.ratio)}
+                </span>
+              </span>
+            ))}
             {section.families.length > 1 && (
               <span className='text-muted-foreground ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs'>
                 {section.families.map((family) => (

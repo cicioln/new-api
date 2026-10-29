@@ -246,6 +246,7 @@ export function Pricing() {
       <ModelCardGrid
         {...shared}
         sort={filters.sortBy}
+        groups={groups}
         onModelClick={openModel}
       />
     )
@@ -290,10 +291,6 @@ export function Pricing() {
             selectedVendors={filters.vendors}
             onToggleVendor={filters.toggleVendor}
             onClearVendors={filters.clearVendors}
-            groups={groups}
-            group={filters.group}
-            onGroupChange={filters.setGroup}
-            onClearGroup={filters.resetGroup}
             statusCounts={statusCounts}
             status={filters.status}
             onToggleStatus={filters.toggleStatus}
