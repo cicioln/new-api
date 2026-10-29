@@ -46,6 +46,8 @@ export interface ModelCardGridProps {
   sort?: MarketSort
   /** Pricing groups shown in the market, in display order. */
   groups?: { name: string; ratio: number }[]
+  /** Toggles the group filter; clicking the selected group clears it. */
+  onGroupClick?: (group: string) => void
 }
 
 type Entry = { model: PricingModel; parsed: ParsedModelName; latest: boolean }
@@ -172,22 +174,35 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             <span className='text-subtle-foreground text-xs tabular-nums'>
               {t('{{count}} models', { count: section.entries.length })}
             </span>
-            {section.groups.map((group) => (
-              <span
-                key={group.name}
-                className='bg-card text-muted-foreground inline-flex h-6 items-center gap-1 rounded-full border pr-1 pl-2.5 text-xs'
-              >
-                {group.name}
-                <span
+            {section.groups.map((group) => {
+              const checked = props.selectedGroup === group.name
+              return (
+                <button
+                  key={group.name}
+                  type='button'
+                  aria-pressed={checked}
+                  onClick={() => props.onGroupClick?.(group.name)}
                   className={cn(
-                    'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
-                    RATIO_TONE[Math.sign(group.ratio - 1)]
+                    'inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border pr-1 pl-2.5 text-xs transition-colors',
+                    checked
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground'
                   )}
                 >
-                  ×{formatGroupRatio(group.ratio)}
-                </span>
-              </span>
-            ))}
+                  {group.name}
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
+                      checked
+                        ? 'bg-background/20 text-background'
+                        : RATIO_TONE[Math.sign(group.ratio - 1)]
+                    )}
+                  >
+                    ×{formatGroupRatio(group.ratio)}
+                  </span>
+                </button>
+              )
+            })}
             {section.families.length > 1 && (
               <span className='text-muted-foreground ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs'>
                 {section.families.map((family) => (

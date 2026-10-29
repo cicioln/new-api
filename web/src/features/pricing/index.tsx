@@ -247,6 +247,9 @@ export function Pricing() {
         {...shared}
         sort={filters.sortBy}
         groups={groups}
+        onGroupClick={(name) =>
+          name === filters.group ? filters.resetGroup() : filters.setGroup(name)
+        }
         onModelClick={openModel}
       />
     )
