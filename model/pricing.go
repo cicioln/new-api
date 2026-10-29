@@ -51,6 +51,14 @@ type Pricing struct {
 	BillingUsageExamples   []jsplugin.UsageExample              `json:"billing_usage_examples,omitempty"`
 	PricingVersion         string                               `json:"pricing_version,omitempty"`
 	CreatedTime            int64                                `json:"created_time,omitempty"`
+	// Maintenance is set when every channel serving the model is under
+	// maintenance; the model stays listed but cannot be called.
+	Maintenance *PricingMaintenance `json:"maintenance,omitempty"`
+}
+
+type PricingMaintenance struct {
+	Note  string `json:"note,omitempty"`
+	Until int64  `json:"until,omitempty"`
 }
 
 type PricingVendor struct {
@@ -70,6 +78,7 @@ var (
 	// 缓存映射：模型名 -> 启用分组 / 计费类型
 	modelEnableGroups     = make(map[string][]string)
 	modelQuotaTypeMap     = make(map[string]int)
+	modelMaintenanceMap   = make(map[string]ModelMaintenance)
 	modelEnableGroupsLock = sync.RWMutex{}
 )
 
@@ -256,6 +265,7 @@ func updatePricing() {
 		common.SysLog(common.LogText("GetAllEnableAbilityWithChannels error: %v", err))
 		return
 	}
+	maintenance := appendMaintenanceAbilities(&enableAbilities)
 	enableAbilities = dropMappedAliasAbilities(enableAbilities)
 	// 预加载模型元数据与供应商一次，避免循环查询
 	var allMeta []Model
@@ -405,6 +415,9 @@ func updatePricing() {
 			SupportedEndpointTypes: modelSupportEndpointTypes[model],
 			CreatedTime:            modelCreatedTime[model],
 		}
+		if item, ok := maintenance[model]; ok {
+			pricing.Maintenance = &PricingMaintenance{Note: item.Note, Until: item.Until}
+		}
 
 		// 补充模型元数据（描述、标签、供应商、状态）
 		if meta, ok := metaMap[model]; ok {
@@ -519,9 +532,13 @@ func updatePricing() {
 	modelEnableGroupsLock.Lock()
 	modelEnableGroups = make(map[string][]string)
 	modelQuotaTypeMap = make(map[string]int)
+	modelMaintenanceMap = make(map[string]ModelMaintenance)
 	for _, p := range pricingMap {
 		modelEnableGroups[p.ModelName] = p.EnableGroup
 		modelQuotaTypeMap[p.ModelName] = p.QuotaType
+		if p.Maintenance != nil {
+			modelMaintenanceMap[p.ModelName] = ModelMaintenance{Note: p.Maintenance.Note, Until: p.Maintenance.Until}
+		}
 	}
 	modelEnableGroupsLock.Unlock()
 

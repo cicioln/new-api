@@ -151,6 +151,13 @@ func noAvailableChannelMessage(c *gin.Context, group, modelName string) string {
 		logger.LogWarn(c, common.LogText("task_plugin subsystem=distribution event=no_available_channel group=%q model=%q plugins=%q reason=no_eligible_channel", group, modelName, strings.Join(keys, ",")))
 		return i18n.T(c, i18n.MsgDistributorNoAvailableChannelTaskPlugin, map[string]any{"Group": group, "Model": modelName})
 	}
+	if maintenance, ok := model.GetModelMaintenance(modelName); ok {
+		until := ""
+		if maintenance.Until > 0 {
+			until = time.Unix(maintenance.Until, 0).Format("01-02 15:04")
+		}
+		return i18n.T(c, i18n.MsgDistributorModelMaintenance, map[string]any{"Model": modelName, "Note": maintenance.Note, "Until": until})
+	}
 	return i18n.T(c, i18n.MsgDistributorNoAvailableChannel, map[string]any{"Group": group, "Model": modelName})
 }
 

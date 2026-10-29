@@ -51,7 +51,9 @@ import {
 } from '../constants'
 import {
   channelsQueryKeys,
+  formatMaintenanceUntil,
   getChannelDisplayStatus,
+  getChannelMaintenance,
   getChannelTypeLabel,
   handleTestChannel,
   parseGroupsList,
@@ -97,6 +99,28 @@ function ChannelStatusCell(props: { channel: Channel }) {
       {t(status.label)}
     </span>
   )
+  const maintenance = getChannelMaintenance(props.channel)
+  if (maintenance) {
+    const recovery = maintenance.until
+      ? t('Expected recovery {{time}}', {
+          time: formatMaintenanceUntil(maintenance.until),
+        })
+      : t('No recovery time set')
+    const hint = maintenance.note
+      ? `${maintenance.note} · ${recovery}`
+      : recovery
+    return (
+      <div className='flex min-w-0 flex-col items-start gap-0.5'>
+        {tag}
+        <span
+          className='text-muted-foreground max-w-[200px] truncate text-[11px]'
+          title={hint}
+        >
+          {hint}
+        </span>
+      </div>
+    )
+  }
   if (!details) return tag
 
   return (

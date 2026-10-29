@@ -268,6 +268,9 @@ const (
 	ChannelStatusEnabled          = 1 // don't use 0, 0 is the default value!
 	ChannelStatusManuallyDisabled = 2 // also don't use 0
 	ChannelStatusAutoDisabled     = 3
+	// ChannelStatusMaintenance takes the channel out of routing like a disabled
+	// one, but its models stay listed in the model square as under maintenance.
+	ChannelStatusMaintenance = 4
 )
 
 const (

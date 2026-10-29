@@ -96,6 +96,20 @@ export function getStatusLevel(rate: number | undefined): MarketStatus | null {
   return 'bad'
 }
 
+/**
+ * Status used by the filter chips. `bad` means every channel serving the
+ * model is under maintenance; a low success rate alone reads as busy.
+ */
+export function getModelMarketStatus(
+  model: PricingModel,
+  perf: Map<string, MarketPerf>
+): MarketStatusFilter {
+  if (model.maintenance) return 'bad'
+  const level = getStatusLevel(perf.get(model.model_name)?.successRate)
+  if (!level) return 'none'
+  return level === 'bad' ? 'warn' : level
+}
+
 export type MarketStatusBar = {
   /** Start of the hour, in Unix seconds. */
   ts: number
@@ -257,11 +271,11 @@ export function filterMarketModels(
       ) {
         return false
       }
-      if (options.status) {
-        const status =
-          getStatusLevel(options.perf.get(model.model_name)?.successRate) ??
-          'none'
-        if (status !== options.status) return false
+      if (
+        options.status &&
+        getModelMarketStatus(model, options.perf) !== options.status
+      ) {
+        return false
       }
       return !options.group || model.enable_groups?.includes(options.group)
     }

@@ -39,6 +39,7 @@ import {
   editTagChannels,
   testAllChannels,
   updateAllChannelsBalance,
+  type ChannelMaintenancePayload,
 } from '../api'
 import { CHANNEL_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../constants'
 import type { ChannelTestResponse, CopyChannelParams } from '../types'
@@ -157,6 +158,54 @@ export async function handleDisableChannel(
       onSuccess?.()
     } else {
       handleServerError(response, i18next.t(ERROR_MESSAGES.UPDATE_FAILED))
+    }
+  } catch (error) {
+    handleServerError(error, i18next.t(ERROR_MESSAGES.UPDATE_FAILED))
+  }
+}
+
+/**
+ * Put channels under maintenance, or update the note and recovery time of
+ * channels already under maintenance.
+ */
+export async function handleSetChannelMaintenance(
+  ids: number[],
+  maintenance: ChannelMaintenancePayload,
+  queryClient?: QueryClient,
+  onSuccess?: () => void
+): Promise<void> {
+  if (ids.length === 0) {
+    toast.error(i18next.t('No channels selected'))
+    return
+  }
+
+  try {
+    const response = await batchUpdateChannelStatus(
+      ids,
+      CHANNEL_STATUS.MAINTENANCE,
+      maintenance
+    )
+    const successCount = response.success ? response.data || 0 : 0
+    const failCount = ids.length - successCount
+
+    if (successCount > 0) {
+      toast.success(
+        i18next.t('{{count}} channel(s) set to maintenance', {
+          count: successCount,
+        })
+      )
+      queryClient?.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
+      onSuccess?.()
+    }
+
+    if (!response.success) {
+      handleServerError(response, i18next.t(ERROR_MESSAGES.UPDATE_FAILED))
+    } else if (failCount > 0) {
+      toast.error(
+        i18next.t('{{count}} channel(s) failed to set maintenance', {
+          count: failCount,
+        })
+      )
     }
   } catch (error) {
     handleServerError(error, i18next.t(ERROR_MESSAGES.UPDATE_FAILED))

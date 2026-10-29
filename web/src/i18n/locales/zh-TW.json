@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "USDT 金額 = 人民幣應付金額 ÷ USDT 匯率。",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons 圖示名（如 SiTether）或圖片 URL，留空使用 Tether 圖示。",
     "USDT exchange rate": "USDT 匯率",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT 折合多少人民幣，例如 7.2。填 0 則使用美元匯率（{{rate}}）。"
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT 折合多少人民幣，例如 7.2。填 0 則使用美元匯率（{{rate}}）。",
+    "Expected recovery {{time}}": "預計 {{time}} 恢復",
+    "No recovery time set": "未設定恢復時間",
+    "Set maintenance": "設為維護中",
+    "End maintenance": "結束維護",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "管道 {{name}} 將暫停服務，其模型在模型廣場顯示為維護中。",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} 個管道將暫停服務，其模型在模型廣場顯示為維護中。",
+    "Confirm maintenance": "確認維護",
+    "Maintenance note (shown to users, optional)": "維護說明（對使用者展示，可選）",
+    "e.g. Upstream upgrade, service paused": "例如：上游升級，暫停服務",
+    "Expected recovery": "預計恢復",
+    "In 1 hour": "1 小時後",
+    "Today 18:00": "今天 18:00",
+    "Auto restore to enabled at that time": "到時自動恢復為啟用",
+    "{{count}} channel(s) set to maintenance": "已將 {{count}} 個管道設為維護中",
+    "{{count}} channel(s) failed to set maintenance": "{{count}} 個管道設為維護中失敗",
+    "Recovery time to be determined": "恢復時間待定",
+    "Today {{time}}": "今天 {{time}}",
+    "Under maintenance, service paused": "維護中，暫停服務",
+    "{{count}} under maintenance": "{{count}} 個維護中"
   }
 }

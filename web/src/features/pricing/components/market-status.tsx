@@ -51,13 +51,22 @@ function getStatusTextClass(status: MarketStatus | null): string {
   return status ? STATUS_TEXT[status] : 'text-subtle-foreground'
 }
 
+// Filter dots: `bad` is the maintenance filter, shown in indigo like the
+// maintenance cards rather than the red of a failing success bar.
+const STATUS_DOT_BG: Record<MarketStatusFilter, string> = {
+  ok: STATUS_BG.ok,
+  warn: STATUS_BG.warn,
+  bad: 'bg-indigo-500',
+  none: 'bg-border',
+}
+
 export function MarketStatusDot(props: { status: MarketStatusFilter }) {
   return (
     <span
       aria-hidden
       className={cn(
         'inline-block size-1.5 shrink-0 rounded-full',
-        props.status === 'none' ? 'bg-border' : STATUS_BG[props.status]
+        STATUS_DOT_BG[props.status]
       )}
     />
   )

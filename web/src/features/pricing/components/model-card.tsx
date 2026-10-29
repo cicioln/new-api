@@ -16,9 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Clock, Wrench } from 'lucide-react'
 import { memo, useMemo, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import dayjs from '@/lib/dayjs'
 import { cn } from '@/lib/utils'
 
 import { DEFAULT_TOKEN_UNIT } from '../constants'
@@ -40,6 +42,41 @@ import {
   VendorAvatar,
 } from './market-parts'
 import { MarketStatusBars, MarketSuccessRate } from './market-status'
+
+// Muted content of a card whose channels are all under maintenance.
+const MAINTENANCE_DIM_CLASS = 'opacity-50 grayscale'
+const MAINTENANCE_STRIPES =
+  'repeating-linear-gradient(135deg, transparent 0 10px, rgb(99 102 241 / 0.04) 10px 20px)'
+
+/** Expected recovery as "today 18:00" or "10-30 09:00". */
+function useMaintenanceRecovery(until: number | undefined): string {
+  const { t } = useTranslation()
+  if (!until) return t('Recovery time to be determined')
+  const time = dayjs.unix(until)
+  const text = time.isSame(dayjs(), 'day')
+    ? t('Today {{time}}', { time: time.format('HH:mm') })
+    : time.format('MM-DD HH:mm')
+  return t('Expected recovery {{time}}', { time: text })
+}
+
+function MaintenanceRibbon(props: { note?: string; until?: number }) {
+  const { t } = useTranslation()
+  const recovery = useMaintenanceRecovery(props.until)
+  return (
+    <div
+      role='status'
+      className='flex items-start gap-2 rounded-[9px] bg-indigo-500/10 px-2.5 py-2 text-xs text-indigo-600 dark:text-indigo-400'
+    >
+      <Clock aria-hidden className='mt-0.5 size-3.5 shrink-0' strokeWidth={2.2} />
+      <div className='min-w-0'>
+        <b className='block font-semibold break-words'>
+          {props.note || t('Under maintenance, service paused')}
+        </b>
+        <div className='text-[11.5px] opacity-80'>{recovery}</div>
+      </div>
+    </div>
+  )
+}
 
 export interface ModelCardProps {
   model: PricingModel
@@ -76,25 +113,38 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   // Each model family gets its own accent, so Opus / Sonnet / Haiku cards of
   // the same vendor still look different at a glance.
   const familyColor = getFamilyColor(parsed)
+  const maintenance = props.model.maintenance
+  const dim = maintenance ? MAINTENANCE_DIM_CLASS : undefined
   return (
     // Only the Details button opens the side panel, so the card itself is a
     // plain region with a default cursor and text selection.
     <article
       aria-label={props.model.model_name}
-      className='group/market bg-card hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border p-4 transition-[border-color,box-shadow] duration-150 hover:border-(--family)/45'
-      style={{ '--family': familyColor } as CSSProperties}
+      className={cn(
+        'group/market bg-card hover:shadow-card relative flex min-w-0 flex-col gap-3 rounded-xl border p-4 transition-[border-color,box-shadow] duration-150',
+        maintenance ? 'border-indigo-500/35' : 'hover:border-(--family)/45'
+      )}
+      style={
+        {
+          '--family': familyColor,
+          ...(maintenance && { backgroundImage: MAINTENANCE_STRIPES }),
+        } as CSSProperties
+      }
     >
       <div className='flex items-center gap-3'>
         <span
           aria-hidden
-          className='grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12'
+          className={cn(
+            'grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12',
+            dim
+          )}
         >
           <VendorAvatar
             name={getVendorAvatarName(props.model)}
             icon={getVendorAvatarIcon(props.model)}
           />
         </span>
-        <div className='min-w-0 flex-1'>
+        <div className={cn('min-w-0 flex-1', dim)}>
           <div className='flex flex-wrap items-baseline gap-x-2 text-[19px] leading-tight tracking-[-0.01em]'>
             <strong className='font-bold break-all'>{parsed.label}</strong>
             {parsed.version && (
@@ -121,6 +171,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             </div>
           )}
         </div>
+        {maintenance && (
+          <span className='inline-flex h-[22px] shrink-0 items-center gap-1 rounded-md bg-indigo-500/12 px-2 text-xs font-medium text-indigo-600 dark:text-indigo-400'>
+            <Wrench aria-hidden className='size-3' strokeWidth={2.4} />
+            {t('Under maintenance')}
+          </span>
+        )}
         <MarketDetailsButton
           modelName={props.model.model_name}
           onClick={props.onClick}
@@ -129,11 +185,15 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
 
       <MarketModelName
         name={props.model.model_name}
-        className='text-subtle-foreground text-[11.5px] font-normal'
+        className={cn('text-subtle-foreground text-[11.5px] font-normal', dim)}
       />
 
+      {maintenance && (
+        <MaintenanceRibbon note={maintenance.note} until={maintenance.until} />
+      )}
+
       {groups.length > 0 && (
-        <div className='flex flex-wrap items-center gap-1.5'>
+        <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
           <small className='text-subtle-foreground mr-0.5 text-[11px]'>
             {t('Group')}
           </small>
@@ -141,7 +201,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         </div>
       )}
 
-      {props.perf ? (
+      {maintenance ? null : props.perf ? (
         <div
           aria-label={t('Performance metrics for the last 24 hours')}
           className='text-subtle-foreground flex flex-col gap-1.5 text-[11.5px]'
@@ -187,7 +247,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         className='mt-auto grid grid-cols-[1fr_1fr_auto] items-end border-t pt-3'
       >
         {prices.map((price, index) => (
-          <div key={price.key} className='min-w-0'>
+          <div key={price.key} className={cn('min-w-0', dim)}>
             <small className='text-subtle-foreground block truncate text-[11.5px]'>
               {price.label}
             </small>

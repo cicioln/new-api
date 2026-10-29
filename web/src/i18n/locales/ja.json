@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "USDT 金額 = 人民元の支払額 ÷ USDT レート。",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "react-icons のアイコン名（例: SiTether）または画像 URL。空欄なら Tether のロゴを使います。",
     "USDT exchange rate": "USDT レート",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT が何人民元か（例: 7.2）。0 にすると米ドル為替レート（{{rate}}）を使います。"
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "1 USDT が何人民元か（例: 7.2）。0 にすると米ドル為替レート（{{rate}}）を使います。",
+    "Expected recovery {{time}}": "{{time}} 復旧予定",
+    "No recovery time set": "復旧時刻未設定",
+    "Set maintenance": "メンテナンス中にする",
+    "End maintenance": "メンテナンス終了",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "チャネル {{name}} はリクエストの処理を停止し、モデルはモデル広場でメンテナンス中と表示されます。",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} 件のチャネルはリクエストの処理を停止し、モデルはモデル広場でメンテナンス中と表示されます。",
+    "Confirm maintenance": "メンテナンスを確定",
+    "Maintenance note (shown to users, optional)": "メンテナンスの説明（ユーザーに表示、任意）",
+    "e.g. Upstream upgrade, service paused": "例：上流アップグレードのため一時停止",
+    "Expected recovery": "復旧予定",
+    "In 1 hour": "1 時間後",
+    "Today 18:00": "今日 18:00",
+    "Auto restore to enabled at that time": "その時刻に自動で有効へ戻す",
+    "{{count}} channel(s) set to maintenance": "{{count}} 件のチャネルをメンテナンス中にしました",
+    "{{count}} channel(s) failed to set maintenance": "{{count}} 件のチャネルをメンテナンス中にできませんでした",
+    "Recovery time to be determined": "復旧時刻未定",
+    "Today {{time}}": "今日 {{time}}",
+    "Under maintenance, service paused": "メンテナンス中のため一時停止",
+    "{{count}} under maintenance": "{{count}} 件メンテナンス中"
   }
 }

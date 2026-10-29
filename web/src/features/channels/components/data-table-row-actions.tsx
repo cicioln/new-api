@@ -33,6 +33,7 @@ import {
   Tag,
   Tags,
   Trash2,
+  Wrench,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -51,15 +52,17 @@ import {
 } from '@/lib/admin-permissions'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { MODEL_FETCHABLE_TYPES } from '../constants'
+import { CHANNEL_STATUS, MODEL_FETCHABLE_TYPES } from '../constants'
 import {
   handleDeleteChannel,
+  handleEnableChannel,
   handleToggleChannelStatus,
   isChannelEnabled,
   isMultiKeyChannel,
 } from '../lib'
 import type { Channel } from '../types'
 import { useChannels } from './channels-provider'
+import { MaintenanceDialog } from './dialogs/maintenance-dialog'
 
 interface DataTableRowActionsProps {
   row: Row<Channel>
@@ -73,8 +76,10 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const currentUser = useAuthStore((s) => s.auth.user)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [isTogglingStatus, setIsTogglingStatus] = useState(false)
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false)
 
   const isEnabled = isChannelEnabled(channel)
+  const isMaintenance = channel.status === CHANNEL_STATUS.MAINTENANCE
   const canEditSensitive = hasPermission(
     currentUser,
     ADMIN_PERMISSION_RESOURCES.CHANNEL,
@@ -95,6 +100,15 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
     setIsTogglingStatus(true)
     try {
       await handleToggleChannelStatus(channel.id, channel.status, queryClient)
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
+  const handleEndMaintenance = async () => {
+    setIsTogglingStatus(true)
+    try {
+      await handleEnableChannel(channel.id, queryClient)
     } finally {
       setIsTogglingStatus(false)
     }
@@ -122,6 +136,19 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
         >
           {isEnabled ? t('Disable') : t('Enable')}
           <DropdownMenuShortcut>{statusIcon}</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={isTogglingStatus}
+          onClick={() =>
+            isMaintenance
+              ? void handleEndMaintenance()
+              : setMaintenanceOpen(true)
+          }
+        >
+          {isMaintenance ? t('End maintenance') : t('Set maintenance')}
+          <DropdownMenuShortcut>
+            <Wrench size={16} />
+          </DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => openDialog('test-channel')}>
@@ -210,6 +237,15 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           </DropdownMenuShortcut>
         </DropdownMenuItem>
       </DataTableRowActionMenu>
+
+      {maintenanceOpen && (
+        <MaintenanceDialog
+          open={maintenanceOpen}
+          onOpenChange={setMaintenanceOpen}
+          channelIds={[channel.id]}
+          channelName={channel.name}
+        />
+      )}
 
       <ConfirmDialog
         open={deleteConfirmOpen}

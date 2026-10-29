@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import dayjs from '@/lib/dayjs'
+
 import { CHANNEL_STATUS, RESPONSE_TIME_THRESHOLDS } from '../constants'
 import type { Channel } from '../types'
 
@@ -44,6 +46,12 @@ export function getChannelDisplayStatus(
       className: 'bg-destructive/10 text-destructive',
     }
   }
+  if (channel.status === CHANNEL_STATUS.MAINTENANCE) {
+    return {
+      label: 'Under maintenance',
+      className: 'bg-indigo-500/12 text-indigo-600 dark:text-indigo-400',
+    }
+  }
   if (channel.status !== CHANNEL_STATUS.ENABLED) {
     return {
       label: 'Manual Disabled',
@@ -57,6 +65,36 @@ export function getChannelDisplayStatus(
     label: 'Channel status enabled',
     className: 'bg-success/12 text-success',
   }
+}
+
+export type ChannelMaintenance = {
+  note: string
+  /** Expected recovery time in Unix seconds; 0 when not set. */
+  until: number
+}
+
+/** Maintenance details kept in other_info, or null if not under maintenance. */
+export function getChannelMaintenance(
+  channel: Channel
+): ChannelMaintenance | null {
+  if (channel.status !== CHANNEL_STATUS.MAINTENANCE) return null
+  try {
+    const info = channel.other_info ? JSON.parse(channel.other_info) : {}
+    return {
+      note: typeof info?.maintenance_note === 'string' ? info.maintenance_note : '',
+      until: Number(info?.maintenance_until) || 0,
+    }
+  } catch {
+    return { note: '', until: 0 }
+  }
+}
+
+/** Recovery time as HH:mm today, otherwise MM-DD HH:mm. */
+export function formatMaintenanceUntil(until: number): string {
+  const time = dayjs(until * 1000)
+  return time.isSame(dayjs(), 'day')
+    ? time.format('HH:mm')
+    : time.format('MM-DD HH:mm')
 }
 
 /** Status tab value → list API status filter and the counted status codes. */
@@ -76,6 +114,11 @@ export const CHANNEL_STATUS_TABS = [
     value: 'manual',
     label: 'Manual Disabled',
     statuses: [CHANNEL_STATUS.MANUAL_DISABLED],
+  },
+  {
+    value: 'maintenance',
+    label: 'Under maintenance',
+    statuses: [CHANNEL_STATUS.MAINTENANCE],
   },
 ] as const
 

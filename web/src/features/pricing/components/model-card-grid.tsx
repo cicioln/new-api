@@ -58,12 +58,14 @@ type VendorSection = {
   entries: Entry[]
   families: ParsedModelName[]
   groups: { name: string; ratio: number }[]
+  maintenance: number
 }
 
 /**
  * Splits models into vendor sections in the order the current sort puts
  * them. Unless sorting by price, cards inside a section are clustered by
- * family with the newest version first.
+ * family with the newest version first. Models under maintenance always go
+ * last in their section.
  */
 function buildSections(
   models: PricingModel[],
@@ -81,6 +83,7 @@ function buildSections(
         entries: [],
         families: [],
         groups: [],
+        maintenance: 0,
       }
       sections.set(vendor, section)
     }
@@ -133,6 +136,14 @@ function buildSections(
           (index.get(a) ?? 0) - (index.get(b) ?? 0)
       )
     }
+
+    // A stable sort keeps the order above within each half.
+    section.entries.sort(
+      (a, b) => Number(!!a.model.maintenance) - Number(!!b.model.maintenance)
+    )
+    section.maintenance = section.entries.filter(
+      (e) => e.model.maintenance
+    ).length
   }
 
   // Unknown vendors go last.
@@ -174,6 +185,13 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             <span className='text-subtle-foreground text-xs tabular-nums'>
               {t('{{count}} models', { count: section.entries.length })}
             </span>
+            {section.maintenance > 0 && (
+              <span className='inline-flex h-5 items-center rounded-full bg-indigo-500/12 px-2 text-[11px] font-medium text-indigo-600 dark:text-indigo-400'>
+                {t('{{count}} under maintenance', {
+                  count: section.maintenance,
+                })}
+              </span>
+            )}
             {section.groups.map((group) => {
               const checked = props.selectedGroup === group.name
               return (

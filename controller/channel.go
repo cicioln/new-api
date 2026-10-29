@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
@@ -65,6 +66,8 @@ func parseStatusFilter(statusParam string) int {
 		return common.ChannelStatusManuallyDisabled
 	case "auto", "3":
 		return common.ChannelStatusAutoDisabled
+	case "maintenance", "4":
+		return common.ChannelStatusMaintenance
 	default:
 		return -1
 	}
@@ -1129,13 +1132,20 @@ type PatchChannel struct {
 	KeyMode      *string `json:"key_mode"` // 多key模式下密钥覆盖或者追加
 }
 
+// MaintenanceNote and MaintenanceUntil apply only to the maintenance status.
 type ChannelStatusRequest struct {
-	Status int `json:"status"`
+	Status                 int    `json:"status"`
+	MaintenanceNote        string `json:"maintenance_note"`
+	MaintenanceUntil       int64  `json:"maintenance_until"`
+	MaintenanceAutoRestore bool   `json:"maintenance_auto_restore"`
 }
 
 type ChannelStatusBatchRequest struct {
-	Ids    []int `json:"ids"`
-	Status int   `json:"status"`
+	Ids                    []int  `json:"ids"`
+	Status                 int    `json:"status"`
+	MaintenanceNote        string `json:"maintenance_note"`
+	MaintenanceUntil       int64  `json:"maintenance_until"`
+	MaintenanceAutoRestore bool   `json:"maintenance_auto_restore"`
 }
 
 func UpdateChannel(c *gin.Context) {
@@ -1346,11 +1356,17 @@ func UpdateChannelStatus(c *gin.Context) {
 		return
 	}
 	req := ChannelStatusRequest{}
-	if err := c.ShouldBindJSON(&req); err != nil || !isManageableChannelStatus(req.Status) {
+	if err := c.ShouldBindJSON(&req); err != nil || !isManageableChannelStatus(req.Status) ||
+		!validChannelMaintenance(req.MaintenanceNote, req.MaintenanceUntil) {
 		common.ApiErrorT(c, "Invalid parameters")
 		return
 	}
-	changed := model.UpdateChannelStatus(id, "", req.Status, "manual operation")
+	var changed bool
+	if req.Status == common.ChannelStatusMaintenance {
+		changed = model.SetChannelMaintenance(id, strings.TrimSpace(req.MaintenanceNote), req.MaintenanceUntil, req.MaintenanceAutoRestore)
+	} else {
+		changed = model.UpdateChannelStatus(id, "", req.Status, "manual operation")
+	}
 	if changed {
 		model.InitChannelCache()
 		if req.Status != common.ChannelStatusEnabled {
@@ -1371,14 +1387,22 @@ func UpdateChannelStatus(c *gin.Context) {
 
 func BatchUpdateChannelStatus(c *gin.Context) {
 	req := ChannelStatusBatchRequest{}
-	if err := c.ShouldBindJSON(&req); err != nil || len(req.Ids) == 0 || !isManageableChannelStatus(req.Status) {
+	if err := c.ShouldBindJSON(&req); err != nil || len(req.Ids) == 0 || !isManageableChannelStatus(req.Status) ||
+		!validChannelMaintenance(req.MaintenanceNote, req.MaintenanceUntil) {
 		common.ApiErrorT(c, "Invalid parameters")
 		return
 	}
 	changedCount := 0
 	var disabledIDs []int
+	note := strings.TrimSpace(req.MaintenanceNote)
 	for _, id := range req.Ids {
-		if model.UpdateChannelStatus(id, "", req.Status, "manual batch operation") {
+		var changed bool
+		if req.Status == common.ChannelStatusMaintenance {
+			changed = model.SetChannelMaintenance(id, note, req.MaintenanceUntil, req.MaintenanceAutoRestore)
+		} else {
+			changed = model.UpdateChannelStatus(id, "", req.Status, "manual batch operation")
+		}
+		if changed {
 			changedCount++
 			if req.Status != common.ChannelStatusEnabled {
 				disabledIDs = append(disabledIDs, id)
@@ -1404,7 +1428,12 @@ func BatchUpdateChannelStatus(c *gin.Context) {
 }
 
 func isManageableChannelStatus(status int) bool {
-	return status == common.ChannelStatusEnabled || status == common.ChannelStatusManuallyDisabled
+	return status == common.ChannelStatusEnabled || status == common.ChannelStatusManuallyDisabled ||
+		status == common.ChannelStatusMaintenance
+}
+
+func validChannelMaintenance(note string, until int64) bool {
+	return until >= 0 && utf8.RuneCountInString(strings.TrimSpace(note)) <= model.MaxChannelMaintenanceNoteLength
 }
 
 // equalStringPtr 比较两个 *string 是否相等（均为 nil 视为相等）。

@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "Le montant USDT est le montant dû en CNY divisé par le taux de change USDT.",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "Un nom react-icons (ex. SiTether) ou une URL d'image. Laissez vide pour le logo Tether.",
     "USDT exchange rate": "Taux de change USDT",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Valeur d'un USDT en CNY, ex. 7.2. Mettez 0 pour utiliser le taux de change USD ({{rate}})."
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Valeur d'un USDT en CNY, ex. 7.2. Mettez 0 pour utiliser le taux de change USD ({{rate}}).",
+    "Expected recovery {{time}}": "Retour prévu {{time}}",
+    "No recovery time set": "Aucune heure de reprise définie",
+    "Set maintenance": "Mettre en maintenance",
+    "End maintenance": "Terminer la maintenance",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "Le canal {{name}} cesse de traiter les requêtes ; ses modèles apparaissent en maintenance sur la place de marché.",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} canal(aux) cessent de traiter les requêtes ; leurs modèles apparaissent en maintenance sur la place de marché.",
+    "Confirm maintenance": "Confirmer la maintenance",
+    "Maintenance note (shown to users, optional)": "Note de maintenance (visible par les utilisateurs, facultative)",
+    "e.g. Upstream upgrade, service paused": "ex. Mise à niveau en amont, service suspendu",
+    "Expected recovery": "Reprise prévue",
+    "In 1 hour": "Dans 1 heure",
+    "Today 18:00": "Aujourd'hui 18:00",
+    "Auto restore to enabled at that time": "Rétablir automatiquement à l'heure prévue",
+    "{{count}} channel(s) set to maintenance": "{{count}} canal(aux) mis en maintenance",
+    "{{count}} channel(s) failed to set maintenance": "Échec de la mise en maintenance de {{count}} canal(aux)",
+    "Recovery time to be determined": "Heure de reprise à déterminer",
+    "Today {{time}}": "Aujourd'hui {{time}}",
+    "Under maintenance, service paused": "En maintenance, service suspendu",
+    "{{count}} under maintenance": "{{count}} en maintenance"
   }
 }

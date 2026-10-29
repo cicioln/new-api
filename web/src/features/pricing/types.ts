@@ -91,6 +91,12 @@ export type PricingModel = {
   pricing_version?: string
   /** Unix seconds when the model was listed; the backend sorts newest first */
   created_time?: number
+  /** Set when every channel serving the model is under maintenance. */
+  maintenance?: {
+    note?: string
+    /** Expected recovery time in Unix seconds. */
+    until?: number
+  }
   /**
    * Optional model metadata fields reserved for backend-provided catalog data.
    * Keep them data-driven; do not synthesize display values on the client.

@@ -191,16 +191,26 @@ export async function updateChannel(
   return res.data
 }
 
+/** Maintenance details sent with status 4 (maintenance). */
+export type ChannelMaintenancePayload = {
+  maintenance_note?: string
+  /** Expected recovery time in Unix seconds; 0 when not set. */
+  maintenance_until?: number
+  /** Re-enable the channel automatically at maintenance_until. */
+  maintenance_auto_restore?: boolean
+}
+
 /**
  * Update channel enabled/disabled status.
  */
 export async function updateChannelStatus(
   id: number,
-  status: number
+  status: number,
+  maintenance?: ChannelMaintenancePayload
 ): Promise<{ success: boolean; message?: string; data?: boolean }> {
   const res = await api.post(
     `/api/channel/${id}/status`,
-    { status },
+    { status, ...maintenance },
     channelActionConfig()
   )
   return res.data
@@ -211,11 +221,12 @@ export async function updateChannelStatus(
  */
 export async function batchUpdateChannelStatus(
   ids: number[],
-  status: number
+  status: number,
+  maintenance?: ChannelMaintenancePayload
 ): Promise<{ success: boolean; message?: string; data?: number }> {
   const res = await api.post(
     '/api/channel/status/batch',
-    { ids, status },
+    { ids, status, ...maintenance },
     channelActionConfig()
   )
   return res.data

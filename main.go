@@ -138,6 +138,9 @@ func main() {
 	// Built-in USDT payments: expire unpaid orders and confirm on-chain transfers
 	service.StartUsdtPaymentTask()
 
+	// Restore maintenance channels whose expected recovery time has passed
+	service.StartChannelMaintenanceRestoreTask()
+
 	// Report this process as a system instance so the System Info page can show
 	// all currently alive nodes in multi-instance deployments.
 	service.StartSystemInstanceReporter()

@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "Số USDT là số tiền CNY phải trả chia cho tỷ giá USDT.",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "Tên biểu tượng react-icons (vd. SiTether) hoặc URL hình ảnh. Để trống để dùng logo Tether.",
     "USDT exchange rate": "Tỷ giá USDT",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Một USDT bằng bao nhiêu CNY, vd. 7.2. Đặt 0 để dùng tỷ giá USD ({{rate}})."
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Một USDT bằng bao nhiêu CNY, vd. 7.2. Đặt 0 để dùng tỷ giá USD ({{rate}}).",
+    "Expected recovery {{time}}": "Dự kiến khôi phục {{time}}",
+    "No recovery time set": "Chưa đặt thời gian khôi phục",
+    "Set maintenance": "Đặt bảo trì",
+    "End maintenance": "Kết thúc bảo trì",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "Kênh {{name}} sẽ ngừng phục vụ yêu cầu; các mô hình của kênh hiển thị là đang bảo trì trên chợ mô hình.",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} kênh sẽ ngừng phục vụ yêu cầu; các mô hình của chúng hiển thị là đang bảo trì trên chợ mô hình.",
+    "Confirm maintenance": "Xác nhận bảo trì",
+    "Maintenance note (shown to users, optional)": "Ghi chú bảo trì (hiển thị cho người dùng, tùy chọn)",
+    "e.g. Upstream upgrade, service paused": "VD: Nâng cấp phía nhà cung cấp, tạm dừng dịch vụ",
+    "Expected recovery": "Dự kiến khôi phục",
+    "In 1 hour": "Sau 1 giờ",
+    "Today 18:00": "Hôm nay 18:00",
+    "Auto restore to enabled at that time": "Tự động bật lại vào thời điểm đó",
+    "{{count}} channel(s) set to maintenance": "Đã đặt bảo trì cho {{count}} kênh",
+    "{{count}} channel(s) failed to set maintenance": "Không thể đặt bảo trì cho {{count}} kênh",
+    "Recovery time to be determined": "Thời gian khôi phục chưa xác định",
+    "Today {{time}}": "Hôm nay {{time}}",
+    "Under maintenance, service paused": "Đang bảo trì, tạm dừng dịch vụ",
+    "{{count}} under maintenance": "{{count}} đang bảo trì"
   }
 }

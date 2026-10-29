@@ -41,7 +41,7 @@ import {
   getDefaultMarketGroup,
   getMarketGroups,
   getStatusLabelKey,
-  getStatusLevel,
+  getModelMarketStatus,
   type MarketStatusFilter,
 } from './lib/market'
 
@@ -117,9 +117,7 @@ export function Pricing() {
       none: 0,
     }
     for (const model of models) {
-      const status =
-        getStatusLevel(perf.get(model.model_name)?.successRate) ?? 'none'
-      counts[status] += 1
+      counts[getModelMarketStatus(model, perf)] += 1
     }
     return counts
   }, [models, perf])

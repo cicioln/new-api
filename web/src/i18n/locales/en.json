@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "The USDT amount is the payable CNY amount divided by the USDT exchange rate.",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.",
     "USDT exchange rate": "USDT exchange rate",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}})."
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).",
+    "Expected recovery {{time}}": "Expected recovery {{time}}",
+    "No recovery time set": "No recovery time set",
+    "Set maintenance": "Set maintenance",
+    "End maintenance": "End maintenance",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.",
+    "Confirm maintenance": "Confirm maintenance",
+    "Maintenance note (shown to users, optional)": "Maintenance note (shown to users, optional)",
+    "e.g. Upstream upgrade, service paused": "e.g. Upstream upgrade, service paused",
+    "Expected recovery": "Expected recovery",
+    "In 1 hour": "In 1 hour",
+    "Today 18:00": "Today 18:00",
+    "Auto restore to enabled at that time": "Auto restore to enabled at that time",
+    "{{count}} channel(s) set to maintenance": "{{count}} channel(s) set to maintenance",
+    "{{count}} channel(s) failed to set maintenance": "{{count}} channel(s) failed to set maintenance",
+    "Recovery time to be determined": "Recovery time to be determined",
+    "Today {{time}}": "Today {{time}}",
+    "Under maintenance, service paused": "Under maintenance, service paused",
+    "{{count}} under maintenance": "{{count}} under maintenance"
   }
 }

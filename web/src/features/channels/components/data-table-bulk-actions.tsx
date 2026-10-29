@@ -43,6 +43,7 @@ import {
   handleTestChannel,
 } from '../lib'
 import type { Channel } from '../types'
+import { MaintenanceDialog } from './dialogs/maintenance-dialog'
 
 interface DataTableBulkActionsProps {
   table: Table<Channel>
@@ -53,6 +54,7 @@ export function DataTableBulkActions(props: DataTableBulkActionsProps) {
   const queryClient = useQueryClient()
   const [showTagDialog, setShowTagDialog] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showMaintenance, setShowMaintenance] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
   const [tagValue, setTagValue] = useState('')
   const currentUser = useAuthStore((s) => s.auth.user)
@@ -116,6 +118,13 @@ export function DataTableBulkActions(props: DataTableBulkActionsProps) {
         <Button
           variant='outline'
           size='sm'
+          onClick={() => setShowMaintenance(true)}
+        >
+          {t('Set maintenance')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
           onClick={() => setShowTagDialog(true)}
         >
           {t('Set Tag')}
@@ -143,6 +152,15 @@ export function DataTableBulkActions(props: DataTableBulkActionsProps) {
           {t('Delete')}
         </Button>
       </BulkActionsToolbar>
+
+      {showMaintenance && (
+        <MaintenanceDialog
+          open={showMaintenance}
+          onOpenChange={setShowMaintenance}
+          channelIds={selectedIds}
+          onSuccess={clearSelection}
+        />
+      )}
 
       <Dialog
         open={showTagDialog}

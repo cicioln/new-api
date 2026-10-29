@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { Bird, ChevronRight } from 'lucide-react'
+import { Bird, ChevronRight, Wrench } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -247,6 +247,15 @@ export function PelicanButton(props: {
       {t('Pelican test')}
     </>
   )
+
+  if (props.model.maintenance) {
+    return (
+      <button type='button' disabled className={PELICAN_BUTTON_CLASS}>
+        <Wrench aria-hidden className='size-3.5' strokeWidth={1.8} />
+        {t('Under maintenance')}
+      </button>
+    )
+  }
 
   if (!supported) {
     return (

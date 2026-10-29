@@ -7828,6 +7828,25 @@
     "The USDT amount is the payable CNY amount divided by the USDT exchange rate.": "Сумма в USDT — сумма к оплате в CNY, делённая на курс USDT.",
     "A react-icons name (e.g. SiTether) or an image URL. Leave blank for the Tether logo.": "Имя иконки react-icons (например, SiTether) или URL изображения. Оставьте пустым для логотипа Tether.",
     "USDT exchange rate": "Курс USDT",
-    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Сколько CNY стоит один USDT, например 7.2. Укажите 0, чтобы использовать курс доллара ({{rate}})."
+    "How many CNY one USDT is worth, e.g. 7.2. Set 0 to use the USD exchange rate ({{rate}}).": "Сколько CNY стоит один USDT, например 7.2. Укажите 0, чтобы использовать курс доллара ({{rate}}).",
+    "Expected recovery {{time}}": "Ожидаемое восстановление {{time}}",
+    "No recovery time set": "Время восстановления не задано",
+    "Set maintenance": "Перевести в обслуживание",
+    "End maintenance": "Завершить обслуживание",
+    "Channel {{name}} stops serving requests; its models show as under maintenance in the model square.": "Канал {{name}} перестанет обрабатывать запросы; его модели будут показаны на витрине как на обслуживании.",
+    "{{count}} channel(s) stop serving requests; their models show as under maintenance in the model square.": "{{count}} канал(ов) перестанут обрабатывать запросы; их модели будут показаны на витрине как на обслуживании.",
+    "Confirm maintenance": "Подтвердить обслуживание",
+    "Maintenance note (shown to users, optional)": "Примечание (видно пользователям, необязательно)",
+    "e.g. Upstream upgrade, service paused": "Например: обновление у провайдера, сервис приостановлен",
+    "Expected recovery": "Ожидаемое восстановление",
+    "In 1 hour": "Через 1 час",
+    "Today 18:00": "Сегодня 18:00",
+    "Auto restore to enabled at that time": "Автоматически включить в это время",
+    "{{count}} channel(s) set to maintenance": "{{count}} канал(ов) переведено в обслуживание",
+    "{{count}} channel(s) failed to set maintenance": "Не удалось перевести в обслуживание {{count}} канал(ов)",
+    "Recovery time to be determined": "Время восстановления уточняется",
+    "Today {{time}}": "Сегодня {{time}}",
+    "Under maintenance, service paused": "На обслуживании, сервис приостановлен",
+    "{{count}} under maintenance": "{{count}} на обслуживании"
   }
 }
