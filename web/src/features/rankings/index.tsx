@@ -20,27 +20,31 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
-import { Button } from '@/components/ui/button'
+import { PageTransition } from '@/components/page-transition'
 import { Skeleton } from '@/components/ui/skeleton'
-import { MarketSeg } from '@/features/pricing/components/market-seg'
-import { toIntlLocale } from '@/i18n/languages'
-import { formatNumber } from '@/lib/format'
 
-import { RankingsPodium } from './components/rankings-podium'
-import { TopRisersCard, VendorShareCard } from './components/rankings-side'
-import { RankingsTable } from './components/rankings-table'
+import {
+  MarketShareSection,
+  ModelsSection,
+  PulseSection,
+  RankingsHero,
+} from './components'
 import { useRankings } from './hooks/use-rankings'
-import { formatTokens } from './lib/format'
-import { RANKING_PERIODS, getTopRisers } from './lib/rankings'
 import type { RankingPeriod } from './types'
 
+const VALID_PERIODS: RankingPeriod[] = ['today', 'week', 'month', 'year']
+
 export function Rankings() {
-  const { t, i18n } = useTranslation()
-  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
+  const { t } = useTranslation()
   const search = useSearch({ from: '/rankings/' })
   const navigate = useNavigate()
 
-  const period: RankingPeriod = search.period ?? 'week'
+  const period: RankingPeriod = VALID_PERIODS.includes(
+    search.period as RankingPeriod
+  )
+    ? (search.period as RankingPeriod)
+    : 'week'
+
   const rankingsQuery = useRankings(period)
   const snapshot = rankingsQuery.data?.data
 
@@ -51,125 +55,83 @@ export function Rankings() {
     })
   }
 
-  let content: React.ReactNode
-  if (rankingsQuery.isLoading) {
-    content = (
-      <div aria-busy='true' className='grid gap-3.5'>
-        <Skeleton className='h-[74px] rounded-xl' />
-        <div className='grid items-end gap-3.5 md:grid-cols-3'>
-          <Skeleton className='h-[170px] rounded-[14px]' />
-          <Skeleton className='h-[190px] rounded-[14px]' />
-          <Skeleton className='h-[170px] rounded-[14px]' />
-        </div>
-        <div className={GRID}>
-          <Skeleton className='h-[420px] rounded-xl' />
-          <Skeleton className='h-[200px] rounded-xl' />
-        </div>
-      </div>
-    )
-  } else if (!snapshot) {
-    content = (
-      <div className='bg-card text-subtle-foreground rounded-xl border px-5 py-16 text-center text-[13px]'>
-        <b className='text-destructive mb-1 block text-[15px]'>
-          {t('Unable to load rankings')}
-        </b>
-        {rankingsQuery.error instanceof Error
-          ? rankingsQuery.error.message
-          : t('Unable to load rankings data')}
-        <br />
-        <Button
-          size='sm'
-          variant='outline'
-          className='mt-3.5'
-          onClick={() => void rankingsQuery.refetch()}
-        >
-          {t('Retry')}
-        </Button>
-      </div>
-    )
-  } else {
-    const models = snapshot.models
-    // Trend columns are noise until a previous period exists for any model.
-    const showTrend = models.some((row) => row.previous_rank != null)
-    const hasRisers = getTopRisers(snapshot.top_movers).length > 0
-    const totalTokens = models.reduce((sum, row) => sum + row.total_tokens, 0)
-    const stats = [
-      { label: t('Total tokens'), value: formatTokens(totalTokens) },
-      { label: t('Active models'), value: formatNumber(models.length, locale) },
-      {
-        label: t('Vendors'),
-        value: formatNumber(snapshot.vendors.length, locale),
-      },
-    ]
-    content =
-      models.length === 0 ? (
-        <div className='bg-card text-subtle-foreground rounded-xl border px-5 py-16 text-center text-[13px]'>
-          {t('No data')}
-        </div>
-      ) : (
-        <>
-          <dl className='bg-card mb-3.5 grid grid-cols-3 divide-x rounded-[14px] border'>
-            {stats.map((stat) => (
-              <div key={stat.label} className='px-[18px] py-3.5'>
-                <dt className='text-subtle-foreground text-xs'>{stat.label}</dt>
-                <dd className='mt-0.5 font-mono text-xl font-semibold tracking-tight tabular-nums max-[560px]:text-base'>
-                  {stat.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <RankingsPodium
-            rows={models.slice(0, 3)}
-            showRankChange={showTrend}
-          />
-          <div className={GRID}>
-            {models.length > 3 ? (
-              <RankingsTable
-                rows={models.slice(3)}
-                showTrend={showTrend}
-                maxTokens={models[0].total_tokens}
-              />
-            ) : (
-              <div />
-            )}
-            <div className='grid gap-3.5'>
-              <VendorShareCard vendors={snapshot.vendors} />
-              {hasRisers && <TopRisersCard movers={snapshot.top_movers} />}
-            </div>
-          </div>
-        </>
-      )
-  }
-
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='mx-auto w-full max-w-[1600px] px-4 pb-16 md:px-7'>
-        <div className='flex flex-wrap items-end justify-between gap-4 pt-10 pb-5'>
-          <div>
-            <h1 className='text-[30px] font-[650] tracking-[-0.02em]'>
-              {t('Model rankings')}
-            </h1>
-            <p className='text-subtle-foreground mt-1'>
-              {t(
-                'Ranked by tokens actually routed through this site, from /api/rankings.'
-              )}
-            </p>
-          </div>
-          <MarketSeg
-            value={period}
-            options={RANKING_PERIODS.map((option) => ({
-              value: option.value,
-              label: t(option.labelKey),
-            }))}
-            onChange={handlePeriodChange}
-            aria-label={t('Period')}
-          />
-        </div>
-        {content}
+      <div className='relative'>
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-x-0 top-0 h-[600px] opacity-20 dark:opacity-[0.10]'
+          style={{
+            background: [
+              'radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.72 0.18 250 / 80%) 0%, transparent 70%)',
+              'radial-gradient(ellipse 50% 40% at 80% 15%, oklch(0.65 0.15 200 / 60%) 0%, transparent 70%)',
+              'radial-gradient(ellipse 40% 35% at 50% 70%, oklch(0.70 0.12 280 / 40%) 0%, transparent 70%)',
+            ].join(', '),
+            maskImage:
+              'linear-gradient(to bottom, black 40%, transparent 100%)',
+            WebkitMaskImage:
+              'linear-gradient(to bottom, black 40%, transparent 100%)',
+          }}
+        />
+        <PageTransition className='relative mx-auto w-full max-w-[1280px] space-y-8 px-3 pt-16 pb-10 sm:px-6 sm:pt-20 sm:pb-12 xl:px-8'>
+          <RankingsHero period={period} onPeriodChange={handlePeriodChange} />
+
+          {rankingsQuery.isLoading ? (
+            <RankingsLoading />
+          ) : !snapshot ? (
+            <RankingsError
+              message={
+                rankingsQuery.error instanceof Error
+                  ? rankingsQuery.error.message
+                  : t('Unable to load rankings data')
+              }
+            />
+          ) : (
+            <>
+              <ModelsSection
+                history={snapshot.models_history}
+                rows={snapshot.models}
+                period={period}
+              />
+
+              <MarketShareSection
+                history={snapshot.vendor_share_history}
+                rows={snapshot.vendors}
+                period={period}
+              />
+
+              <PulseSection
+                movers={snapshot.top_movers}
+                droppers={snapshot.top_droppers}
+              />
+            </>
+          )}
+        </PageTransition>
       </div>
     </PublicLayout>
   )
 }
 
-const GRID =
-  'grid grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] items-start gap-3.5 max-[1000px]:grid-cols-[minmax(0,1fr)]'
+function RankingsLoading() {
+  return (
+    <div className='space-y-6'>
+      <Skeleton className='h-[420px] w-full rounded-xl' />
+      <Skeleton className='h-[360px] w-full rounded-xl' />
+      <Skeleton className='h-[180px] w-full rounded-xl' />
+    </div>
+  )
+}
+
+function RankingsError(props: { message: string }) {
+  const { t } = useTranslation()
+  return (
+    <div className='bg-card rounded-xl border border-dashed px-6 py-12 text-center'>
+      <h2 className='text-foreground text-base font-semibold'>
+        {t('Unable to load rankings')}
+      </h2>
+      <p className='text-muted-foreground mx-auto mt-2 max-w-md text-sm'>
+        {props.message}
+      </p>
+    </div>
+  )
+}
