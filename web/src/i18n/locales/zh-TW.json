@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "第 {{line}} 行：日期 {{date}} 重複",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必須大於或等於 0",
     "Failed to sync renamed groups": "同步改名分組失敗",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分組改名已同步：{{channels}} 個渠道、{{users}} 個使用者、{{tokens}} 個令牌、{{pelican}} 筆鵜鶘記錄"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分組改名已同步：{{channels}} 個渠道、{{users}} 個使用者、{{tokens}} 個令牌、{{pelican}} 筆鵜鶘記錄",
+    "Cache short": "快取",
+    "Cache hit rate: cached input tokens / all input tokens": "快取命中率：快取命中的輸入 tokens / 全部輸入 tokens",
+    "No cache data": "暫無快取資料"
   }
 }

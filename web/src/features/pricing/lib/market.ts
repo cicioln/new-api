@@ -46,6 +46,7 @@ export type MarketPerf = {
   latencyMs?: number
   tps?: number
   successRate?: number
+  cacheHitRate?: number
   requests: number
   series: SuccessRatePoint[]
 }
@@ -63,8 +64,10 @@ export function toMarketPerf(summary: {
   success_rate: number
   request_count?: number
   recent_success_series?: SuccessRatePoint[]
+  cache_hit_rate?: number
 }): MarketPerf {
   const rate = summary.success_rate
+  const cacheRate = summary.cache_hit_rate
   return {
     // Total latency grows with output length (and with long reasoning), so
     // time to first token is the fairer number; non-stream-only models
@@ -73,6 +76,13 @@ export function toMarketPerf(summary: {
     tps: finite(summary.avg_tps),
     successRate:
       Number.isFinite(rate) && rate >= 0 && rate <= 100 ? rate : undefined,
+    cacheHitRate:
+      cacheRate != null &&
+      Number.isFinite(cacheRate) &&
+      cacheRate >= 0 &&
+      cacheRate <= 100
+        ? cacheRate
+        : undefined,
     requests: summary.request_count ?? 0,
     series: summary.recent_success_series ?? [],
   }
@@ -154,6 +164,10 @@ export function formatMarketLatency(ms: number | undefined): string {
 
 export function formatMarketTps(tps: number | undefined): string {
   return tps == null ? '—' : String(Math.round(tps))
+}
+
+export function formatCacheHitRate(rate: number | undefined): string {
+  return rate == null ? '—' : `${Math.round(rate)}%`
 }
 
 export function formatSuccessRate(rate: number | undefined): string {

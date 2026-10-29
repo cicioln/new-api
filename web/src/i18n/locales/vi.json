@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "Dòng {{line}}: ngày {{date}} bị trùng",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "Dòng {{line}}: token ngày {{date}} phải từ 0 trở lên",
     "Failed to sync renamed groups": "Đồng bộ nhóm đã đổi tên thất bại",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Đã đồng bộ nhóm đổi tên: {{channels}} kênh, {{users}} người dùng, {{tokens}} token, {{pelican}} bản ghi pelican"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Đã đồng bộ nhóm đổi tên: {{channels}} kênh, {{users}} người dùng, {{tokens}} token, {{pelican}} bản ghi pelican",
+    "Cache short": "Cache",
+    "Cache hit rate: cached input tokens / all input tokens": "Tỷ lệ cache: token đầu vào từ cache / tổng token đầu vào",
+    "No cache data": "Chưa có dữ liệu cache"
   }
 }

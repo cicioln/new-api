@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "第 {{line}} 行：日期 {{date}} 重复",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必须大于或等于 0",
     "Failed to sync renamed groups": "同步改名分组失败",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分组改名已同步：{{channels}} 个渠道、{{users}} 个用户、{{tokens}} 个令牌、{{pelican}} 条鹈鹕记录"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分组改名已同步：{{channels}} 个渠道、{{users}} 个用户、{{tokens}} 个令牌、{{pelican}} 条鹈鹕记录",
+    "Cache short": "缓存",
+    "Cache hit rate: cached input tokens / all input tokens": "缓存命中率：缓存命中的输入 tokens / 全部输入 tokens",
+    "No cache data": "暂无缓存数据"
   }
 }

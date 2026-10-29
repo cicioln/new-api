@@ -64,6 +64,9 @@ type textQuotaSummary struct {
 	ToolSurchargeItems     []ToolSurchargeItem
 	ToolCallSurchargeQuota decimal.Decimal
 	FixedPriceBilling      bool
+	// PerformanceInputTokens counts all prompt tokens, cache reads and writes
+	// included, regardless of how the upstream reports them.
+	PerformanceInputTokens int
 }
 
 // hasBillableUsage reports whether this request should incur any charge.
@@ -274,6 +277,10 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 			}
 		}
 		summary.PromptTokens -= summary.CacheCreationTokens
+	}
+	summary.PerformanceInputTokens = summary.PromptTokens
+	if summary.IsClaudeUsageSemantic || legacyClaudeDerived {
+		summary.PerformanceInputTokens += summary.CacheTokens + cacheWriteTokensTotal(summary)
 	}
 
 	dPromptTokens := decimal.NewFromInt(int64(summary.PromptTokens))
@@ -543,4 +550,6 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 		Other:            other,
 	})
 	relayInfo.PerformanceOutputTokens = int64(summary.CompletionTokens)
+	relayInfo.PerformanceInputTokens = int64(summary.PerformanceInputTokens)
+	relayInfo.PerformanceCacheTokens = int64(min(summary.CacheTokens, summary.PerformanceInputTokens))
 }

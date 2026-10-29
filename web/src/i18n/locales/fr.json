@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "Ligne {{line}} : date {{date}} en double",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "Ligne {{line}} : les tokens du {{date}} doivent être supérieurs ou égaux à 0",
     "Failed to sync renamed groups": "Échec de la synchronisation des groupes renommés",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Groupes renommés synchronisés : {{channels}} canaux, {{users}} utilisateurs, {{tokens}} jetons, {{pelican}} enregistrements pélican"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Groupes renommés synchronisés : {{channels}} canaux, {{users}} utilisateurs, {{tokens}} jetons, {{pelican}} enregistrements pélican",
+    "Cache short": "Cache",
+    "Cache hit rate: cached input tokens / all input tokens": "Taux de cache : tokens d'entrée en cache / tous les tokens d'entrée",
+    "No cache data": "Aucune donnée de cache"
   }
 }

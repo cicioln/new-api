@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "Строка {{line}}: дата {{date}} повторяется",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "Строка {{line}}: токены на {{date}} должны быть не меньше 0",
     "Failed to sync renamed groups": "Не удалось синхронизировать переименованные группы",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Переименованные группы синхронизированы: каналов {{channels}}, пользователей {{users}}, токенов {{tokens}}, записей пеликана {{pelican}}"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Переименованные группы синхронизированы: каналов {{channels}}, пользователей {{users}}, токенов {{tokens}}, записей пеликана {{pelican}}",
+    "Cache short": "Кэш",
+    "Cache hit rate: cached input tokens / all input tokens": "Доля кэша: кэшированные входные токены / все входные токены",
+    "No cache data": "Нет данных о кэше"
   }
 }

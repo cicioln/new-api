@@ -63,6 +63,8 @@ export type PerfModelSummary = {
   success_rate: number
   avg_tps: number
   recent_success_series?: SuccessRatePoint[]
+  /** Cache-read input tokens / all input tokens, in percent. */
+  cache_hit_rate?: number
   request_count?: number
 }
 

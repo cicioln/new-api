@@ -7879,6 +7879,9 @@
     "Row {{line}}: duplicate date {{date}}": "Row {{line}}: duplicate date {{date}}",
     "Row {{line}}: tokens on {{date}} must be 0 or more": "Row {{line}}: tokens on {{date}} must be 0 or more",
     "Failed to sync renamed groups": "Failed to sync renamed groups",
-    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records"
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records",
+    "Cache short": "Cache",
+    "Cache hit rate: cached input tokens / all input tokens": "Cache hit rate: cached input tokens / all input tokens",
+    "No cache data": "No cache data"
   }
 }

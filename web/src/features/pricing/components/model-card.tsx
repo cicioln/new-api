@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { DEFAULT_TOKEN_UNIT } from '../constants'
 import { useMarketPrice } from '../hooks/use-market-price'
 import {
+  formatCacheHitRate,
   formatMarketLatency,
   formatMarketTps,
   getVendorAvatarIcon,
@@ -229,6 +230,22 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 )}
               </b>
             </span>
+            {props.model.cache_ratio != null && (
+              <span
+                title={
+                  props.perf?.cacheHitRate != null
+                    ? t(
+                        'Cache hit rate: cached input tokens / all input tokens'
+                      )
+                    : t('No cache data')
+                }
+              >
+                {t('Cache short')}{' '}
+                <b className='font-mono font-medium text-sky-600 dark:text-sky-400'>
+                  {formatCacheHitRate(props.perf?.cacheHitRate)}
+                </b>
+              </span>
+            )}
           </div>
           <MarketStatusBars perf={props.perf} className='h-2.5' />
         </div>

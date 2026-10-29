@@ -69,6 +69,8 @@ func RecordRelayResult(ctx context.Context, info *relaycommon.RelayInfo, apiErr 
 		Success:      outcome == OutcomeSuccess,
 		OutputTokens: info.PerformanceOutputTokens,
 		GenerationMs: generationMs,
+		InputTokens:  info.PerformanceInputTokens,
+		CacheTokens:  info.PerformanceCacheTokens,
 	})
 }
 
@@ -182,6 +184,8 @@ func Query(params QueryParams) (QueryResult, error) {
 			ttftCount:      row.TtftCount,
 			outputTokens:   row.OutputTokens,
 			generationMs:   row.GenerationMs,
+			inputTokens:    row.InputTokens,
+			cacheTokens:    row.CacheTokens,
 		})
 	}
 
@@ -253,6 +257,8 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 			generationMs:   row.GenerationMs,
 			ttftSumMs:      row.TtftSumMs,
 			ttftCount:      row.TtftCount,
+			inputTokens:    row.InputTokens,
+			cacheTokens:    row.CacheTokens,
 		}
 		mergeModelTotals(totals, row.ModelName, value)
 		mergeModelBucket(modelBuckets, row.ModelName, row.BucketTs, value)
@@ -309,6 +315,7 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 			SuccessRate:         math.Round(successRate*100) / 100,
 			AvgTps:              math.Round(avgTps*100) / 100,
 			RecentSuccessSeries: recentSuccessSeries(modelBuckets[name]),
+			CacheHitRate:        cacheHitRate(total),
 			RequestCount:        total.requestCount,
 		})
 	}
@@ -396,6 +403,8 @@ func mergeModelTotals(totals map[string]counters, modelName string, value counte
 	current.ttftCount += value.ttftCount
 	current.outputTokens += value.outputTokens
 	current.generationMs += value.generationMs
+	current.inputTokens += value.inputTokens
+	current.cacheTokens += value.cacheTokens
 	totals[modelName] = current
 }
 
@@ -414,6 +423,8 @@ func mergeModelBucket(modelBuckets map[string]map[int64]counters, modelName stri
 	current.ttftCount += value.ttftCount
 	current.outputTokens += value.outputTokens
 	current.generationMs += value.generationMs
+	current.inputTokens += value.inputTokens
+	current.cacheTokens += value.cacheTokens
 	modelBuckets[modelName][bucketTs] = current
 }
 
@@ -483,6 +494,8 @@ func mergeCounters(merged map[bucketKey]counters, key bucketKey, value counters)
 	current.ttftCount += value.ttftCount
 	current.outputTokens += value.outputTokens
 	current.generationMs += value.generationMs
+	current.inputTokens += value.inputTokens
+	current.cacheTokens += value.cacheTokens
 	merged[key] = current
 }
 
@@ -611,6 +624,14 @@ func avgTps(value counters) float64 {
 	return float64(value.outputTokens) / (float64(value.generationMs) / 1000)
 }
 
+func cacheHitRate(value counters) *float64 {
+	if value.inputTokens <= 0 {
+		return nil
+	}
+	rate := math.Round(float64(value.cacheTokens)/float64(value.inputTokens)*10000) / 100
+	return &rate
+}
+
 func recordRedis(key bucketKey, sample Sample) {
 	if !common.RedisEnabled || common.RDB == nil {
 		return
@@ -634,6 +655,10 @@ func recordRedis(key bucketKey, sample Sample) {
 	if sample.OutputTokens > 0 && sample.GenerationMs > 0 {
 		pipe.HIncrBy(ctx, redisKey, "out", sample.OutputTokens)
 		pipe.HIncrBy(ctx, redisKey, "gen_ms", sample.GenerationMs)
+	}
+	if sample.InputTokens > 0 {
+		pipe.HIncrBy(ctx, redisKey, "in", sample.InputTokens)
+		pipe.HIncrBy(ctx, redisKey, "cache", min(max(sample.CacheTokens, 0), sample.InputTokens))
 	}
 	pipe.Expire(ctx, redisKey, time.Hour)
 	_, _ = pipe.Exec(ctx)
