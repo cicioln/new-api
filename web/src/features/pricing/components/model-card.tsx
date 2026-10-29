@@ -243,7 +243,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
               </b>
             </span>
           </div>
-          <MarketStatusBars perf={props.perf} className='h-2.5' />
+          <MarketStatusBars perf={props.perf} className='h-5' />
         </div>
       ) : (
         <div
