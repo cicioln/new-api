@@ -44,6 +44,21 @@ export async function updateSystemOption(request: UpdateOptionRequest) {
   return res.data
 }
 
+export async function renameGroups(renames: Record<string, string>) {
+  const res = await api.post<{
+    success: boolean
+    message?: string
+    data?: {
+      channels: number
+      users: number
+      tokens: number
+      pelican_records: number
+      subscriptions: number
+    }
+  }>('/api/group/rename', { renames })
+  return res.data
+}
+
 export async function updatePasskeyDomains(
   request: UpdatePasskeyDomainsRequest
 ) {

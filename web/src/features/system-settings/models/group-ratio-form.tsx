@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Code2, Eye, HelpCircle } from 'lucide-react'
-import { memo, useCallback, useState, type ReactNode } from 'react'
+import { memo, useCallback, useRef, useState, type ReactNode } from 'react'
 import { useWatch, type UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 
@@ -78,7 +78,10 @@ type GroupFormValues = {
 
 type GroupRatioFormProps = {
   form: UseFormReturn<GroupFormValues>
-  onSave: (values: GroupFormValues) => Promise<void>
+  onSave: (
+    values: GroupFormValues,
+    renames: Record<string, string>
+  ) => Promise<void>
   isSaving: boolean
 }
 
@@ -92,6 +95,28 @@ export const GroupRatioForm = memo(function GroupRatioForm({
   const [editMode, setEditMode] = useState<'visual' | 'json'>('visual')
   const [guideOpen, setGuideOpen] = useState(false)
   const [section, setSection] = useState<GroupSettingsSection>('pricing')
+  const renamesRef = useRef<Record<string, string>>({})
+  const [editorKey, setEditorKey] = useState(0)
+
+  const handleRenamesChange = useCallback(
+    (renames: Record<string, string>) => {
+      renamesRef.current = renames
+    },
+    []
+  )
+
+  const handleSave = useCallback(
+    async (formValues: GroupFormValues) => {
+      const renames = renamesRef.current
+      await onSave(formValues, renames)
+      if (Object.keys(renames).length > 0) {
+        // Remount so rows treat the saved names as their new originals
+        renamesRef.current = {}
+        setEditorKey((key) => key + 1)
+      }
+    },
+    [onSave]
+  )
 
   const handleFieldChange = useCallback(
     (field: keyof GroupFormValues, value: string) => {
@@ -151,7 +176,7 @@ export const GroupRatioForm = memo(function GroupRatioForm({
           <Button
             type='button'
             size='sm'
-            onClick={form.handleSubmit(onSave, (errors) => {
+            onClick={form.handleSubmit(handleSave, (errors) => {
               if (errors.MaxTokenAutoGroups) {
                 setEditMode('visual')
                 setSection('auto')
@@ -165,6 +190,7 @@ export const GroupRatioForm = memo(function GroupRatioForm({
         </SettingsPageActionsPortal>
         {editMode === 'visual' ? (
           <GroupRatioVisualEditor
+            key={editorKey}
             section={section}
             onSectionChange={setSection}
             groupRatio={values.GroupRatio ?? ''}
@@ -228,9 +254,10 @@ export const GroupRatioForm = memo(function GroupRatioForm({
             onChange={(field, value) =>
               handleFieldChange(field as keyof GroupFormValues, value)
             }
+            onRenamesChange={handleRenamesChange}
           />
         ) : (
-          <SettingsForm onSubmit={form.handleSubmit(onSave)}>
+          <SettingsForm onSubmit={form.handleSubmit(handleSave)}>
             <FormField
               control={form.control}
               name='GroupRatio'

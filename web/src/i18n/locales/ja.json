@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "{{line}} 行目：開始日は終了日より後にできません",
     "Row {{line}}: every dated value needs a date": "{{line}} 行目：日付指定の値にはすべて日付が必要です",
     "Row {{line}}: duplicate date {{date}}": "{{line}} 行目：日付 {{date}} が重複しています",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "{{line}} 行目：{{date}} のトークンは 0 以上にしてください"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "{{line}} 行目：{{date}} のトークンは 0 以上にしてください",
+    "Failed to sync renamed groups": "名前変更したグループの同期に失敗しました",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "グループ名の変更を同期しました：チャネル {{channels}} 件、ユーザー {{users}} 件、トークン {{tokens}} 件、ペリカン記録 {{pelican}} 件"
   }
 }

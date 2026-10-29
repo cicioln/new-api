@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "Dòng {{line}}: ngày bắt đầu không được sau ngày kết thúc",
     "Row {{line}}: every dated value needs a date": "Dòng {{line}}: mỗi giá trị theo ngày cần có ngày",
     "Row {{line}}: duplicate date {{date}}": "Dòng {{line}}: ngày {{date}} bị trùng",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "Dòng {{line}}: token ngày {{date}} phải từ 0 trở lên"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Dòng {{line}}: token ngày {{date}} phải từ 0 trở lên",
+    "Failed to sync renamed groups": "Đồng bộ nhóm đã đổi tên thất bại",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Đã đồng bộ nhóm đổi tên: {{channels}} kênh, {{users}} người dùng, {{tokens}} token, {{pelican}} bản ghi pelican"
   }
 }

@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "Row {{line}}: start date must not be after end date",
     "Row {{line}}: every dated value needs a date": "Row {{line}}: every dated value needs a date",
     "Row {{line}}: duplicate date {{date}}": "Row {{line}}: duplicate date {{date}}",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "Row {{line}}: tokens on {{date}} must be 0 or more"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Row {{line}}: tokens on {{date}} must be 0 or more",
+    "Failed to sync renamed groups": "Failed to sync renamed groups",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records"
   }
 }

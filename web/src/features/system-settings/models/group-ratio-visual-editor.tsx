@@ -103,10 +103,12 @@ type GroupRatioVisualEditorProps = {
   maxTokenAutoGroupsField: ReactNode
   groupSpecialUsableGroup: string
   onChange: (field: string, value: string) => void
+  onRenamesChange?: (renames: Record<string, string>) => void
 }
 
 type GroupPricingRow = {
   _id: string
+  originalName?: string
   name: string
   ratio: string
   topupRatio: string
@@ -172,6 +174,7 @@ function buildGroupPricingRows(
 
   return [...names].map((name) => ({
     _id: createGroupPricingId(),
+    originalName: name,
     name,
     ratio: String(normalizeRatio(ratioMap[name])),
     topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
@@ -203,6 +206,18 @@ function serializeGroupPricingRows(rows: GroupPricingRow[]) {
     UserUsableGroups: JSON.stringify(userUsableGroups, null, 2),
     TopupGroupRatio: JSON.stringify(topupGroupRatio, null, 2),
   }
+}
+
+function collectGroupRenames(rows: GroupPricingRow[]) {
+  const names = new Set(rows.map((row) => row.name.trim()))
+  const renames: Record<string, string> = {}
+  for (const row of rows) {
+    const from = row.originalName
+    const to = row.name.trim()
+    if (!from || !to || from === to || names.has(from)) continue
+    renames[from] = to
+  }
+  return renames
 }
 
 function groupPricingSignature(rows: GroupPricingRow[]): string {
@@ -278,6 +293,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
   maxTokenAutoGroupsField,
   groupSpecialUsableGroup,
   onChange,
+  onRenamesChange,
 }: GroupRatioVisualEditorProps) {
   const { t, i18n } = useTranslation()
   const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
@@ -371,6 +387,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
           userUsableGroups={userUsableGroups}
           topupGroupRatio={topupGroupRatio}
           onChange={onChange}
+          onRenamesChange={onRenamesChange}
           onShowDetail={setDetailGroup}
         />
       </TabsContent>
@@ -476,6 +493,7 @@ type GroupPricingTableProps = {
   userUsableGroups: string
   topupGroupRatio: string
   onChange: (field: string, value: string) => void
+  onRenamesChange?: (renames: Record<string, string>) => void
   onShowDetail: (name: string) => void
 }
 
@@ -484,6 +502,7 @@ function GroupPricingTable({
   userUsableGroups,
   topupGroupRatio,
   onChange,
+  onRenamesChange,
   onShowDetail,
 }: GroupPricingTableProps) {
   const { t } = useTranslation()
@@ -509,6 +528,10 @@ function GroupPricingTable({
       )
     })
   }, [groupRatio, userUsableGroups, topupGroupRatio])
+
+  useEffect(() => {
+    onRenamesChange?.(collectGroupRenames(rows))
+  }, [rows, onRenamesChange])
 
   const emitRows = useCallback(
     (nextRows: GroupPricingRow[]) => {

@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "Ligne {{line}} : la date de début ne peut pas être après la date de fin",
     "Row {{line}}: every dated value needs a date": "Ligne {{line}} : chaque valeur datée doit avoir une date",
     "Row {{line}}: duplicate date {{date}}": "Ligne {{line}} : date {{date}} en double",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "Ligne {{line}} : les tokens du {{date}} doivent être supérieurs ou égaux à 0"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Ligne {{line}} : les tokens du {{date}} doivent être supérieurs ou égaux à 0",
+    "Failed to sync renamed groups": "Échec de la synchronisation des groupes renommés",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Groupes renommés synchronisés : {{channels}} canaux, {{users}} utilisateurs, {{tokens}} jetons, {{pelican}} enregistrements pélican"
   }
 }

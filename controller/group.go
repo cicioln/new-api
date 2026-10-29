@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
@@ -49,4 +50,24 @@ func GetUserGroups(c *gin.Context) {
 		"message": "",
 		"data":    usableGroups,
 	})
+}
+
+type renameGroupsRequest struct {
+	Renames map[string]string `json:"renames"`
+}
+
+// RenameGroups propagates group renames made in the group pricing settings
+// to channels, users, tokens, pelican records and subscription plans.
+func RenameGroups(c *gin.Context) {
+	var req renameGroupsRequest
+	if err := common.DecodeJson(c.Request.Body, &req); err != nil {
+		common.ApiErrorT(c, "Invalid parameters")
+		return
+	}
+	result, err := model.RenameGroups(req.Renames)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, result)
 }

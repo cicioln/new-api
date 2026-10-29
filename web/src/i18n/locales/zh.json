@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "第 {{line}} 行：开始日期不能晚于结束日期",
     "Row {{line}}: every dated value needs a date": "第 {{line}} 行：每个指定日期用量都需要选择日期",
     "Row {{line}}: duplicate date {{date}}": "第 {{line}} 行：日期 {{date}} 重复",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必须大于或等于 0"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必须大于或等于 0",
+    "Failed to sync renamed groups": "同步改名分组失败",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分组改名已同步：{{channels}} 个渠道、{{users}} 个用户、{{tokens}} 个令牌、{{pelican}} 条鹈鹕记录"
   }
 }

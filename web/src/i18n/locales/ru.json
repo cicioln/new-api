@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "Строка {{line}}: дата начала не может быть позже даты окончания",
     "Row {{line}}: every dated value needs a date": "Строка {{line}}: у каждого значения должна быть дата",
     "Row {{line}}: duplicate date {{date}}": "Строка {{line}}: дата {{date}} повторяется",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "Строка {{line}}: токены на {{date}} должны быть не меньше 0"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Строка {{line}}: токены на {{date}} должны быть не меньше 0",
+    "Failed to sync renamed groups": "Не удалось синхронизировать переименованные группы",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Переименованные группы синхронизированы: каналов {{channels}}, пользователей {{users}}, токенов {{tokens}}, записей пеликана {{pelican}}"
   }
 }

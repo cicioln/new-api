@@ -7877,6 +7877,8 @@
     "Row {{line}}: start date must not be after end date": "第 {{line}} 行：開始日期不能晚於結束日期",
     "Row {{line}}: every dated value needs a date": "第 {{line}} 行：每個指定日期用量都需要選擇日期",
     "Row {{line}}: duplicate date {{date}}": "第 {{line}} 行：日期 {{date}} 重複",
-    "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必須大於或等於 0"
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必須大於或等於 0",
+    "Failed to sync renamed groups": "同步改名分組失敗",
+    "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分組改名已同步：{{channels}} 個渠道、{{users}} 個使用者、{{tokens}} 個令牌、{{pelican}} 筆鵜鶘記錄"
   }
 }

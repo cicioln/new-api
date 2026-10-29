@@ -40,6 +40,7 @@ import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsPageTitleStatusPortal } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
+import { renameGroups } from '../api'
 import { useUpdateOption } from '../hooks/use-update-option'
 import { positiveIntegerSchema } from '../utils/numeric-field'
 import { GroupRatioForm } from './group-ratio-form'
@@ -146,6 +147,74 @@ const createGroupSchema = (t: Translate) =>
     DefaultUseAutoGroup: z.boolean(),
     GroupSpecialUsableGroup: createJsonStringField(t),
   })
+
+function renameGroupKey(key: string, renames: Record<string, string>) {
+  const prefix =
+    key.startsWith('+:') || key.startsWith('-:') ? key.slice(0, 2) : ''
+  const name = key.slice(prefix.length)
+  return prefix + (renames[name] ?? name)
+}
+
+function renameGroupKeys<T>(
+  map: Record<string, T>,
+  renames: Record<string, string>
+): Record<string, T> {
+  return Object.fromEntries(
+    Object.entries(map).map(([key, value]) => [
+      renameGroupKey(key, renames),
+      value,
+    ])
+  )
+}
+
+function rewriteGroupJson(
+  value: string,
+  rewrite: (parsed: unknown) => unknown
+): string {
+  try {
+    return JSON.stringify(rewrite(JSON.parse(value)), null, 2)
+  } catch {
+    return value
+  }
+}
+
+function applyGroupRenames<T extends GroupFormValues>(
+  values: T,
+  renames: Record<string, string>
+): T {
+  if (Object.keys(renames).length === 0) return values
+  const renameNested = (parsed: unknown) => {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return parsed
+    }
+    const outer = renameGroupKeys(parsed as Record<string, unknown>, renames)
+    for (const [key, inner] of Object.entries(outer)) {
+      if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+        outer[key] = renameGroupKeys(inner as Record<string, unknown>, renames)
+      }
+    }
+    return outer
+  }
+  return {
+    ...values,
+    GroupGroupRatio: rewriteGroupJson(values.GroupGroupRatio, renameNested),
+    GroupSpecialUsableGroup: rewriteGroupJson(
+      values.GroupSpecialUsableGroup,
+      renameNested
+    ),
+    AutoGroups: rewriteGroupJson(values.AutoGroups, (parsed) =>
+      Array.isArray(parsed)
+        ? [
+            ...new Set(
+              parsed.map((name) =>
+                typeof name === 'string' ? (renames[name] ?? name) : name
+              )
+            ),
+          ]
+        : parsed
+    ),
+  }
+}
 
 type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
 type GroupFormValues = z.infer<ReturnType<typeof createGroupSchema>>
@@ -408,7 +477,8 @@ export function RatioSettingsCard({
   )
 
   const saveGroupRatios = useCallback(
-    async (values: GroupFormValues) => {
+    async (formValues: GroupFormValues, renames: Record<string, string>) => {
+      const values = applyGroupRenames(formValues, renames)
       const normalized = {
         GroupRatio: normalizeJsonString(values.GroupRatio),
         TopupGroupRatio: normalizeJsonString(values.TopupGroupRatio),
@@ -440,8 +510,31 @@ export function RatioSettingsCard({
       }
 
       groupNormalizedDefaults.current = normalized
+
+      if (Object.keys(renames).length > 0) {
+        try {
+          const res = await renameGroups(renames)
+          if (!res.success) {
+            handleServerError(res, t('Failed to sync renamed groups'))
+            return
+          }
+          toast.success(
+            t(
+              'Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records',
+              {
+                channels: res.data?.channels ?? 0,
+                users: res.data?.users ?? 0,
+                tokens: res.data?.tokens ?? 0,
+                pelican: res.data?.pelican_records ?? 0,
+              }
+            )
+          )
+        } catch (error) {
+          handleServerError(error, t('Failed to sync renamed groups'))
+        }
+      }
     },
-    [updateOption]
+    [t, updateOption]
   )
 
   const handleResetRatios = useCallback(() => {
