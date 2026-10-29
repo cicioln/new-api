@@ -39,8 +39,8 @@ export type MarketStatusFilter = (typeof MARKET_STATUS_FILTERS)[number]
 /** Number of status bars shown for the last 24 hours. */
 export const STATUS_BAR_COUNT = 24
 
-const STATUS_OK_MIN = 99
-const STATUS_WARN_MIN = 90
+const STATUS_OK_MIN = 90
+const STATUS_WARN_MIN = 70
 
 export type MarketPerf = {
   latencyMs?: number

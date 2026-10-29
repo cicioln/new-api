@@ -95,9 +95,9 @@ describe('model market filters', () => {
   })
 
   it('grades success rates into normal, busy and maintenance', () => {
-    expect(getStatusLevel(99)).toBe('ok')
-    expect(getStatusLevel(90)).toBe('warn')
-    expect(getStatusLevel(89.9)).toBe('bad')
+    expect(getStatusLevel(90)).toBe('ok')
+    expect(getStatusLevel(85)).toBe('warn')
+    expect(getStatusLevel(69.9)).toBe('bad')
     expect(getStatusLevel(undefined)).toBeNull()
   })
 
