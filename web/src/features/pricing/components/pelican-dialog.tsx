@@ -105,6 +105,42 @@ function Thumbs(props: {
   )
 }
 
+// Splits records into one section per billing group, keeping the newest-first
+// order inside each section and ordering sections by their newest record.
+function GroupedThumbs(props: {
+  records: PelicanRecord[]
+  selected?: PelicanRecord
+  onSelect: (record: PelicanRecord) => void
+  className?: string
+}) {
+  const { t } = useTranslation()
+  const sections = new Map<string, PelicanRecord[]>()
+  for (const record of props.records) {
+    const key = record.group
+    sections.set(key, [...(sections.get(key) ?? []), record])
+  }
+  return (
+    <div className={cn('flex flex-col gap-3', props.className)}>
+      {[...sections.entries()].map(([name, records]) => (
+        <div key={name} className='flex flex-col gap-1.5'>
+          <div className='flex items-center gap-1.5 text-xs font-semibold'>
+            <span className='truncate'>{name || t('No group')}</span>
+            <span className='text-subtle-foreground font-normal tabular-nums'>
+              {records.length}
+            </span>
+            <span className='bg-border h-px flex-1' />
+          </div>
+          <Thumbs
+            records={records}
+            selected={props.selected}
+            onSelect={props.onSelect}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
   const { t } = useTranslation()
   const ago = useTimeAgo()
@@ -413,6 +449,11 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
               </span>
             )}
             · {ago(selected.createdAt)}
+            {selected.group && (
+              <span className='bg-muted text-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold'>
+                {selected.group}
+              </span>
+            )}
           </span>
           <MarketSeg
             value={view}
@@ -541,7 +582,11 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
               </p>
             )}
             {scope === 'model' && (
-              <Thumbs records={mine} selected={selected} onSelect={select} />
+              <GroupedThumbs
+                records={mine}
+                selected={selected}
+                onSelect={select}
+              />
             )}
             {scope === 'all' && (
               <div className='flex flex-col gap-1.5'>
@@ -578,7 +623,7 @@ function PelicanContent(props: PelicanDialogProps & { model: PricingModel }) {
                         />
                       </button>
                       {expanded && (
-                        <Thumbs
+                        <GroupedThumbs
                           records={records}
                           selected={selected}
                           onSelect={select}
