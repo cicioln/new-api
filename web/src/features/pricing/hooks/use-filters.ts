@@ -31,12 +31,6 @@ import {
 } from '../lib/market'
 import type { PricingModel, TokenUnit } from '../types'
 
-function toggle<T>(list: T[], value: T): T[] {
-  return list.includes(value)
-    ? list.filter((item) => item !== value)
-    : [...list, value]
-}
-
 export function useFilters(
   models: PricingModel[],
   perf: Map<string, MarketPerf>
@@ -65,7 +59,9 @@ export function useFilters(
   const group = selectedGroup
 
   const toggleVendor = useCallback(
-    (vendor: string) => setVendors((prev) => toggle(prev, vendor)),
+    // Single-select: picking a vendor replaces the current one.
+    (vendor: string) =>
+      setVendors((prev) => (prev.includes(vendor) ? [] : [vendor])),
     []
   )
   const toggleStatus = useCallback(

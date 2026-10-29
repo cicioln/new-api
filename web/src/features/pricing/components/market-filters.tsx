@@ -133,6 +133,7 @@ export function MarketFilters(props: MarketFiltersProps) {
     >
       <FilterRow label={t('Model vendor')}>
         <FilterChip
+          radio
           checked={props.selectedVendors.length === 0}
           onSelect={props.onClearVendors}
           count={props.total}
@@ -142,6 +143,7 @@ export function MarketFilters(props: MarketFiltersProps) {
         {props.vendors.map((vendor) => (
           <FilterChip
             key={vendor.name}
+            radio
             checked={props.selectedVendors.includes(vendor.name)}
             onSelect={() => props.onToggleVendor(vendor.name)}
             count={vendor.count}
