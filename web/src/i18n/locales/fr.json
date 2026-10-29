@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "Les classements n'affichent que les modèles configurés ci-dessous ; les journaux sont ignorés.",
     "Configured tokens are added on top of actual usage for the same model.": "Les tokens configurés s'ajoutent à l'utilisation réelle du même modèle.",
     "Simulated models": "Modèles simulés",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Les tokens quotidiens sont multipliés selon la période (aujourd'hui ×1, semaine ×7, mois ×30, année ×365). La croissance se mesure par rapport à la période précédente et pilote l'évolution du rang et les courbes. Le fournisseur est déduit des métadonnées du modèle.",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "Les tokens quotidiens sont multipliés selon la période (aujourd'hui ×1, semaine ×7, mois ×30, année ×365). La croissance se mesure par rapport à la période précédente et détermine l'évolution du rang et les courbes. Les dates de début et de fin limitent les jours d'utilisation ; les valeurs datées fixent les tokens exacts d'un jour (UTC). Les fournisseurs sont déduits des métadonnées du modèle.",
     "No simulated models yet": "Aucun modèle simulé",
     "Daily tokens": "Tokens par jour",
     "Growth (%)": "Croissance (%)",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "Ligne {{line}} : le nom du modèle est requis",
     "Row {{line}}: duplicate model {{name}}": "Ligne {{line}} : modèle {{name}} en double",
     "Row {{line}}: daily tokens must be greater than 0": "Ligne {{line}} : les tokens par jour doivent être supérieurs à 0",
-    "Row {{line}}: growth must be between -100% and 10000%": "Ligne {{line}} : la croissance doit être comprise entre -100 % et 10000 %"
+    "Row {{line}}: growth must be between -100% and 10000%": "Ligne {{line}} : la croissance doit être comprise entre -100 % et 10000 %",
+    "Start date": "Date de début",
+    "End date": "Date de fin",
+    "Date": "Date",
+    "Dated values": "Valeurs datées",
+    "Add date": "Ajouter une date",
+    "No dated values yet": "Aucune valeur datée",
+    "this model": "ce modèle",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "Tokens exacts pour {{model}} à des jours précis (UTC). Ils remplacent la moyenne quotidienne et s'appliquent même hors des dates de début et de fin.",
+    "Row {{line}}: start date must not be after end date": "Ligne {{line}} : la date de début ne peut pas être après la date de fin",
+    "Row {{line}}: every dated value needs a date": "Ligne {{line}} : chaque valeur datée doit avoir une date",
+    "Row {{line}}: duplicate date {{date}}": "Ligne {{line}} : date {{date}} en double",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Ligne {{line}} : les tokens du {{date}} doivent être supérieurs ou égaux à 0"
   }
 }

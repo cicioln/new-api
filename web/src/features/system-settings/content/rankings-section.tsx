@@ -16,11 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { Dialog } from '@/components/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +45,15 @@ type SimulatedModelRow = {
   model_name: string
   daily_tokens: string
   growth_pct: string
+  start_date: string
+  end_date: string
+  overrides: DailyOverrideRow[]
+}
+
+type DailyOverrideRow = {
+  key: number
+  date: string
+  tokens: string
 }
 
 type RankingsSectionProps = {
@@ -80,6 +90,17 @@ function parseRows(raw: string): SimulatedModelRow[] {
       model_name: String(item?.model_name ?? ''),
       daily_tokens: item?.daily_tokens ? String(item.daily_tokens) : '',
       growth_pct: item?.growth_pct != null ? String(item.growth_pct) : '0',
+      start_date: String(item?.start_date ?? ''),
+      end_date: String(item?.end_date ?? ''),
+      overrides: Object.entries(
+        (item?.daily_overrides ?? {}) as Record<string, number>
+      )
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, tokens]) => ({
+          key: ++rowKey,
+          date,
+          tokens: String(tokens),
+        })),
     }))
   } catch {
     return []
@@ -88,11 +109,25 @@ function parseRows(raw: string): SimulatedModelRow[] {
 
 function serializeRows(rows: SimulatedModelRow[]): string {
   return JSON.stringify(
-    rows.map((row) => ({
-      model_name: row.model_name.trim(),
-      daily_tokens: Math.round(Number(row.daily_tokens)),
-      growth_pct: Number(row.growth_pct) || 0,
-    }))
+    rows.map((row) => {
+      const overrides = [...row.overrides].sort((a, b) =>
+        a.date.localeCompare(b.date)
+      )
+      return {
+        model_name: row.model_name.trim(),
+        daily_tokens: Math.round(Number(row.daily_tokens) || 0),
+        growth_pct: Number(row.growth_pct) || 0,
+        ...(row.start_date ? { start_date: row.start_date } : {}),
+        ...(row.end_date ? { end_date: row.end_date } : {}),
+        ...(overrides.length > 0
+          ? {
+              daily_overrides: Object.fromEntries(
+                overrides.map((o) => [o.date, Math.round(Number(o.tokens))])
+              ),
+            }
+          : {}),
+      }
+    })
   )
 }
 
@@ -109,8 +144,12 @@ function validateRows(
       return { key: 'Row {{line}}: duplicate model {{name}}', params: { line, name } }
     }
     seen.add(name)
-    const tokens = Number(row.daily_tokens)
-    if (!Number.isFinite(tokens) || tokens <= 0) {
+    const tokens = Number(row.daily_tokens || 0)
+    if (
+      !Number.isFinite(tokens) ||
+      tokens < 0 ||
+      (tokens === 0 && row.overrides.length === 0)
+    ) {
       return {
         key: 'Row {{line}}: daily tokens must be greater than 0',
         params: { line },
@@ -121,6 +160,35 @@ function validateRows(
       return {
         key: 'Row {{line}}: growth must be between -100% and 10000%',
         params: { line },
+      }
+    }
+    if (row.start_date && row.end_date && row.start_date > row.end_date) {
+      return {
+        key: 'Row {{line}}: start date must not be after end date',
+        params: { line },
+      }
+    }
+    const dates = new Set<string>()
+    for (const override of row.overrides) {
+      if (!override.date) {
+        return {
+          key: 'Row {{line}}: every dated value needs a date',
+          params: { line },
+        }
+      }
+      if (dates.has(override.date)) {
+        return {
+          key: 'Row {{line}}: duplicate date {{date}}',
+          params: { line, date: override.date },
+        }
+      }
+      dates.add(override.date)
+      const value = Number(override.tokens)
+      if (override.tokens === '' || !Number.isFinite(value) || value < 0) {
+        return {
+          key: 'Row {{line}}: tokens on {{date}} must be 0 or more',
+          params: { line, date: override.date },
+        }
       }
     }
   }
@@ -134,6 +202,8 @@ export function RankingsSection(props: RankingsSectionProps) {
   const [rows, setRows] = useState<SimulatedModelRow[]>(() =>
     parseRows(props.models)
   )
+  const [editingKey, setEditingKey] = useState<number | null>(null)
+  const editingRow = rows.find((row) => row.key === editingKey) ?? null
 
   useEffect(() => {
     setMode(props.mode)
@@ -214,7 +284,7 @@ export function RankingsSection(props: RankingsSectionProps) {
               <h4 className='font-medium'>{t('Simulated models')}</h4>
               <p className='text-muted-foreground mt-1 text-xs'>
                 {t(
-                  'Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.'
+                  'Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.'
                 )}
               </p>
             </div>
@@ -225,7 +295,15 @@ export function RankingsSection(props: RankingsSectionProps) {
               onClick={() =>
                 setRows((current) => [
                   ...current,
-                  { key: ++rowKey, model_name: '', daily_tokens: '', growth_pct: '0' },
+                  {
+                    key: ++rowKey,
+                    model_name: '',
+                    daily_tokens: '',
+                    growth_pct: '0',
+                    start_date: '',
+                    end_date: '',
+                    overrides: [],
+                  },
                 ])
               }
             >
@@ -240,12 +318,15 @@ export function RankingsSection(props: RankingsSectionProps) {
             </p>
           ) : (
             <div className='overflow-x-auto rounded-lg border'>
-              <table className='w-full min-w-[560px] text-sm'>
+              <table className='w-full min-w-[960px] text-sm'>
                 <thead className='bg-muted/40 text-muted-foreground text-xs'>
                   <tr>
                     <th className='px-3 py-2 text-left font-medium'>{t('Model name')}</th>
                     <th className='px-3 py-2 text-left font-medium'>{t('Daily tokens')}</th>
                     <th className='px-3 py-2 text-left font-medium'>{t('Growth (%)')}</th>
+                    <th className='px-3 py-2 text-left font-medium'>{t('Start date')}</th>
+                    <th className='px-3 py-2 text-left font-medium'>{t('End date')}</th>
+                    <th className='px-3 py-2 text-left font-medium'>{t('Dated values')}</th>
                     <th className='w-12 px-3 py-2' />
                   </tr>
                 </thead>
@@ -280,6 +361,35 @@ export function RankingsSection(props: RankingsSectionProps) {
                           onChange={(e) => updateRow(row.key, { growth_pct: e.target.value })}
                         />
                       </td>
+                      <td className='px-3 py-2'>
+                        <Input
+                          type='date'
+                          value={row.start_date}
+                          aria-label={t('Start date')}
+                          onChange={(e) => updateRow(row.key, { start_date: e.target.value })}
+                        />
+                      </td>
+                      <td className='px-3 py-2'>
+                        <Input
+                          type='date'
+                          value={row.end_date}
+                          aria-label={t('End date')}
+                          onChange={(e) => updateRow(row.key, { end_date: e.target.value })}
+                        />
+                      </td>
+                      <td className='px-3 py-2'>
+                        <Button
+                          type='button'
+                          size='sm'
+                          variant='outline'
+                          onClick={() => setEditingKey(row.key)}
+                        >
+                          <CalendarDays className='size-4' />
+                          {row.overrides.length > 0
+                            ? t('{{count}} days', { count: row.overrides.length })
+                            : t('Set')}
+                        </Button>
+                      </td>
                       <td className='px-3 py-2 text-right'>
                         <Button
                           type='button'
@@ -299,6 +409,13 @@ export function RankingsSection(props: RankingsSectionProps) {
               </table>
             </div>
           )}
+          <DailyOverridesDialog
+            row={editingRow}
+            onClose={() => setEditingKey(null)}
+            onChange={(overrides) => {
+              if (editingRow) updateRow(editingRow.key, { overrides })
+            }}
+          />
           {!simulationOn && rows.length > 0 && (
             <p className='text-warning text-xs'>
               {t('Simulated models only take effect when the data source is Simulated or Real + simulated.')}
@@ -307,5 +424,92 @@ export function RankingsSection(props: RankingsSectionProps) {
         </div>
       </div>
     </SettingsSection>
+  )
+}
+
+function DailyOverridesDialog(props: {
+  row: SimulatedModelRow | null
+  onClose: () => void
+  onChange: (overrides: DailyOverrideRow[]) => void
+}) {
+  const { t } = useTranslation()
+  const overrides = props.row?.overrides ?? []
+
+  const update = (key: number, patch: Partial<DailyOverrideRow>) => {
+    props.onChange(
+      overrides.map((item) => (item.key === key ? { ...item, ...patch } : item))
+    )
+  }
+
+  return (
+    <Dialog
+      open={props.row !== null}
+      onOpenChange={(open) => {
+        if (!open) props.onClose()
+      }}
+      title={t('Dated values')}
+      description={t(
+        'Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.',
+        { model: props.row?.model_name.trim() || t('this model') }
+      )}
+      footer={
+        <Button type='button' onClick={props.onClose}>
+          {t('Done')}
+        </Button>
+      }
+    >
+      <div className='space-y-3'>
+        {overrides.length === 0 ? (
+          <p className='text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm'>
+            {t('No dated values yet')}
+          </p>
+        ) : (
+          <div className='space-y-2'>
+            {overrides.map((item) => (
+              <div key={item.key} className='flex items-center gap-2'>
+                <Input
+                  type='date'
+                  className='w-44 shrink-0'
+                  value={item.date}
+                  aria-label={t('Date')}
+                  onChange={(e) => update(item.key, { date: e.target.value })}
+                />
+                <Input
+                  type='number'
+                  min={0}
+                  step={1}
+                  value={item.tokens}
+                  placeholder='500000000'
+                  aria-label={t('Tokens')}
+                  onChange={(e) => update(item.key, { tokens: e.target.value })}
+                />
+                <Button
+                  type='button'
+                  size='icon'
+                  variant='ghost'
+                  aria-label={t('Delete')}
+                  onClick={() =>
+                    props.onChange(overrides.filter((o) => o.key !== item.key))
+                  }
+                >
+                  <Trash2 className='size-4' />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          onClick={() =>
+            props.onChange([...overrides, { key: ++rowKey, date: '', tokens: '' }])
+          }
+        >
+          <Plus className='size-4' />
+          {t('Add date')}
+        </Button>
+      </div>
+    </Dialog>
   )
 }

@@ -3,6 +3,7 @@ package rankings_setting
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/setting/config"
@@ -15,7 +16,12 @@ const (
 	ModeMixed     = "mixed"     // usage logs plus configured models
 )
 
-const maxSimulatedModels = 200
+const (
+	maxSimulatedModels    = 200
+	maxSimulatedOverrides = 400
+	// DateLayout is the format of start/end dates and override keys.
+	DateLayout = "2006-01-02"
+)
 
 type RankingsSetting struct {
 	Mode string `json:"mode"`
@@ -30,6 +36,29 @@ type SimulatedModel struct {
 	DailyTokens int64 `json:"daily_tokens"`
 	// GrowthPct is the change against the previous period, e.g. 25 or -10.
 	GrowthPct float64 `json:"growth_pct"`
+	// StartDate and EndDate (inclusive, DateLayout) limit the days the model
+	// has usage; empty means unbounded.
+	StartDate string `json:"start_date,omitempty"`
+	EndDate   string `json:"end_date,omitempty"`
+	// DailyOverrides sets the exact tokens for a date (DateLayout), replacing
+	// the daily average and ignoring the start/end dates.
+	DailyOverrides map[string]int64 `json:"daily_overrides,omitempty"`
+}
+
+// Active reports whether the model has its average usage on day.
+func (m SimulatedModel) Active(day string) bool {
+	if m.StartDate != "" && day < m.StartDate {
+		return false
+	}
+	if m.EndDate != "" && day > m.EndDate {
+		return false
+	}
+	return true
+}
+
+func validDate(value string) bool {
+	_, err := time.Parse(DateLayout, value)
+	return err == nil
 }
 
 var rankingsSetting = RankingsSetting{
@@ -65,7 +94,21 @@ func ParseSimulatedModels(raw string) ([]SimulatedModel, error) {
 	seen := make(map[string]struct{}, len(items))
 	for _, item := range items {
 		item.ModelName = strings.TrimSpace(item.ModelName)
-		if item.ModelName == "" || item.DailyTokens <= 0 || item.GrowthPct <= -100 {
+		if item.StartDate != "" && !validDate(item.StartDate) {
+			item.StartDate = ""
+		}
+		if item.EndDate != "" && !validDate(item.EndDate) {
+			item.EndDate = ""
+		}
+		for day, tokens := range item.DailyOverrides {
+			if !validDate(day) || tokens < 0 {
+				delete(item.DailyOverrides, day)
+			}
+		}
+		if item.DailyTokens < 0 {
+			item.DailyTokens = 0
+		}
+		if item.ModelName == "" || item.GrowthPct <= -100 || (item.DailyTokens == 0 && len(item.DailyOverrides) == 0) {
 			continue
 		}
 		if _, ok := seen[item.ModelName]; ok {
@@ -96,8 +139,28 @@ func ValidateModels(raw string) error {
 			return fmt.Errorf("row %d: duplicate model %s", i+1, name)
 		}
 		seen[name] = struct{}{}
-		if item.DailyTokens <= 0 {
+		if item.DailyTokens < 0 || (item.DailyTokens == 0 && len(item.DailyOverrides) == 0) {
 			return fmt.Errorf("row %d: daily tokens must be greater than 0", i+1)
+		}
+		if item.StartDate != "" && !validDate(item.StartDate) {
+			return fmt.Errorf("row %d: invalid start date %s", i+1, item.StartDate)
+		}
+		if item.EndDate != "" && !validDate(item.EndDate) {
+			return fmt.Errorf("row %d: invalid end date %s", i+1, item.EndDate)
+		}
+		if item.StartDate != "" && item.EndDate != "" && item.StartDate > item.EndDate {
+			return fmt.Errorf("row %d: start date must not be after end date", i+1)
+		}
+		if len(item.DailyOverrides) > maxSimulatedOverrides {
+			return fmt.Errorf("row %d: at most %d dated values are allowed", i+1, maxSimulatedOverrides)
+		}
+		for day, tokens := range item.DailyOverrides {
+			if !validDate(day) {
+				return fmt.Errorf("row %d: invalid date %s", i+1, day)
+			}
+			if tokens < 0 {
+				return fmt.Errorf("row %d: tokens on %s must not be negative", i+1, day)
+			}
 		}
 		if item.GrowthPct <= -100 || item.GrowthPct > 10000 {
 			return fmt.Errorf("row %d: growth must be between -100%% and 10000%%", i+1)

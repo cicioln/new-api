@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "Rankings show only the models configured below; usage logs are ignored.",
     "Configured tokens are added on top of actual usage for the same model.": "Configured tokens are added on top of actual usage for the same model.",
     "Simulated models": "Simulated models",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.",
     "No simulated models yet": "No simulated models yet",
     "Daily tokens": "Daily tokens",
     "Growth (%)": "Growth (%)",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "Row {{line}}: model name is required",
     "Row {{line}}: duplicate model {{name}}": "Row {{line}}: duplicate model {{name}}",
     "Row {{line}}: daily tokens must be greater than 0": "Row {{line}}: daily tokens must be greater than 0",
-    "Row {{line}}: growth must be between -100% and 10000%": "Row {{line}}: growth must be between -100% and 10000%"
+    "Row {{line}}: growth must be between -100% and 10000%": "Row {{line}}: growth must be between -100% and 10000%",
+    "Start date": "Start date",
+    "End date": "End date",
+    "Date": "Date",
+    "Dated values": "Dated values",
+    "Add date": "Add date",
+    "No dated values yet": "No dated values yet",
+    "this model": "this model",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.",
+    "Row {{line}}: start date must not be after end date": "Row {{line}}: start date must not be after end date",
+    "Row {{line}}: every dated value needs a date": "Row {{line}}: every dated value needs a date",
+    "Row {{line}}: duplicate date {{date}}": "Row {{line}}: duplicate date {{date}}",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Row {{line}}: tokens on {{date}} must be 0 or more"
   }
 }

@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "ランキングには下で設定したモデルのみを表示し、利用ログは無視します。",
     "Configured tokens are added on top of actual usage for the same model.": "設定したトークンを同名モデルの実利用量に加算します。",
     "Simulated models": "シミュレーションモデル",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "1 日あたりのトークンは期間に応じて拡大されます（今日 ×1、週 ×7、月 ×30、年 ×365）。成長率は前期間との比較で、順位変動と推移グラフに反映されます。ベンダーはモデルのメタデータから判定します。",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "1日あたりのトークンは期間に応じて拡大されます（今日 ×1、週 ×7、月 ×30、年 ×365）。成長率は前期間との比較で、順位変動とトレンド線に反映されます。開始日と終了日で利用がある日を制限し、日付指定の値でその日のトークン数を正確に設定できます（UTC）。ベンダーはモデルのメタデータから判定されます。",
     "No simulated models yet": "シミュレーションモデルはまだありません",
     "Daily tokens": "1 日あたりのトークン",
     "Growth (%)": "成長率（%）",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "{{line}} 行目：モデル名は必須です",
     "Row {{line}}: duplicate model {{name}}": "{{line}} 行目：モデル {{name}} が重複しています",
     "Row {{line}}: daily tokens must be greater than 0": "{{line}} 行目：1 日あたりのトークンは 0 より大きくしてください",
-    "Row {{line}}: growth must be between -100% and 10000%": "{{line}} 行目：成長率は -100% から 10000% の範囲にしてください"
+    "Row {{line}}: growth must be between -100% and 10000%": "{{line}} 行目：成長率は -100% から 10000% の範囲にしてください",
+    "Start date": "開始日",
+    "End date": "終了日",
+    "Date": "日付",
+    "Dated values": "日付指定の値",
+    "Add date": "日付を追加",
+    "No dated values yet": "日付指定の値はまだありません",
+    "this model": "このモデル",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "{{model}} の特定日のトークン数を正確に設定します（UTC）。その日の平均値を置き換え、開始日・終了日の範囲外でも適用されます。",
+    "Row {{line}}: start date must not be after end date": "{{line}} 行目：開始日は終了日より後にできません",
+    "Row {{line}}: every dated value needs a date": "{{line}} 行目：日付指定の値にはすべて日付が必要です",
+    "Row {{line}}: duplicate date {{date}}": "{{line}} 行目：日付 {{date}} が重複しています",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "{{line}} 行目：{{date}} のトークンは 0 以上にしてください"
   }
 }

@@ -4,17 +4,23 @@ import (
 	"hash/fnv"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/setting/rankings_setting"
 )
 
 // Admin-configured rankings data. Each model has an average daily token count
-// and a growth against the previous period; the period total scales with its
-// length and the hourly/daily buckets ramp from the previous rate to the
-// current one with a small, stable wobble so the charts look natural.
+// and a growth against the previous period. Usage is laid out in slots (hours
+// for today, days otherwise) that ramp from the previous rate to the current
+// one with a small, stable wobble so the charts look natural. Start/end dates
+// limit the days a model has usage, and dated values replace a day's tokens
+// exactly. Days are UTC dates, matching the daily chart buckets.
 
-const rankingSimulatedWobble = 0.12
+const (
+	rankingSimulatedWobble = 0.12
+	rankingDaySeconds      = int64(24 * 3600)
+)
 
 type simulatedRankingData struct {
 	current  []model.RankingQuotaTotal
@@ -22,81 +28,114 @@ type simulatedRankingData struct {
 	buckets  []model.RankingQuotaBucket
 }
 
-func simulateRankingData(models []rankings_setting.SimulatedModel, config rankingPeriodConfig, startTime, endTime int64) simulatedRankingData {
+func simulateRankingData(models []rankings_setting.SimulatedModel, config rankingPeriodConfig, endTime int64) simulatedRankingData {
 	data := simulatedRankingData{}
 	if len(models) == 0 {
 		return data
 	}
-	days := config.duration.Hours() / 24
-	buckets := rankingBucketStarts(startTime, endTime, config.bucketSize)
+	slotSize := min(config.bucketSize, rankingDaySeconds)
+	if slotSize <= 0 {
+		return data
+	}
+	slotCount := int64(config.duration.Seconds()) / slotSize
+	if slotCount <= 0 {
+		return data
+	}
+	// The current window is the last slotCount slots ending with the one that
+	// holds endTime; the previous window is the same length right before it.
+	lastSlot := endTime / slotSize * slotSize
+	currentStart := lastSlot - (slotCount-1)*slotSize
+	previousStart := currentStart - slotCount*slotSize
 	for _, item := range models {
-		current := int64(math.Round(float64(item.DailyTokens) * days))
-		if current <= 0 {
-			continue
+		current, buckets := simulateCurrentSlots(item, config, currentStart, slotSize, slotCount)
+		if current > 0 {
+			data.current = append(data.current, model.RankingQuotaTotal{ModelName: item.ModelName, TotalTokens: current})
+			data.buckets = append(data.buckets, buckets...)
 		}
-		data.current = append(data.current, model.RankingQuotaTotal{ModelName: item.ModelName, TotalTokens: current})
 		if config.hasPrevious {
-			previous := int64(math.Round(float64(current) / (1 + item.GrowthPct/100)))
-			if previous > 0 {
+			if previous := simulatePreviousSlots(item, previousStart, slotSize, slotCount); previous > 0 {
 				data.previous = append(data.previous, model.RankingQuotaTotal{ModelName: item.ModelName, TotalTokens: previous})
 			}
 		}
-		data.buckets = append(data.buckets, simulateRankingBuckets(item, current, buckets)...)
 	}
 	return data
 }
 
-// rankingBucketStarts lists the bucket starts covering [startTime, endTime],
-// aligned the same way the quota_data aggregation aligns them.
-func rankingBucketStarts(startTime, endTime, bucketSize int64) []int64 {
-	if bucketSize <= 0 || endTime < startTime {
-		return nil
-	}
-	first := startTime / bucketSize * bucketSize
-	starts := make([]int64, 0, (endTime-first)/bucketSize+1)
-	for bucket := first; bucket <= endTime; bucket += bucketSize {
-		starts = append(starts, bucket)
-	}
-	return starts
-}
-
-func simulateRankingBuckets(item rankings_setting.SimulatedModel, total int64, buckets []int64) []model.RankingQuotaBucket {
-	if len(buckets) == 0 {
-		return nil
-	}
-	// The rate at the start of the period relative to the end: a model that
-	// grew 50% started at 1/1.5 of today's rate.
+// simulateCurrentSlots returns the model's total over the current window and
+// its tokens grouped into chart buckets.
+func simulateCurrentSlots(item rankings_setting.SimulatedModel, config rankingPeriodConfig, start, slotSize, slotCount int64) (int64, []model.RankingQuotaBucket) {
+	// The rate at the start of the window relative to the end: a model that
+	// grew 50% started at 1/1.5 of today's rate. Weights are normalized to a
+	// mean of 1 so the window averages the configured daily tokens.
 	startRate := 1 / (1 + item.GrowthPct/100)
-	weights := make([]float64, len(buckets))
+	weights := make([]float64, slotCount)
 	sum := 0.0
-	for i, bucket := range buckets {
+	for i := range weights {
 		progress := 1.0
-		if len(buckets) > 1 {
-			progress = float64(i) / float64(len(buckets)-1)
+		if slotCount > 1 {
+			progress = float64(i) / float64(slotCount-1)
 		}
-		trend := startRate + (1-startRate)*progress
-		weights[i] = trend * (1 + rankingSimulatedWobble*rankingNoise(item.ModelName, bucket))
-		if weights[i] < 0 {
-			weights[i] = 0
-		}
+		slot := start + int64(i)*slotSize
+		weights[i] = (startRate + (1-startRate)*progress) * rankingWobble(item.ModelName, slot)
 		sum += weights[i]
 	}
-	if sum <= 0 {
-		return nil
-	}
-	rows := make([]model.RankingQuotaBucket, 0, len(buckets))
-	allocated := int64(0)
-	for i, bucket := range buckets {
-		tokens := int64(math.Floor(float64(total) * weights[i] / sum))
-		if i == len(buckets)-1 {
-			tokens = total - allocated
+	mean := sum / float64(slotCount)
+	byBucket := make(map[int64]int64)
+	order := make([]int64, 0)
+	total := int64(0)
+	for i, weight := range weights {
+		slot := start + int64(i)*slotSize
+		if mean > 0 {
+			weight /= mean
 		}
-		allocated += tokens
-		if tokens > 0 {
-			rows = append(rows, model.RankingQuotaBucket{ModelName: item.ModelName, Bucket: bucket, Tokens: tokens})
+		tokens := simulatedSlotTokens(item, slot, slotSize, weight)
+		if tokens <= 0 {
+			continue
 		}
+		bucket := slot / config.bucketSize * config.bucketSize
+		if _, ok := byBucket[bucket]; !ok {
+			order = append(order, bucket)
+		}
+		byBucket[bucket] += tokens
+		total += tokens
 	}
-	return rows
+	rows := make([]model.RankingQuotaBucket, 0, len(order))
+	for _, bucket := range order {
+		rows = append(rows, model.RankingQuotaBucket{ModelName: item.ModelName, Bucket: bucket, Tokens: byBucket[bucket]})
+	}
+	return total, rows
+}
+
+// simulatePreviousSlots returns the model's total over the previous window,
+// flat at the previous rate.
+func simulatePreviousSlots(item rankings_setting.SimulatedModel, start, slotSize, slotCount int64) int64 {
+	startRate := 1 / (1 + item.GrowthPct/100)
+	total := int64(0)
+	for i := int64(0); i < slotCount; i++ {
+		slot := start + i*slotSize
+		total += simulatedSlotTokens(item, slot, slotSize, startRate*rankingWobble(item.ModelName, slot))
+	}
+	return total
+}
+
+// simulatedSlotTokens is the tokens in one slot: a dated value split evenly
+// over the day, nothing outside the start/end dates, else the daily average
+// scaled by weight.
+func simulatedSlotTokens(item rankings_setting.SimulatedModel, slot, slotSize int64, weight float64) int64 {
+	share := float64(slotSize) / float64(rankingDaySeconds)
+	day := time.Unix(slot, 0).UTC().Format(rankings_setting.DateLayout)
+	if tokens, ok := item.DailyOverrides[day]; ok {
+		return int64(math.Round(float64(tokens) * share))
+	}
+	if !item.Active(day) || weight <= 0 {
+		return 0
+	}
+	return int64(math.Round(float64(item.DailyTokens) * share * weight))
+}
+
+// rankingWobble is a stable multiplier around 1 for a model and slot.
+func rankingWobble(modelName string, slot int64) float64 {
+	return max(0, 1+rankingSimulatedWobble*rankingNoise(modelName, slot))
 }
 
 // rankingNoise returns a stable value in [-1, 1] for a model and bucket, so

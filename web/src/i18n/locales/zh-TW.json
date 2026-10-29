@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "排行榜只展示下方設定的模型，忽略使用日誌。",
     "Configured tokens are added on top of actual usage for the same model.": "設定的用量會疊加到同名模型的真實用量上。",
     "Simulated models": "模擬模型",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "每日 Tokens 依週期放大（今天 ×1、本週 ×7、本月 ×30、今年 ×365）。成長率相對上一週期，決定排名變化與趨勢曲線。廠商依模型中繼資料自動比對。",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "每日 Tokens 按週期放大（今天 ×1、本週 ×7、本月 ×30、今年 ×365）。成長率相對上一週期，決定排名變化和趨勢曲線。開始/結束日期限制模型有用量的日期；指定日期用量可精確設定某一天的 Tokens（UTC）。廠商依模型中繼資料自動匹配。",
     "No simulated models yet": "尚無模擬模型",
     "Daily tokens": "每日 Tokens",
     "Growth (%)": "成長率（%）",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "第 {{line}} 行：模型名稱不能為空",
     "Row {{line}}: duplicate model {{name}}": "第 {{line}} 行：模型 {{name}} 重複",
     "Row {{line}}: daily tokens must be greater than 0": "第 {{line}} 行：每日 Tokens 必須大於 0",
-    "Row {{line}}: growth must be between -100% and 10000%": "第 {{line}} 行：成長率必須介於 -100% 到 10000%"
+    "Row {{line}}: growth must be between -100% and 10000%": "第 {{line}} 行：成長率必須介於 -100% 到 10000%",
+    "Start date": "開始日期",
+    "End date": "結束日期",
+    "Date": "日期",
+    "Dated values": "指定日期用量",
+    "Add date": "新增日期",
+    "No dated values yet": "尚無指定日期用量",
+    "this model": "此模型",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "為 {{model}} 設定指定日期的精確 Tokens（UTC）。會取代當天的每日平均值，且不受開始/結束日期限制。",
+    "Row {{line}}: start date must not be after end date": "第 {{line}} 行：開始日期不能晚於結束日期",
+    "Row {{line}}: every dated value needs a date": "第 {{line}} 行：每個指定日期用量都需要選擇日期",
+    "Row {{line}}: duplicate date {{date}}": "第 {{line}} 行：日期 {{date}} 重複",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "第 {{line}} 行：{{date}} 的 Tokens 必須大於或等於 0"
   }
 }

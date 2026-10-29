@@ -208,7 +208,7 @@ func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time, setting ra
 		}
 	}
 	if setting.Mode == rankings_setting.ModeSimulated || setting.Mode == rankings_setting.ModeMixed {
-		simulated := simulateRankingData(rankings_setting.GetSimulatedModels(), config, startTime, endTime)
+		simulated := simulateRankingData(rankings_setting.GetSimulatedModels(), config, endTime)
 		currentTotals = mergeRankingTotals(currentTotals, simulated.current)
 		previousTotals = mergeRankingTotals(previousTotals, simulated.previous)
 		currentBuckets = append(currentBuckets, simulated.buckets...)

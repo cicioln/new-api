@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "Рейтинги показывают только модели ниже; журналы использования игнорируются.",
     "Configured tokens are added on top of actual usage for the same model.": "Заданные токены добавляются к реальному использованию той же модели.",
     "Simulated models": "Смоделированные модели",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Токены в день масштабируются по периоду (сегодня ×1, неделя ×7, месяц ×30, год ×365). Рост считается к предыдущему периоду и задаёт изменение места и линии тренда. Поставщик определяется по метаданным модели.",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "Дневные токены масштабируются по периоду (сегодня ×1, неделя ×7, месяц ×30, год ×365). Рост считается относительно прошлого периода и задаёт изменение места и линии тренда. Даты начала и окончания ограничивают дни с использованием; значения по датам задают точное число токенов за день (UTC). Поставщики определяются по метаданным модели.",
     "No simulated models yet": "Смоделированных моделей пока нет",
     "Daily tokens": "Токенов в день",
     "Growth (%)": "Рост (%)",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "Строка {{line}}: укажите название модели",
     "Row {{line}}: duplicate model {{name}}": "Строка {{line}}: модель {{name}} повторяется",
     "Row {{line}}: daily tokens must be greater than 0": "Строка {{line}}: токенов в день должно быть больше 0",
-    "Row {{line}}: growth must be between -100% and 10000%": "Строка {{line}}: рост должен быть от -100% до 10000%"
+    "Row {{line}}: growth must be between -100% and 10000%": "Строка {{line}}: рост должен быть от -100% до 10000%",
+    "Start date": "Дата начала",
+    "End date": "Дата окончания",
+    "Date": "Дата",
+    "Dated values": "Значения по датам",
+    "Add date": "Добавить дату",
+    "No dated values yet": "Значений по датам пока нет",
+    "this model": "этой модели",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "Точное число токенов для {{model}} в конкретные дни (UTC). Заменяет дневное среднее и действует даже вне дат начала и окончания.",
+    "Row {{line}}: start date must not be after end date": "Строка {{line}}: дата начала не может быть позже даты окончания",
+    "Row {{line}}: every dated value needs a date": "Строка {{line}}: у каждого значения должна быть дата",
+    "Row {{line}}: duplicate date {{date}}": "Строка {{line}}: дата {{date}} повторяется",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Строка {{line}}: токены на {{date}} должны быть не меньше 0"
   }
 }

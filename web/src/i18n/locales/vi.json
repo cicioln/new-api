@@ -7857,7 +7857,7 @@
     "Rankings show only the models configured below; usage logs are ignored.": "Bảng xếp hạng chỉ hiển thị các mô hình cấu hình bên dưới; bỏ qua nhật ký sử dụng.",
     "Configured tokens are added on top of actual usage for the same model.": "Token cấu hình được cộng thêm vào lượng dùng thực của cùng mô hình.",
     "Simulated models": "Mô hình mô phỏng",
-    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Token mỗi ngày được nhân theo kỳ (hôm nay ×1, tuần ×7, tháng ×30, năm ×365). Tăng trưởng so với kỳ trước, quyết định thay đổi thứ hạng và đường xu hướng. Nhà cung cấp được xác định từ siêu dữ liệu mô hình.",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Start and end dates limit the days a model has usage; dated values set the exact tokens for a day (UTC). Vendors are matched from model metadata.": "Token mỗi ngày được nhân theo kỳ (hôm nay ×1, tuần ×7, tháng ×30, năm ×365). Tăng trưởng so với kỳ trước, quyết định thay đổi thứ hạng và đường xu hướng. Ngày bắt đầu và kết thúc giới hạn các ngày có sử dụng; giá trị theo ngày đặt chính xác số token của một ngày (UTC). Nhà cung cấp được xác định từ metadata của mô hình.",
     "No simulated models yet": "Chưa có mô hình mô phỏng",
     "Daily tokens": "Token mỗi ngày",
     "Growth (%)": "Tăng trưởng (%)",
@@ -7865,6 +7865,18 @@
     "Row {{line}}: model name is required": "Dòng {{line}}: cần nhập tên mô hình",
     "Row {{line}}: duplicate model {{name}}": "Dòng {{line}}: mô hình {{name}} bị trùng",
     "Row {{line}}: daily tokens must be greater than 0": "Dòng {{line}}: token mỗi ngày phải lớn hơn 0",
-    "Row {{line}}: growth must be between -100% and 10000%": "Dòng {{line}}: tăng trưởng phải từ -100% đến 10000%"
+    "Row {{line}}: growth must be between -100% and 10000%": "Dòng {{line}}: tăng trưởng phải từ -100% đến 10000%",
+    "Start date": "Ngày bắt đầu",
+    "End date": "Ngày kết thúc",
+    "Date": "Ngày",
+    "Dated values": "Giá trị theo ngày",
+    "Add date": "Thêm ngày",
+    "No dated values yet": "Chưa có giá trị theo ngày",
+    "this model": "mô hình này",
+    "Exact tokens for {{model}} on specific days (UTC). They replace the daily average and apply even outside the start and end dates.": "Số token chính xác cho {{model}} vào các ngày cụ thể (UTC). Thay thế mức trung bình ngày và áp dụng cả ngoài ngày bắt đầu và kết thúc.",
+    "Row {{line}}: start date must not be after end date": "Dòng {{line}}: ngày bắt đầu không được sau ngày kết thúc",
+    "Row {{line}}: every dated value needs a date": "Dòng {{line}}: mỗi giá trị theo ngày cần có ngày",
+    "Row {{line}}: duplicate date {{date}}": "Dòng {{line}}: ngày {{date}} bị trùng",
+    "Row {{line}}: tokens on {{date}} must be 0 or more": "Dòng {{line}}: token ngày {{date}} phải từ 0 trở lên"
   }
 }
