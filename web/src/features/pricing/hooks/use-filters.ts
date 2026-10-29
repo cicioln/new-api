@@ -49,7 +49,7 @@ export function useFilters(
   const [status, setStatus] = useState<MarketStatusFilter | undefined>()
   const [selectedGroup, setGroup] = useState<string | undefined>(search.group)
   const [sortBy, setSortBy] = useState<MarketSort>(
-    MARKET_SORTS.find((sort) => sort === search.sort) ?? 'hot'
+    MARKET_SORTS.find((sort) => sort === search.sort) ?? 'new'
   )
   const [viewMode, setViewMode] = useState<ViewMode>(
     search.view === VIEW_MODES.TABLE ? VIEW_MODES.TABLE : VIEW_MODES.CARD

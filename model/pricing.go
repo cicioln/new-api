@@ -1,6 +1,8 @@
 package model
 
 import (
+	"cmp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -48,6 +50,7 @@ type Pricing struct {
 	BillingUsageSchema     map[string]jsplugin.UsageFieldSchema `json:"billing_usage_schema,omitempty"`
 	BillingUsageExamples   []jsplugin.UsageExample              `json:"billing_usage_examples,omitempty"`
 	PricingVersion         string                               `json:"pricing_version,omitempty"`
+	CreatedTime            int64                                `json:"created_time,omitempty"`
 }
 
 type PricingVendor struct {
@@ -381,6 +384,18 @@ func updatePricing() {
 		}
 	}
 
+	// 模型上架时间：精确匹配的模型元数据创建时间，否则取最早提供该模型的渠道创建时间
+	modelCreatedTime := make(map[string]int64)
+	for _, ability := range enableAbilities {
+		created := ability.ChannelCreatedTime
+		if created <= 0 {
+			continue
+		}
+		if current, ok := modelCreatedTime[ability.Model]; !ok || created < current {
+			modelCreatedTime[ability.Model] = created
+		}
+	}
+
 	pricingMap = make([]Pricing, 0)
 	pluginGeneration := jsplugin.DefaultRegistry.Generation()
 	for model, groups := range modelGroupsMap {
@@ -388,6 +403,7 @@ func updatePricing() {
 			ModelName:              model,
 			EnableGroup:            groups.Items(),
 			SupportedEndpointTypes: modelSupportEndpointTypes[model],
+			CreatedTime:            modelCreatedTime[model],
 		}
 
 		// 补充模型元数据（描述、标签、供应商、状态）
@@ -400,6 +416,9 @@ func updatePricing() {
 			pricing.Icon = meta.Icon
 			pricing.Tags = meta.Tags
 			pricing.VendorID = meta.VendorID
+			if meta.Id != 0 && meta.NameRule == NameRuleExact && meta.CreatedTime > 0 {
+				pricing.CreatedTime = meta.CreatedTime
+			}
 		}
 		modelPrice, findPrice := ratio_setting.GetModelPrice(model, false)
 		if findPrice {
@@ -485,6 +504,11 @@ func updatePricing() {
 		}
 		pricingMap = append(pricingMap, pricing)
 	}
+
+	// 固定排序：最新上架的模型靠前，同时间按名称
+	slices.SortFunc(pricingMap, func(a, b Pricing) int {
+		return cmp.Or(cmp.Compare(b.CreatedTime, a.CreatedTime), strings.Compare(a.ModelName, b.ModelName))
+	})
 
 	// 防止大更新后数据不通用
 	if len(pricingMap) > 0 {

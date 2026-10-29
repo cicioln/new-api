@@ -288,8 +288,9 @@ export function filterMarketModels(
   if (options.sort === 'new') {
     return result.sort(
       (a, b) =>
+        (b.created_time ?? 0) - (a.created_time ?? 0) ||
         (b.release_date ?? '').localeCompare(a.release_date ?? '') ||
-        (b.id ?? 0) - (a.id ?? 0)
+        byOrder(a, b)
     )
   }
   return result.sort(

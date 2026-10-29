@@ -50,11 +50,17 @@ function perf(successRate: number, requests: number): MarketPerf {
 }
 
 const models = [
-  model('alpha', { vendor_name: 'OpenAI', model_ratio: 3, id: 1 }),
+  model('alpha', {
+    vendor_name: 'OpenAI',
+    model_ratio: 3,
+    id: 1,
+    created_time: 300,
+  }),
   model('beta', {
     vendor_name: 'Anthropic',
     model_ratio: 1,
     id: 2,
+    created_time: 200,
     enable_groups: ['default', 'vip'],
   }),
   model('gamma', { vendor_name: 'Google', model_ratio: 2, id: 3 }),
@@ -123,7 +129,7 @@ describe('model market filters', () => {
       names(filterMarketModels(models, { ...base, sort: 'price' }))
     ).toEqual(['beta', 'gamma', 'alpha'])
     expect(names(filterMarketModels(models, { ...base, sort: 'new' }))).toEqual(
-      ['gamma', 'beta', 'alpha']
+      ['alpha', 'beta', 'gamma']
     )
   })
 
