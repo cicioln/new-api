@@ -24,6 +24,7 @@ import { ChatSettingsSection } from './chat-settings-section'
 import { DashboardSection } from './dashboard-section'
 import { DrawingSettingsSection } from './drawing-settings-section'
 import { FAQSection } from './faq-section'
+import { RankingsSection, type RankingsMode } from './rankings-section'
 import { UptimeKumaSection } from './uptime-kuma-section'
 
 /**
@@ -35,6 +36,10 @@ function validateDataExportDefaultTime(value: string): 'week' | 'hour' | 'day' {
   }
   // Default to 'hour' if value is unexpected
   return 'hour'
+}
+
+function validateRankingsMode(value: string): RankingsMode {
+  return value === 'simulated' || value === 'mixed' ? value : 'real'
 }
 
 const CONTENT_SECTIONS = [
@@ -97,6 +102,18 @@ const CONTENT_SECTIONS = [
       <UptimeKumaSection
         enabled={settings['console_setting.uptime_kuma_enabled']}
         data={settings['console_setting.uptime_kuma_groups']}
+      />
+    ),
+  },
+  {
+    id: 'rankings',
+    titleKey: 'Rankings',
+    descriptionKey:
+      'Data source of the public rankings page, including simulated models.',
+    build: (settings: ContentSettings) => (
+      <RankingsSection
+        mode={validateRankingsMode(settings['rankings_setting.mode'])}
+        models={settings['rankings_setting.models']}
       />
     ),
   },

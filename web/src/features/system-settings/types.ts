@@ -212,6 +212,8 @@ export type ContentSettings = {
   'console_setting.announcements_enabled': boolean
   'console_setting.faq_enabled': boolean
   'console_setting.uptime_kuma_enabled': boolean
+  'rankings_setting.mode': string
+  'rankings_setting.models': string
   DataExportEnabled: boolean
   DataExportDefaultTime: string
   DataExportInterval: number

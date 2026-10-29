@@ -17,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/console_setting"
 	"github.com/QuantumNous/new-api/setting/model_setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/rankings_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
 
@@ -392,6 +393,16 @@ func UpdateOption(c *gin.Context) {
 	case "console_setting.faq":
 		err = console_setting.ValidateConsoleSettings(option.Value.(string), "FAQ")
 		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	case "rankings_setting.mode":
+		if err = rankings_setting.ValidateMode(option.Value.(string)); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	case "rankings_setting.models":
+		if err = rankings_setting.ValidateModels(option.Value.(string)); err != nil {
 			common.ApiError(c, err)
 			return
 		}

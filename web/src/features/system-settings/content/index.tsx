@@ -33,6 +33,8 @@ const defaultContentSettings: ContentSettings = {
   'console_setting.announcements_enabled': true,
   'console_setting.faq_enabled': true,
   'console_setting.uptime_kuma_enabled': false,
+  'rankings_setting.mode': 'real',
+  'rankings_setting.models': '[]',
   DataExportEnabled: false,
   DataExportDefaultTime: 'hour',
   DataExportInterval: 5,

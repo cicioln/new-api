@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "Thời gian khôi phục chưa xác định",
     "Today {{time}}": "Hôm nay {{time}}",
     "Under maintenance, service paused": "Đang bảo trì, tạm dừng dịch vụ",
-    "{{count}} under maintenance": "{{count}} đang bảo trì"
+    "{{count}} under maintenance": "{{count}} đang bảo trì",
+    "Data source of the public rankings page, including simulated models.": "Nguồn dữ liệu của trang bảng xếp hạng công khai, gồm cả mô hình mô phỏng.",
+    "Data source": "Nguồn dữ liệu",
+    "Real data": "Dữ liệu thực",
+    "Simulated data": "Dữ liệu mô phỏng",
+    "Real + simulated": "Thực + mô phỏng",
+    "Rankings come only from actual usage logs.": "Bảng xếp hạng chỉ dùng nhật ký sử dụng thực tế.",
+    "Rankings show only the models configured below; usage logs are ignored.": "Bảng xếp hạng chỉ hiển thị các mô hình cấu hình bên dưới; bỏ qua nhật ký sử dụng.",
+    "Configured tokens are added on top of actual usage for the same model.": "Token cấu hình được cộng thêm vào lượng dùng thực của cùng mô hình.",
+    "Simulated models": "Mô hình mô phỏng",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Token mỗi ngày được nhân theo kỳ (hôm nay ×1, tuần ×7, tháng ×30, năm ×365). Tăng trưởng so với kỳ trước, quyết định thay đổi thứ hạng và đường xu hướng. Nhà cung cấp được xác định từ siêu dữ liệu mô hình.",
+    "No simulated models yet": "Chưa có mô hình mô phỏng",
+    "Daily tokens": "Token mỗi ngày",
+    "Growth (%)": "Tăng trưởng (%)",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "Mô hình mô phỏng chỉ có hiệu lực khi nguồn dữ liệu là Mô phỏng hoặc Thực + mô phỏng.",
+    "Row {{line}}: model name is required": "Dòng {{line}}: cần nhập tên mô hình",
+    "Row {{line}}: duplicate model {{name}}": "Dòng {{line}}: mô hình {{name}} bị trùng",
+    "Row {{line}}: daily tokens must be greater than 0": "Dòng {{line}}: token mỗi ngày phải lớn hơn 0",
+    "Row {{line}}: growth must be between -100% and 10000%": "Dòng {{line}}: tăng trưởng phải từ -100% đến 10000%"
   }
 }

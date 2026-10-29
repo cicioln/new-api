@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "復旧時刻未定",
     "Today {{time}}": "今日 {{time}}",
     "Under maintenance, service paused": "メンテナンス中のため一時停止",
-    "{{count}} under maintenance": "{{count}} 件メンテナンス中"
+    "{{count}} under maintenance": "{{count}} 件メンテナンス中",
+    "Data source of the public rankings page, including simulated models.": "公開ランキングページのデータソース。シミュレーションモデルを設定できます。",
+    "Data source": "データソース",
+    "Real data": "実データ",
+    "Simulated data": "シミュレーションデータ",
+    "Real + simulated": "実データ + シミュレーション",
+    "Rankings come only from actual usage logs.": "ランキングは実際の利用ログのみを使用します。",
+    "Rankings show only the models configured below; usage logs are ignored.": "ランキングには下で設定したモデルのみを表示し、利用ログは無視します。",
+    "Configured tokens are added on top of actual usage for the same model.": "設定したトークンを同名モデルの実利用量に加算します。",
+    "Simulated models": "シミュレーションモデル",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "1 日あたりのトークンは期間に応じて拡大されます（今日 ×1、週 ×7、月 ×30、年 ×365）。成長率は前期間との比較で、順位変動と推移グラフに反映されます。ベンダーはモデルのメタデータから判定します。",
+    "No simulated models yet": "シミュレーションモデルはまだありません",
+    "Daily tokens": "1 日あたりのトークン",
+    "Growth (%)": "成長率（%）",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "データソースが「シミュレーションデータ」または「実データ + シミュレーション」のときのみ有効です。",
+    "Row {{line}}: model name is required": "{{line}} 行目：モデル名は必須です",
+    "Row {{line}}: duplicate model {{name}}": "{{line}} 行目：モデル {{name}} が重複しています",
+    "Row {{line}}: daily tokens must be greater than 0": "{{line}} 行目：1 日あたりのトークンは 0 より大きくしてください",
+    "Row {{line}}: growth must be between -100% and 10000%": "{{line}} 行目：成長率は -100% から 10000% の範囲にしてください"
   }
 }

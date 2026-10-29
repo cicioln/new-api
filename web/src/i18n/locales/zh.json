@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "恢复时间待定",
     "Today {{time}}": "今天 {{time}}",
     "Under maintenance, service paused": "维护中，暂停服务",
-    "{{count}} under maintenance": "{{count}} 个维护中"
+    "{{count}} under maintenance": "{{count}} 个维护中",
+    "Data source of the public rankings page, including simulated models.": "公开排行榜页面的数据来源，可配置模拟模型。",
+    "Data source": "数据来源",
+    "Real data": "真实数据",
+    "Simulated data": "模拟数据",
+    "Real + simulated": "真实 + 模拟",
+    "Rankings come only from actual usage logs.": "排行榜只使用实际的使用日志。",
+    "Rankings show only the models configured below; usage logs are ignored.": "排行榜只展示下方配置的模型，忽略使用日志。",
+    "Configured tokens are added on top of actual usage for the same model.": "配置的用量会叠加到同名模型的真实用量上。",
+    "Simulated models": "模拟模型",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "每日 Tokens 按周期放大（今天 ×1、本周 ×7、本月 ×30、今年 ×365）。增长率相对上一周期，决定排名变化和趋势曲线。厂商按模型元数据自动匹配。",
+    "No simulated models yet": "暂无模拟模型",
+    "Daily tokens": "每日 Tokens",
+    "Growth (%)": "增长率（%）",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "数据来源为「模拟数据」或「真实 + 模拟」时，模拟模型才会生效。",
+    "Row {{line}}: model name is required": "第 {{line}} 行：模型名称不能为空",
+    "Row {{line}}: duplicate model {{name}}": "第 {{line}} 行：模型 {{name}} 重复",
+    "Row {{line}}: daily tokens must be greater than 0": "第 {{line}} 行：每日 Tokens 必须大于 0",
+    "Row {{line}}: growth must be between -100% and 10000%": "第 {{line}} 行：增长率必须在 -100% 到 10000% 之间"
   }
 }

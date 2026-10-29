@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/rankings_setting"
 )
 
 const (
@@ -112,7 +113,10 @@ type rankingPeriodConfig struct {
 
 type rankingCacheItem struct {
 	expiresAt time.Time
-	data      *RankingsResponse
+	// setting is the rankings setting the data was built with, so a change in
+	// the admin simulation config shows up without waiting for the TTL.
+	setting rankings_setting.RankingsSetting
+	data    *RankingsResponse
 }
 
 type rankingModelMeta struct {
@@ -142,14 +146,15 @@ func GetRankingsSnapshot(period string) (*RankingsResponse, error) {
 	}
 
 	now := time.Now()
+	setting := rankings_setting.GetSetting()
 	rankingCacheMu.Lock()
-	if item, ok := rankingCache[config.id]; ok && now.Before(item.expiresAt) {
+	if item, ok := rankingCache[config.id]; ok && now.Before(item.expiresAt) && item.setting == setting {
 		rankingCacheMu.Unlock()
 		return item.data, nil
 	}
 	rankingCacheMu.Unlock()
 
-	data, err := buildRankingsSnapshot(config, now)
+	data, err := buildRankingsSnapshot(config, now, setting)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +162,7 @@ func GetRankingsSnapshot(period string) (*RankingsResponse, error) {
 	rankingCacheMu.Lock()
 	rankingCache[config.id] = rankingCacheItem{
 		expiresAt: now.Add(rankingCacheTTL),
+		setting:   setting,
 		data:      data,
 	}
 	rankingCacheMu.Unlock()
@@ -179,24 +185,33 @@ func rankingConfig(period string) (rankingPeriodConfig, error) {
 	}
 }
 
-func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time) (*RankingsResponse, error) {
+func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time, setting rankings_setting.RankingsSetting) (*RankingsResponse, error) {
 	startTime, endTime := rankingTimeRange(config, now)
-	currentTotals, err := model.GetRankingQuotaTotals(startTime, endTime)
-	if err != nil {
-		return nil, err
-	}
-	currentBuckets, err := model.GetRankingQuotaBuckets(startTime, endTime, config.bucketSize)
-	if err != nil {
-		return nil, err
-	}
-
-	var previousTotals []model.RankingQuotaTotal
-	if config.hasPrevious {
-		previousStart, previousEnd := previousRankingTimeRange(config, startTime)
-		previousTotals, err = model.GetRankingQuotaTotals(previousStart, previousEnd)
+	var currentTotals, previousTotals []model.RankingQuotaTotal
+	var currentBuckets []model.RankingQuotaBucket
+	if setting.Mode != rankings_setting.ModeSimulated {
+		var err error
+		currentTotals, err = model.GetRankingQuotaTotals(startTime, endTime)
 		if err != nil {
 			return nil, err
 		}
+		currentBuckets, err = model.GetRankingQuotaBuckets(startTime, endTime, config.bucketSize)
+		if err != nil {
+			return nil, err
+		}
+		if config.hasPrevious {
+			previousStart, previousEnd := previousRankingTimeRange(config, startTime)
+			previousTotals, err = model.GetRankingQuotaTotals(previousStart, previousEnd)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	if setting.Mode == rankings_setting.ModeSimulated || setting.Mode == rankings_setting.ModeMixed {
+		simulated := simulateRankingData(rankings_setting.GetSimulatedModels(), config, startTime, endTime)
+		currentTotals = mergeRankingTotals(currentTotals, simulated.current)
+		previousTotals = mergeRankingTotals(previousTotals, simulated.previous)
+		currentBuckets = append(currentBuckets, simulated.buckets...)
 	}
 
 	meta := buildRankingModelMeta(rankingModelNames(currentTotals, previousTotals, currentBuckets))

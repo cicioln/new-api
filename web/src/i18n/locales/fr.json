@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "Heure de reprise à déterminer",
     "Today {{time}}": "Aujourd'hui {{time}}",
     "Under maintenance, service paused": "En maintenance, service suspendu",
-    "{{count}} under maintenance": "{{count}} en maintenance"
+    "{{count}} under maintenance": "{{count}} en maintenance",
+    "Data source of the public rankings page, including simulated models.": "Source des données de la page publique des classements, avec modèles simulés.",
+    "Data source": "Source des données",
+    "Real data": "Données réelles",
+    "Simulated data": "Données simulées",
+    "Real + simulated": "Réelles + simulées",
+    "Rankings come only from actual usage logs.": "Les classements proviennent uniquement des journaux d'utilisation.",
+    "Rankings show only the models configured below; usage logs are ignored.": "Les classements n'affichent que les modèles configurés ci-dessous ; les journaux sont ignorés.",
+    "Configured tokens are added on top of actual usage for the same model.": "Les tokens configurés s'ajoutent à l'utilisation réelle du même modèle.",
+    "Simulated models": "Modèles simulés",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Les tokens quotidiens sont multipliés selon la période (aujourd'hui ×1, semaine ×7, mois ×30, année ×365). La croissance se mesure par rapport à la période précédente et pilote l'évolution du rang et les courbes. Le fournisseur est déduit des métadonnées du modèle.",
+    "No simulated models yet": "Aucun modèle simulé",
+    "Daily tokens": "Tokens par jour",
+    "Growth (%)": "Croissance (%)",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "Les modèles simulés ne s'appliquent que si la source est Simulées ou Réelles + simulées.",
+    "Row {{line}}: model name is required": "Ligne {{line}} : le nom du modèle est requis",
+    "Row {{line}}: duplicate model {{name}}": "Ligne {{line}} : modèle {{name}} en double",
+    "Row {{line}}: daily tokens must be greater than 0": "Ligne {{line}} : les tokens par jour doivent être supérieurs à 0",
+    "Row {{line}}: growth must be between -100% and 10000%": "Ligne {{line}} : la croissance doit être comprise entre -100 % et 10000 %"
   }
 }

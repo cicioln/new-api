@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "Recovery time to be determined",
     "Today {{time}}": "Today {{time}}",
     "Under maintenance, service paused": "Under maintenance, service paused",
-    "{{count}} under maintenance": "{{count}} under maintenance"
+    "{{count}} under maintenance": "{{count}} under maintenance",
+    "Data source of the public rankings page, including simulated models.": "Data source of the public rankings page, including simulated models.",
+    "Data source": "Data source",
+    "Real data": "Real data",
+    "Simulated data": "Simulated data",
+    "Real + simulated": "Real + simulated",
+    "Rankings come only from actual usage logs.": "Rankings come only from actual usage logs.",
+    "Rankings show only the models configured below; usage logs are ignored.": "Rankings show only the models configured below; usage logs are ignored.",
+    "Configured tokens are added on top of actual usage for the same model.": "Configured tokens are added on top of actual usage for the same model.",
+    "Simulated models": "Simulated models",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.",
+    "No simulated models yet": "No simulated models yet",
+    "Daily tokens": "Daily tokens",
+    "Growth (%)": "Growth (%)",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "Simulated models only take effect when the data source is Simulated or Real + simulated.",
+    "Row {{line}}: model name is required": "Row {{line}}: model name is required",
+    "Row {{line}}: duplicate model {{name}}": "Row {{line}}: duplicate model {{name}}",
+    "Row {{line}}: daily tokens must be greater than 0": "Row {{line}}: daily tokens must be greater than 0",
+    "Row {{line}}: growth must be between -100% and 10000%": "Row {{line}}: growth must be between -100% and 10000%"
   }
 }

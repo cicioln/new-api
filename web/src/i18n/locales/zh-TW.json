@@ -7847,6 +7847,24 @@
     "Recovery time to be determined": "恢復時間待定",
     "Today {{time}}": "今天 {{time}}",
     "Under maintenance, service paused": "維護中，暫停服務",
-    "{{count}} under maintenance": "{{count}} 個維護中"
+    "{{count}} under maintenance": "{{count}} 個維護中",
+    "Data source of the public rankings page, including simulated models.": "公開排行榜頁面的資料來源，可設定模擬模型。",
+    "Data source": "資料來源",
+    "Real data": "真實資料",
+    "Simulated data": "模擬資料",
+    "Real + simulated": "真實 + 模擬",
+    "Rankings come only from actual usage logs.": "排行榜只使用實際的使用日誌。",
+    "Rankings show only the models configured below; usage logs are ignored.": "排行榜只展示下方設定的模型，忽略使用日誌。",
+    "Configured tokens are added on top of actual usage for the same model.": "設定的用量會疊加到同名模型的真實用量上。",
+    "Simulated models": "模擬模型",
+    "Daily tokens scale with the period (today ×1, week ×7, month ×30, year ×365). Growth is against the previous period and drives the rank change and trend lines. Vendors are matched from model metadata.": "每日 Tokens 依週期放大（今天 ×1、本週 ×7、本月 ×30、今年 ×365）。成長率相對上一週期，決定排名變化與趨勢曲線。廠商依模型中繼資料自動比對。",
+    "No simulated models yet": "尚無模擬模型",
+    "Daily tokens": "每日 Tokens",
+    "Growth (%)": "成長率（%）",
+    "Simulated models only take effect when the data source is Simulated or Real + simulated.": "資料來源為「模擬資料」或「真實 + 模擬」時，模擬模型才會生效。",
+    "Row {{line}}: model name is required": "第 {{line}} 行：模型名稱不能為空",
+    "Row {{line}}: duplicate model {{name}}": "第 {{line}} 行：模型 {{name}} 重複",
+    "Row {{line}}: daily tokens must be greater than 0": "第 {{line}} 行：每日 Tokens 必須大於 0",
+    "Row {{line}}: growth must be between -100% and 10000%": "第 {{line}} 行：成長率必須介於 -100% 到 10000%"
   }
 }
