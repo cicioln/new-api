@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
@@ -202,8 +203,9 @@ func appendPricingEndpoint(endpoints []string, endpoint string) []string {
 }
 
 // dropMappedAliasAbilities hides abilities whose model is a channel
-// model_mapping alias of another model already listed in the same group, so the
-// model square shows one card per real model instead of one per alias.
+// model_mapping alias of another model already listed in the same group and
+// only differs from it in spelling, so the model square shows one card per
+// real model instead of one per alias.
 func dropMappedAliasAbilities(abilities []AbilityWithChannel) []AbilityWithChannel {
 	channelIDs := make([]int, 0)
 	seenChannel := make(map[int]struct{})
@@ -246,7 +248,10 @@ func dropMappedAliasAbilities(abilities []AbilityWithChannel) []AbilityWithChann
 		if modelMap, ok := mappings[ability.ChannelId]; ok {
 			if _, isAlias := modelMap[ability.Model]; isAlias {
 				target, cyclic := followChannelModelMapping(modelMap, ability.Model)
-				if !cyclic && target != ability.Model {
+				// Only fold spelling variants of the target (claude-opus-4.8 →
+				// claude-opus-4-8); a differently named alias such as
+				// claude-fable-5-1 → claude-opus-5.5 is a product of its own.
+				if !cyclic && target != ability.Model && sameModelSpelling(ability.Model, target) {
 					if _, targetListed := listed[ability.Group+"\x00"+target]; targetListed {
 						continue
 					}
@@ -256,6 +261,21 @@ func dropMappedAliasAbilities(abilities []AbilityWithChannel) []AbilityWithChann
 		filtered = append(filtered, ability)
 	}
 	return filtered
+}
+
+// sameModelSpelling reports whether two model names differ only in case and
+// the separators '.', '-' and '_'.
+func sameModelSpelling(a, b string) bool {
+	normalize := func(name string) string {
+		return strings.Map(func(r rune) rune {
+			switch r {
+			case '.', '-', '_':
+				return -1
+			}
+			return unicode.ToLower(r)
+		}, name)
+	}
+	return normalize(a) == normalize(b)
 }
 
 func updatePricing() {
