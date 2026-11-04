@@ -136,6 +136,33 @@ func GetPerfMetricsGroupSummary(startTs int64, endTs int64, groups []string) ([]
 	return summaries, err
 }
 
+type PerfMetricModelGroupCache struct {
+	ModelName   string `json:"model_name"`
+	Group       string `json:"group" gorm:"column:group"`
+	InputTokens int64  `json:"input_tokens"`
+	CacheTokens int64  `json:"cache_tokens"`
+}
+
+// GetPerfMetricsModelGroupCache sums input and cache-read tokens per model and
+// group, for per-group cache hit rates.
+func GetPerfMetricsModelGroupCache(startTs int64, endTs int64, groups []string) ([]PerfMetricModelGroupCache, error) {
+	var rows []PerfMetricModelGroupCache
+	if groups != nil && len(groups) == 0 {
+		return rows, nil
+	}
+	query := DB.Model(&PerfMetric{}).
+		Select("model_name, "+commonGroupCol+", SUM(input_tokens) as input_tokens, SUM(cache_tokens) as cache_tokens").
+		Where("bucket_ts >= ? AND bucket_ts <= ?", startTs, endTs)
+	if groups != nil {
+		query = query.Where(commonGroupCol+" IN ?", groups)
+	}
+	err := query.
+		Group("model_name, " + commonGroupCol).
+		Having("SUM(input_tokens) > 0").
+		Find(&rows).Error
+	return rows, err
+}
+
 func GetPerfMetricsSummaryBucketsAll(startTs int64, endTs int64, groups []string) ([]PerfMetricSummaryBucket, error) {
 	var summaries []PerfMetricSummaryBucket
 	query := DB.Model(&PerfMetric{}).

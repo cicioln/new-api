@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分組改名已同步：{{channels}} 個渠道、{{users}} 個使用者、{{tokens}} 個令牌、{{pelican}} 筆鵜鶘記錄",
     "Cache short": "快取",
     "Cache hit rate: cached input tokens / all input tokens": "快取命中率：快取命中的輸入 tokens / 全部輸入 tokens",
-    "No cache data": "暫無快取資料"
+    "No cache data": "暫無快取資料",
+    "Group cache hit rate": "分組快取命中率",
+    "+{{count}} more groups": "另外 {{count}} 個分組"
   }
 }

@@ -65,6 +65,8 @@ export type PerfModelSummary = {
   recent_success_series?: SuccessRatePoint[]
   /** Cache-read input tokens / all input tokens, in percent. */
   cache_hit_rate?: number
+  /** Cache hit rate per group, in percent; groups without data are absent. */
+  group_cache_hit_rates?: Record<string, number>
   request_count?: number
 }
 

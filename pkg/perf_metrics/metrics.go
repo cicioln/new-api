@@ -246,6 +246,29 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 		}
 	}
 
+	cacheRows, err := model.GetPerfMetricsModelGroupCache(startTs, endTs, groups)
+	if err != nil {
+		return SummaryAllResult{}, err
+	}
+	groupCache := map[string]map[string]counters{}
+	addGroupCache := func(modelName, group string, inputTokens, cacheTokens int64) {
+		if inputTokens <= 0 {
+			return
+		}
+		byGroup := groupCache[modelName]
+		if byGroup == nil {
+			byGroup = map[string]counters{}
+			groupCache[modelName] = byGroup
+		}
+		current := byGroup[group]
+		current.inputTokens += inputTokens
+		current.cacheTokens += cacheTokens
+		byGroup[group] = current
+	}
+	for _, row := range cacheRows {
+		addGroupCache(row.ModelName, row.Group, row.InputTokens, row.CacheTokens)
+	}
+
 	totals := map[string]counters{}
 	modelBuckets := map[string]map[int64]counters{}
 	for _, row := range rows {
@@ -286,6 +309,7 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 		}
 		mergeModelTotals(totals, k.model, snap)
 		mergeModelBucket(modelBuckets, k.model, k.bucketTs, snap)
+		addGroupCache(k.model, k.group, snap.inputTokens, snap.cacheTokens)
 		return true
 	})
 
@@ -316,6 +340,7 @@ func QuerySummaryAll(hours int, groups []string, recentModels ...string) (Summar
 			AvgTps:              math.Round(avgTps*100) / 100,
 			RecentSuccessSeries: recentSuccessSeries(modelBuckets[name]),
 			CacheHitRate:        cacheHitRate(total),
+			GroupCacheHitRates:  groupCacheHitRates(groupCache[name]),
 			RequestCount:        total.requestCount,
 		})
 	}
@@ -630,6 +655,22 @@ func cacheHitRate(value counters) *float64 {
 	}
 	rate := math.Round(float64(value.cacheTokens)/float64(value.inputTokens)*10000) / 100
 	return &rate
+}
+
+func groupCacheHitRates(byGroup map[string]counters) map[string]float64 {
+	if len(byGroup) == 0 {
+		return nil
+	}
+	rates := make(map[string]float64, len(byGroup))
+	for group, value := range byGroup {
+		if rate := cacheHitRate(value); rate != nil {
+			rates[group] = *rate
+		}
+	}
+	if len(rates) == 0 {
+		return nil
+	}
+	return rates
 }
 
 func recordRedis(key bucketKey, sample Sample) {

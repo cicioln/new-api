@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Groupes renommés synchronisés : {{channels}} canaux, {{users}} utilisateurs, {{tokens}} jetons, {{pelican}} enregistrements pélican",
     "Cache short": "Cache",
     "Cache hit rate: cached input tokens / all input tokens": "Taux de cache : tokens d'entrée en cache / tous les tokens d'entrée",
-    "No cache data": "Aucune donnée de cache"
+    "No cache data": "Aucune donnée de cache",
+    "Group cache hit rate": "Taux de cache par groupe",
+    "+{{count}} more groups": "+{{count}} autres groupes"
   }
 }

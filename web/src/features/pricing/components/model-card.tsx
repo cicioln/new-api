@@ -29,8 +29,10 @@ import {
   formatCacheHitRate,
   formatMarketLatency,
   formatMarketTps,
+  getCacheRateLevel,
   getVendorAvatarIcon,
   getVendorAvatarName,
+  type CacheRateLevel,
   type MarketPerf,
 } from '../lib/market'
 import { getFamilyColor, parseModelName } from '../lib/model-name'
@@ -75,6 +77,78 @@ function MaintenanceRibbon(props: { note?: string; until?: number }) {
         </b>
         <div className='text-[11.5px] opacity-80'>{recovery}</div>
       </div>
+    </div>
+  )
+}
+
+const GROUP_CACHE_MAX_ROWS = 4
+
+const CACHE_LEVEL_TEXT: Record<CacheRateLevel, string> = {
+  high: 'text-emerald-600 dark:text-emerald-400',
+  mid: 'text-sky-600 dark:text-sky-400',
+  low: 'text-subtle-foreground',
+}
+const CACHE_LEVEL_BAR: Record<CacheRateLevel, string> = {
+  high: 'bg-emerald-500',
+  mid: 'bg-sky-500',
+  low: 'bg-muted-foreground/40',
+}
+
+/** One row per group: name, cache hit meter and percentage. */
+function GroupCacheTable(props: {
+  groups: string[]
+  rates: Record<string, number>
+}) {
+  const { t } = useTranslation()
+  const shown = props.groups.slice(0, GROUP_CACHE_MAX_ROWS)
+  const rest = props.groups.slice(shown.length)
+  return (
+    <div
+      role='list'
+      aria-label={t('Group cache hit rate')}
+      title={t('Cache hit rate: cached input tokens / all input tokens')}
+      className='flex flex-col gap-1.5'
+    >
+      <small className='text-subtle-foreground text-[11px]'>
+        {t('Group cache hit rate')}
+      </small>
+      {shown.map((group) => {
+        const rate = props.rates[group]
+        const level = getCacheRateLevel(rate)
+        return (
+          <div
+            key={group}
+            role='listitem'
+            className='grid grid-cols-[minmax(0,1fr)_88px_38px] items-center gap-2.5 text-[11px]'
+          >
+            <span className='text-muted-foreground truncate font-mono font-medium'>
+              {group}
+            </span>
+            <span className='bg-muted h-1.5 overflow-hidden rounded-full'>
+              <span
+                className={cn('block h-full rounded-full', CACHE_LEVEL_BAR[level])}
+                style={{ width: `${rate ?? 0}%` }}
+              />
+            </span>
+            <b
+              className={cn(
+                'text-right font-mono font-semibold tabular-nums',
+                CACHE_LEVEL_TEXT[level]
+              )}
+            >
+              {formatCacheHitRate(rate)}
+            </b>
+          </div>
+        )
+      })}
+      {rest.length > 0 && (
+        <span
+          title={rest.join(', ')}
+          className='text-subtle-foreground text-[11px]'
+        >
+          {t('+{{count}} more groups', { count: rest.length })}
+        </span>
+      )}
     </div>
   )
 }
@@ -193,14 +267,20 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         <MaintenanceRibbon note={maintenance.note} until={maintenance.until} />
       )}
 
-      {groups.length > 0 && (
-        <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
-          <small className='text-subtle-foreground mr-0.5 text-[11px]'>
-            {t('Group')}
-          </small>
-          <MarketGroupTags groups={groups} max={4} className='text-[11px]' />
-        </div>
-      )}
+      {groups.length > 0 &&
+        (maintenance || !props.perf ? (
+          <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
+            <small className='text-subtle-foreground mr-0.5 text-[11px]'>
+              {t('Group')}
+            </small>
+            <MarketGroupTags groups={groups} max={4} className='text-[11px]' />
+          </div>
+        ) : (
+          <GroupCacheTable
+            groups={groups}
+            rates={props.perf.groupCacheHitRates ?? {}}
+          />
+        ))}
 
       {maintenance ? null : props.perf ? (
         <div

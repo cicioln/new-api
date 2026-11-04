@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "分组改名已同步：{{channels}} 个渠道、{{users}} 个用户、{{tokens}} 个令牌、{{pelican}} 条鹈鹕记录",
     "Cache short": "缓存",
     "Cache hit rate: cached input tokens / all input tokens": "缓存命中率：缓存命中的输入 tokens / 全部输入 tokens",
-    "No cache data": "暂无缓存数据"
+    "No cache data": "暂无缓存数据",
+    "Group cache hit rate": "分组缓存命中率",
+    "+{{count}} more groups": "另外 {{count}} 个分组"
   }
 }

@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Переименованные группы синхронизированы: каналов {{channels}}, пользователей {{users}}, токенов {{tokens}}, записей пеликана {{pelican}}",
     "Cache short": "Кэш",
     "Cache hit rate: cached input tokens / all input tokens": "Доля кэша: кэшированные входные токены / все входные токены",
-    "No cache data": "Нет данных о кэше"
+    "No cache data": "Нет данных о кэше",
+    "Group cache hit rate": "Попадания в кэш по группам",
+    "+{{count}} more groups": "ещё групп: {{count}}"
   }
 }

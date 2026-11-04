@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records",
     "Cache short": "Cache",
     "Cache hit rate: cached input tokens / all input tokens": "Cache hit rate: cached input tokens / all input tokens",
-    "No cache data": "No cache data"
+    "No cache data": "No cache data",
+    "Group cache hit rate": "Group cache hit rate",
+    "+{{count}} more groups": "+{{count}} more groups"
   }
 }

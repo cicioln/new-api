@@ -83,7 +83,10 @@ type ModelSummary struct {
 	AvgTps              float64            `json:"avg_tps"`
 	RecentSuccessSeries []SuccessRatePoint `json:"recent_success_series,omitempty"`
 	CacheHitRate        *float64           `json:"cache_hit_rate,omitempty"`
-	RequestCount        int64              `json:"-"`
+	// GroupCacheHitRates maps group name to that group's cache hit rate, in
+	// percent; groups without sampled input tokens are absent.
+	GroupCacheHitRates map[string]float64 `json:"group_cache_hit_rates,omitempty"`
+	RequestCount       int64              `json:"-"`
 }
 
 type SummaryAllResult struct {

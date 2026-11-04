@@ -47,8 +47,26 @@ export type MarketPerf = {
   tps?: number
   successRate?: number
   cacheHitRate?: number
+  /** Cache hit rate per group, in percent; groups without data are absent. */
+  groupCacheHitRates?: Record<string, number>
   requests: number
   series: SuccessRatePoint[]
+}
+
+export type CacheRateLevel = 'high' | 'mid' | 'low'
+
+/** ≥ 50% high, 10%–50% mid, below 10% or no data low. */
+export function getCacheRateLevel(rate: number | undefined): CacheRateLevel {
+  if (rate == null) return 'low'
+  if (rate >= 50) return 'high'
+  if (rate >= 10) return 'mid'
+  return 'low'
+}
+
+function validRate(value: number | undefined): number | undefined {
+  return value != null && Number.isFinite(value) && value >= 0 && value <= 100
+    ? value
+    : undefined
 }
 
 function finite(value: number | undefined): number | undefined {
@@ -65,6 +83,7 @@ export function toMarketPerf(summary: {
   request_count?: number
   recent_success_series?: SuccessRatePoint[]
   cache_hit_rate?: number
+  group_cache_hit_rates?: Record<string, number>
 }): MarketPerf {
   const rate = summary.success_rate
   const cacheRate = summary.cache_hit_rate
@@ -76,13 +95,15 @@ export function toMarketPerf(summary: {
     tps: finite(summary.avg_tps),
     successRate:
       Number.isFinite(rate) && rate >= 0 && rate <= 100 ? rate : undefined,
-    cacheHitRate:
-      cacheRate != null &&
-      Number.isFinite(cacheRate) &&
-      cacheRate >= 0 &&
-      cacheRate <= 100
-        ? cacheRate
-        : undefined,
+    cacheHitRate: validRate(cacheRate),
+    groupCacheHitRates: Object.fromEntries(
+      Object.entries(summary.group_cache_hit_rates ?? {}).flatMap(
+        ([group, value]) => {
+          const valid = validRate(value)
+          return valid == null ? [] : [[group, valid]]
+        }
+      )
+    ),
     requests: summary.request_count ?? 0,
     series: summary.recent_success_series ?? [],
   }

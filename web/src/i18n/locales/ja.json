@@ -7882,6 +7882,8 @@
     "Renamed groups synced: {{channels}} channels, {{users}} users, {{tokens}} tokens, {{pelican}} pelican records": "グループ名の変更を同期しました：チャネル {{channels}} 件、ユーザー {{users}} 件、トークン {{tokens}} 件、ペリカン記録 {{pelican}} 件",
     "Cache short": "キャッシュ",
     "Cache hit rate: cached input tokens / all input tokens": "キャッシュヒット率：キャッシュされた入力トークン / 全入力トークン",
-    "No cache data": "キャッシュデータなし"
+    "No cache data": "キャッシュデータなし",
+    "Group cache hit rate": "グループ別キャッシュヒット率",
+    "+{{count}} more groups": "他 {{count}} グループ"
   }
 }
