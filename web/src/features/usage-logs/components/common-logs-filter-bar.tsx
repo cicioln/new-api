@@ -539,6 +539,13 @@ export function CommonLogsFilterBar<TData>(
             singleSelect
           />
         )}
+        <LogsFilterChip
+          title={t('Group')}
+          value={filters.group}
+          options={groupOptions}
+          inputClassName={sensitiveInputClass}
+          onApply={(value) => applyField('group', value)}
+        />
         {isAdmin && (
           <LogsFilterChip
             title={t('User')}

@@ -33,6 +33,8 @@ interface LogsFilterChipProps {
   title: string
   value?: string
   inputClassName?: string
+  /** Optional suggestions shown under the input; free text is still allowed. */
+  options?: { label: string; value: string }[]
   onApply: (value: string) => void
 }
 
@@ -49,6 +51,11 @@ export function LogsFilterChip(props: LogsFilterChipProps) {
     if (nextOpen) setDraft(props.value ?? '')
     setOpen(nextOpen)
   }
+
+  const keyword = draft.trim().toLowerCase()
+  const suggestions = (props.options ?? []).filter((option) =>
+    option.label.toLowerCase().includes(keyword)
+  )
 
   const apply = (value: string) => {
     props.onApply(value.trim())
@@ -94,6 +101,24 @@ export function LogsFilterChip(props: LogsFilterChipProps) {
             if (event.key === 'Enter') apply(draft)
           }}
         />
+        {suggestions.length > 0 && (
+          <div
+            className={`max-h-48 overflow-y-auto ${props.inputClassName ?? ''}`}
+          >
+            {suggestions.map((option) => (
+              <button
+                key={option.value}
+                type='button'
+                className={`hover:bg-accent hover:text-accent-foreground w-full truncate rounded-md px-2 py-1.5 text-left text-[13px] ${
+                  option.value === props.value ? 'bg-accent' : ''
+                }`}
+                onClick={() => apply(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className='flex justify-end gap-1.5'>
           {props.value && (
             <Button
