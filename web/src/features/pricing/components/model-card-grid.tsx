@@ -62,10 +62,10 @@ type VendorSection = {
 }
 
 /**
- * Splits models into vendor sections in the order the current sort puts
- * them. Unless sorting by price, cards inside a section are clustered by
- * family with the newest version first. Models under maintenance always go
- * last in their section.
+ * Splits models into vendor sections with a fixed order that does not depend
+ * on creation time or traffic: vendors and families by name, and inside a
+ * family the newest version first. Sorting by price keeps the price order
+ * inside each section. Models under maintenance always go last.
  */
 function buildSections(
   models: PricingModel[],
@@ -100,13 +100,20 @@ function buildSections(
     )
     section.groups = groups.filter((group) => enabled.has(group.name))
 
-    const familyOrder = new Map<string, number>()
+    // Families are ordered by name, not by which model happens to come first,
+    // so adding or re-timestamping a model never reshuffles the section.
+    const familyByKey = new Map<string, ParsedModelName>()
     for (const entry of section.entries) {
-      if (!familyOrder.has(entry.parsed.family)) {
-        familyOrder.set(entry.parsed.family, familyOrder.size)
-        section.families.push(entry.parsed)
+      if (!familyByKey.has(entry.parsed.family)) {
+        familyByKey.set(entry.parsed.family, entry.parsed)
       }
     }
+    section.families = [...familyByKey.values()].sort((a, b) =>
+      compareText(a.family, b.family)
+    )
+    const familyOrder = new Map(
+      section.families.map((family, index) => [family.family, index])
+    )
 
     // The newest plain version (no Flash / Thinking / date suffix) of each
     // family gets the "Latest" badge.
@@ -125,15 +132,16 @@ function buildSections(
       if (versions.length > 1) entry.latest = true
     }
 
+    // Fixed card order: family by name, newest version first, plain models
+    // before tagged variants, then the model ID as the final tie-break.
     if (sort !== 'price') {
-      const index = new Map(section.entries.map((e, i) => [e, i]))
       section.entries.sort(
         (a, b) =>
           (familyOrder.get(a.parsed.family) ?? 0) -
             (familyOrder.get(b.parsed.family) ?? 0) ||
           b.parsed.versionNum - a.parsed.versionNum ||
           a.parsed.tags.length - b.parsed.tags.length ||
-          (index.get(a) ?? 0) - (index.get(b) ?? 0)
+          compareText(a.model.model_name, b.model.model_name)
       )
     }
 
@@ -146,10 +154,16 @@ function buildSections(
     ).length
   }
 
-  // Unknown vendors go last.
+  // Vendors in name order; unknown vendors go last.
   return [...sections.values()].sort(
-    (a, b) => Number(!a.vendor) - Number(!b.vendor)
+    (a, b) =>
+      Number(!a.vendor) - Number(!b.vendor) || compareText(a.vendor, b.vendor)
   )
+}
+
+/** Locale-independent name order, so every viewer sees the same layout. */
+function compareText(a: string, b: string): number {
+  return a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true })
 }
 
 export const ModelCardGrid = memo(function ModelCardGrid(
