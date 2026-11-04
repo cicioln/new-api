@@ -218,13 +218,35 @@ func GetLogsStat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data": gin.H{
-			"quota": stat.Quota,
-			"rpm":   stat.Rpm,
-			"tpm":   stat.Tpm,
-		},
+		"data":    logStatData(stat),
 	})
 	return
+}
+
+func logStatData(stat model.Stat) gin.H {
+	data := gin.H{
+		"quota":             stat.Quota,
+		"rpm":               stat.Rpm,
+		"tpm":               stat.Tpm,
+		"prompt_tokens":     stat.PromptTokens,
+		"completion_tokens": stat.CompletionTokens,
+		"request_count":     stat.RequestCount,
+		"error_count":       stat.ErrorCount,
+		"avg_use_time":      stat.AvgUseTime,
+	}
+	if stat.CacheReadTokens != nil {
+		data["cache_read_tokens"] = *stat.CacheReadTokens
+	}
+	if stat.CacheWriteTokens != nil {
+		data["cache_write_tokens"] = *stat.CacheWriteTokens
+	}
+	if stat.InputTokensTotal != nil {
+		data["input_tokens_total"] = *stat.InputTokensTotal
+	}
+	if stat.AvgFrtMs != nil {
+		data["avg_frt_ms"] = *stat.AvgFrtMs
+	}
+	return data
 }
 
 func GetLogsSelfStat(c *gin.Context) {
@@ -252,14 +274,7 @@ func GetLogsSelfStat(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"success": true,
 		"message": "",
-		"data": gin.H{
-			"quota":             quotaNum.Quota,
-			"rpm":               quotaNum.Rpm,
-			"tpm":               quotaNum.Tpm,
-			"prompt_tokens":     quotaNum.PromptTokens,
-			"completion_tokens": quotaNum.CompletionTokens,
-			//"token": tokenNum,
-		},
+		"data":    logStatData(quotaNum),
 	})
 	return
 }

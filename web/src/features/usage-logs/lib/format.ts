@@ -328,6 +328,50 @@ export interface TieredBillingSummary {
  * suppress cache pricing rows from the tiered breakdown when the request did
  * not exercise the cache path.
  */
+export type LogTokenBreakdown = {
+  /** Input tokens billed at the full rate (no cache read or write). */
+  input: number
+  cacheRead: number
+  cacheWrite: number
+  output: number
+  /** Every input token, cached or not. */
+  inputTotal: number
+  /** Cache reads / all input, in percent; undefined without input. */
+  hitRate?: number
+}
+
+/**
+ * Splits a log's tokens into uncached input, cache read, cache write and
+ * output. Claude-semantic logs report prompt_tokens without the cache parts;
+ * other logs include cache reads in prompt_tokens.
+ */
+export function getLogTokenBreakdown(
+  log: Pick<UsageLog, 'prompt_tokens' | 'completion_tokens'>,
+  other: LogOtherData | null | undefined
+): LogTokenBreakdown {
+  const prompt = Math.max(log.prompt_tokens || 0, 0)
+  const cacheRead = Math.max(other?.cache_tokens || 0, 0)
+  const cacheWrite = Math.max(
+    (other?.cache_creation_tokens_5m || 0) +
+      (other?.cache_creation_tokens_1h || 0) ||
+      other?.cache_creation_tokens ||
+      0,
+    0
+  )
+  const inputTotal =
+    other?.claude === true
+      ? prompt + cacheRead + cacheWrite
+      : Math.max(prompt, cacheRead + cacheWrite)
+  return {
+    input: Math.max(inputTotal - cacheRead - cacheWrite, 0),
+    cacheRead,
+    cacheWrite,
+    output: Math.max(log.completion_tokens || 0, 0),
+    inputTotal,
+    hitRate: inputTotal > 0 ? (cacheRead / inputTotal) * 100 : undefined,
+  }
+}
+
 export function hasAnyCacheTokens(
   other: LogOtherData | null | undefined
 ): boolean {

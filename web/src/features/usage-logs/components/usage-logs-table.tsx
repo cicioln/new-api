@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { useCallback, useState } from 'react'
+import { Fragment, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -43,6 +43,7 @@ import {
   COMMON_LOG_NUMERIC_COLUMNS,
   DEFAULT_LOGS_DATA,
   LOG_TYPE_ALL_VALUE,
+  LOG_TYPE_ENUM,
   TASK_LOG_NUMERIC_COLUMNS,
   TASK_STATUS_TABS,
 } from '../constants'
@@ -52,6 +53,7 @@ import { useColumnsByCategory } from '../lib/columns'
 import { parseLogOther } from '../lib/format'
 import { fetchLogsByCategory } from '../lib/utils'
 import type { LogCategory, TaskLog } from '../types'
+import { CommonLogExpandedRow } from './common-log-expanded-row'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
 import { DetailsDialog } from './dialogs/details-dialog'
 import { TaskDetailsDialog } from './dialogs/task-details-dialog'
@@ -68,6 +70,12 @@ const quotaSaturationRowTint = 'bg-amber-50/60 dark:bg-amber-950/25'
 // The desktop common table opens details from the row, so the stream and
 // details columns only feed the mobile cards.
 const COMMON_DESKTOP_COLUMN_VISIBILITY = { is_stream: false, content: false }
+// Admins see the key under the user, so the key column is dropped too.
+const COMMON_DESKTOP_ADMIN_COLUMN_VISIBILITY = {
+  ...COMMON_DESKTOP_COLUMN_VISIBILITY,
+  token_name: false,
+}
+const errorRowEdge = 'shadow-[inset_3px_0_0_var(--color-red-500)]'
 
 // Drawing logs keep their own toolbar and roomier rows; common and task
 // tables right-align their numeric columns as in the design.
@@ -109,6 +117,16 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     [logCategory]
   )
   const [detailLog, setDetailLog] = useState<UsageLog | null>(null)
+  const [expandedRowIds, setExpandedRowIds] = useState<ReadonlySet<string>>(
+    () => new Set()
+  )
+  const toggleExpanded = useCallback((rowId: string) => {
+    setExpandedRowIds((current) => {
+      const next = new Set(current)
+      if (!next.delete(rowId)) next.add(rowId)
+      return next
+    })
+  }, [])
   const [detailTask, setDetailTask] = useState<TaskLog | null>(null)
   const {
     isAdminView: isAdmin,
@@ -239,7 +257,9 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     columnFilters,
     columnVisibility:
       logCategory === 'common' && !isMobile
-        ? COMMON_DESKTOP_COLUMN_VISIBILITY
+        ? isAdmin
+          ? COMMON_DESKTOP_ADMIN_COLUMN_VISIBILITY
+          : COMMON_DESKTOP_COLUMN_VISIBILITY
         : undefined,
     columnVisibilityStorageKey: getColumnVisibilityStorageKey(
       logCategory,
@@ -309,33 +329,63 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
         }
         toolbar={toolbar}
         renderRow={(row) => {
+          const original = row.original as Record<string, unknown>
           let tintClass = ''
           if (isCommon && isAdmin) {
-            const other = parseLogOther(
-              ((row.original as Record<string, unknown>).other as string) ?? ''
-            )
+            const other = parseLogOther((original.other as string) ?? '')
             if (other?.admin_info?.quota_saturation) {
               tintClass = quotaSaturationRowTint
             }
           }
+          const isErrorRow =
+            isCommon && original.type === LOG_TYPE_ENUM.ERROR
+          // Common rows expand inline; the expanded row links to the dialog.
+          const expanded = isCommon && expandedRowIds.has(row.id)
 
           return (
-            <DataTableRow
-              key={row.id}
-              row={row}
-              className={cn(
-                'transition-colors',
-                isDesignTable && 'cursor-pointer',
-                tintClass
+            <Fragment key={row.id}>
+              <DataTableRow
+                row={row}
+                className={cn(
+                  'transition-colors',
+                  isDesignTable && 'cursor-pointer',
+                  isErrorRow && errorRowEdge,
+                  expanded && 'bg-muted/40',
+                  tintClass
+                )}
+                getColumnClassName={getColumnClassName}
+                cellRenderColumns={table.options.columns}
+                aria-expanded={isCommon ? expanded : undefined}
+                tabIndex={isCommon ? 0 : undefined}
+                onKeyDown={
+                  isCommon
+                    ? (event) => {
+                        if (
+                          event.target === event.currentTarget &&
+                          (event.key === 'Enter' || event.key === ' ')
+                        ) {
+                          event.preventDefault()
+                          toggleExpanded(row.id)
+                        }
+                      }
+                    : undefined
+                }
+                onClick={
+                  isCommon
+                    ? () => toggleExpanded(row.id)
+                    : isDesignTable
+                      ? () => openDetails(original)
+                      : undefined
+                }
+              />
+              {expanded && (
+                <CommonLogExpandedRow
+                  log={original as unknown as UsageLog}
+                  colSpan={row.getVisibleCells().length}
+                  onOpenDetails={() => openDetails(original)}
+                />
               )}
-              getColumnClassName={getColumnClassName}
-              cellRenderColumns={table.options.columns}
-              onClick={
-                isDesignTable
-                  ? () => openDetails(row.original as Record<string, unknown>)
-                  : undefined
-              }
-            />
+            </Fragment>
           )
         }}
       />

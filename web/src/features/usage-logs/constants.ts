@@ -103,7 +103,7 @@ export const LOG_TYPES = [
 /** Columns whose header and cells are right-aligned numbers in the design. */
 export const COMMON_LOG_NUMERIC_COLUMNS = new Set([
   'prompt_tokens',
-  'completion_tokens',
+  'cache_hit',
   'use_time',
   'quota',
 ])

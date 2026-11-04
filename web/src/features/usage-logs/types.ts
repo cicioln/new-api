@@ -290,6 +290,15 @@ export interface LogStatistics {
   /** Present on servers that report token sums with the stat. */
   prompt_tokens?: number
   completion_tokens?: number
+  request_count?: number
+  error_count?: number
+  /** Mean total time of consume logs, in seconds. */
+  avg_use_time?: number
+  /** Absent when the server could not read the log's other JSON. */
+  cache_read_tokens?: number
+  cache_write_tokens?: number
+  input_tokens_total?: number
+  avg_frt_ms?: number
 }
 
 // ============================================================================

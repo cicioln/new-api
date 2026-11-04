@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -677,55 +678,159 @@ type Stat struct {
 	Tpm              int `json:"tpm"`
 	PromptTokens     int `json:"prompt_tokens"`
 	CompletionTokens int `json:"completion_tokens"`
+	RequestCount     int64 `json:"request_count"`
+	ErrorCount       int64 `json:"error_count"`
+	// AvgUseTime is the mean total time of consume logs, in seconds.
+	AvgUseTime float64 `json:"avg_use_time"`
+	// Fields read from the log's other JSON; nil when that query failed.
+	CacheReadTokens  *int64   `json:"cache_read_tokens,omitempty"`
+	CacheWriteTokens *int64   `json:"cache_write_tokens,omitempty"`
+	InputTokensTotal *int64   `json:"input_tokens_total,omitempty"`
+	AvgFrtMs         *float64 `json:"avg_frt_ms,omitempty"`
+}
+
+// logOtherNumberExpr reads a numeric key from logs.other, 0 when absent or
+// when other is not valid JSON. key must be a trusted constant.
+func logOtherNumberExpr(key string) string {
+	switch common.LogDatabaseType() {
+	case common.DatabaseTypePostgreSQL:
+		return fmt.Sprintf("(CASE WHEN other LIKE '{%%' THEN COALESCE((other::jsonb->>'%s')::numeric, 0) ELSE 0 END)", key)
+	case common.DatabaseTypeMySQL:
+		return fmt.Sprintf("(CASE WHEN JSON_VALID(other) THEN COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(other, '$.%s')) AS DECIMAL(20,4)), 0) ELSE 0 END)", key)
+	case common.DatabaseTypeClickHouse:
+		return fmt.Sprintf("JSONExtractFloat(other, '%s')", key)
+	default:
+		return fmt.Sprintf("(CASE WHEN json_valid(other) THEN COALESCE(json_extract(other, '$.%s'), 0) ELSE 0 END)", key)
+	}
+}
+
+// logOtherFlagExpr is a SQL condition that is true when logs.other has key
+// set to JSON true. key must be a trusted constant.
+func logOtherFlagExpr(key string) string {
+	switch common.LogDatabaseType() {
+	// CASE guards the JSON parse; AND does not short-circuit on every engine.
+	case common.DatabaseTypePostgreSQL:
+		return fmt.Sprintf("(CASE WHEN other LIKE '{%%' THEN COALESCE(other::jsonb->>'%s', '') = 'true' ELSE false END)", key)
+	case common.DatabaseTypeMySQL:
+		return fmt.Sprintf("(CASE WHEN JSON_VALID(other) THEN COALESCE(JSON_UNQUOTE(JSON_EXTRACT(other, '$.%s')), '') = 'true' ELSE false END)", key)
+	case common.DatabaseTypeClickHouse:
+		return fmt.Sprintf("(JSONExtractBool(other, '%s') = 1)", key)
+	default:
+		return fmt.Sprintf("(CASE WHEN json_valid(other) THEN COALESCE(json_extract(other, '$.%s'), 0) = 1 ELSE 0 END)", key)
+	}
+}
+
+func logStreamTrueExpr() string {
+	if common.UsingLogDatabase(common.DatabaseTypePostgreSQL) {
+		return "is_stream = true"
+	}
+	return "is_stream = 1"
+}
+
+// sumLogCacheStat fills the stat fields stored in logs.other. Cache reads
+// are included in prompt_tokens except for Claude-semantic logs, where the
+// full input is prompt + cache read + cache write.
+func sumLogCacheStat(tx *gorm.DB, stat *Stat) error {
+	read := logOtherNumberExpr("cache_tokens")
+	write := fmt.Sprintf("(CASE WHEN %s > 0 THEN %s ELSE %s END)",
+		logOtherNumberExpr("cache_write_tokens"), logOtherNumberExpr("cache_write_tokens"), logOtherNumberExpr("cache_creation_tokens"))
+	claude := logOtherFlagExpr("claude")
+	frt := logOtherNumberExpr("frt")
+	stream := logStreamTrueExpr()
+	query := fmt.Sprintf(`COALESCE(SUM(%[1]s), 0) cache_read_tokens,
+		COALESCE(SUM(%[2]s), 0) cache_write_tokens,
+		COALESCE(SUM(CASE WHEN %[3]s THEN prompt_tokens + %[1]s + %[2]s ELSE prompt_tokens END), 0) input_tokens_total,
+		COALESCE(SUM(CASE WHEN %[5]s AND %[4]s > 0 THEN %[4]s ELSE 0 END), 0) frt_sum,
+		COALESCE(SUM(CASE WHEN %[5]s AND %[4]s > 0 THEN 1 ELSE 0 END), 0) frt_count`,
+		read, write, claude, frt, stream)
+	var row struct {
+		CacheReadTokens  float64
+		CacheWriteTokens float64
+		InputTokensTotal float64
+		FrtSum           float64
+		FrtCount         int64
+	}
+	if err := tx.Select(query).Scan(&row).Error; err != nil {
+		return err
+	}
+	readTokens := int64(row.CacheReadTokens)
+	writeTokens := int64(row.CacheWriteTokens)
+	inputTotal := int64(row.InputTokensTotal)
+	stat.CacheReadTokens = &readTokens
+	stat.CacheWriteTokens = &writeTokens
+	stat.InputTokensTotal = &inputTotal
+	if row.FrtCount > 0 {
+		avgFrt := row.FrtSum / float64(row.FrtCount)
+		stat.AvgFrtMs = &avgFrt
+	}
+	return nil
 }
 
 func SumUsedQuota(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, channel int, group string) (stat Stat, err error) {
-	tx := LOG_DB.Table("logs").Select("COALESCE(sum(quota), 0) quota, COALESCE(sum(prompt_tokens), 0) prompt_tokens, COALESCE(sum(completion_tokens), 0) completion_tokens")
-
-	// 为rpm和tpm创建单独的查询
-	rpmTpmQuery := LOG_DB.Table("logs").Select("count(*) rpm, COALESCE(sum(prompt_tokens), 0) + COALESCE(sum(completion_tokens), 0) tpm")
-
-	if tx, err = applyExplicitLogTextFilter(tx, "username", username); err != nil {
-		return stat, err
-	}
-	if rpmTpmQuery, err = applyExplicitLogTextFilter(rpmTpmQuery, "username", username); err != nil {
-		return stat, err
-	}
-	if tokenName != "" {
-		tx = tx.Where("token_name = ?", tokenName)
-		rpmTpmQuery = rpmTpmQuery.Where("token_name = ?", tokenName)
-	}
-	if startTimestamp != 0 {
-		tx = tx.Where("created_at >= ?", startTimestamp)
-	}
-	if endTimestamp != 0 {
-		tx = tx.Where("created_at <= ?", endTimestamp)
-	}
-	if tx, err = applyExplicitLogTextFilter(tx, "model_name", modelName); err != nil {
-		return stat, err
-	}
-	if rpmTpmQuery, err = applyExplicitLogTextFilter(rpmTpmQuery, "model_name", modelName); err != nil {
-		return stat, err
-	}
-	if channel != 0 {
-		tx = tx.Where("channel_id = ?", channel)
-		rpmTpmQuery = rpmTpmQuery.Where("channel_id = ?", channel)
-	}
-	if group != "" {
-		tx = tx.Where(logGroupCol+" = ?", group)
-		rpmTpmQuery = rpmTpmQuery.Where(logGroupCol+" = ?", group)
+	// filtered builds a fresh logs query with the shared filters; withRange
+	// adds the selected time range (rpm/tpm use the last minute instead).
+	filtered := func(withRange bool) (*gorm.DB, error) {
+		q := LOG_DB.Table("logs")
+		var err error
+		if q, err = applyExplicitLogTextFilter(q, "username", username); err != nil {
+			return nil, err
+		}
+		if tokenName != "" {
+			q = q.Where("token_name = ?", tokenName)
+		}
+		if withRange {
+			if startTimestamp != 0 {
+				q = q.Where("created_at >= ?", startTimestamp)
+			}
+			if endTimestamp != 0 {
+				q = q.Where("created_at <= ?", endTimestamp)
+			}
+		}
+		if q, err = applyExplicitLogTextFilter(q, "model_name", modelName); err != nil {
+			return nil, err
+		}
+		if channel != 0 {
+			q = q.Where("channel_id = ?", channel)
+		}
+		if group != "" {
+			q = q.Where(logGroupCol+" = ?", group)
+		}
+		return q, nil
 	}
 
-	tx = tx.Where("type = ?", LogTypeConsume)
-	rpmTpmQuery = rpmTpmQuery.Where("type = ?", LogTypeConsume)
+	tx, err := filtered(true)
+	if err != nil {
+		return stat, err
+	}
+	tx = tx.Select("COALESCE(sum(quota), 0) quota, COALESCE(sum(prompt_tokens), 0) prompt_tokens, COALESCE(sum(completion_tokens), 0) completion_tokens, count(*) request_count, COALESCE(avg(use_time), 0) avg_use_time").
+		Where("type = ?", LogTypeConsume)
 
+	rpmTpmQuery, err := filtered(false)
+	if err != nil {
+		return stat, err
+	}
 	// 只统计最近60秒的rpm和tpm
-	rpmTpmQuery = rpmTpmQuery.Where("created_at >= ?", time.Now().Add(-60*time.Second).Unix())
+	rpmTpmQuery = rpmTpmQuery.Select("count(*) rpm, COALESCE(sum(prompt_tokens), 0) + COALESCE(sum(completion_tokens), 0) tpm").
+		Where("type = ?", LogTypeConsume).
+		Where("created_at >= ?", time.Now().Add(-60*time.Second).Unix())
 
 	// 执行查询
 	if err := tx.Scan(&stat).Error; err != nil {
 		common.SysError(common.LogText("failed to query log stat: %s", err.Error()))
 		return stat, common.NewMessage("Failed to query statistics")
+	}
+
+	if errorQuery, err := filtered(true); err == nil {
+		if err := errorQuery.Where("type = ?", LogTypeError).Count(&stat.ErrorCount).Error; err != nil {
+			common.SysError(common.LogText("failed to query error log count: %s", err.Error()))
+		}
+	}
+	// Cache and first-token figures come from the other JSON; a failure there
+	// leaves them empty instead of failing the whole stat.
+	if cacheQuery, err := filtered(true); err == nil {
+		if err := sumLogCacheStat(cacheQuery.Where("type = ?", LogTypeConsume), &stat); err != nil {
+			common.SysError(common.LogText("failed to query log cache stat: %s", err.Error()))
+		}
 	}
 	var rateStat struct {
 		Rpm int

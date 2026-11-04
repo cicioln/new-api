@@ -37,6 +37,7 @@ import { toIntlLocale } from '@/i18n/languages'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import dayjs from '@/lib/dayjs'
 import {
+  formatCompactNumber,
   formatLogQuota,
   formatNumber,
   formatTimestampToDate,
@@ -50,6 +51,7 @@ import type { UsageLog } from '../../data/schema'
 import {
   formatModelName,
   decodeBillingExprB64,
+  getLogTokenBreakdown,
   getTieredBillingSummary,
   hasAnyCacheTokens,
   parseLogOther,
@@ -314,6 +316,11 @@ function buildTypeDetailSegments(
 }
 
 const numericCellClass = 'font-mono! text-[12.5px]! tabular-nums'
+const secondLineClass = 'text-subtle-foreground text-[11px]! leading-4'
+/** Total time above this many seconds is highlighted as slow. */
+const SLOW_REQUEST_SECONDS = 15
+/** Cache hit rates at or above this percentage are highlighted. */
+const HIGH_CACHE_HIT_RATE = 50
 const tagClass =
   'inline-flex h-[22px] items-center gap-1.5 rounded-md px-2 text-xs! font-medium! whitespace-nowrap'
 
@@ -332,10 +339,15 @@ export function useCommonLogsColumns(
         header: t('Time'),
         cell: ({ row }) => (
           <span
-            className='text-muted-foreground font-mono! text-xs!'
+            className='flex flex-col gap-0.5'
             title={formatTimestampToDate(row.original.created_at)}
           >
-            {dayjs.unix(row.original.created_at).format('HH:mm:ss')}
+            <span className='font-mono! text-xs!'>
+              {dayjs.unix(row.original.created_at).format('HH:mm:ss')}
+            </span>
+            <span className={secondLineClass}>
+              {dayjs.unix(row.original.created_at).format('MM-DD')}
+            </span>
           </span>
         ),
         filterFn: (row, _id, value) => {
@@ -357,18 +369,30 @@ export function useCommonLogsColumns(
           const log = row.original
           if (!log.username) return null
 
+          // The desktop table hides the key column for admins and shows the
+          // key under the user instead.
+          const tokenName = isDisplayableLogType(log.type)
+            ? logTokenName(log, t)
+            : ''
           return (
-            <button
-              type='button'
-              className='text-left hover:underline'
-              onClick={(e) => {
-                e.stopPropagation()
-                context.setSelectedUserId(log.user_id)
-                context.setUserInfoDialogOpen(true)
-              }}
-            >
-              {context.sensitiveVisible ? log.username : '••••'}
-            </button>
+            <span className='flex min-w-0 flex-col items-start gap-0.5'>
+              <button
+                type='button'
+                className='text-left font-medium hover:underline'
+                onClick={(e) => {
+                  e.stopPropagation()
+                  context.setSelectedUserId(log.user_id)
+                  context.setUserInfoDialogOpen(true)
+                }}
+              >
+                {context.sensitiveVisible ? log.username : '••••'}
+              </button>
+              {tokenName && (
+                <span className={cn(secondLineClass, 'max-sm:hidden')}>
+                  {context.sensitiveVisible ? tokenName : '••••'}
+                </span>
+              )}
+            </span>
           )
         },
         filterFn: () => true,
@@ -397,10 +421,17 @@ export function useCommonLogsColumns(
           const modelInfo = formatModelName(log)
           return (
             <span
-              className='font-mono! text-[12.5px]!'
+              className='flex min-w-0 flex-col gap-0.5'
               title={modelInfo.actualModel || modelInfo.name}
             >
-              {modelInfo.name}
+              <span className='font-mono! text-[12.5px]!'>
+                {modelInfo.name}
+              </span>
+              {modelInfo.isMapped && modelInfo.actualModel && (
+                <span className={cn(secondLineClass, 'font-mono!')}>
+                  → {modelInfo.actualModel}
+                </span>
+              )}
             </span>
           )
         },
@@ -466,28 +497,100 @@ export function useCommonLogsColumns(
       },
       {
         accessorKey: 'prompt_tokens',
-        header: t('Input'),
+        header: t('Tokens (in·out / cache read·write)'),
         cell: ({ row }) => {
           const log = row.original
-          return (
-            <span className={numericCellClass}>
-              {isDisplayableLogType(log.type)
-                ? formatNumber(log.prompt_tokens || 0, locale)
+          if (!isDisplayableLogType(log.type)) {
+            return <span className={numericCellClass}>—</span>
+          }
+          const tokens = getLogTokenBreakdown(log, parseLogOther(log.other))
+          const cell = (
+            label: string,
+            value: number,
+            colorClass: string,
+            compact = false
+          ) => (
+            <span
+              className={cn(
+                'inline-flex items-baseline justify-end gap-1 whitespace-nowrap',
+                value > 0 ? colorClass : 'text-subtle-foreground'
+              )}
+            >
+              <span className='font-sans! text-[10.5px]! opacity-80'>
+                {label}
+              </span>
+              {value > 0
+                ? compact
+                  ? formatCompactNumber(value, locale)
+                  : formatNumber(value, locale)
                 : '—'}
+            </span>
+          )
+          return (
+            <span
+              className={cn(
+                numericCellClass,
+                'grid grid-cols-[auto_auto] justify-end gap-x-3 gap-y-0.5'
+              )}
+            >
+              {cell(t('In short'), tokens.input, 'text-sky-600 dark:text-sky-400')}
+              {cell(
+                t('Out short'),
+                tokens.output,
+                'text-violet-600 dark:text-violet-400'
+              )}
+              {cell(
+                t('Cache read short'),
+                tokens.cacheRead,
+                'text-emerald-600 dark:text-emerald-400',
+                true
+              )}
+              {cell(
+                t('Cache write short'),
+                tokens.cacheWrite,
+                'text-amber-600 dark:text-amber-400',
+                true
+              )}
             </span>
           )
         },
       },
       {
-        accessorKey: 'completion_tokens',
-        header: t('Output'),
+        id: 'cache_hit',
+        header: t('Cache short'),
         cell: ({ row }) => {
           const log = row.original
+          if (!isDisplayableLogType(log.type)) {
+            return <span className={numericCellClass}>—</span>
+          }
+          const rate = getLogTokenBreakdown(
+            log,
+            parseLogOther(log.other)
+          ).hitRate
+          if (rate == null) {
+            return <span className={numericCellClass}>—</span>
+          }
           return (
-            <span className={numericCellClass}>
-              {isDisplayableLogType(log.type)
-                ? formatNumber(log.completion_tokens || 0, locale)
-                : '—'}
+            <span
+              className='flex flex-col items-end gap-1'
+              title={t('Cache hit rate: cached input tokens / all input tokens')}
+            >
+              <span
+                className={cn(
+                  numericCellClass,
+                  rate >= HIGH_CACHE_HIT_RATE
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-subtle-foreground'
+                )}
+              >
+                {Math.round(rate)}%
+              </span>
+              <span className='bg-muted block h-1 w-12 overflow-hidden rounded-full'>
+                <span
+                  className='block h-full rounded-full bg-emerald-500'
+                  style={{ width: `${Math.min(rate, 100)}%` }}
+                />
+              </span>
             </span>
           )
         },
@@ -500,14 +603,36 @@ export function useCommonLogsColumns(
           if (!isTimingLogType(log.type)) {
             return <span className={numericCellClass}>—</span>
           }
-          const frt = parseLogOther(log.other)?.frt
+          const other = parseLogOther(log.other)
+          const frt = other?.frt
           const firstToken =
             log.is_stream && frt != null && frt > 0
               ? formatUseTime(frt / 1000)
               : '—'
+          const slow = log.use_time > SLOW_REQUEST_SECONDS
           return (
-            <span className={numericCellClass}>
-              {firstToken} / {formatUseTime(log.use_time)}
+            <span className='flex flex-col items-end gap-1'>
+              <span
+                className={cn(
+                  numericCellClass,
+                  slow && 'text-amber-600 dark:text-amber-400'
+                )}
+                title={slow ? t('Slow request') : undefined}
+              >
+                {firstToken} / {formatUseTime(log.use_time)}
+              </span>
+              {other?.is_task !== true && (
+                <span
+                  className={cn(
+                    'inline-flex h-[18px] items-center rounded px-1.5 text-[10.5px]!',
+                    log.is_stream
+                      ? 'bg-sky-500/12 text-sky-600 dark:text-sky-400'
+                      : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {log.is_stream ? t('Stream badge') : t('Non-stream badge')}
+                </span>
+              )}
             </span>
           )
         },
@@ -548,8 +673,15 @@ export function useCommonLogsColumns(
 
           return (
             <span className='inline-flex items-center gap-1'>
-              <span className='font-mono! text-xs!' title={`#${log.channel}`}>
-                {channelName}
+              <span className='flex flex-col gap-0.5'>
+                <span className='font-mono! text-xs!' title={`#${log.channel}`}>
+                  {channelName}
+                </span>
+                {channelName !== `#${log.channel}` && (
+                  <span className={cn(secondLineClass, 'font-mono!')}>
+                    #{log.channel}
+                  </span>
+                )}
               </span>
               {affinity && (
                 <button

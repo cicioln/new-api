@@ -22,7 +22,12 @@ import { useTranslation } from 'react-i18next'
 
 import { Skeleton } from '@/components/ui/skeleton'
 import { toIntlLocale } from '@/i18n/languages'
-import { formatLogQuota, formatNumber } from '@/lib/format'
+import {
+  formatCompactNumber,
+  formatLogQuota,
+  formatNumber,
+  formatUseTime,
+} from '@/lib/format'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
@@ -49,16 +54,40 @@ function StatBadge(props: {
   )
 }
 
-function StatCard(props: { label: string; value: string | number }) {
+function StatCard(props: {
+  label: string
+  value: React.ReactNode
+  hint?: React.ReactNode
+  valueClassName?: string
+  children?: React.ReactNode
+}) {
   return (
-    <div className='bg-card rounded-lg border px-[18px] pt-[18px] pb-3.5'>
+    <div className='bg-card flex min-w-0 flex-col gap-1.5 rounded-lg border px-4 py-3.5'>
       <div className='text-muted-foreground text-[12.5px]'>{props.label}</div>
-      <div className='mt-1.5 mb-1 truncate text-[28px] leading-[1.55] font-semibold tracking-tight tabular-nums'>
+      <div
+        className={cn(
+          'truncate font-mono text-[22px] leading-tight font-semibold tracking-tight tabular-nums',
+          props.valueClassName
+        )}
+      >
         {props.value}
       </div>
+      {props.children}
+      {props.hint && (
+        <div className='text-subtle-foreground truncate text-[11.5px]'>
+          {props.hint}
+        </div>
+      )}
     </div>
   )
 }
+
+const TOKEN_MIX = [
+  { key: 'input', label: 'Input', bar: 'bg-sky-500' },
+  { key: 'cacheRead', label: 'Cache read', bar: 'bg-emerald-500' },
+  { key: 'cacheWrite', label: 'Cache write', bar: 'bg-amber-500' },
+  { key: 'output', label: 'Output', bar: 'bg-violet-500' },
+] as const
 
 /** Badges sit inside the toolbar on mobile; desktop shows design KPI cards above the table. */
 export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
@@ -95,25 +124,113 @@ export function CommonLogsStats(props: { variant?: 'badges' | 'cards' }) {
     : '••••'
 
   if (props.variant === 'cards') {
+    const gridClass =
+      'grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6'
     if (isLoading) {
       return (
-        <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-3'>
-          {['quota', 'rpm', 'tpm'].map((key) => (
-            <Skeleton key={key} className='h-[94px] rounded-lg' />
-          ))}
+        <div className={gridClass}>
+          {['quota', 'tokens', 'cache', 'timing', 'rate', 'success'].map(
+            (key) => (
+              <Skeleton key={key} className='h-[94px] rounded-lg' />
+            )
+          )}
         </div>
       )
     }
+    const requests = stats?.request_count ?? 0
+    const errors = stats?.error_count ?? 0
+    const attempts = requests + errors
+    const output = stats?.completion_tokens ?? 0
+    const hasCacheStats = stats?.input_tokens_total != null
+    const cacheRead = stats?.cache_read_tokens ?? 0
+    const cacheWrite = stats?.cache_write_tokens ?? 0
+    const inputTotal = stats?.input_tokens_total ?? stats?.prompt_tokens ?? 0
+    const mix = {
+      input: Math.max(inputTotal - cacheRead - cacheWrite, 0),
+      cacheRead,
+      cacheWrite,
+      output,
+    }
+    const tokenTotal = inputTotal + output
+    const hitRate =
+      hasCacheStats && inputTotal > 0 ? (cacheRead / inputTotal) * 100 : null
+    const compact = (value: number) => formatCompactNumber(value, locale)
+
     return (
-      <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-3'>
-        <StatCard label={t('Spend in range')} value={quotaDisplay} />
+      <div className={gridClass}>
         <StatCard
-          label={t('RPM')}
-          value={formatNumber(stats?.rpm || 0, locale)}
+          label={t('Spend in range')}
+          value={quotaDisplay}
+          hint={t('{{count}} requests', { count: requests })}
         />
         <StatCard
-          label={t('TPM')}
-          value={formatNumber(stats?.tpm || 0, locale)}
+          label={t('Total tokens')}
+          value={compact(tokenTotal)}
+          hint={
+            hasCacheStats
+              ? TOKEN_MIX.map(
+                  (item) => `${t(item.label)} ${compact(mix[item.key])}`
+                ).join(' · ')
+              : `${t('Input')} ${compact(inputTotal)} · ${t('Output')} ${compact(output)}`
+          }
+        >
+          {hasCacheStats && tokenTotal > 0 && (
+            <div className='bg-muted flex h-1 overflow-hidden rounded-full'>
+              {TOKEN_MIX.map((item) =>
+                mix[item.key] > 0 ? (
+                  <span
+                    key={item.key}
+                    className={item.bar}
+                    style={{ width: `${(mix[item.key] / tokenTotal) * 100}%` }}
+                  />
+                ) : null
+              )}
+            </div>
+          )}
+        </StatCard>
+        <StatCard
+          label={t('Cache hit rate')}
+          value={hitRate != null ? `${hitRate.toFixed(1)}%` : '—'}
+          valueClassName={
+            hitRate != null ? 'text-emerald-600 dark:text-emerald-400' : undefined
+          }
+          hint={t('Cache read / all input')}
+        />
+        <StatCard
+          label={t('Average first token')}
+          value={
+            stats?.avg_frt_ms != null
+              ? formatUseTime(stats.avg_frt_ms / 1000)
+              : '—'
+          }
+          hint={t('Average total {{time}}', {
+            time: formatUseTime(stats?.avg_use_time ?? 0),
+          })}
+        />
+        <StatCard
+          label={`${t('RPM')} / ${t('TPM')}`}
+          value={
+            <>
+              {formatNumber(stats?.rpm || 0, locale)}
+              <span className='text-muted-foreground text-sm font-medium'>
+                {' / '}
+                {compact(stats?.tpm || 0)}
+              </span>
+            </>
+          }
+          hint={t('Last minute')}
+        />
+        <StatCard
+          label={t('Success rate')}
+          value={
+            attempts > 0 ? `${((requests / attempts) * 100).toFixed(1)}%` : '—'
+          }
+          valueClassName={
+            errors > 0 && attempts > 0 && requests / attempts < 0.95
+              ? 'text-amber-600 dark:text-amber-400'
+              : undefined
+          }
+          hint={t('{{count}} failed', { count: errors })}
         />
       </div>
     )

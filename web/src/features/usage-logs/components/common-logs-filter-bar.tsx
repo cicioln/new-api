@@ -47,7 +47,11 @@ import { getUserGroups } from '@/lib/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
-import { LOG_TYPE_ALL_VALUE, LOG_TYPE_FILTERS } from '../constants'
+import {
+  LOG_TYPE_ALL_VALUE,
+  LOG_TYPE_ENUM,
+  LOG_TYPE_FILTERS,
+} from '../constants'
 import { buildSearchParams } from '../lib/filter'
 import { getDefaultTimeRange } from '../lib/utils'
 import type { CommonLogFilters } from '../types'
@@ -65,6 +69,14 @@ import { useLogsViewScope, useUsageLogsContext } from './usage-logs-provider'
 const route = getRouteApi('/_authenticated/usage-logs/$section')
 
 type LogTypeValue = (typeof LOG_TYPE_FILTERS)[number]['value']
+
+// Success / failure maps onto the log type: consume rows succeeded, error
+// rows failed.
+const OUTCOME_FILTERS = [
+  { value: LOG_TYPE_ALL_VALUE, label: 'All' },
+  { value: String(LOG_TYPE_ENUM.CONSUME), label: 'Success' },
+  { value: String(LOG_TYPE_ENUM.ERROR), label: 'Failed' },
+] as const
 const logTypeValueSet = new Set<string>(
   LOG_TYPE_FILTERS.map((type) => type.value)
 )
@@ -560,6 +572,39 @@ export function CommonLogsFilterBar<TData>(
             value={filters.channel}
             onApply={(value) => applyField('channel', value)}
           />
+        )}
+        {typeColumn && (
+          <div
+            role='group'
+            aria-label={t('Status')}
+            className='ml-auto inline-flex h-8 overflow-hidden rounded-lg border'
+          >
+            {OUTCOME_FILTERS.map((outcome) => {
+              const active = logType === outcome.value
+              return (
+                <button
+                  key={outcome.value}
+                  type='button'
+                  aria-pressed={active}
+                  className={cn(
+                    'focus-visible:ring-ring px-3 text-[12.5px] transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                    active
+                      ? 'bg-muted text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  onClick={() =>
+                    typeColumn.setFilterValue(
+                      outcome.value === LOG_TYPE_ALL_VALUE
+                        ? undefined
+                        : [outcome.value]
+                    )
+                  }
+                >
+                  {t(outcome.label)}
+                </button>
+              )
+            })}
+          </div>
         )}
       </div>
     )
