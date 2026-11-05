@@ -134,6 +134,7 @@ func (a *Adaptor) chat(c *gin.Context, info *relaycommon.RelayInfo) (any, *types
 		if err != nil {
 			return nil, relayError(err, false)
 		}
+		result.Text = appendFileSVG(result.Text, result.Media)
 		removeMedia(result.Media)
 		usage := service.ResponseText2Usage(c, result.Text, modelName, info.GetEstimatePromptTokens())
 		body, err := common.Marshal(dto.OpenAITextResponse{
@@ -191,11 +192,16 @@ func (a *Adaptor) chat(c *gin.Context, info *relaycommon.RelayInfo) (any, *types
 	if err != nil {
 		return nil, relayError(err, started)
 	}
+	result.Text = appendFileSVG(result.Text, result.Media)
 	removeMedia(result.Media)
-	// The SDK stops emitting deltas when upstream rewrites earlier text; send
-	// whatever the final text adds beyond what the client already received.
+	// The SDK stops emitting deltas when upstream rewrites earlier text. Send
+	// what the final text adds; when it no longer extends what the client
+	// received (e.g. a "generating…" placeholder was replaced), send the whole
+	// final text so the answer is not lost.
 	if rest, ok := strings.CutPrefix(result.Text, sent.String()); ok {
 		sendDelta(rest)
+	} else {
+		sendDelta("\n\n" + result.Text)
 	}
 	startStream()
 	usage := service.ResponseText2Usage(c, result.Text, modelName, info.GetEstimatePromptTokens())
@@ -383,6 +389,35 @@ func multipartImages(c *gin.Context) ([]musesdk.RefImage, error) {
 
 func mediaPath(file musesdk.Media) string {
 	return filepath.Join(engineConfig.MediaDir(), filepath.Base(file.Filename))
+}
+
+const maxInlineSVGBytes = 1 << 20
+
+// appendFileSVG copies an SVG the agent saved as a workspace file into the
+// reply. Asked for SVG, Muse often writes the file and only describes it in
+// text, so clients that read SVG from the message would get nothing.
+func appendFileSVG(text string, files []musesdk.Media) string {
+	if strings.Contains(strings.ToLower(text), "<svg") {
+		return text
+	}
+	for _, file := range files {
+		if file.Bytes > maxInlineSVGBytes {
+			continue
+		}
+		data, err := os.ReadFile(mediaPath(file))
+		if err != nil || len(data) > maxInlineSVGBytes {
+			continue
+		}
+		lower := strings.ToLower(string(data))
+		start := strings.Index(lower, "<svg")
+		end := strings.LastIndex(lower, "</svg>")
+		if start < 0 || end < start {
+			continue
+		}
+		svg := string(data[start : end+len("</svg>")])
+		return strings.TrimRight(text, "\n") + "\n\n```svg\n" + svg + "\n```"
+	}
+	return text
 }
 
 func removeMedia(files []musesdk.Media) {
