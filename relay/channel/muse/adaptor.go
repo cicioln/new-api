@@ -306,13 +306,19 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 			return nil, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
 		}
 	}
-	prompt := request.Prompt
+	// Muse is a general agent; without an explicit instruction it sometimes
+	// describes the picture in text instead of calling its image tool.
+	prompt := "Use your image generation tool to create the image. Do not answer with text only; produce the image file."
+	if len(refs) > 0 {
+		prompt = "Use your image generation tool to edit the attached image(s) as described. Do not answer with text only; produce the image file."
+	}
 	if request.Size != "" {
-		prompt += "\n\nImage size: " + request.Size + "."
+		prompt += "\nImage size: " + request.Size + "."
 	}
 	if count > 1 {
-		prompt += fmt.Sprintf("\n\nGenerate %d separate images.", count)
+		prompt += fmt.Sprintf("\nGenerate %d separate images.", count)
 	}
+	prompt += "\n\nImage description:\n" + request.Prompt
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
 	if err != nil {
 		return nil, relayError(err, false)

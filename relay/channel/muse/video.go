@@ -175,13 +175,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if len(refs) > musesdk.MaxRefImages {
 		return nil, fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages)
 	}
-	prompt := req.Prompt
-	if req.Size != "" {
-		prompt += "\n\nVideo size: " + req.Size + "."
-	}
-	if seconds := videoSeconds(req); seconds > 0 {
-		prompt += fmt.Sprintf("\n\nVideo length: %d seconds.", seconds)
-	}
+	prompt := videoPrompt(req, len(refs) > 0)
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
 	if err != nil {
 		return nil, err
@@ -207,6 +201,27 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 	}
 	videoJobsMu.Unlock()
 	return jsonResponse(http.StatusOK, []byte(`{}`)), nil
+}
+
+// videoPrompt wraps the user's description in an explicit instruction. Muse is
+// a general agent: given a bare description such as "a cat running on the
+// beach" it often answers in text instead of calling its video tool.
+func videoPrompt(req relaycommon.TaskSubmitReq, hasRefs bool) string {
+	var b strings.Builder
+	if hasRefs {
+		b.WriteString("Use your video generation tool to animate the attached image(s) into a video. Do not answer with text only; produce the video file.")
+	} else {
+		b.WriteString("Use your video generation tool to create a video. Do not answer with text only; produce the video file.")
+	}
+	if req.Size != "" {
+		b.WriteString("\nVideo size: " + req.Size + ".")
+	}
+	if seconds := videoSeconds(req); seconds > 0 {
+		b.WriteString(fmt.Sprintf("\nVideo length: %d seconds.", seconds))
+	}
+	b.WriteString("\n\nVideo description:\n")
+	b.WriteString(req.Prompt)
+	return b.String()
 }
 
 func runVideoJob(jobID string, req videoRequest) {
