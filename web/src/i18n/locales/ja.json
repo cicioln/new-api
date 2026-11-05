@@ -7973,6 +7973,9 @@
     "Remove image": "画像を削除",
     "Add image": "画像を追加",
     "View image": "画像を表示",
-    "Image preview": "画像プレビュー"
+    "Image preview": "画像プレビュー",
+    "Video Storage": "動画の保存",
+    "How long generated videos are kept on the server.": "生成した動画をサーバーに保存する期間。",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成した動画はこのサーバーに保存されます。これより古い動画は自動的に削除されます。0 は永久に保存します。"
   }
 }

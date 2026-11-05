@@ -209,6 +209,12 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
+	if option.Key == "video_setting.retention_days" {
+		if days, err := strconv.Atoi(option.Value.(string)); err != nil || days < 0 {
+			common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid parameters"))
+			return
+		}
+	}
 	if option.Key == "TaskPublicAddress" && option.Value.(string) != "" {
 		if err := service.ValidateTaskArtifactBaseURL(option.Value.(string)); err != nil {
 			common.ApiError(c, err)

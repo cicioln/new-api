@@ -23,6 +23,7 @@ import { WorkerSettingsSection } from '../integrations/worker-settings-section'
 import { LogSettingsSection } from '../maintenance/log-settings-section'
 import { PerformanceSection } from '../maintenance/performance-section'
 import { UpdateCheckerSection } from '../maintenance/update-checker-section'
+import { VideoStorageSection } from '../maintenance/video-storage-section'
 import type { OperationsSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
 
@@ -115,6 +116,19 @@ const OPERATIONS_SECTIONS = [
             settings['log_setting.user_export_enabled'] ?? true,
           'log_setting.max_range_days':
             settings['log_setting.max_range_days'] ?? 365,
+        }}
+      />
+    ),
+  },
+  {
+    id: 'video-storage',
+    titleKey: 'Video Storage',
+    descriptionKey: 'How long generated videos are kept on the server.',
+    build: (settings: OperationsSettings) => (
+      <VideoStorageSection
+        defaultValues={{
+          'video_setting.retention_days':
+            settings['video_setting.retention_days'] ?? 0,
         }}
       />
     ),

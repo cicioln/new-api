@@ -7973,6 +7973,9 @@
     "Remove image": "移除圖片",
     "Add image": "新增圖片",
     "View image": "檢視圖片",
-    "Image preview": "圖片預覽"
+    "Image preview": "圖片預覽",
+    "Video Storage": "影片儲存",
+    "How long generated videos are kept on the server.": "生成的影片在伺服器上保留多久。",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成的影片儲存在本伺服器上，超過該天數的影片會被自動刪除；0 表示永久保留。"
   }
 }

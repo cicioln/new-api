@@ -7973,6 +7973,9 @@
     "Remove image": "Xóa ảnh",
     "Add image": "Thêm ảnh",
     "View image": "Xem ảnh",
-    "Image preview": "Xem trước ảnh"
+    "Image preview": "Xem trước ảnh",
+    "Video Storage": "Lưu trữ video",
+    "How long generated videos are kept on the server.": "Thời gian lưu video đã tạo trên máy chủ.",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Video đã tạo được lưu trên máy chủ này. Video cũ hơn sẽ tự động bị xóa; 0 nghĩa là lưu vĩnh viễn."
   }
 }

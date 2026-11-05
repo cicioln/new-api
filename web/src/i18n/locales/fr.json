@@ -7973,6 +7973,9 @@
     "Remove image": "Retirer l’image",
     "Add image": "Ajouter une image",
     "View image": "Voir l’image",
-    "Image preview": "Aperçu de l’image"
+    "Image preview": "Aperçu de l’image",
+    "Video Storage": "Stockage des vidéos",
+    "How long generated videos are kept on the server.": "Durée de conservation des vidéos générées sur le serveur.",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Les vidéos générées sont stockées sur ce serveur. Les vidéos plus anciennes sont supprimées automatiquement ; 0 les conserve définitivement."
   }
 }

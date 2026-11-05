@@ -25,6 +25,7 @@ import (
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +35,8 @@ import (
 // reads job state from this process, and an unfinished job missing after a
 // restart (or on another node) is reported as not found, which fails and
 // refunds the task. Finished videos are stored under their task ID, so they
-// stay playable across restarts until the retention period ends.
+// stay playable across restarts. They are kept until the administrator's
+// video retention period (video_setting.retention_days, 0 = forever) ends.
 
 const videoGenerateTimeout = 20 * time.Minute
 
@@ -55,9 +57,9 @@ var (
 	videoJobs   = map[string]*videoJob{}
 )
 
-func videoRetention() time.Duration {
-	return time.Duration(common.GetEnvOrDefault("MUSE_VIDEO_RETENTION_HOURS", 24)) * time.Hour
-}
+// videoJobMemory is how long a finished job stays in memory. Its file outlives
+// it on disk and is found by task ID afterwards.
+const videoJobMemory = 24 * time.Hour
 
 func cleanupVideoJobs(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Minute)
@@ -68,19 +70,17 @@ func cleanupVideoJobs(ctx context.Context) {
 			return
 		case <-ticker.C:
 		}
-		cutoff := time.Now().Add(-videoRetention())
+		forget := time.Now().Add(-videoJobMemory)
 		videoJobsMu.Lock()
 		for id, job := range videoJobs {
-			if job.finished.IsZero() || job.finished.After(cutoff) {
-				continue
+			if !job.finished.IsZero() && job.finished.Before(forget) {
+				delete(videoJobs, id)
 			}
-			if job.file != "" {
-				_ = os.Remove(job.file)
-			}
-			delete(videoJobs, id)
 		}
 		videoJobsMu.Unlock()
-		removeExpiredVideoFiles(cutoff)
+		if days := operation_setting.GetVideoSetting().RetentionDays; days > 0 {
+			removeExpiredVideoFiles(time.Now().AddDate(0, 0, -days))
+		}
 	}
 }
 
@@ -339,7 +339,12 @@ func (a *TaskAdaptor) FetchTask(baseUrl, key string, task *model.Task, proxy str
 	}
 	videoJobsMu.Unlock()
 	if job == nil {
-		return jsonResponse(http.StatusNotFound, []byte(`{"status":"NOT_FOUND"}`)), nil
+		// A job that finished before a restart left its video on disk.
+		sharedEngine()
+		if path, _ := findVideoFile(task.GetUpstreamTaskID()); path == "" {
+			return jsonResponse(http.StatusNotFound, []byte(`{"status":"NOT_FOUND"}`)), nil
+		}
+		snapshot = videoJob{Status: model.TaskStatusSuccess, Progress: 100}
 	}
 	body, err := common.Marshal(snapshot)
 	if err != nil {

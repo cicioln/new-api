@@ -7973,6 +7973,9 @@
     "Remove image": "Удалить изображение",
     "Add image": "Добавить изображение",
     "View image": "Открыть изображение",
-    "Image preview": "Просмотр изображения"
+    "Image preview": "Просмотр изображения",
+    "Video Storage": "Хранение видео",
+    "How long generated videos are kept on the server.": "Сколько хранить созданные видео на сервере.",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Созданные видео хранятся на этом сервере. Более старые удаляются автоматически; 0 — хранить всегда."
   }
 }

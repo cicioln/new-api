@@ -7973,6 +7973,9 @@
     "Remove image": "Remove image",
     "Add image": "Add image",
     "View image": "View image",
-    "Image preview": "Image preview"
+    "Image preview": "Image preview",
+    "Video Storage": "Video Storage",
+    "How long generated videos are kept on the server.": "How long generated videos are kept on the server.",
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently."
   }
 }
