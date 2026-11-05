@@ -330,6 +330,8 @@ export type BillingSettings = {
   'payment_setting.usdt_addresses': string
   'payment_setting.usdt_exchange_rate': number
   'payment_setting.usdt_icon': string
+  'payment_setting.usdt_bonus_rate': number
+  'payment_setting.usdt_fee_rate': number
   StripeApiSecret: string
   StripeWebhookSecret: string
   StripePriceId: string

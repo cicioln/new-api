@@ -7923,6 +7923,8 @@
     "e.g., 2": "例如 2",
     "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "按充值额度额外赠送，会在支付方式右上角显示角标。",
     "Added to the amount the user pays; the credited amount is unchanged.": "加在用户应付金额上，到账额度不变。",
-    "Enter a percentage between 0 and 100 with up to 2 decimals": "请输入 0–100 之间的百分比，最多两位小数"
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "请输入 0–100 之间的百分比，最多两位小数",
+    "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "USDT 充值赠送 {{rate}}%：+{{amount}}",
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT 充值需额外支付 {{rate}}% 通道手续费：+{{amount}}"
   }
 }

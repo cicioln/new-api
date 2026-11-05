@@ -169,7 +169,6 @@ const RATELESS_PAYMENT_TYPES = new Set<string>([
   PAYMENT_TYPES.STRIPE,
   PAYMENT_TYPES.WAFFO,
   PAYMENT_TYPES.WAFFO_PANCAKE,
-  PAYMENT_TYPES.USDT,
 ])
 
 function parseRate(value: string | number | undefined): number {
@@ -178,8 +177,8 @@ function parseRate(value: string | number | undefined): number {
 }
 
 /**
- * Bonus and fee percentages configured on a payment method. Gateways with
- * their own checkout (Stripe, Waffo, USDT) ignore both, matching the server.
+ * Bonus and fee percentages configured on a payment method. Stripe and Waffo
+ * ignore both, matching the server. USDT rates come from the USDT settings.
  */
 export function getPaymentMethodRates(method: PaymentMethod | undefined): {
   bonusRate: number

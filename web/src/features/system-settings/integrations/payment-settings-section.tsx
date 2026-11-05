@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Code2, Eye, ShieldAlert } from 'lucide-react'
 import * as React from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
+import { useForm, type Resolver, type UseFormReturn } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -192,6 +192,8 @@ const paymentSchema = z.object({
     ),
   UsdtExchangeRate: z.coerce.number().min(0),
   UsdtIcon: z.string(),
+  UsdtBonusRate: z.coerce.number().min(0).max(100),
+  UsdtFeeRate: z.coerce.number().min(0).max(100),
   WaffoEnabled: z.boolean(),
   WaffoApiKey: z.string(),
   WaffoPrivateKey: z.string(),
@@ -217,6 +219,104 @@ type PaymentBaseFormValues = Omit<
   PaymentFormValues,
   keyof WaffoFormFieldValues | keyof WaffoPancakeSettingsValues
 >
+
+/** USDT bonus or fee: one switch, one percentage; the other field is zeroed. */
+function UsdtRateFields({
+  form,
+}: {
+  form: UseFormReturn<PaymentFormValues>
+}) {
+  const { t } = useTranslation()
+  const bonusRate = Number(form.watch('UsdtBonusRate')) || 0
+  const feeRate = Number(form.watch('UsdtFeeRate')) || 0
+  const [kind, setKind] = React.useState<'none' | 'bonus' | 'fee'>(
+    bonusRate > 0 ? 'bonus' : feeRate > 0 ? 'fee' : 'none'
+  )
+  React.useEffect(() => {
+    if (bonusRate > 0) setKind('bonus')
+    else if (feeRate > 0) setKind('fee')
+  }, [bonusRate, feeRate])
+
+  const switchKind = (next: 'none' | 'bonus' | 'fee') => {
+    const current = kind === 'fee' ? feeRate : bonusRate
+    setKind(next)
+    form.setValue('UsdtBonusRate', next === 'bonus' ? current : 0, {
+      shouldDirty: true,
+    })
+    form.setValue('UsdtFeeRate', next === 'fee' ? current : 0, {
+      shouldDirty: true,
+    })
+  }
+
+  const fieldName = kind === 'fee' ? 'UsdtFeeRate' : 'UsdtBonusRate'
+  return (
+    <div className='space-y-3'>
+      <div className='space-y-2'>
+        <FormLabel>{t('Bonus or fee')}</FormLabel>
+        <div className='inline-flex overflow-hidden rounded-md border text-sm'>
+          {(
+            [
+              ['none', t('None')],
+              ['bonus', t('Top-up bonus')],
+              ['fee', t('Channel fee')],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type='button'
+              aria-pressed={kind === value}
+              onClick={() => switchKind(value)}
+              className={
+                kind === value
+                  ? 'bg-foreground text-background px-3 py-1.5'
+                  : 'hover:bg-muted px-3 py-1.5'
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {kind !== 'none' && (
+        <FormField
+          key={fieldName}
+          control={form.control}
+          name={fieldName}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <div className='relative max-w-xs'>
+                  <Input
+                    type='number'
+                    step='0.01'
+                    min={0}
+                    max={100}
+                    placeholder={t('e.g., 2')}
+                    className='pr-8'
+                    {...safeNumberFieldProps(field)}
+                  />
+                  <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
+                    %
+                  </span>
+                </div>
+              </FormControl>
+              <FormDescription>
+                {kind === 'bonus'
+                  ? t(
+                      'Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.'
+                    )
+                  : t(
+                      'Added to the amount the user pays; the credited amount is unchanged.'
+                    )}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+    </div>
+  )
+}
 
 const CURRENT_COMPLIANCE_TERMS_VERSION = 'v1'
 const paymentTabContentClassName = 'mt-6 min-w-0'
@@ -482,6 +582,8 @@ export function PaymentSettingsSection({
       UsdtEnabled: values.UsdtEnabled,
       UsdtExchangeRate: values.UsdtExchangeRate,
       UsdtIcon: values.UsdtIcon.trim(),
+      UsdtBonusRate: values.UsdtBonusRate,
+      UsdtFeeRate: values.UsdtFeeRate,
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(values.UsdtAddresses)
           .map((entry) => ({
@@ -544,6 +646,8 @@ export function PaymentSettingsSection({
       UsdtEnabled: initialRef.current.UsdtEnabled,
       UsdtExchangeRate: initialRef.current.UsdtExchangeRate,
       UsdtIcon: initialRef.current.UsdtIcon.trim(),
+      UsdtBonusRate: initialRef.current.UsdtBonusRate,
+      UsdtFeeRate: initialRef.current.UsdtFeeRate,
       UsdtAddresses: JSON.stringify(
         parseUsdtAddresses(initialRef.current.UsdtAddresses)
       ),
@@ -757,6 +861,21 @@ export function PaymentSettingsSection({
       updates.push({
         key: 'payment_setting.usdt_icon',
         value: sanitized.UsdtIcon,
+      })
+    }
+
+    // Bonus and fee are exclusive; the switch zeroes the other one.
+    if (sanitized.UsdtBonusRate !== initial.UsdtBonusRate) {
+      updates.push({
+        key: 'payment_setting.usdt_bonus_rate',
+        value: sanitized.UsdtBonusRate,
+      })
+    }
+
+    if (sanitized.UsdtFeeRate !== initial.UsdtFeeRate) {
+      updates.push({
+        key: 'payment_setting.usdt_fee_rate',
+        value: sanitized.UsdtFeeRate,
       })
     }
 
@@ -1614,6 +1733,8 @@ export function PaymentSettingsSection({
                     </FormItem>
                   )}
                 />
+
+                <UsdtRateFields form={form} />
 
                 <FormField
                   control={form.control}

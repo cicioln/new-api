@@ -113,9 +113,13 @@ func RequestUsdtPay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Failed to get the user group"))
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
+	quote := getTopUpQuote(req.Amount, group, operation_setting.PayMethodUsdt)
+	payMoney := quote.PayMoney
 	if payMoney < 0.01 {
 		paymentError(c, common.NewMessage("Payment amount is too low"))
+		return
+	}
+	if rejectInvalidBonusQuota(c, id, req.Amount, quote.BonusQuota) {
 		return
 	}
 
@@ -159,6 +163,8 @@ func RequestUsdtPay(c *gin.Context) {
 		PaymentProvider: model.PaymentProviderUsdt,
 		CreateTime:      now,
 		Status:          common.TopUpStatusPending,
+		BonusQuota:      quote.BonusQuota,
+		FeeMoney:        quote.FeeMoney,
 	}
 	order := &model.UsdtOrder{
 		TradeNo:    tradeNo,

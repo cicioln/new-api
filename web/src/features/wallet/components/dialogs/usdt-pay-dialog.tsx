@@ -27,13 +27,16 @@ import { CopyButton } from '@/components/copy-button'
 import { Dialog } from '@/components/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { formatQuotaWithCurrency } from '@/lib/currency'
 import { handleServerError } from '@/lib/handle-server-error'
 import { cn } from '@/lib/utils'
 
 import { getUsdtOrder, isApiSuccess, requestUsdtPayment } from '../../api'
-import type { UsdtChainInfo, UsdtOrder } from '../../types'
+import { formatCurrency } from '../../lib'
+import type { AmountDetail, UsdtChainInfo, UsdtOrder } from '../../types'
 
 const POLL_INTERVAL_MS = 5000
+const AMOUNT_FORMAT = { digitsLarge: 2, digitsSmall: 2, abbreviate: false }
 
 /**
  * USDT checkout: pick a receiving address, then transfer the exact amount to the shown
@@ -45,8 +48,12 @@ export function UsdtPayDialog(props: {
   topupAmount: number
   chains: UsdtChainInfo[]
   onPaid: () => void
+  /** Bonus / fee quote for USDT, shown before the order is created */
+  amountDetail?: AmountDetail | null
 }) {
   const { t } = useTranslation()
+  const bonusQuota = props.amountDetail?.bonus_quota ?? 0
+  const feeMoney = props.amountDetail?.fee_money ?? 0
   const [pickedAddress, setAddress] = useState<string>()
   // Top-up info may load after mount, so fall back to the first address lazily.
   const address = pickedAddress ?? props.chains[0]?.address
@@ -141,6 +148,29 @@ export function UsdtPayDialog(props: {
             </button>
           )
         })}
+        {(bonusQuota > 0 || feeMoney > 0) && (
+          <p
+            className={cn(
+              'rounded-lg px-3.5 py-2.5 text-[13px] sm:col-span-2',
+              bonusQuota > 0
+                ? 'bg-green-600/10 text-green-700 dark:text-green-400'
+                : 'bg-orange-500/10 text-orange-700 dark:text-orange-400'
+            )}
+          >
+            {bonusQuota > 0
+              ? t('USDT top-ups get a {{rate}}% bonus: +{{amount}}', {
+                  rate: props.amountDetail?.bonus_rate,
+                  amount: formatQuotaWithCurrency(bonusQuota, AMOUNT_FORMAT),
+                })
+              : t(
+                  'USDT top-ups include a {{rate}}% channel fee: +{{amount}}',
+                  {
+                    rate: props.amountDetail?.fee_rate,
+                    amount: formatCurrency(feeMoney),
+                  }
+                )}
+          </p>
+        )}
       </div>
     )
   } else if (status === 'paid') {

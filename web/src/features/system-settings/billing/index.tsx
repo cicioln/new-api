@@ -84,6 +84,8 @@ const defaultBillingSettings: BillingSettings = {
   'payment_setting.usdt_addresses': '[]',
   'payment_setting.usdt_exchange_rate': 0,
   'payment_setting.usdt_icon': '',
+  'payment_setting.usdt_bonus_rate': 0,
+  'payment_setting.usdt_fee_rate': 0,
   StripeApiSecret: '',
   StripeWebhookSecret: '',
   StripePriceId: '',

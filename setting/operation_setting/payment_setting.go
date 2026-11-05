@@ -28,6 +28,9 @@ type PaymentSetting struct {
 	UsdtAddresses    []UsdtAddress `json:"usdt_addresses"`
 	UsdtExchangeRate float64       `json:"usdt_exchange_rate"`
 	UsdtIcon         string        `json:"usdt_icon"`
+	// UsdtBonusRate / UsdtFeeRate 是 USDT 收款的充值赠送和手续费百分比（0-100），二者只能设置一个。
+	UsdtBonusRate float64 `json:"usdt_bonus_rate"`
+	UsdtFeeRate   float64 `json:"usdt_fee_rate"`
 }
 
 type UsdtAddress struct {

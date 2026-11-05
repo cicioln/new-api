@@ -172,6 +172,8 @@ const BILLING_SECTIONS = [
           UsdtAddresses: settings['payment_setting.usdt_addresses'] || '[]',
           UsdtExchangeRate: settings['payment_setting.usdt_exchange_rate'] ?? 0,
           UsdtIcon: settings['payment_setting.usdt_icon'] ?? '',
+          UsdtBonusRate: settings['payment_setting.usdt_bonus_rate'] ?? 0,
+          UsdtFeeRate: settings['payment_setting.usdt_fee_rate'] ?? 0,
         }}
         waffoDefaultValues={{
           WaffoEnabled: settings.WaffoEnabled ?? false,

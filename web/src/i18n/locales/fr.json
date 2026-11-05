@@ -7923,6 +7923,8 @@
     "e.g., 2": "ex. 2",
     "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "Quota supplémentaire crédité en plus du montant rechargé. Affiché comme badge sur le moyen de paiement.",
     "Added to the amount the user pays; the credited amount is unchanged.": "Ajouté au montant payé par l’utilisateur ; le montant crédité ne change pas.",
-    "Enter a percentage between 0 and 100 with up to 2 decimals": "Saisissez un pourcentage entre 0 et 100 avec au plus 2 décimales"
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "Saisissez un pourcentage entre 0 et 100 avec au plus 2 décimales",
+    "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "Les recharges USDT reçoivent un bonus de {{rate}} % : +{{amount}}",
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Les recharges USDT incluent {{rate}} % de frais de canal : +{{amount}}"
   }
 }

@@ -249,6 +249,9 @@ func validateOptionValue(key string, value string) error {
 	if key == "PayMethods" {
 		return operation_setting.ValidatePayMethodsJSON(value)
 	}
+	if operation_setting.UsdtRateOptionKeys[key] {
+		return operation_setting.ValidateUsdtRateOption(key, value)
+	}
 	return nil
 }
 

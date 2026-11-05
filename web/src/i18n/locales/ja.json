@@ -7923,6 +7923,8 @@
     "e.g., 2": "例: 2",
     "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "チャージ額に上乗せして付与されます。支払い方法にバッジで表示されます。",
     "Added to the amount the user pays; the credited amount is unchanged.": "ユーザーの支払額に加算され、入金額は変わりません。",
-    "Enter a percentage between 0 and 100 with up to 2 decimals": "0〜100 のパーセンテージを小数点以下 2 桁まで入力してください"
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "0〜100 のパーセンテージを小数点以下 2 桁まで入力してください",
+    "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "USDT チャージで {{rate}}% ボーナス：+{{amount}}",
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT チャージには {{rate}}% のチャネル手数料がかかります：+{{amount}}"
   }
 }

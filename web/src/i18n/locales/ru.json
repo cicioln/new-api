@@ -7923,6 +7923,8 @@
     "e.g., 2": "напр. 2",
     "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "Дополнительная квота сверх суммы пополнения. Отображается значком на способе оплаты.",
     "Added to the amount the user pays; the credited amount is unchanged.": "Добавляется к сумме оплаты; зачисляемая сумма не меняется.",
-    "Enter a percentage between 0 and 100 with up to 2 decimals": "Введите процент от 0 до 100, не более 2 знаков после запятой"
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "Введите процент от 0 до 100, не более 2 знаков после запятой",
+    "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "Бонус {{rate}}% за пополнение USDT: +{{amount}}",
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Пополнение USDT включает комиссию канала {{rate}}%: +{{amount}}"
   }
 }

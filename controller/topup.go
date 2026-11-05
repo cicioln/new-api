@@ -109,6 +109,13 @@ func GetTopUpInfo(c *gin.Context) {
 		if icon := strings.TrimSpace(operation_setting.GetPaymentSetting().UsdtIcon); icon != "" {
 			usdtMethod["icon"] = icon
 		}
+		usdtBonusRate, usdtFeeRate := operation_setting.GetPayMethodRates(operation_setting.PayMethodUsdt)
+		if usdtBonusRate.IsPositive() {
+			usdtMethod[operation_setting.PayMethodBonusRateKey] = usdtBonusRate.String()
+		}
+		if usdtFeeRate.IsPositive() {
+			usdtMethod[operation_setting.PayMethodFeeRateKey] = usdtFeeRate.String()
+		}
 		payMethods = append(slices.Clone(payMethods), usdtMethod)
 	}
 
@@ -603,7 +610,8 @@ func RequestAmount(c *gin.Context) {
 		return
 	}
 	paymentMethod := ""
-	if operation_setting.ContainsPayMethod(req.PaymentMethod) {
+	if operation_setting.ContainsPayMethod(req.PaymentMethod) ||
+		(req.PaymentMethod == operation_setting.PayMethodUsdt && len(usdtReceivers()) > 0) {
 		paymentMethod = req.PaymentMethod
 	}
 	quote := getTopUpQuote(req.Amount, group, paymentMethod)

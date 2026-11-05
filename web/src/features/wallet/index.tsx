@@ -195,6 +195,7 @@ export function Wallet(props: WalletProps) {
 
       // USDT has its own checkout with chain choice, address and QR code
       if (method.type === PAYMENT_TYPES.USDT) {
+        await calculatePaymentAmount(topupAmount, method.type)
         setUsdtDialogOpen(true)
         return
       }
@@ -410,6 +411,7 @@ export function Wallet(props: WalletProps) {
         topupAmount={topupAmount}
         chains={topupInfo?.usdt_chains ?? []}
         onPaid={() => void fetchUser()}
+        amountDetail={amountDetail}
       />
 
       <TransferDialog

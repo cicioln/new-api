@@ -65,7 +65,43 @@ var payMethodTypesWithoutRates = map[string]bool{
 	"stripe":        true,
 	"waffo":         true,
 	"waffo_pancake": true,
-	"usdt":          true,
+}
+
+// PayMethodUsdt 是内置 USDT 收款的类型，赠送和手续费来自 payment_setting.usdt_bonus_rate / usdt_fee_rate。
+const PayMethodUsdt = "usdt"
+
+// UsdtRateOptionKeys 是需要做 0-100 校验的 USDT 比例配置项。
+var UsdtRateOptionKeys = map[string]bool{
+	"payment_setting.usdt_bonus_rate": true,
+	"payment_setting.usdt_fee_rate":   true,
+}
+
+// ValidateUsdtRateOption 校验 USDT 赠送 / 手续费百分比。
+func ValidateUsdtRateOption(key string, value string) error {
+	if !UsdtRateOptionKeys[key] {
+		return nil
+	}
+	if _, err := parsePayMethodRate(value); err != nil {
+		return fmt.Errorf("%s: %w", key, err)
+	}
+	return nil
+}
+
+func usdtRates() (decimal.Decimal, decimal.Decimal) {
+	setting := GetPaymentSetting()
+	bonusRate, err1 := parsePayMethodRate(decimal.NewFromFloat(setting.UsdtBonusRate).String())
+	feeRate, err2 := parsePayMethodRate(decimal.NewFromFloat(setting.UsdtFeeRate).String())
+	if err1 != nil {
+		bonusRate = decimal.Zero
+	}
+	if err2 != nil {
+		feeRate = decimal.Zero
+	}
+	// 后台是二选一；两个都为正时（只可能是保存中途）都不生效，避免既加价又赠送。
+	if bonusRate.IsPositive() && feeRate.IsPositive() {
+		return decimal.Zero, decimal.Zero
+	}
+	return bonusRate, feeRate
 }
 
 // PayMethodSupportsRates 报告该支付方式类型是否支持赠送和手续费。
@@ -92,6 +128,9 @@ func parsePayMethodRate(value string) (decimal.Decimal, error) {
 func GetPayMethodRates(method string) (bonusRate decimal.Decimal, feeRate decimal.Decimal) {
 	if !PayMethodSupportsRates(method) {
 		return decimal.Zero, decimal.Zero
+	}
+	if method == PayMethodUsdt {
+		return usdtRates()
 	}
 	for _, payMethod := range PayMethods {
 		if payMethod["type"] != method {
