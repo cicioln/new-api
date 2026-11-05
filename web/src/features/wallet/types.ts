@@ -34,7 +34,15 @@ export interface ApiResponse<T = unknown> {
  */
 export type TopupInfoResponse = ApiResponse<TopupInfo>
 export type RedemptionResponse = ApiResponse<number>
-export type AmountResponse = ApiResponse<string>
+/** Breakdown returned by /api/user/amount for the selected payment method */
+export interface AmountDetail {
+  base_money: number
+  fee_money: number
+  fee_rate: string
+  bonus_quota: number
+  bonus_rate: string
+}
+export type AmountResponse = ApiResponse<string> & { detail?: AmountDetail }
 export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
   url?: string
 }
@@ -122,6 +130,10 @@ export interface PaymentMethod {
   min_topup?: number
   /** Optional react-icons component name or safe icon URL */
   icon?: string
+  /** Top-up bonus percentage (0-100) granted on top of the credited amount */
+  bonus_rate?: string | number
+  /** Channel fee percentage (0-100) added to the amount to pay */
+  fee_rate?: string | number
 }
 
 /**
@@ -234,6 +246,8 @@ export interface WaffoPancakePaymentRequest {
 export interface AmountRequest {
   /** Topup amount to calculate */
   amount: number
+  /** Selected payment method, used for bonus and fee rates */
+  payment_method?: string
 }
 
 /**
@@ -295,6 +309,10 @@ export interface TopupRecord {
   complete_time?: number
   /** Payment status */
   status: TopupStatus
+  /** Extra quota granted by the payment method bonus */
+  bonus_quota?: number
+  /** Channel fee included in money */
+  fee_money?: number
 }
 
 /**

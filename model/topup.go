@@ -23,6 +23,10 @@ type TopUp struct {
 	CreateTime      int64   `json:"create_time"`
 	CompleteTime    int64   `json:"complete_time"`
 	Status          string  `json:"status"`
+	// BonusQuota 是下单时按支付方式赠送比例算好的额外额度，入账时与 Amount 一起加给用户。
+	BonusQuota int `json:"bonus_quota" gorm:"default:0"`
+	// FeeMoney 是下单时按支付方式手续费比例算出的手续费，已包含在 Money 里。
+	FeeMoney float64 `json:"fee_money" gorm:"default:0"`
 }
 
 const (
@@ -212,7 +216,8 @@ func RechargeOnlineTopUp(tradeNo string, provider string, actualPaymentMethod st
 		}
 		var quotaErr error
 		quotaToAdd, quotaErr = common.WalletQuotaFromDecimalStrict(
-			decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)),
+			decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
+				Add(decimal.NewFromInt(int64(max(topUp.BonusQuota, 0)))),
 		)
 		if quotaErr != nil || quotaToAdd <= 0 {
 			return ErrInvalidTopUpQuota
@@ -495,7 +500,8 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 			)
 		} else {
 			quotaToAdd, quotaErr = common.WalletQuotaFromDecimalStrict(
-				decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)),
+				decimal.NewFromInt(topUp.Amount).Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
+					Add(decimal.NewFromInt(int64(max(topUp.BonusQuota, 0)))),
 			)
 		}
 		if quotaErr != nil || quotaToAdd <= 0 {

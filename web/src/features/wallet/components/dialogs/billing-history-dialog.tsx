@@ -45,7 +45,10 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
-import { formatCurrencyFromUSD } from '@/lib/currency'
+import {
+  formatCurrencyFromUSD,
+  formatQuotaWithCurrency,
+} from '@/lib/currency'
 import { formatNumber } from '@/lib/format'
 
 import { useBillingHistory } from '../../hooks/use-billing-history'
@@ -253,6 +256,16 @@ export function BillingHistoryDialog({
                               digitsSmall: 2,
                               abbreviate: false,
                             })}
+                            {!!record.bonus_quota && record.bonus_quota > 0 && (
+                              <span className='ml-1.5 text-xs font-medium text-green-600'>
+                                +
+                                {formatQuotaWithCurrency(record.bonus_quota, {
+                                  digitsLarge: 2,
+                                  digitsSmall: 2,
+                                  abbreviate: false,
+                                })}
+                              </span>
+                            )}
                           </div>
                         </div>
                         <div className='space-y-1'>
@@ -261,6 +274,13 @@ export function BillingHistoryDialog({
                           </Label>
                           <div className='text-sm font-semibold text-red-600'>
                             {formatNumber(record.money)}
+                            {!!record.fee_money && record.fee_money > 0 && (
+                              <span className='text-muted-foreground ml-1.5 text-xs font-normal'>
+                                {t('Incl. fee {{amount}}', {
+                                  amount: formatNumber(record.fee_money),
+                                })}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

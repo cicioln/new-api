@@ -134,7 +134,8 @@ func xingyeTradeNo(prefix string) string {
 	return fmt.Sprintf("%s%d%s", prefix, time.Now().Unix(), common.GetRandomString(6))
 }
 
-func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, payMoney float64, bankcode string) {
+func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, quote topUpQuote, bankcode string) {
+	payMoney := quote.PayMoney
 	// 星烨订单号最长 20 位：前缀 2 位 + 时间戳 10 位 + 随机 6 位。
 	tradeNo := xingyeTradeNo("XY")
 	amount := req.Amount
@@ -150,6 +151,8 @@ func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, payMoney floa
 		PaymentProvider: model.PaymentProviderXingye,
 		CreateTime:      time.Now().Unix(),
 		Status:          common.TopUpStatusPending,
+		BonusQuota:      quote.BonusQuota,
+		FeeMoney:        quote.FeeMoney,
 	}
 	if err := topUp.Insert(); err != nil {
 		logger.LogError(c.Request.Context(), common.LogText("Xingye failed to create top-up order user_id=%d trade_no=%s error=%q", userId, tradeNo, err.Error()))

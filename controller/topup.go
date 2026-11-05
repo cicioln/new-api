@@ -147,7 +147,8 @@ type EpayRequest struct {
 }
 
 type AmountRequest struct {
-	Amount int64 `json:"amount"`
+	Amount        int64  `json:"amount"`
+	PaymentMethod string `json:"payment_method,omitempty"`
 }
 
 func GetEpayClient() *epay.Client {
@@ -192,6 +193,51 @@ func getPayMoney(amount int64, group string) float64 {
 	payMoney := dAmount.Mul(dPrice).Mul(dTopupGroupRatio).Mul(dDiscount)
 
 	return payMoney.InexactFloat64()
+}
+
+// topUpQuote 是某个支付方式下的一次充值报价：手续费加在应付金额上，赠送额度入账时额外加给用户。
+type topUpQuote struct {
+	BaseMoney  float64 // 未加手续费的商品金额
+	FeeMoney   float64 // 手续费，向上取整到 0.01
+	PayMoney   float64 // 应付金额 = BaseMoney + FeeMoney
+	BonusQuota int     // 赠送额度（quota 单位）
+	BonusRate  string
+	FeeRate    string
+}
+
+func getTopUpQuote(amount int64, group string, paymentMethod string) topUpQuote {
+	baseMoney := getPayMoney(amount, group)
+	quote := topUpQuote{BaseMoney: baseMoney, PayMoney: baseMoney, BonusRate: "0", FeeRate: "0"}
+	bonusRate, feeRate := operation_setting.GetPayMethodRates(paymentMethod)
+	hundred := decimal.NewFromInt(100)
+	if feeRate.IsPositive() {
+		base := decimal.NewFromFloat(baseMoney).Round(2)
+		fee := base.Mul(feeRate).Div(hundred).RoundCeil(2)
+		quote.BaseMoney = base.InexactFloat64()
+		quote.FeeMoney = fee.InexactFloat64()
+		quote.PayMoney = base.Add(fee).InexactFloat64()
+		quote.FeeRate = feeRate.String()
+	}
+	if bonusRate.IsPositive() {
+		if baseQuota, err := getTopUpQuota(amount); err == nil && baseQuota > 0 {
+			quote.BonusQuota = int(decimal.NewFromInt(int64(baseQuota)).Mul(bonusRate).Div(hundred).IntPart())
+			quote.BonusRate = bonusRate.String()
+		}
+	}
+	return quote
+}
+
+// rejectInvalidBonusQuota 校验加上赠送后的到账额度没有超出钱包上限。
+func rejectInvalidBonusQuota(c *gin.Context, userId int, amount int64, bonusQuota int) bool {
+	if bonusQuota <= 0 {
+		return false
+	}
+	baseQuota, err := getTopUpQuota(amount)
+	if err != nil {
+		paymentError(c, common.NewMessage("Invalid top-up amount"))
+		return true
+	}
+	return rejectInvalidCreditedQuota(c, userId, decimal.NewFromInt(int64(baseQuota)).Add(decimal.NewFromInt(int64(bonusQuota))))
 }
 
 func getMinTopup() int64 {
@@ -317,18 +363,21 @@ func RequestEpay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Failed to get the user group"))
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
-	if payMoney < 0.01 {
-		paymentError(c, common.NewMessage("Payment amount is too low"))
-		return
-	}
-
 	if !operation_setting.ContainsPayMethod(req.PaymentMethod) {
 		paymentError(c, common.NewMessage("Payment method does not exist"))
 		return
 	}
+	quote := getTopUpQuote(req.Amount, group, req.PaymentMethod)
+	payMoney := quote.PayMoney
+	if payMoney < 0.01 {
+		paymentError(c, common.NewMessage("Payment amount is too low"))
+		return
+	}
+	if rejectInvalidBonusQuota(c, id, req.Amount, quote.BonusQuota) {
+		return
+	}
 	if bankcode := xingyeBankcode(req.PaymentMethod); bankcode != "" {
-		startXingyeTopUp(c, id, req, payMoney, bankcode)
+		startXingyeTopUp(c, id, req, quote, bankcode)
 		return
 	}
 
@@ -372,6 +421,8 @@ func RequestEpay(c *gin.Context) {
 		PaymentProvider: model.PaymentProviderEpay,
 		CreateTime:      time.Now().Unix(),
 		Status:          common.TopUpStatusPending,
+		BonusQuota:      quote.BonusQuota,
+		FeeMoney:        quote.FeeMoney,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -551,12 +602,26 @@ func RequestAmount(c *gin.Context) {
 		paymentError(c, common.NewMessage("Failed to get the user group"))
 		return
 	}
-	payMoney := getPayMoney(req.Amount, group)
-	if payMoney <= 0.01 {
+	paymentMethod := ""
+	if operation_setting.ContainsPayMethod(req.PaymentMethod) {
+		paymentMethod = req.PaymentMethod
+	}
+	quote := getTopUpQuote(req.Amount, group, paymentMethod)
+	if quote.PayMoney <= 0.01 {
 		paymentError(c, common.NewMessage("Payment amount is too low"))
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": strconv.FormatFloat(payMoney, 'f', 2, 64)})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    strconv.FormatFloat(quote.PayMoney, 'f', 2, 64),
+		"detail": gin.H{
+			"base_money":  quote.BaseMoney,
+			"fee_money":   quote.FeeMoney,
+			"fee_rate":    quote.FeeRate,
+			"bonus_quota": quote.BonusQuota,
+			"bonus_rate":  quote.BonusRate,
+		},
+	})
 }
 
 func GetUserTopUps(c *gin.Context) {

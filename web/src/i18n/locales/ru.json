@@ -7906,6 +7906,23 @@
     "Cache read / all input": "Чтение кэша / весь вход",
     "Average total {{time}}": "Среднее общее {{time}}",
     "Last minute": "Последняя минута",
-    "{{count}} failed": "Ошибок: {{count}}"
+    "{{count}} failed": "Ошибок: {{count}}",
+    "Bonus {{rate}}%": "Бонус {{rate}}%",
+    "Fee {{rate}}%": "Комиссия {{rate}}%",
+    "Paying with {{name}} adds a {{rate}}% channel fee": "Оплата через {{name}} добавляет комиссию канала {{rate}}%",
+    "Top-up amount": "Сумма пополнения",
+    "{{name}} bonus {{rate}}%": "Бонус {{name}} {{rate}}%",
+    "Order amount": "Сумма заказа",
+    "{{name}} fee {{rate}}%": "Комиссия {{name}} {{rate}}%",
+    "Amount to pay": "К оплате",
+    "Channel fee {{rate}}%": "Комиссия канала {{rate}}%",
+    "Incl. fee {{amount}}": "Вкл. комиссию {{amount}}",
+    "Bonus or fee": "Бонус или комиссия",
+    "Top-up bonus": "Бонус пополнения",
+    "Channel fee": "Комиссия канала",
+    "e.g., 2": "напр. 2",
+    "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "Дополнительная квота сверх суммы пополнения. Отображается значком на способе оплаты.",
+    "Added to the amount the user pays; the credited amount is unchanged.": "Добавляется к сумме оплаты; зачисляемая сумма не меняется.",
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "Введите процент от 0 до 100, не более 2 знаков после запятой"
   }
 }

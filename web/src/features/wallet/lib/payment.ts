@@ -165,6 +165,40 @@ export function getDefaultPaymentType(topupInfo: TopupInfo | null): string {
   return DEFAULT_PAYMENT_TYPE
 }
 
+const RATELESS_PAYMENT_TYPES = new Set<string>([
+  PAYMENT_TYPES.STRIPE,
+  PAYMENT_TYPES.WAFFO,
+  PAYMENT_TYPES.WAFFO_PANCAKE,
+  PAYMENT_TYPES.USDT,
+])
+
+function parseRate(value: string | number | undefined): number {
+  const rate = Number(value)
+  return Number.isFinite(rate) && rate > 0 && rate <= 100 ? rate : 0
+}
+
+/**
+ * Bonus and fee percentages configured on a payment method. Gateways with
+ * their own checkout (Stripe, Waffo, USDT) ignore both, matching the server.
+ */
+export function getPaymentMethodRates(method: PaymentMethod | undefined): {
+  bonusRate: number
+  feeRate: number
+} {
+  if (!method || RATELESS_PAYMENT_TYPES.has(method.type)) {
+    return { bonusRate: 0, feeRate: 0 }
+  }
+  return {
+    bonusRate: parseRate(method.bonus_rate),
+    feeRate: parseRate(method.fee_rate),
+  }
+}
+
+/** Format a percentage without trailing zeros, e.g. 2 -> "2", 2.5 -> "2.5". */
+export function formatRate(rate: number): string {
+  return String(Number(rate.toFixed(2)))
+}
+
 /**
  * Get minimum topup amount from topup info
  */

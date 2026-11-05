@@ -58,6 +58,29 @@ function getEffectiveIconName(method: PaymentMethodData) {
   return method.icon || getDefaultIconName(method.type)
 }
 
+function RateCell({
+  value,
+  tone,
+}: {
+  value?: string
+  tone: 'bonus' | 'fee'
+}) {
+  if (!value || !(Number(value) > 0)) {
+    return <span className='text-muted-foreground text-sm'>—</span>
+  }
+  return (
+    <span
+      className={
+        tone === 'bonus'
+          ? 'rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-950 dark:text-green-400'
+          : 'rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-950 dark:text-orange-400'
+      }
+    >
+      {value}%
+    </span>
+  )
+}
+
 export function PaymentMethodsVisualEditor({
   value,
   onChange,
@@ -129,7 +152,9 @@ export function PaymentMethodsVisualEditor({
         typeof item.type === 'string' &&
         (!('icon' in item) || typeof item.icon === 'string') &&
         (!('min_topup' in item) || typeof item.min_topup === 'string') &&
-        (!('color' in item) || typeof item.color === 'string')
+        (!('color' in item) || typeof item.color === 'string') &&
+        (!('bonus_rate' in item) || typeof item.bonus_rate === 'string') &&
+        (!('fee_rate' in item) || typeof item.fee_rate === 'string')
     )
   }, [value])
 
@@ -360,6 +385,16 @@ export function PaymentMethodsVisualEditor({
                   ),
               },
               {
+                id: 'bonus',
+                header: t('Top-up bonus'),
+                cell: (method) => <RateCell value={method.bonus_rate} tone='bonus' />,
+              },
+              {
+                id: 'fee',
+                header: t('Channel fee'),
+                cell: (method) => <RateCell value={method.fee_rate} tone='fee' />,
+              },
+              {
                 id: 'actions',
                 header: t('Actions'),
                 className: 'text-right',
@@ -453,6 +488,22 @@ export function PaymentMethodsVisualEditor({
                           {t('Min Top-up:')}
                         </span>
                         <span className='font-mono'>{method.min_topup}</span>
+                      </div>
+                    )}
+                    {Number(method.bonus_rate) > 0 && (
+                      <div className='flex items-center gap-2'>
+                        <span className='text-muted-foreground min-w-20'>
+                          {t('Top-up bonus')}
+                        </span>
+                        <RateCell value={method.bonus_rate} tone='bonus' />
+                      </div>
+                    )}
+                    {Number(method.fee_rate) > 0 && (
+                      <div className='flex items-center gap-2'>
+                        <span className='text-muted-foreground min-w-20'>
+                          {t('Channel fee')}
+                        </span>
+                        <RateCell value={method.fee_rate} tone='fee' />
                       </div>
                     )}
                   </div>

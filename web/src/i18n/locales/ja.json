@@ -7906,6 +7906,23 @@
     "Cache read / all input": "キャッシュ読取 / 全入力",
     "Average total {{time}}": "平均合計 {{time}}",
     "Last minute": "直近 1 分",
-    "{{count}} failed": "失敗 {{count}} 件"
+    "{{count}} failed": "失敗 {{count}} 件",
+    "Bonus {{rate}}%": "{{rate}}% ボーナス",
+    "Fee {{rate}}%": "手数料 {{rate}}%",
+    "Paying with {{name}} adds a {{rate}}% channel fee": "{{name}} で支払うと {{rate}}% のチャネル手数料が加算されます",
+    "Top-up amount": "チャージ額",
+    "{{name}} bonus {{rate}}%": "{{name}} ボーナス {{rate}}%",
+    "Order amount": "注文金額",
+    "{{name}} fee {{rate}}%": "{{name}} 手数料 {{rate}}%",
+    "Amount to pay": "支払額",
+    "Channel fee {{rate}}%": "チャネル手数料 {{rate}}%",
+    "Incl. fee {{amount}}": "手数料 {{amount}} 込み",
+    "Bonus or fee": "ボーナス / 手数料",
+    "Top-up bonus": "チャージボーナス",
+    "Channel fee": "チャネル手数料",
+    "e.g., 2": "例: 2",
+    "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "チャージ額に上乗せして付与されます。支払い方法にバッジで表示されます。",
+    "Added to the amount the user pays; the credited amount is unchanged.": "ユーザーの支払額に加算され、入金額は変わりません。",
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "0〜100 のパーセンテージを小数点以下 2 桁まで入力してください"
   }
 }

@@ -33,18 +33,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { formatBillingCurrencyFromUSD } from '@/lib/currency'
+import {
+  formatBillingCurrencyFromUSD,
+  formatQuotaWithCurrency,
+} from '@/lib/currency'
 import { cn } from '@/lib/utils'
 
 import { PAYMENT_ICON_COLORS, PAYMENT_TYPES } from '../constants'
 import {
   formatCurrency,
+  formatRate,
   getBonusLabel,
   getPaymentIcon,
+  getPaymentMethodRates,
   getMinTopupAmount,
   calculatePresetPricing,
 } from '../lib'
 import type {
+  AmountDetail,
   PaymentMethod,
   PresetAmount,
   TopupInfo,
@@ -60,6 +66,32 @@ function formatTileAmount(amount: number): string {
     abbreviate: false,
     minimumFractionDigits: 2,
   })
+}
+
+/** Corner tag on a payment method button showing its bonus or fee. */
+function PaymentRateTag({
+  bonusRate,
+  feeRate,
+}: {
+  bonusRate: number
+  feeRate: number
+}) {
+  const { t } = useTranslation()
+  if (bonusRate > 0) {
+    return (
+      <span className='border-card absolute -top-2.5 -right-2 rounded-full border bg-green-600 px-1.5 text-[10.5px] leading-4 font-semibold whitespace-nowrap text-white'>
+        {t('Bonus {{rate}}%', { rate: formatRate(bonusRate) })}
+      </span>
+    )
+  }
+  if (feeRate > 0) {
+    return (
+      <span className='border-card absolute -top-2.5 -right-2 rounded-full border bg-orange-100 px-1.5 text-[10.5px] leading-4 font-semibold whitespace-nowrap text-orange-700 dark:bg-orange-950 dark:text-orange-400'>
+        {t('Fee {{rate}}%', { rate: formatRate(feeRate) })}
+      </span>
+    )
+  }
+  return null
 }
 
 /** Colored square from the design; admin-configured icons keep their own art. */
@@ -105,6 +137,10 @@ interface RechargeFormCardProps {
   waffoMinTopup?: number
   onWaffoMethodSelect?: (method: WaffoPayMethod, index: number) => void
   enableWaffoPancakeTopup?: boolean
+  /** Server breakdown of bonus and fee for the selected method */
+  amountDetail?: AmountDetail | null
+  /** Called when the user highlights a payment method, before paying */
+  onPaymentMethodChange?: (method: PaymentMethod) => void
   /** Render the redemption code form in this card (default) or leave it to the page. */
   hideRedemption?: boolean
 }
@@ -136,6 +172,8 @@ export function RechargeFormCard({
   waffoMinTopup,
   onWaffoMethodSelect,
   enableWaffoPancakeTopup,
+  amountDetail,
+  onPaymentMethodChange,
   hideRedemption,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
@@ -227,6 +265,12 @@ export function RechargeFormCard({
   const selectedMethodMin = selectedMethod
     ? Math.max(selectedMethod.min_topup || 0, minTopup)
     : minTopup
+  const selectedRates = getPaymentMethodRates(selectedMethod)
+  const bonusMultiplier = 1 + selectedRates.bonusRate / 100
+  const showBreakdown =
+    !!amountDetail &&
+    (selectedRates.bonusRate > 0 || selectedRates.feeRate > 0) &&
+    (amountDetail.bonus_quota > 0 || amountDetail.fee_money > 0)
   // Custom amounts are offered when no preset is configured, and always for USDT.
   const showCustomInput =
     presetAmounts.length === 0 || selectedMethod?.type === PAYMENT_TYPES.USDT
@@ -280,6 +324,14 @@ export function RechargeFormCard({
                           <small className='text-primary text-xs'>
                             {getBonusLabel(discount, t)}
                           </small>
+                        ) : selectedRates.bonusRate > 0 ? (
+                          <small className='text-xs text-green-600 dark:text-green-500'>
+                            {t('Credited {{amount}}', {
+                              amount: formatTileAmount(
+                                preset.value * bonusMultiplier
+                              ),
+                            })}
+                          </small>
                         ) : (
                           <small className='text-muted-foreground text-xs'>
                             {t('Credited {{amount}}', {
@@ -328,8 +380,9 @@ export function RechargeFormCard({
                 </p>
                 {hasStandardPaymentMethods ? (
                   <>
-                    <div className='flex flex-wrap gap-2'>
+                    <div className='flex flex-wrap gap-x-2.5 gap-y-3 pt-2'>
                       {topupInfo?.pay_methods?.map((method) => {
+                        const rates = getPaymentMethodRates(method)
                         const methodMin = Math.max(
                           method.min_topup || 0,
                           minTopup
@@ -347,16 +400,30 @@ export function RechargeFormCard({
                             key={method.type}
                             type='button'
                             aria-pressed={selected}
-                            onClick={() => setMethodType(method.type)}
+                            onClick={() => {
+                              setMethodType(method.type)
+                              onPaymentMethodChange?.(method)
+                            }}
                             disabled={disabled || !!paymentLoading}
-                            title={disabledReason}
+                            title={
+                              disabledReason ??
+                              (rates.feeRate > 0
+                                ? t(
+                                    'Paying with {{name}} adds a {{rate}}% channel fee',
+                                    {
+                                      name: method.name,
+                                      rate: formatRate(rates.feeRate),
+                                    }
+                                  )
+                                : undefined)
+                            }
                             aria-label={
                               disabledReason
                                 ? `${method.name}. ${disabledReason}`
                                 : method.name
                             }
                             className={cn(
-                              'inline-flex h-[38px] min-w-0 items-center gap-2 rounded-lg border px-3.5 text-[13px] disabled:cursor-not-allowed disabled:opacity-50',
+                              'relative inline-flex h-[38px] min-w-0 items-center gap-2 rounded-lg border px-3.5 text-[13px] disabled:cursor-not-allowed disabled:opacity-50',
                               selected
                                 ? 'border-foreground font-medium'
                                 : 'border-border'
@@ -366,6 +433,10 @@ export function RechargeFormCard({
                             <span className='max-w-full truncate'>
                               {method.name}
                             </span>
+                            <PaymentRateTag
+                              bonusRate={rates.bonusRate}
+                              feeRate={rates.feeRate}
+                            />
                           </button>
                         )
 
@@ -381,6 +452,81 @@ export function RechargeFormCard({
                         )
                       })}
                     </div>
+                    {showBreakdown && amountDetail && (
+                      <div className='bg-muted/30 mt-4 space-y-1 rounded-[9px] border px-3.5 py-3 text-[13px]'>
+                        {amountDetail.bonus_quota > 0 ? (
+                          <>
+                            <div className='flex justify-between gap-3'>
+                              <span className='text-muted-foreground'>
+                                {t('Top-up amount')}
+                              </span>
+                              <span className='tabular-nums'>
+                                {formatTileAmount(topupAmount)}
+                              </span>
+                            </div>
+                            <div className='flex justify-between gap-3'>
+                              <span className='text-muted-foreground'>
+                                {t('{{name}} bonus {{rate}}%', {
+                                  name: selectedMethod?.name,
+                                  rate: amountDetail.bonus_rate,
+                                })}
+                              </span>
+                              <span className='font-medium text-green-600 tabular-nums dark:text-green-500'>
+                                +{' '}
+                                {formatQuotaWithCurrency(
+                                  amountDetail.bonus_quota,
+                                  {
+                                    digitsLarge: 2,
+                                    digitsSmall: 2,
+                                    abbreviate: false,
+                                  }
+                                )}
+                              </span>
+                            </div>
+                            <div className='flex justify-between gap-3'>
+                              <span className='text-muted-foreground'>
+                                {t('Credited')}
+                              </span>
+                              <span className='tabular-nums'>
+                                {formatTileAmount(topupAmount * bonusMultiplier)}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className='flex justify-between gap-3'>
+                              <span className='text-muted-foreground'>
+                                {t('Order amount')}
+                              </span>
+                              <span className='tabular-nums'>
+                                {formatCurrency(amountDetail.base_money)}
+                              </span>
+                            </div>
+                            <div className='flex justify-between gap-3'>
+                              <span className='text-muted-foreground'>
+                                {t('{{name}} fee {{rate}}%', {
+                                  name: selectedMethod?.name,
+                                  rate: amountDetail.fee_rate,
+                                })}
+                              </span>
+                              <span className='text-orange-700 tabular-nums dark:text-orange-400'>
+                                + {formatCurrency(amountDetail.fee_money)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        <div className='mt-1.5 flex justify-between gap-3 border-t border-dashed pt-2 font-semibold'>
+                          <span>{t('Amount to pay')}</span>
+                          {calculating ? (
+                            <Skeleton className='h-5 w-16' />
+                          ) : (
+                            <span className='tabular-nums'>
+                              {formatCurrency(paymentAmount)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <Button
                       className='mt-4 h-[38px] px-4'
                       disabled={

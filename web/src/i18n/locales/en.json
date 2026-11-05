@@ -7906,6 +7906,23 @@
     "Cache read / all input": "Cache read / all input",
     "Average total {{time}}": "Average total {{time}}",
     "Last minute": "Last minute",
-    "{{count}} failed": "{{count}} failed"
+    "{{count}} failed": "{{count}} failed",
+    "Bonus {{rate}}%": "Bonus {{rate}}%",
+    "Fee {{rate}}%": "Fee {{rate}}%",
+    "Paying with {{name}} adds a {{rate}}% channel fee": "Paying with {{name}} adds a {{rate}}% channel fee",
+    "Top-up amount": "Top-up amount",
+    "{{name}} bonus {{rate}}%": "{{name}} bonus {{rate}}%",
+    "Order amount": "Order amount",
+    "{{name}} fee {{rate}}%": "{{name}} fee {{rate}}%",
+    "Amount to pay": "Amount to pay",
+    "Channel fee {{rate}}%": "Channel fee {{rate}}%",
+    "Incl. fee {{amount}}": "Incl. fee {{amount}}",
+    "Bonus or fee": "Bonus or fee",
+    "Top-up bonus": "Top-up bonus",
+    "Channel fee": "Channel fee",
+    "e.g., 2": "e.g., 2",
+    "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.",
+    "Added to the amount the user pays; the credited amount is unchanged.": "Added to the amount the user pays; the credited amount is unchanged.",
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "Enter a percentage between 0 and 100 with up to 2 decimals"
   }
 }

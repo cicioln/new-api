@@ -30,11 +30,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLocalCurrencyAmount } from '@/lib/currency'
+import {
+  formatLocalCurrencyAmount,
+  formatQuotaWithCurrency,
+} from '@/lib/currency'
 
 import { DEFAULT_DISCOUNT_RATE } from '../../constants'
 import { formatCurrency, getPaymentIcon } from '../../lib'
-import type { PaymentMethod } from '../../types'
+import type { AmountDetail, PaymentMethod } from '../../types'
 
 interface PaymentConfirmDialogProps {
   open: boolean
@@ -47,6 +50,7 @@ interface PaymentConfirmDialogProps {
   processing: boolean
   discountRate?: number
   usdExchangeRate?: number
+  amountDetail?: AmountDetail | null
 }
 
 export function PaymentConfirmDialog({
@@ -60,11 +64,17 @@ export function PaymentConfirmDialog({
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
   usdExchangeRate = 1,
+  amountDetail,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
-  const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
-  const originalAmount = hasDiscount ? paymentAmount / discountRate : 0
-  const discountAmount = hasDiscount ? originalAmount - paymentAmount : 0
+  const feeMoney = amountDetail?.fee_money ?? 0
+  const bonusQuota = amountDetail?.bonus_quota ?? 0
+  // The discount applies to the order amount, before the channel fee
+  const discountedAmount = paymentAmount - feeMoney
+  const hasDiscount =
+    discountRate > 0 && discountRate < 1 && discountedAmount > 0
+  const originalAmount = hasDiscount ? discountedAmount / discountRate : 0
+  const discountAmount = hasDiscount ? originalAmount - discountedAmount : 0
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -91,6 +101,33 @@ export function PaymentConfirmDialog({
               })}
             </span>
           </div>
+
+          {bonusQuota > 0 && !calculating && (
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground text-sm'>
+                {t('Bonus {{rate}}%', { rate: amountDetail?.bonus_rate })}
+              </span>
+              <span className='font-semibold text-green-600'>
+                +{' '}
+                {formatQuotaWithCurrency(bonusQuota, {
+                  digitsLarge: 2,
+                  digitsSmall: 2,
+                  abbreviate: false,
+                })}
+              </span>
+            </div>
+          )}
+
+          {feeMoney > 0 && !calculating && (
+            <div className='flex items-center justify-between'>
+              <span className='text-muted-foreground text-sm'>
+                {t('Channel fee {{rate}}%', { rate: amountDetail?.fee_rate })}
+              </span>
+              <span className='font-medium text-orange-700 dark:text-orange-400'>
+                + {formatCurrency(feeMoney)}
+              </span>
+            </div>
+          )}
 
           <div className='flex items-center justify-between'>
             <span className='text-muted-foreground text-sm'>

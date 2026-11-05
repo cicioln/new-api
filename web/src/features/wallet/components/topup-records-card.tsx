@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   formatCurrencyFromUSD,
   formatLocalCurrencyAmount,
+  formatQuotaWithCurrency,
 } from '@/lib/currency'
 import dayjs from '@/lib/dayjs'
 import { cn } from '@/lib/utils'
@@ -111,11 +112,30 @@ export function TopupRecordsCard(props: { onOpenAll: () => void }) {
                   <td>{getPaymentMethodName(record.payment_method, t)}</td>
                   <td className='text-right font-mono text-[12.5px] tabular-nums'>
                     {formatLocalCurrencyAmount(record.money, AMOUNT_FORMAT)}
+                    {!!record.fee_money && record.fee_money > 0 && (
+                      <span className='block text-[11px] text-orange-700 dark:text-orange-400'>
+                        {t('Incl. fee {{amount}}', {
+                          amount: formatLocalCurrencyAmount(
+                            record.fee_money,
+                            AMOUNT_FORMAT
+                          ),
+                        })}
+                      </span>
+                    )}
                   </td>
                   <td className='text-right font-mono text-[12.5px] tabular-nums'>
                     {record.amount
                       ? formatCurrencyFromUSD(record.amount, AMOUNT_FORMAT)
                       : '—'}
+                    {!!record.bonus_quota && record.bonus_quota > 0 && (
+                      <span className='block text-[11px] text-green-600 dark:text-green-500'>
+                        +{' '}
+                        {formatQuotaWithCurrency(
+                          record.bonus_quota,
+                          AMOUNT_FORMAT
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td>
                     <span

@@ -43,6 +43,23 @@ const createPaymentMethodDialogSchema = (t: (key: string) => string) =>
     type: z.string().min(1, t('Payment type key is required')),
     icon: z.string().optional(),
     min_topup: z.string().optional(),
+    rate_kind: z.enum(['none', 'bonus', 'fee']),
+    rate: z
+      .string()
+      .optional()
+      .refine(
+        (value) => {
+          if (!value || value.trim() === '') return true
+          const rate = Number(value)
+          return (
+            Number.isFinite(rate) &&
+            rate >= 0 &&
+            rate <= 100 &&
+            /^\d+(\.\d{1,2})?$/.test(value.trim())
+          )
+        },
+        t('Enter a percentage between 0 and 100 with up to 2 decimals')
+      ),
   })
 
 type PaymentMethodDialogFormValues = z.infer<
@@ -57,7 +74,17 @@ export type PaymentMethodData = {
   icon?: string
   min_topup?: string
   color?: string
+  bonus_rate?: string
+  fee_rate?: string
 }
+
+/** Payment types with their own checkout; bonus and fee do not apply to them. */
+export const RATELESS_PAYMENT_TYPES = new Set([
+  'stripe',
+  'waffo',
+  'waffo_pancake',
+  'usdt',
+])
 
 type PaymentMethodDialogProps = {
   open: boolean
@@ -120,18 +147,27 @@ export function PaymentMethodDialog({
       type: '',
       icon: '',
       min_topup: '',
+      rate_kind: 'none',
+      rate: '',
     },
   })
 
   const iconValue = form.watch('icon')
+  const typeValue = form.watch('type')
+  const rateKind = form.watch('rate_kind')
+  const ratesSupported = !RATELESS_PAYMENT_TYPES.has(typeValue)
 
   useEffect(() => {
     if (editData) {
+      const bonus = Number(editData.bonus_rate) > 0 ? editData.bonus_rate : ''
+      const fee = Number(editData.fee_rate) > 0 ? editData.fee_rate : ''
       form.reset({
         name: editData.name,
         type: editData.type,
         icon: editData.icon ?? getDefaultIconName(editData.type),
         min_topup: editData.min_topup ?? '',
+        rate_kind: bonus ? 'bonus' : fee ? 'fee' : 'none',
+        rate: bonus || fee || '',
       })
     } else {
       form.reset({
@@ -139,20 +175,33 @@ export function PaymentMethodDialog({
         type: '',
         icon: '',
         min_topup: '',
+        rate_kind: 'none',
+        rate: '',
       })
     }
   }, [editData, form, open])
 
   const handleSubmit = (values: PaymentMethodDialogFormValues) => {
+    // Keep keys the dialog does not edit (e.g. color)
     const data: PaymentMethodData = {
+      ...editData,
       name: values.name,
       type: values.type,
     }
+    delete data.icon
+    delete data.min_topup
+    delete data.bonus_rate
+    delete data.fee_rate
     if (values.icon && values.icon.trim() !== '') {
       data.icon = values.icon.trim()
     }
     if (values.min_topup && values.min_topup.trim() !== '') {
       data.min_topup = values.min_topup
+    }
+    const rate = values.rate?.trim() ?? ''
+    if (ratesSupported && rate !== '' && Number(rate) > 0) {
+      if (values.rate_kind === 'bonus') data.bonus_rate = rate
+      if (values.rate_kind === 'fee') data.fee_rate = rate
     }
     onSave(data)
     form.reset()
@@ -310,6 +359,81 @@ export function PaymentMethodDialog({
               </FormItem>
             )}
           />
+
+          {ratesSupported && (
+            <div className='space-y-3'>
+              <FormField
+                control={form.control}
+                name='rate_kind'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Bonus or fee')}</FormLabel>
+                    <FormControl>
+                      <div className='inline-flex overflow-hidden rounded-md border text-sm'>
+                        {(
+                          [
+                            ['none', t('None')],
+                            ['bonus', t('Top-up bonus')],
+                            ['fee', t('Channel fee')],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <button
+                            key={value}
+                            type='button'
+                            aria-pressed={field.value === value}
+                            onClick={() => field.onChange(value)}
+                            className={
+                              field.value === value
+                                ? 'bg-foreground text-background px-3 py-1.5'
+                                : 'hover:bg-muted px-3 py-1.5'
+                            }
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {rateKind !== 'none' && (
+                <FormField
+                  control={form.control}
+                  name='rate'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className='relative'>
+                          <Input
+                            type='number'
+                            step='0.01'
+                            min='0'
+                            max='100'
+                            placeholder={t('e.g., 2')}
+                            className='pr-8'
+                            {...field}
+                          />
+                          <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
+                            %
+                          </span>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        {rateKind === 'bonus'
+                          ? t(
+                              'Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.'
+                            )
+                          : t(
+                              'Added to the amount the user pays; the credited amount is unchanged.'
+                            )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+          )}
         </form>
       </Form>
     </Dialog>

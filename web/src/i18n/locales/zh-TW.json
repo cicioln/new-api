@@ -7906,6 +7906,23 @@
     "Cache read / all input": "快取讀取 / 全部輸入",
     "Average total {{time}}": "平均總耗時 {{time}}",
     "Last minute": "最近 1 分鐘",
-    "{{count}} failed": "失敗 {{count}} 次"
+    "{{count}} failed": "失敗 {{count}} 次",
+    "Bonus {{rate}}%": "送 {{rate}}%",
+    "Fee {{rate}}%": "手續費 {{rate}}%",
+    "Paying with {{name}} adds a {{rate}}% channel fee": "使用{{name}}支付需額外支付 {{rate}}% 通道手續費",
+    "Top-up amount": "儲值額度",
+    "{{name}} bonus {{rate}}%": "{{name}}贈送 {{rate}}%",
+    "Order amount": "商品金額",
+    "{{name}} fee {{rate}}%": "{{name}}手續費 {{rate}}%",
+    "Amount to pay": "應付金額",
+    "Channel fee {{rate}}%": "通道手續費 {{rate}}%",
+    "Incl. fee {{amount}}": "含手續費 {{amount}}",
+    "Bonus or fee": "贈送 / 手續費",
+    "Top-up bonus": "儲值贈送",
+    "Channel fee": "手續費",
+    "e.g., 2": "例如 2",
+    "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "按儲值額度額外贈送，會在支付方式右上角顯示角標。",
+    "Added to the amount the user pays; the credited amount is unchanged.": "加在使用者應付金額上，到帳額度不變。",
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "請輸入 0–100 之間的百分比，最多兩位小數"
   }
 }

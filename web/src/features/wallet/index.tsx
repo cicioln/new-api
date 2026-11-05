@@ -95,6 +95,7 @@ export function Wallet(props: WalletProps) {
   }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
   const {
     amount: paymentAmount,
+    detail: amountDetail,
     calculating,
     processing,
     calculatePaymentAmount,
@@ -170,6 +171,13 @@ export function Wallet(props: WalletProps) {
     setTopupAmount(amount)
     setSelectedPreset(null)
     calculatePaymentAmount(amount, getCurrentPaymentType())
+  }
+
+  // Highlighting a method re-quotes so the bonus / fee breakdown follows it
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    setSelectedPaymentMethod(method)
+    setSelectedWaffoMethodIndex(null)
+    calculatePaymentAmount(topupAmount, method.type)
   }
 
   // Handle payment method selection
@@ -340,6 +348,8 @@ export function Wallet(props: WalletProps) {
                   enableWaffoPancakeTopup={
                     topupInfo?.enable_waffo_pancake_topup
                   }
+                  amountDetail={amountDetail}
+                  onPaymentMethodChange={handlePaymentMethodChange}
                   hideRedemption
                 />
               </div>
@@ -391,6 +401,7 @@ export function Wallet(props: WalletProps) {
         processing={processing || waffoProcessing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={effectiveUsdExchangeRate}
+        amountDetail={amountDetail}
       />
 
       <UsdtPayDialog

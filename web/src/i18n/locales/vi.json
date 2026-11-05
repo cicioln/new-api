@@ -7906,6 +7906,23 @@
     "Cache read / all input": "Đọc cache / toàn bộ đầu vào",
     "Average total {{time}}": "Tổng TB {{time}}",
     "Last minute": "1 phút gần nhất",
-    "{{count}} failed": "{{count}} lỗi"
+    "{{count}} failed": "{{count}} lỗi",
+    "Bonus {{rate}}%": "Tặng {{rate}}%",
+    "Fee {{rate}}%": "Phí {{rate}}%",
+    "Paying with {{name}} adds a {{rate}}% channel fee": "Thanh toán bằng {{name}} cộng thêm {{rate}}% phí kênh",
+    "Top-up amount": "Số tiền nạp",
+    "{{name}} bonus {{rate}}%": "{{name}} tặng {{rate}}%",
+    "Order amount": "Giá trị đơn",
+    "{{name}} fee {{rate}}%": "Phí {{name}} {{rate}}%",
+    "Amount to pay": "Số tiền phải trả",
+    "Channel fee {{rate}}%": "Phí kênh {{rate}}%",
+    "Incl. fee {{amount}}": "Gồm phí {{amount}}",
+    "Bonus or fee": "Tặng hoặc phí",
+    "Top-up bonus": "Tặng khi nạp",
+    "Channel fee": "Phí kênh",
+    "e.g., 2": "vd: 2",
+    "Extra quota credited on top of the top-up amount. Shown as a badge on the payment method.": "Hạn mức tặng thêm ngoài số tiền nạp, hiển thị dạng huy hiệu trên phương thức thanh toán.",
+    "Added to the amount the user pays; the credited amount is unchanged.": "Cộng vào số tiền người dùng trả; số tiền nhận không đổi.",
+    "Enter a percentage between 0 and 100 with up to 2 decimals": "Nhập phần trăm từ 0 đến 100, tối đa 2 chữ số thập phân"
   }
 }

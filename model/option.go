@@ -246,6 +246,9 @@ func validateOptionValue(key string, value string) error {
 	if key == "MaxTokenAutoGroups" {
 		return setting.ValidateMaxTokenAutoGroups(value)
 	}
+	if key == "PayMethods" {
+		return operation_setting.ValidatePayMethodsJSON(value)
+	}
 	return nil
 }
 
