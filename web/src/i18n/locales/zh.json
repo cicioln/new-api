@@ -7976,6 +7976,22 @@
     "Image preview": "图片预览",
     "Video Storage": "视频存储",
     "How long generated videos are kept on the server.": "生成的视频在服务器上保留多久。",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成的视频保存在本服务器上，超过该天数的视频会被自动删除；0 表示永久保留。"
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成的视频保存在本服务器上，超过该天数的视频会被自动删除；0 表示永久保留。",
+    "Width": "宽",
+    "Height": "高",
+    "Between {{min}} and {{max}}": "范围 {{min}} 到 {{max}}",
+    "Image task submitted": "图片任务已提交，可以关闭页面，稍后回来查看",
+    "Delete image": "删除图片",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "这次生成的 {{count}} 张图片会一起删除，此操作无法撤销。",
+    "Play video": "播放视频",
+    "Video preview": "视频预览",
+    "Delete video": "删除视频",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "视频会从列表中移除，服务器上的视频文件也会删除，此操作无法撤销。",
+    "Too many images are generating. Wait for one to finish.": "正在生成的图片太多，请等其中一张完成后再提交",
+    "Generation was interrupted by a server restart": "服务器重启，生成被中断",
+    "Image not found": "图片不存在",
+    "This image is still generating": "图片还在生成中",
+    "Video not found": "视频不存在",
+    "This video is still generating": "视频还在生成中"
   }
 }

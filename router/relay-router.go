@@ -71,6 +71,8 @@ func SetRelayRouter(router *gin.Engine) {
 		playgroundRouter.POST("/images/edits", controller.PlaygroundImage)
 		playgroundRouter.POST("/videos", controller.PlaygroundVideo)
 	}
+	// Studio images are opened by <img> tags, so the signed URL is the credential.
+	router.GET("/pg/studio/media/:access/:name", middleware.RouteTag("relay"), controller.StudioImageContent)
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.RouteTag("relay"))
 	relayV1Router.Use(middleware.SystemPerformanceCheck())

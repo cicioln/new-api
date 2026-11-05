@@ -265,6 +265,12 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"GET /api/mj/self":                 accessTokenScopeRule("usage:read"),
 	"GET /api/mj/":                     accessTokenScopeRule("log:read"),
 	"GET /api/task/self":               accessTokenScopeRule("usage:read"),
+
+	"GET /api/studio/images":             accessTokenScopeRule("usage:read"),
+	"DELETE /api/studio/images/:id":      accessTokenSessionRule,
+	"GET /api/studio/videos":             accessTokenScopeRule("usage:read"),
+	"DELETE /api/studio/videos/:task_id": accessTokenSessionRule,
+
 	"GET /api/task":                    accessTokenScopeRule("log:read"),
 	"GET /api/task/:task_id/artifacts": accessTokenScopeRule("usage:read"),
 

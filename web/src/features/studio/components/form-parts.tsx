@@ -17,10 +17,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { ImagePlus, X } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -214,6 +215,130 @@ export function CostLine(props: { label: string; value?: string }) {
       <span className='text-foreground font-mono tabular-nums'>
         {props.value}
       </span>
+    </div>
+  )
+}
+
+const CUSTOM = 'custom'
+
+/** Preset sizes plus a custom width × height. The value is "WxH" or "". */
+export function SizePicker(props: {
+  label: string
+  presets: { value: string; label: string }[]
+  value: string
+  onChange: (value: string) => void
+}) {
+  const { t } = useTranslation()
+  const [custom, setCustom] = useState(
+    () => !props.presets.some((preset) => preset.value === props.value)
+  )
+  const [width, height] = props.value.split('x')
+  const update = (nextWidth: string, nextHeight: string) =>
+    props.onChange(
+      nextWidth && nextHeight ? `${nextWidth}x${nextHeight}` : ''
+    )
+  return (
+    <div className='grid gap-2'>
+      <ChipGroup
+        label={props.label}
+        options={[...props.presets, { value: CUSTOM, label: t('Custom') }]}
+        value={custom ? CUSTOM : props.value}
+        onChange={(value) => {
+          if (value === CUSTOM) {
+            setCustom(true)
+            update(width || '1024', height || '1024')
+            return
+          }
+          setCustom(false)
+          props.onChange(value)
+        }}
+      />
+      {custom && (
+        <div className='flex items-center gap-2'>
+          <Input
+            type='number'
+            min={64}
+            max={4096}
+            step={1}
+            aria-label={t('Width')}
+            placeholder={t('Width')}
+            value={width ?? ''}
+            onChange={(event) => update(event.target.value, height ?? '')}
+          />
+          <span className='text-muted-foreground text-xs'>×</span>
+          <Input
+            type='number'
+            min={64}
+            max={4096}
+            step={1}
+            aria-label={t('Height')}
+            placeholder={t('Height')}
+            value={height ?? ''}
+            onChange={(event) => update(width ?? '', event.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Preset numbers plus a custom value within [min, max]. */
+export function NumberPicker(props: {
+  label: string
+  presets: number[]
+  format: (value: number) => string
+  min: number
+  max: number
+  value: number
+  onChange: (value: number) => void
+}) {
+  const { t } = useTranslation()
+  const [custom, setCustom] = useState(
+    () => !props.presets.includes(props.value)
+  )
+  return (
+    <div className='grid gap-2'>
+      <ChipGroup<number | typeof CUSTOM>
+        label={props.label}
+        options={[
+          ...props.presets.map((value) => ({
+            value,
+            label: props.format(value),
+          })),
+          { value: CUSTOM, label: t('Custom') },
+        ]}
+        value={custom ? CUSTOM : props.value}
+        onChange={(value) => {
+          if (value === CUSTOM) {
+            setCustom(true)
+            return
+          }
+          setCustom(false)
+          props.onChange(value)
+        }}
+      />
+      {custom && (
+        <Input
+          type='number'
+          min={props.min}
+          max={props.max}
+          step={1}
+          aria-label={props.label}
+          className='max-w-32'
+          value={props.value}
+          onChange={(event) => {
+            const next = Math.round(Number(event.target.value))
+            if (Number.isFinite(next)) {
+              props.onChange(Math.min(props.max, Math.max(props.min, next)))
+            }
+          }}
+        />
+      )}
+      {custom && (
+        <p className='text-muted-foreground -mt-1 text-xs'>
+          {t('Between {{min}} and {{max}}', { min: props.min, max: props.max })}
+        </p>
+      )}
     </div>
   )
 }

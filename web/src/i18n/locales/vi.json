@@ -7976,6 +7976,22 @@
     "Image preview": "Xem trước ảnh",
     "Video Storage": "Lưu trữ video",
     "How long generated videos are kept on the server.": "Thời gian lưu video đã tạo trên máy chủ.",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Video đã tạo được lưu trên máy chủ này. Video cũ hơn sẽ tự động bị xóa; 0 nghĩa là lưu vĩnh viễn."
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Video đã tạo được lưu trên máy chủ này. Video cũ hơn sẽ tự động bị xóa; 0 nghĩa là lưu vĩnh viễn.",
+    "Width": "Rộng",
+    "Height": "Cao",
+    "Between {{min}} and {{max}}": "Từ {{min}} đến {{max}}",
+    "Image task submitted": "Đã gửi tác vụ ảnh. Bạn có thể đóng trang và quay lại sau.",
+    "Delete image": "Xóa ảnh",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "Toàn bộ {{count}} ảnh của lần tạo này sẽ bị xóa. Không thể hoàn tác.",
+    "Play video": "Phát video",
+    "Video preview": "Xem trước video",
+    "Delete video": "Xóa video",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "Video sẽ bị gỡ khỏi danh sách và tệp trên máy chủ bị xóa. Không thể hoàn tác.",
+    "Too many images are generating. Wait for one to finish.": "Đang tạo quá nhiều ảnh. Hãy chờ một ảnh hoàn tất.",
+    "Generation was interrupted by a server restart": "Quá trình tạo bị gián đoạn do máy chủ khởi động lại",
+    "Image not found": "Không tìm thấy ảnh",
+    "This image is still generating": "Ảnh này vẫn đang được tạo",
+    "Video not found": "Không tìm thấy video",
+    "This video is still generating": "Video này vẫn đang được tạo"
   }
 }

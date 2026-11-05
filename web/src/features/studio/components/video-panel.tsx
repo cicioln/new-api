@@ -17,27 +17,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Download, LoaderCircle } from 'lucide-react'
+import { Download, LoaderCircle, Play, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 import type { TaskLog } from '@/features/usage-logs/types'
 
-import { getVideoTasks, getVideoUrl, submitVideo } from '../api'
+import { deleteVideoTask, getVideoTasks, getVideoUrl, submitVideo } from '../api'
 import { newId, readAsDataUrl, useStudioModels } from '../lib/options'
 import {
-  ChipGroup,
   CostLine,
   FieldLabel,
   ModelSelect,
+  NumberPicker,
   ReferencePicker,
+  SizePicker,
   type ReferenceImage,
 } from './form-parts'
 import { IconAction } from './image-panel'
@@ -51,6 +54,7 @@ const RATIOS = [
   { value: '1024x1024', label: '1:1' },
 ]
 const DURATIONS = [5, 10]
+const MAX_SECONDS = 10
 const POLL_MS = 5000
 
 const RUNNING = new Set<string>([
@@ -163,21 +167,21 @@ export function VideoPanel(props: {
             onChange={(event) => setPrompt(event.target.value)}
           />
         </div>
-        <ChipGroup
+        <SizePicker
           label={t('Aspect ratio')}
-          options={RATIOS.map((option) => ({
+          presets={RATIOS.map((option) => ({
             value: option.value,
             label: option.value ? option.label : t(needsImage ? 'Match image' : 'Auto'),
           }))}
           value={ratio}
           onChange={setRatio}
         />
-        <ChipGroup
+        <NumberPicker
           label={t('Duration')}
-          options={DURATIONS.map((value) => ({
-            value,
-            label: t('{{count}} s', { count: value }),
-          }))}
+          presets={DURATIONS}
+          format={(value) => t('{{count}} s', { count: value })}
+          min={1}
+          max={MAX_SECONDS}
           value={seconds}
           onChange={setSeconds}
         />
@@ -189,9 +193,6 @@ export function VideoPanel(props: {
           {submitting && <LoaderCircle className='animate-spin' />}
           {t('Submit video task')}
         </Button>
-        <p className='text-muted-foreground text-xs'>
-          {t('Videos run as background tasks. You can leave this page and check back here or in Task Logs.')}
-        </p>
       </section>
 
       <section className='grid min-w-0 gap-3'>
@@ -219,7 +220,11 @@ export function VideoPanel(props: {
 
 function VideoTaskCard(props: { task: TaskLog }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const task = props.task
+  const [playing, setPlaying] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const done = task.status === TASK_STATUS.SUCCESS
   const failed = task.status === TASK_STATUS.FAILURE
   const running = RUNNING.has(task.status)
@@ -233,6 +238,20 @@ function VideoTaskCard(props: { task: TaskLog }) {
   const [expired, setExpired] = useState(false)
   useEffect(() => setExpired(false), [video.data])
 
+  const remove = async () => {
+    setDeleting(true)
+    try {
+      await deleteVideoTask(task.task_id)
+      toast.success(t('Deleted successfully'))
+      setConfirming(false)
+      await queryClient.invalidateQueries({ queryKey: ['studio-video-tasks'] })
+    } catch (error) {
+      toast.error(getServerErrorMessage(error, t('Delete failed')))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const progress = Number.parseInt(task.progress ?? '', 10)
   const prompt = (task.properties?.input ?? '').trim()
 
@@ -240,13 +259,26 @@ function VideoTaskCard(props: { task: TaskLog }) {
     <article className='bg-card overflow-hidden rounded-lg border'>
       <div className='bg-muted text-muted-foreground relative flex aspect-video items-center justify-center text-xs'>
         {done && video.data && !expired ? (
-          <video
-            src={video.data}
-            controls
-            preload='metadata'
-            className='size-full bg-black object-contain'
-            onError={() => setExpired(true)}
-          />
+          <button
+            type='button'
+            aria-label={t('Play video')}
+            onClick={() => setPlaying(true)}
+            className='group relative size-full cursor-pointer bg-black'
+          >
+            <video
+              src={video.data}
+              preload='metadata'
+              muted
+              playsInline
+              className='pointer-events-none size-full object-contain'
+              onError={() => setExpired(true)}
+            />
+            <span className='absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30'>
+              <span className='flex size-11 items-center justify-center rounded-full bg-black/60 text-white'>
+                <Play className='size-5 fill-current' />
+              </span>
+            </span>
+          </button>
         ) : done ? (
           video.isLoading ? (
             <LoaderCircle className='size-5 animate-spin' />
@@ -291,14 +323,55 @@ function VideoTaskCard(props: { task: TaskLog }) {
               ` · ${t('Refunded {{amount}}', { amount: formatQuotaWithCurrency(task.quota) })}`}
           </p>
         )}
-        {done && video.data && !expired && (
+        {!running && (
           <div className='flex gap-1'>
-            <IconAction label={t('Download')} href={video.data} download>
-              <Download />
+            {done && video.data && !expired && (
+              <IconAction label={t('Download')} href={video.data} download>
+                <Download />
+              </IconAction>
+            )}
+            <IconAction label={t('Delete')} onClick={() => setConfirming(true)}>
+              <Trash2 />
             </IconAction>
           </div>
         )}
       </div>
+
+      <Dialog open={playing} onOpenChange={setPlaying}>
+        <DialogContent className='sm:max-w-4xl'>
+          <DialogTitle className='pr-8 text-sm font-medium'>
+            {t('Video preview')}
+          </DialogTitle>
+          {playing && video.data && (
+            <div className='grid gap-3'>
+              <video
+                src={video.data}
+                controls
+                autoPlay
+                className='mx-auto max-h-[70dvh] w-full rounded-lg bg-black object-contain'
+              />
+              {prompt && (
+                <p className='text-muted-foreground text-xs break-words whitespace-pre-wrap'>
+                  {prompt}
+                </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={(open) => {
+          if (!deleting) setConfirming(open)
+        }}
+        title={t('Delete video')}
+        desc={t('The video is removed from this list and its file is deleted from the server. This action cannot be undone.')}
+        confirmText={t('Delete')}
+        destructive
+        isLoading={deleting}
+        handleConfirm={() => void remove()}
+      />
     </article>
   )
 }

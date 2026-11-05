@@ -620,6 +620,8 @@ export const STATIC_I18N_KEYS = [
   'Playground',
   'AI model testing environment',
   'Creative Studio',
+  // Studio job errors returned by the server.
+  'Generation was interrupted by a server restart',
   'Text to image',
   'Text to video',
   'Image to video',

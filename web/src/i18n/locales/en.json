@@ -7976,6 +7976,22 @@
     "Image preview": "Image preview",
     "Video Storage": "Video Storage",
     "How long generated videos are kept on the server.": "How long generated videos are kept on the server.",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently."
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.",
+    "Width": "Width",
+    "Height": "Height",
+    "Between {{min}} and {{max}}": "Between {{min}} and {{max}}",
+    "Image task submitted": "Image task submitted",
+    "Delete image": "Delete image",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "All {{count}} images from this generation will be deleted. This action cannot be undone.",
+    "Play video": "Play video",
+    "Video preview": "Video preview",
+    "Delete video": "Delete video",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "The video is removed from this list and its file is deleted from the server. This action cannot be undone.",
+    "Too many images are generating. Wait for one to finish.": "Too many images are generating. Wait for one to finish.",
+    "Generation was interrupted by a server restart": "Generation was interrupted by a server restart",
+    "Image not found": "Image not found",
+    "This image is still generating": "This image is still generating",
+    "Video not found": "Video not found",
+    "This video is still generating": "This video is still generating"
   }
 }

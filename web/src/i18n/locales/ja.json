@@ -7976,6 +7976,22 @@
     "Image preview": "画像プレビュー",
     "Video Storage": "動画の保存",
     "How long generated videos are kept on the server.": "生成した動画をサーバーに保存する期間。",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成した動画はこのサーバーに保存されます。これより古い動画は自動的に削除されます。0 は永久に保存します。"
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "生成した動画はこのサーバーに保存されます。これより古い動画は自動的に削除されます。0 は永久に保存します。",
+    "Width": "幅",
+    "Height": "高さ",
+    "Between {{min}} and {{max}}": "{{min}}〜{{max}}",
+    "Image task submitted": "画像タスクを送信しました。ページを閉じても後で確認できます。",
+    "Delete image": "画像を削除",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "この生成の {{count}} 枚の画像がすべて削除されます。元に戻せません。",
+    "Play video": "動画を再生",
+    "Video preview": "動画プレビュー",
+    "Delete video": "動画を削除",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "動画は一覧から削除され、サーバー上のファイルも削除されます。元に戻せません。",
+    "Too many images are generating. Wait for one to finish.": "生成中の画像が多すぎます。いずれかの完了をお待ちください。",
+    "Generation was interrupted by a server restart": "サーバーの再起動により生成が中断されました",
+    "Image not found": "画像が見つかりません",
+    "This image is still generating": "この画像はまだ生成中です",
+    "Video not found": "動画が見つかりません",
+    "This video is still generating": "この動画はまだ生成中です"
   }
 }

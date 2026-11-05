@@ -401,6 +401,15 @@ func SetApiRouter(router *gin.Engine) {
 			taskRoute.GET("/:task_id/artifacts", middleware.UserAuth(), controller.GetDashboardTaskArtifacts)
 		}
 
+		studioRoute := apiRouter.Group("/studio")
+		studioRoute.Use(middleware.UserAuth())
+		{
+			studioRoute.GET("/images", controller.GetStudioImages)
+			studioRoute.DELETE("/images/:id", controller.DeleteStudioImage)
+			studioRoute.GET("/videos", controller.GetStudioVideos)
+			studioRoute.DELETE("/videos/:task_id", controller.DeleteStudioVideo)
+		}
+
 		vendorRoute := apiRouter.Group("/vendors")
 		vendorRoute.Use(middleware.AdminAuth())
 		{

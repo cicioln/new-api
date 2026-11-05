@@ -22,6 +22,7 @@ import (
 // authentication, so a personal access token has no rule to satisfy there.
 var accessTokenExemptRoutes = []string{
 	// Anonymous pages and setup.
+	"GET /pg/studio/media/:access/:name",
 	"GET /api/setup",
 	"POST /api/setup",
 	"GET /api/status",

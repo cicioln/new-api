@@ -19,7 +19,12 @@ func Playground(c *gin.Context) {
 }
 
 // PlaygroundImage serves image generation and editing for the console studio.
+// With ?background=1 the image is generated as a server-side studio job.
 func PlaygroundImage(c *gin.Context) {
+	if c.Query("background") == "1" {
+		playgroundRelay(c, startStudioImageJob)
+		return
+	}
 	playgroundRelay(c, func(c *gin.Context) { Relay(c, types.RelayFormatOpenAIImage) })
 }
 

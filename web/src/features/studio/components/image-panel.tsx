@@ -16,57 +16,83 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Clapperboard, Copy, Download, LoaderCircle, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  Clapperboard,
+  Copy,
+  Download,
+  LoaderCircle,
+  Trash2,
+} from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 
-import { generateImages } from '../api'
-import {
-  deleteImage,
-  loadImages,
-  MAX_STORED_IMAGES,
-  saveImages,
-  type StoredImage,
-} from '../lib/image-history'
+import { deleteImageJob, getImageJobs, submitImages } from '../api'
+import { deleteImage, loadImages, type StoredImage } from '../lib/image-history'
 import { newId, useStudioModels } from '../lib/options'
 import {
-  ChipGroup,
   CostLine,
   FieldLabel,
   ModelSelect,
+  NumberPicker,
   ReferencePicker,
+  SizePicker,
   type ReferenceImage,
 } from './form-parts'
 
 const SIZES = ['1024x1024', '1024x1536', '1536x1024']
 const COUNTS = [1, 2, 4]
+const MAX_COUNT = 10
+const POLL_MS = 3000
+const JOBS_KEY = ['studio-image-jobs']
 
-type Pending = { id: string; prompt: string; startedAt: number }
+/** One card in the results grid. */
+type ResultImage = {
+  key: string
+  src: string
+  prompt: string
+  model: string
+  /** Server job ID; absent for images kept only in this browser. */
+  jobId?: string
+  localId?: string
+}
 
 export function ImagePanel(props: {
   group: string
   onToVideo: (src: string) => void
 }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const models = useStudioModels('image', props.group)
   const [prompt, setPrompt] = useState('')
   const [size, setSize] = useState(SIZES[0])
   const [count, setCount] = useState(1)
   const [references, setReferences] = useState<ReferenceImage[]>([])
-  const [history, setHistory] = useState<StoredImage[]>([])
-  const [pending, setPending] = useState<Pending[]>([])
-  const [preview, setPreview] = useState<StoredImage | null>(null)
-  const historyRef = useRef(history)
-  historyRef.current = history
+  const [submitting, setSubmitting] = useState(false)
+  const [legacy, setLegacy] = useState<StoredImage[]>([])
+  const [preview, setPreview] = useState<ResultImage | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<ResultImage | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
+  const jobs = useQuery({
+    queryKey: JOBS_KEY,
+    queryFn: getImageJobs,
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((job) => job.status === 'running')
+        ? POLL_MS
+        : false,
+  })
+
+  // Images generated before server storage existed stay in this browser.
   useEffect(() => {
-    void loadImages().then(setHistory)
+    void loadImages().then(setLegacy)
   }, [])
 
   useEffect(
@@ -79,10 +105,9 @@ export function ImagePanel(props: {
   const submit = async () => {
     const text = prompt.trim()
     if (!text || !models.modelName) return
-    const job: Pending = { id: newId(), prompt: text, startedAt: Date.now() }
-    setPending((list) => [job, ...list])
+    setSubmitting(true)
     try {
-      const urls = await generateImages({
+      await submitImages({
         group: props.group,
         model: models.modelName,
         prompt: text,
@@ -90,25 +115,62 @@ export function ImagePanel(props: {
         n: count,
         references: references.map((image) => image.file),
       })
-      if (urls.length === 0) throw new Error(t('The model returned no images'))
-      const created = urls.map((src, index) => ({
-        id: newId(),
-        src,
-        prompt: text,
-        model: models.modelName,
-        createdAt: Date.now() + index,
-      }))
-      const existing = historyRef.current
-      setHistory([...created, ...existing].slice(0, MAX_STORED_IMAGES))
-      void saveImages(created, existing)
+      toast.success(t('Image task submitted'))
+      await queryClient.invalidateQueries({ queryKey: JOBS_KEY })
     } catch (error) {
       toast.error(getServerErrorMessage(error, t('Image generation failed')))
     } finally {
-      setPending((list) => list.filter((item) => item.id !== job.id))
+      setSubmitting(false)
     }
   }
 
-  const estimate = models.estimate(count)
+  const confirmDelete = async () => {
+    const target = pendingDelete
+    if (!target) return
+    setDeleting(true)
+    try {
+      if (target.jobId) {
+        await deleteImageJob(target.jobId)
+        await queryClient.invalidateQueries({ queryKey: JOBS_KEY })
+      } else if (target.localId) {
+        await deleteImage(target.localId)
+        setLegacy((list) => list.filter((item) => item.id !== target.localId))
+      }
+      toast.success(t('Deleted successfully'))
+      setPendingDelete(null)
+    } catch (error) {
+      toast.error(getServerErrorMessage(error, t('Delete failed')))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const jobList = jobs.data ?? []
+  const running = jobList.filter((job) => job.status === 'running')
+  const failed = jobList.filter((job) => job.status === 'failed')
+  const results: ResultImage[] = [
+    ...jobList
+      .filter((job) => job.status === 'success')
+      .flatMap((job) =>
+        job.images.map((src, index) => ({
+          key: `${job.id}-${index}`,
+          src,
+          prompt: job.prompt,
+          model: job.model,
+          jobId: job.id,
+        }))
+      ),
+    ...legacy.map((image) => ({
+      key: image.id,
+      src: image.src,
+      prompt: image.prompt,
+      model: image.model,
+      localId: image.id,
+    })),
+  ]
+  const deletingJobImages = pendingDelete?.jobId
+    ? (jobList.find((job) => job.id === pendingDelete.jobId)?.images.length ?? 0)
+    : 0
 
   return (
     <div className='grid grid-cols-1 items-start gap-3.5 lg:grid-cols-[320px_minmax(0,1fr)]'>
@@ -151,48 +213,77 @@ export function ImagePanel(props: {
             })
           }
         />
-        <ChipGroup
+        <SizePicker
           label={t('Size')}
-          options={SIZES.map((value) => ({ value, label: value.replace('x', '×') }))}
+          presets={SIZES.map((value) => ({ value, label: value.replace('x', '×') }))}
           value={size}
           onChange={setSize}
         />
-        <ChipGroup
+        <NumberPicker
           label={t('Count')}
-          options={COUNTS.map((value) => ({ value, label: String(value) }))}
+          presets={COUNTS}
+          format={String}
+          min={1}
+          max={MAX_COUNT}
           value={count}
           onChange={setCount}
         />
-        <CostLine label={t('Estimated cost')} value={estimate} />
+        <CostLine label={t('Estimated cost')} value={models.estimate(count)} />
         <Button
-          disabled={!prompt.trim() || !models.modelName}
+          disabled={submitting || !prompt.trim() || !models.modelName}
           onClick={() => void submit()}
         >
+          {submitting && <LoaderCircle className='animate-spin' />}
           {t('Generate images')}
         </Button>
       </section>
 
       <section className='grid min-w-0 gap-3'>
-        <div className='flex items-baseline justify-between gap-3'>
-          <h2 className='text-sm font-medium'>{t('Results')}</h2>
-          <span className='text-muted-foreground text-xs'>
-            {t('Saved in this browser, latest {{count}}', {
-              count: MAX_STORED_IMAGES,
-            })}
-          </span>
-        </div>
-        {pending.length === 0 && history.length === 0 ? (
+        <h2 className='text-sm font-medium'>{t('Results')}</h2>
+        {running.length === 0 && failed.length === 0 && results.length === 0 ? (
           <div className='text-muted-foreground rounded-[10px] border border-dashed p-10 text-center text-sm'>
-            {t('Generated images appear here.')}
+            {jobs.isLoading ? t('Loading...') : t('Generated images appear here.')}
           </div>
         ) : (
           <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3'>
-            {pending.map((job) => (
-              <PendingCard key={job.id} job={job} />
+            {running.map((job) => (
+              <PendingCard
+                key={job.id}
+                prompt={job.prompt}
+                startedAt={job.created_at * 1000}
+              />
             ))}
-            {history.map((image) => (
+            {failed.map((job) => (
+              <div key={job.id} className='bg-card overflow-hidden rounded-lg border'>
+                <div className='bg-muted text-destructive flex aspect-square items-center justify-center p-3 text-center text-xs'>
+                  <span className='line-clamp-4' title={job.error}>
+                    {job.error ? t(job.error) : t('Generation failed')}
+                  </span>
+                </div>
+                <div className='flex items-center gap-1 p-2 text-xs'>
+                  <p className='text-muted-foreground min-w-0 flex-1 truncate' title={job.prompt}>
+                    {job.prompt}
+                  </p>
+                  <IconAction
+                    label={t('Delete')}
+                    onClick={() =>
+                      setPendingDelete({
+                        key: job.id,
+                        src: '',
+                        prompt: job.prompt,
+                        model: job.model,
+                        jobId: job.id,
+                      })
+                    }
+                  >
+                    <Trash2 />
+                  </IconAction>
+                </div>
+              </div>
+            ))}
+            {results.map((image) => (
               <figure
-                key={image.id}
+                key={image.key}
                 className='bg-card overflow-hidden rounded-lg border'
               >
                 <button
@@ -235,10 +326,7 @@ export function ImagePanel(props: {
                     </IconAction>
                     <IconAction
                       label={t('Delete')}
-                      onClick={() => {
-                        setHistory((list) => list.filter((item) => item.id !== image.id))
-                        void deleteImage(image.id)
-                      }}
+                      onClick={() => setPendingDelete(image)}
                     >
                       <Trash2 />
                     </IconAction>
@@ -293,25 +381,45 @@ export function ImagePanel(props: {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null)
+        }}
+        title={t('Delete image')}
+        desc={
+          deletingJobImages > 1
+            ? t(
+                'All {{count}} images from this generation will be deleted. This action cannot be undone.',
+                { count: deletingJobImages }
+              )
+            : t('This action cannot be undone.')
+        }
+        confirmText={t('Delete')}
+        destructive
+        isLoading={deleting}
+        handleConfirm={() => void confirmDelete()}
+      />
     </div>
   )
 }
 
-function PendingCard(props: { job: Pending }) {
+function PendingCard(props: { prompt: string; startedAt: number }) {
   const { t } = useTranslation()
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(timer)
   }, [])
-  const seconds = Math.max(0, Math.round((now - props.job.startedAt) / 1000))
+  const seconds = Math.max(0, Math.round((now - props.startedAt) / 1000))
   return (
     <div className='bg-card overflow-hidden rounded-lg border'>
       <div className='bg-muted text-muted-foreground flex aspect-square flex-col items-center justify-center gap-2 text-xs'>
         <LoaderCircle className='size-5 animate-spin' />
         {t('Generating · {{seconds}}s', { seconds })}
       </div>
-      <p className='text-muted-foreground truncate p-2 text-xs'>{props.job.prompt}</p>
+      <p className='text-muted-foreground truncate p-2 text-xs'>{props.prompt}</p>
     </div>
   )
 }

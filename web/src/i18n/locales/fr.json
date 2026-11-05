@@ -7976,6 +7976,22 @@
     "Image preview": "Aperçu de l’image",
     "Video Storage": "Stockage des vidéos",
     "How long generated videos are kept on the server.": "Durée de conservation des vidéos générées sur le serveur.",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Les vidéos générées sont stockées sur ce serveur. Les vidéos plus anciennes sont supprimées automatiquement ; 0 les conserve définitivement."
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Les vidéos générées sont stockées sur ce serveur. Les vidéos plus anciennes sont supprimées automatiquement ; 0 les conserve définitivement.",
+    "Width": "Largeur",
+    "Height": "Hauteur",
+    "Between {{min}} and {{max}}": "Entre {{min}} et {{max}}",
+    "Image task submitted": "Tâche d’image envoyée. Vous pouvez fermer la page et revenir plus tard.",
+    "Delete image": "Supprimer l’image",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "Les {{count}} images de cette génération seront supprimées. Cette action est irréversible.",
+    "Play video": "Lire la vidéo",
+    "Video preview": "Aperçu de la vidéo",
+    "Delete video": "Supprimer la vidéo",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "La vidéo est retirée de la liste et son fichier est supprimé du serveur. Cette action est irréversible.",
+    "Too many images are generating. Wait for one to finish.": "Trop d’images en cours de génération. Attendez qu’une se termine.",
+    "Generation was interrupted by a server restart": "La génération a été interrompue par un redémarrage du serveur",
+    "Image not found": "Image introuvable",
+    "This image is still generating": "Cette image est encore en cours de génération",
+    "Video not found": "Vidéo introuvable",
+    "This video is still generating": "Cette vidéo est encore en cours de génération"
   }
 }

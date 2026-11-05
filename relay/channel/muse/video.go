@@ -375,6 +375,18 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 
 // ServeVideo writes a finished Muse video. The caller has already checked that
 // the requester may read the task.
+// DeleteVideo removes the stored file of a finished Muse video task.
+func DeleteVideo(task *model.Task) {
+	sharedEngine() // initializes engineConfig, which locates the media dir
+	id := task.GetUpstreamTaskID()
+	videoJobsMu.Lock()
+	delete(videoJobs, id)
+	videoJobsMu.Unlock()
+	if path, _ := findVideoFile(id); path != "" {
+		_ = os.Remove(path)
+	}
+}
+
 func ServeVideo(c *gin.Context, task *model.Task) {
 	sharedEngine() // initializes engineConfig, which locates the media dir
 	videoJobsMu.Lock()

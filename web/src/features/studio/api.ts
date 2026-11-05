@@ -21,8 +21,8 @@ import { requireServerSuccess } from '@/lib/server-error-message'
 import { getTaskArtifacts } from '@/features/usage-logs/api'
 import type { TaskLog } from '@/features/usage-logs/types'
 
-// Image and video calls run synchronously for minutes; the console relay
-// endpoints bill the signed-in user, so no API key is involved.
+// Submissions can upload large reference images; the console relay endpoints
+// bill the signed-in user, so no API key is involved.
 const LONG_REQUEST_TIMEOUT_MS = 30 * 60 * 1000
 
 export type StudioImageRequest = {
@@ -34,18 +34,13 @@ export type StudioImageRequest = {
   references: File[]
 }
 
-type ImageResponse = {
-  data?: { b64_json?: string; url?: string }[]
-}
-
-/** Image data URLs, in the order the model returned them. */
-export async function generateImages(
-  request: StudioImageRequest,
-  signal?: AbortSignal
-): Promise<string[]> {
+/**
+ * Starts a server-side image job and returns its ID. The job keeps running
+ * when the page is closed; its images are stored on the server.
+ */
+export async function submitImages(request: StudioImageRequest): Promise<string> {
   const config = {
-    params: { group: request.group },
-    signal,
+    params: { group: request.group, background: 1 },
     timeout: LONG_REQUEST_TIMEOUT_MS,
     skipErrorHandler: true,
   }
@@ -57,9 +52,9 @@ export async function generateImages(
     form.append('n', String(request.n))
     if (request.size) form.append('size', request.size)
     for (const file of request.references) form.append('image[]', file)
-    res = await api.post<ImageResponse>('/pg/images/edits', form, config)
+    res = await api.post<{ id?: string }>('/pg/images/edits', form, config)
   } else {
-    res = await api.post<ImageResponse>(
+    res = await api.post<{ id?: string }>(
       '/pg/images/generations',
       {
         model: request.model,
@@ -71,11 +66,30 @@ export async function generateImages(
       config
     )
   }
-  return (res.data.data ?? [])
-    .map((item) =>
-      item.b64_json ? `data:image/png;base64,${item.b64_json}` : item.url
-    )
-    .filter((url): url is string => Boolean(url))
+  return res.data.id ?? ''
+}
+
+export type StudioImageJob = {
+  id: string
+  status: 'running' | 'success' | 'failed'
+  prompt: string
+  model: string
+  created_at: number
+  finished_at?: number
+  error?: string
+  images: string[]
+}
+
+/** The signed-in user's studio image jobs, newest first. */
+export async function getImageJobs(): Promise<StudioImageJob[]> {
+  const res = await api.get('/api/studio/images')
+  const data = requireServerSuccess(res.data) as { data?: StudioImageJob[] }
+  return data.data ?? []
+}
+
+export async function deleteImageJob(id: string): Promise<void> {
+  const res = await api.delete(`/api/studio/images/${encodeURIComponent(id)}`)
+  requireServerSuccess(res.data)
 }
 
 export type StudioVideoRequest = {
@@ -109,19 +123,17 @@ export async function submitVideo(
   return res.data.task_id || res.data.id || ''
 }
 
-const VIDEO_ACTIONS = new Set(['text_to_video', 'image_to_video'])
-
-/** The signed-in user's most recent video tasks. */
+/** The signed-in user's most recent video tasks shown in the studio. */
 export async function getVideoTasks(): Promise<TaskLog[]> {
-  const res = await api.get('/api/task/self', {
-    params: { p: 1, page_size: 30 },
-  })
-  const data = requireServerSuccess(res.data) as {
-    data?: { items?: TaskLog[] }
-  }
-  return (data.data?.items ?? []).filter((task) =>
-    VIDEO_ACTIONS.has(task.action)
-  )
+  const res = await api.get('/api/studio/videos')
+  const data = requireServerSuccess(res.data) as { data?: TaskLog[] }
+  return data.data ?? []
+}
+
+/** Removes a finished video from the studio and deletes its stored file. */
+export async function deleteVideoTask(taskId: string): Promise<void> {
+  const res = await api.delete(`/api/studio/videos/${encodeURIComponent(taskId)}`)
+  requireServerSuccess(res.data)
 }
 
 /** Signed playback URL of a finished video task. */

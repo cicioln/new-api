@@ -17,11 +17,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-// Generated images are not stored on the server. The studio keeps the most
-// recent ones in this browser's IndexedDB; localStorage is too small for
-// base64 images.
-
-export const MAX_STORED_IMAGES = 50
+// Images generated before the studio stored them on the server were kept in
+// this browser's IndexedDB. They are still shown and can be deleted; new
+// images are never written here.
 
 export type StoredImage = {
   id: string
@@ -72,22 +70,6 @@ export async function loadImages(): Promise<StoredImage[]> {
     return (all ?? []).sort((a, b) => b.createdAt - a.createdAt)
   } catch {
     return []
-  }
-}
-
-/** Adds images and drops the oldest beyond MAX_STORED_IMAGES. */
-export async function saveImages(
-  images: StoredImage[],
-  existing: StoredImage[]
-): Promise<void> {
-  const overflow = [...images, ...existing].slice(MAX_STORED_IMAGES)
-  try {
-    await withStore('readwrite', (store) => {
-      for (const image of images) store.put(image)
-      for (const image of overflow) store.delete(image.id)
-    })
-  } catch {
-    // The page keeps working without persistence.
   }
 }
 

@@ -7976,6 +7976,22 @@
     "Image preview": "Просмотр изображения",
     "Video Storage": "Хранение видео",
     "How long generated videos are kept on the server.": "Сколько хранить созданные видео на сервере.",
-    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Созданные видео хранятся на этом сервере. Более старые удаляются автоматически; 0 — хранить всегда."
+    "Generated videos are stored on this server. Videos older than this are deleted automatically; 0 keeps them permanently.": "Созданные видео хранятся на этом сервере. Более старые удаляются автоматически; 0 — хранить всегда.",
+    "Width": "Ширина",
+    "Height": "Высота",
+    "Between {{min}} and {{max}}": "От {{min}} до {{max}}",
+    "Image task submitted": "Задача отправлена. Можно закрыть страницу и вернуться позже.",
+    "Delete image": "Удалить изображение",
+    "All {{count}} images from this generation will be deleted. This action cannot be undone.": "Будут удалены все {{count}} изображения этой генерации. Это действие нельзя отменить.",
+    "Play video": "Воспроизвести видео",
+    "Video preview": "Просмотр видео",
+    "Delete video": "Удалить видео",
+    "The video is removed from this list and its file is deleted from the server. This action cannot be undone.": "Видео будет убрано из списка, а файл удалён с сервера. Это действие нельзя отменить.",
+    "Too many images are generating. Wait for one to finish.": "Слишком много изображений в работе. Дождитесь завершения одного.",
+    "Generation was interrupted by a server restart": "Генерация прервана перезапуском сервера",
+    "Image not found": "Изображение не найдено",
+    "This image is still generating": "Изображение ещё создаётся",
+    "Video not found": "Видео не найдено",
+    "This video is still generating": "Видео ещё создаётся"
   }
 }
