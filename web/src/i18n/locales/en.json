@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "Each image must be 10 MB or smaller",
     "At most {{count}} reference images": "At most {{count}} reference images",
     "Remove image": "Remove image",
-    "Add image": "Add image"
+    "Add image": "Add image",
+    "View image": "View image",
+    "Image preview": "Image preview"
   }
 }

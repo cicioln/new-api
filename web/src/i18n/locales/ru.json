@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "Каждое изображение должно быть не более 10 МБ",
     "At most {{count}} reference images": "Не более {{count}} референсов",
     "Remove image": "Удалить изображение",
-    "Add image": "Добавить изображение"
+    "Add image": "Добавить изображение",
+    "View image": "Открыть изображение",
+    "Image preview": "Просмотр изображения"
   }
 }

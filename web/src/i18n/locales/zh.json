@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "每张图片不能超过 10 MB",
     "At most {{count}} reference images": "最多 {{count}} 张参考图",
     "Remove image": "移除图片",
-    "Add image": "添加图片"
+    "Add image": "添加图片",
+    "View image": "查看图片",
+    "Image preview": "图片预览"
   }
 }

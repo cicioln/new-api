@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "各画像は 10 MB 以下にしてください",
     "At most {{count}} reference images": "参考画像は最大 {{count}} 枚です",
     "Remove image": "画像を削除",
-    "Add image": "画像を追加"
+    "Add image": "画像を追加",
+    "View image": "画像を表示",
+    "Image preview": "画像プレビュー"
   }
 }

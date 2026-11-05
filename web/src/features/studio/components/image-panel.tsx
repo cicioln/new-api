@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 
@@ -60,6 +61,7 @@ export function ImagePanel(props: {
   const [references, setReferences] = useState<ReferenceImage[]>([])
   const [history, setHistory] = useState<StoredImage[]>([])
   const [pending, setPending] = useState<Pending[]>([])
+  const [preview, setPreview] = useState<StoredImage | null>(null)
   const historyRef = useRef(history)
   historyRef.current = history
 
@@ -193,14 +195,19 @@ export function ImagePanel(props: {
                 key={image.id}
                 className='bg-card overflow-hidden rounded-lg border'
               >
-                <a href={image.src} target='_blank' rel='noreferrer'>
+                <button
+                  type='button'
+                  aria-label={t('View image')}
+                  onClick={() => setPreview(image)}
+                  className='block w-full cursor-zoom-in'
+                >
                   <img
                     src={image.src}
                     alt={image.prompt}
                     loading='lazy'
                     className='aspect-square w-full object-cover'
                   />
-                </a>
+                </button>
                 <figcaption className='grid gap-1.5 p-2 text-xs'>
                   <p className='text-muted-foreground truncate' title={image.prompt}>
                     {image.prompt}
@@ -242,6 +249,50 @@ export function ImagePanel(props: {
           </div>
         )}
       </section>
+
+      <Dialog
+        open={preview !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreview(null)
+        }}
+      >
+        <DialogContent className='sm:max-w-4xl'>
+          <DialogTitle className='pr-8 text-sm font-medium'>
+            {t('Image preview')}
+          </DialogTitle>
+          {preview && (
+            <div className='grid gap-3'>
+              <img
+                src={preview.src}
+                alt={preview.prompt}
+                className='bg-muted mx-auto max-h-[70dvh] w-auto max-w-full rounded-lg object-contain'
+              />
+              <p className='text-muted-foreground text-xs break-words whitespace-pre-wrap'>
+                {preview.prompt}
+              </p>
+              <div className='flex items-center justify-between gap-2'>
+                <span className='text-muted-foreground font-mono text-xs'>
+                  {preview.model}
+                </span>
+                <div className='flex gap-1'>
+                  <IconAction label={t('Download')} href={preview.src} download>
+                    <Download />
+                  </IconAction>
+                  <IconAction
+                    label={t('Make video')}
+                    onClick={() => {
+                      props.onToVideo(preview.src)
+                      setPreview(null)
+                    }}
+                  >
+                    <Clapperboard />
+                  </IconAction>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

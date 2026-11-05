@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "Mỗi ảnh không được vượt quá 10 MB",
     "At most {{count}} reference images": "Tối đa {{count}} ảnh tham chiếu",
     "Remove image": "Xóa ảnh",
-    "Add image": "Thêm ảnh"
+    "Add image": "Thêm ảnh",
+    "View image": "Xem ảnh",
+    "Image preview": "Xem trước ảnh"
   }
 }

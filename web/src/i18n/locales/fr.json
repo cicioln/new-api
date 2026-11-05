@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "Chaque image doit faire 10 Mo maximum",
     "At most {{count}} reference images": "{{count}} images de référence maximum",
     "Remove image": "Retirer l’image",
-    "Add image": "Ajouter une image"
+    "Add image": "Ajouter une image",
+    "View image": "Voir l’image",
+    "Image preview": "Aperçu de l’image"
   }
 }

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -30,8 +31,10 @@ import (
 
 // Video generation runs in a background goroutine on the node that accepted
 // the request. Jobs and their files live on that node only: the task poller
-// reads job state from this process, and a job missing after a restart (or on
-// another node) is reported as not found, which fails and refunds the task.
+// reads job state from this process, and an unfinished job missing after a
+// restart (or on another node) is reported as not found, which fails and
+// refunds the task. Finished videos are stored under their task ID, so they
+// stay playable across restarts until the retention period ends.
 
 const videoGenerateTimeout = 20 * time.Minute
 
@@ -77,6 +80,7 @@ func cleanupVideoJobs(ctx context.Context) {
 			delete(videoJobs, id)
 		}
 		videoJobsMu.Unlock()
+		removeExpiredVideoFiles(cutoff)
 	}
 }
 
@@ -273,6 +277,45 @@ func finishVideoJob(jobID string, files []musesdk.Media, err error) {
 	job.Progress = 100
 	job.file = mediaPath(files[0])
 	job.mime = files[0].Mime
+	// Name the file after the task so ServeVideo still finds it after a
+	// restart has emptied videoJobs.
+	if named := videoFilePath(jobID, filepath.Ext(job.file)); os.Rename(job.file, named) == nil {
+		job.file = named
+	}
+}
+
+const videoFilePrefix = "video-"
+
+func videoFilePath(jobID, ext string) string {
+	return filepath.Join(engineConfig.MediaDir(), videoFilePrefix+filepath.Base(jobID)+ext)
+}
+
+// findVideoFile locates a finished video by task ID when its job is gone.
+func findVideoFile(jobID string) (string, string) {
+	for _, ext := range []string{".mp4", ".webm", ".mov"} {
+		path := videoFilePath(jobID, ext)
+		if _, err := os.Stat(path); err == nil {
+			return path, map[string]string{".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime"}[ext]
+		}
+	}
+	return "", ""
+}
+
+// removeExpiredVideoFiles deletes task-named videos older than the cutoff,
+// including ones whose job was lost in a restart.
+func removeExpiredVideoFiles(cutoff time.Time) {
+	entries, err := os.ReadDir(engineConfig.MediaDir())
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), videoFilePrefix) {
+			continue
+		}
+		if info, err := entry.Info(); err == nil && info.ModTime().Before(cutoff) {
+			_ = os.Remove(filepath.Join(engineConfig.MediaDir(), entry.Name()))
+		}
+	}
 }
 
 func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*channel.TaskSubmitResponse, *taskdto.TaskError) {
@@ -328,6 +371,7 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 // ServeVideo writes a finished Muse video. The caller has already checked that
 // the requester may read the task.
 func ServeVideo(c *gin.Context, task *model.Task) {
+	sharedEngine() // initializes engineConfig, which locates the media dir
 	videoJobsMu.Lock()
 	job := videoJobs[task.GetUpstreamTaskID()]
 	var path, mime string
@@ -335,6 +379,9 @@ func ServeVideo(c *gin.Context, task *model.Task) {
 		path, mime = job.file, job.mime
 	}
 	videoJobsMu.Unlock()
+	if path == "" {
+		path, mime = findVideoFile(task.GetUpstreamTaskID())
+	}
 	file, err := os.Open(path)
 	if path == "" || err != nil {
 		c.Header("Cache-Control", "private, no-store")

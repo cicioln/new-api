@@ -7971,6 +7971,8 @@
     "Each image must be 10 MB or smaller": "每張圖片不能超過 10 MB",
     "At most {{count}} reference images": "最多 {{count}} 張參考圖",
     "Remove image": "移除圖片",
-    "Add image": "新增圖片"
+    "Add image": "新增圖片",
+    "View image": "檢視圖片",
+    "Image preview": "圖片預覽"
   }
 }
