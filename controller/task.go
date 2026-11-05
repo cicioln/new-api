@@ -17,6 +17,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/relay"
 	relaychannel "github.com/QuantumNous/new-api/relay/channel"
+	"github.com/QuantumNous/new-api/relay/channel/muse"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/types"
@@ -337,6 +338,11 @@ func TaskArtifactContent(c *gin.Context) {
 	if !taskHasPluginExecution(task) {
 		if artifactKey != "video" || !legacyVideoAvailable(task) {
 			writeTaskArtifactError(c, http.StatusNotFound, "artifact_not_found", "Task or artifact not found")
+			return
+		}
+		if task.Platform == muse.TaskPlatform {
+			// Muse videos live on this node; their result URL points back here.
+			muse.ServeVideo(c, task)
 			return
 		}
 		descriptor := &relaychannel.TaskContentRequest{

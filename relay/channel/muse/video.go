@@ -35,6 +35,9 @@ import (
 
 const videoGenerateTimeout = 20 * time.Minute
 
+// maxVideoSeconds is the longest clip Muse generates in one request.
+const maxVideoSeconds = 10
+
 type videoJob struct {
 	Status   string `json:"status"`
 	Progress int    `json:"progress"`
@@ -99,10 +102,21 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 	if err != nil {
 		return service.TaskErrorWrapperLocal(err, "invalid_request", http.StatusBadRequest)
 	}
+	if videoSeconds(req) > maxVideoSeconds {
+		return service.TaskErrorWrapperLocal(fmt.Errorf("muse videos are at most %d seconds", maxVideoSeconds), "invalid_seconds", http.StatusBadRequest)
+	}
 	if req.InputReference != "" || len(req.Images) > 0 || hasMultipartReference(c) {
 		info.Action = constant.TaskActionImageToVideo
 	}
 	return nil
+}
+
+func videoSeconds(req relaycommon.TaskSubmitReq) int {
+	if req.Duration > 0 {
+		return req.Duration
+	}
+	seconds, _ := strconv.Atoi(req.Seconds)
+	return seconds
 }
 
 func hasMultipartReference(c *gin.Context) bool {
@@ -165,11 +179,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if req.Size != "" {
 		prompt += "\n\nVideo size: " + req.Size + "."
 	}
-	seconds := req.Duration
-	if seconds == 0 && req.Seconds != "" {
-		seconds, _ = strconv.Atoi(req.Seconds)
-	}
-	if seconds > 0 {
+	if seconds := videoSeconds(req); seconds > 0 {
 		prompt += fmt.Sprintf("\n\nVideo length: %d seconds.", seconds)
 	}
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)

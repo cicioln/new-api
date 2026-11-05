@@ -78,8 +78,8 @@ func Distribute() func(c *gin.Context) {
 					abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorModelNameRequired))
 					return
 				}
-				// check path is /pg/chat/completions
-				if strings.HasPrefix(c.Request.URL.Path, "/pg/chat/completions") {
+				// Console playground requests (/pg/...) choose their group per request.
+				if strings.HasPrefix(c.Request.URL.Path, "/pg/") {
 					usingGroup := common.GetContextKeyString(c, constant.ContextKeyUsingGroup)
 					playgroundRequest := &dto.PlayGroundRequest{}
 					err = common.UnmarshalBodyReusable(c, playgroundRequest)
@@ -87,12 +87,13 @@ func Distribute() func(c *gin.Context) {
 						abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorInvalidPlayground, map[string]any{"Error": err.Error()}))
 						return
 					}
-					if playgroundRequest.Group != "" {
-						if !service.GroupInUserUsableGroups(usingGroup, playgroundRequest.Group) && playgroundRequest.Group != usingGroup {
+					group := playgroundGroup(c, playgroundRequest.Group)
+					if group != "" {
+						if !service.GroupInUserUsableGroups(usingGroup, group) && group != usingGroup {
 							abortWithOpenAiMessage(c, http.StatusForbidden, i18n.T(c, i18n.MsgDistributorGroupAccessDenied))
 							return
 						}
-						common.SetContextKey(c, constant.ContextKeyUsingGroup, playgroundRequest.Group)
+						common.SetContextKey(c, constant.ContextKeyUsingGroup, group)
 					}
 				}
 			}
@@ -499,18 +500,31 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		}
 		c.Set("relay_mode", relayMode)
 	}
-	if strings.HasPrefix(c.Request.URL.Path, "/pg/chat/completions") {
-		// playground chat completions
+	if strings.HasPrefix(c.Request.URL.Path, "/pg/") {
+		// console playground: chat, images and video tasks
 		req, err := getModelFromRequest(c)
 		if err != nil {
 			return nil, false, err
 		}
 		modelRequest.Model = req.Model
-		modelRequest.Group = req.Group
+		modelRequest.Group = playgroundGroup(c, req.Group)
 		common.SetContextKey(c, constant.ContextKeyTokenGroup, modelRequest.Group)
+		if c.Request.URL.Path == "/pg/videos" {
+			c.Set("relay_mode", relayconstant.RelayModeVideoSubmit)
+		}
 	}
 
 	return &modelRequest, shouldSelectChannel, nil
+}
+
+// playgroundGroup returns the group a console playground request asks for.
+// Chat sends it in the body; image and video requests send it as a query
+// parameter so it never reaches the upstream request.
+func playgroundGroup(c *gin.Context, bodyGroup string) string {
+	if bodyGroup != "" {
+		return bodyGroup
+	}
+	return c.Query("group")
 }
 
 // TokenModelLimitAllows reports whether a token model-limit map authorizes
