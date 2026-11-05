@@ -109,7 +109,7 @@ function GroupCacheTable(props: {
       title={t('Cache hit rate: cached input tokens / all input tokens')}
       className='flex flex-col gap-1.5'
     >
-      <small className='text-subtle-foreground text-[11px]'>
+      <small className='text-muted-foreground text-[11.5px]'>
         {t('Group cache hit rate')}
       </small>
       {shown.map((group) => {
@@ -119,9 +119,9 @@ function GroupCacheTable(props: {
           <div
             key={group}
             role='listitem'
-            className='grid grid-cols-[minmax(0,1fr)_88px_38px] items-center gap-2.5 text-[11px]'
+            className='grid grid-cols-[minmax(0,1fr)_88px_38px] items-center gap-2.5 text-[12px] antialiased'
           >
-            <span className='text-muted-foreground truncate font-mono font-medium'>
+            <span className='text-foreground/80 truncate font-medium'>
               {group}
             </span>
             <span className='bg-muted h-1.5 overflow-hidden rounded-full'>

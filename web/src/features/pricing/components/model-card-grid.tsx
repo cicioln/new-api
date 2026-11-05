@@ -215,10 +215,10 @@ export const ModelCardGrid = memo(function ModelCardGrid(
                   aria-pressed={checked}
                   onClick={() => props.onGroupClick?.(group.name)}
                   className={cn(
-                    'inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border pr-1 pl-2.5 text-xs transition-colors',
+                    'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border pr-1 pl-3 text-[12.5px] font-medium antialiased transition-colors',
                     checked
                       ? 'border-foreground bg-foreground text-background'
-                      : 'bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                      : 'bg-card text-foreground/85 border-foreground/15 hover:border-foreground/40 hover:text-foreground'
                   )}
                 >
                   {group.name}
