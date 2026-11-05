@@ -78,6 +78,15 @@ function parsePaymentMethods(
           type === 'stripe' && normalizedMinTopup <= 0
             ? stripeMinTopup
             : normalizedMinTopup,
+        bonus_rate:
+          typeof item.bonus_rate === 'string' ||
+          typeof item.bonus_rate === 'number'
+            ? item.bonus_rate
+            : undefined,
+        fee_rate:
+          typeof item.fee_rate === 'string' || typeof item.fee_rate === 'number'
+            ? item.fee_rate
+            : undefined,
       }
     })
     .filter((item) => item.name && item.type && item.type !== 'waffo')
