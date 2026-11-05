@@ -7925,6 +7925,10 @@
     "Added to the amount the user pays; the credited amount is unchanged.": "ユーザーの支払額に加算され、入金額は変わりません。",
     "Enter a percentage between 0 and 100 with up to 2 decimals": "0〜100 のパーセンテージを小数点以下 2 桁まで入力してください",
     "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "USDT チャージで {{rate}}% ボーナス：+{{amount}}",
-    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT チャージには {{rate}}% のチャネル手数料がかかります：+{{amount}}"
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT チャージには {{rate}}% のチャネル手数料がかかります：+{{amount}}",
+    "Muse": "Muse",
+    "Access Muse chat, image and video generation using account cookies": "アカウントの Cookie で Muse のチャット、画像生成、動画生成を利用します",
+    "Paste Muse cookies (hatch_sess is required)": "Muse の Cookie を貼り付けてください（hatch_sess が必須です）",
+    "Muse channels do not support batch creation": "Muse チャネルは一括作成に対応していません"
   }
 }

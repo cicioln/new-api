@@ -5,6 +5,7 @@ go 1.26.10
 
 require (
 	github.com/Calcium-Ion/go-epay v0.0.5
+	github.com/CoolkHz/muse-protocol-go v0.0.0-20261105155841-052b58a68e46
 	github.com/abema/go-mp4 v1.4.1
 	github.com/andybalholm/brotli v1.2.0
 	github.com/anknown/ahocorasick v0.0.0-20190904063843-d75dbd5169c0
@@ -175,3 +176,6 @@ require (
 replace github.com/QuantumNous/new-api/relaykit => ./relaykit
 
 replace github.com/QuantumNous/new-api/tokenkit => ./tokenkit
+
+// Muse SDK fork with fixes for chat limit classification and gateway proxy routing.
+replace github.com/CoolkHz/muse-protocol-go => github.com/cicioln/muse-protocol-go v0.0.0-20261105155841-052b58a68e46

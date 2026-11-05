@@ -27,6 +27,7 @@ import (
 	"github.com/QuantumNous/new-api/relay/channel/mistral"
 	"github.com/QuantumNous/new-api/relay/channel/mokaai"
 	"github.com/QuantumNous/new-api/relay/channel/moonshot"
+	"github.com/QuantumNous/new-api/relay/channel/muse"
 	"github.com/QuantumNous/new-api/relay/channel/newapi"
 	"github.com/QuantumNous/new-api/relay/channel/ollama"
 	"github.com/QuantumNous/new-api/relay/channel/openai"
@@ -123,6 +124,8 @@ func GetAdaptor(apiType int) channel.Adaptor {
 		return &sub2api.Adaptor{}
 	case constant.APITypeNewAPI:
 		return &newapi.Adaptor{}
+	case constant.APITypeMuse:
+		return &muse.Adaptor{}
 	}
 	return nil
 }
@@ -186,6 +189,9 @@ func TaskPlatformUnavailableError(platform constant.TaskPlatform) (string, strin
 }
 
 func GetTaskAdaptor(platform constant.TaskPlatform) channel.TaskAdaptor {
+	if platform == muse.TaskPlatform {
+		return &muse.TaskAdaptor{}
+	}
 	plugin, ok := ResolveTaskPluginForPlatform(pluginruntime.DefaultRegistry.Generation(), platform)
 	if !ok {
 		return nil
@@ -219,6 +225,9 @@ func getTaskAdaptorForRequest(c *gin.Context, platform constant.TaskPlatform) (c
 			}
 			return platform, nil
 		}
+	}
+	if platform == muse.TaskPlatform {
+		return platform, &muse.TaskAdaptor{}
 	}
 	generation := pluginruntime.DefaultRegistry.Generation()
 	plugin, ok := ResolveTaskPluginForPlatform(generation, platform)

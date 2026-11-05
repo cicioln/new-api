@@ -7925,6 +7925,10 @@
     "Added to the amount the user pays; the credited amount is unchanged.": "Добавляется к сумме оплаты; зачисляемая сумма не меняется.",
     "Enter a percentage between 0 and 100 with up to 2 decimals": "Введите процент от 0 до 100, не более 2 знаков после запятой",
     "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "Бонус {{rate}}% за пополнение USDT: +{{amount}}",
-    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Пополнение USDT включает комиссию канала {{rate}}%: +{{amount}}"
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Пополнение USDT включает комиссию канала {{rate}}%: +{{amount}}",
+    "Muse": "Muse",
+    "Access Muse chat, image and video generation using account cookies": "Доступ к чату, генерации изображений и видео Muse с помощью cookie аккаунта",
+    "Paste Muse cookies (hatch_sess is required)": "Вставьте cookie Muse (обязателен hatch_sess)",
+    "Muse channels do not support batch creation": "Каналы Muse не поддерживают пакетное создание"
   }
 }

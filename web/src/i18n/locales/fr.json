@@ -7925,6 +7925,10 @@
     "Added to the amount the user pays; the credited amount is unchanged.": "Ajouté au montant payé par l’utilisateur ; le montant crédité ne change pas.",
     "Enter a percentage between 0 and 100 with up to 2 decimals": "Saisissez un pourcentage entre 0 et 100 avec au plus 2 décimales",
     "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "Les recharges USDT reçoivent un bonus de {{rate}} % : +{{amount}}",
-    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Les recharges USDT incluent {{rate}} % de frais de canal : +{{amount}}"
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Les recharges USDT incluent {{rate}} % de frais de canal : +{{amount}}",
+    "Muse": "Muse",
+    "Access Muse chat, image and video generation using account cookies": "Accéder au chat, à la génération d'images et de vidéos Muse avec les cookies du compte",
+    "Paste Muse cookies (hatch_sess is required)": "Collez les cookies Muse (hatch_sess est requis)",
+    "Muse channels do not support batch creation": "Les canaux Muse ne prennent pas en charge la création par lots"
   }
 }

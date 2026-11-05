@@ -7925,6 +7925,10 @@
     "Added to the amount the user pays; the credited amount is unchanged.": "加在使用者應付金額上，到帳額度不變。",
     "Enter a percentage between 0 and 100 with up to 2 decimals": "請輸入 0–100 之間的百分比，最多兩位小數",
     "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "USDT 儲值贈送 {{rate}}%：+{{amount}}",
-    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT 儲值需額外支付 {{rate}}% 通道手續費：+{{amount}}"
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "USDT 儲值需額外支付 {{rate}}% 通道手續費：+{{amount}}",
+    "Muse": "Muse",
+    "Access Muse chat, image and video generation using account cookies": "使用帳號 Cookie 接入 Muse 對話、圖片和影片生成",
+    "Paste Muse cookies (hatch_sess is required)": "貼上 Muse Cookie（必須包含 hatch_sess）",
+    "Muse channels do not support batch creation": "Muse 渠道不支援批次建立"
   }
 }

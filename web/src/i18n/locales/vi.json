@@ -7925,6 +7925,10 @@
     "Added to the amount the user pays; the credited amount is unchanged.": "Cộng vào số tiền người dùng trả; số tiền nhận không đổi.",
     "Enter a percentage between 0 and 100 with up to 2 decimals": "Nhập phần trăm từ 0 đến 100, tối đa 2 chữ số thập phân",
     "USDT top-ups get a {{rate}}% bonus: +{{amount}}": "Nạp USDT được tặng {{rate}}%: +{{amount}}",
-    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Nạp USDT có phí kênh {{rate}}%: +{{amount}}"
+    "USDT top-ups include a {{rate}}% channel fee: +{{amount}}": "Nạp USDT có phí kênh {{rate}}%: +{{amount}}",
+    "Muse": "Muse",
+    "Access Muse chat, image and video generation using account cookies": "Truy cập trò chuyện, tạo hình ảnh và video của Muse bằng cookie tài khoản",
+    "Paste Muse cookies (hatch_sess is required)": "Dán cookie Muse (bắt buộc có hatch_sess)",
+    "Muse channels do not support batch creation": "Kênh Muse không hỗ trợ tạo hàng loạt"
   }
 }

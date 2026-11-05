@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	musesdk "github.com/CoolkHz/muse-protocol-go/muse"
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
@@ -727,6 +728,27 @@ func validateChannel(channel *model.Channel, isAdd bool) error {
 			}
 			if v, ok := keyMap["account_id"]; !ok || v == nil || strings.TrimSpace(fmt.Sprintf("%v", v)) == "" {
 				return fmt.Errorf("Codex key JSON must include account_id")
+			}
+		}
+	}
+
+	if channel.Type == constant.ChannelTypeMuse {
+		trimmedKey := strings.TrimSpace(channel.Key)
+		if isAdd || trimmedKey != "" {
+			// A single key may be a multi-line cookie export; batch keys hold one
+			// cookie header per line.
+			keys := []string{trimmedKey}
+			if channel.ChannelInfo.IsMultiKey {
+				keys = strings.Split(trimmedKey, "
+")
+			}
+			for _, key := range keys {
+				if strings.TrimSpace(key) == "" {
+					continue
+				}
+				if missing := musesdk.MissingCookies(musesdk.ParseCookies(key)); len(missing) > 0 {
+					return fmt.Errorf("Muse key must include the cookies: %s", strings.Join(missing, ", "))
+				}
 			}
 		}
 	}
