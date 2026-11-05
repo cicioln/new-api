@@ -739,8 +739,7 @@ func validateChannel(channel *model.Channel, isAdd bool) error {
 			// cookie header per line.
 			keys := []string{trimmedKey}
 			if channel.ChannelInfo.IsMultiKey {
-				keys = strings.Split(trimmedKey, "
-")
+				keys = strings.Split(trimmedKey, "\n")
 			}
 			for _, key := range keys {
 				if strings.TrimSpace(key) == "" {
