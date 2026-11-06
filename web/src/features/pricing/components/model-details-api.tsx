@@ -508,11 +508,11 @@ function buildVideoSample(lang: Lang, ctx: SampleContext): string {
 }
 
 // Endpoint types with no server default path still get a sample.
-const FALLBACK_ENDPOINT_PATHS: Record<string, string> = {
+export const FALLBACK_ENDPOINT_PATHS: Record<string, string> = {
   'openai-video': '/v1/videos',
 }
 
-function buildSample(
+export function buildSample(
   lang: Lang,
   endpointType: string,
   ctx: SampleContext
