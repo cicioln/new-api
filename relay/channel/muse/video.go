@@ -81,6 +81,7 @@ func cleanupVideoJobs(ctx context.Context) {
 		if days := operation_setting.GetVideoSetting().RetentionDays; days > 0 {
 			removeExpiredVideoFiles(time.Now().AddDate(0, 0, -days))
 		}
+		removeExpiredPublicImages()
 	}
 }
 
@@ -109,10 +110,60 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 	if videoSeconds(req) > maxVideoSeconds {
 		return service.TaskErrorWrapperLocal(fmt.Errorf("muse videos are at most %d seconds", maxVideoSeconds), "invalid_seconds", http.StatusBadRequest)
 	}
-	if req.InputReference != "" || len(req.Images) > 0 || hasMultipartReference(c) {
+	extras := videoExtrasOf(c)
+	if extras.LastImageURL != "" && extras.FirstImageURL == "" {
+		return service.TaskErrorWrapperLocal(errors.New("last_image_url requires first_image_url"), "invalid_request", http.StatusBadRequest)
+	}
+	if req.InputReference != "" || len(req.Images) > 0 || hasMultipartReference(c) || extras.hasImages() {
 		info.Action = constant.TaskActionImageToVideo
 	}
 	return nil
+}
+
+// videoExtras are request fields TaskSubmitReq does not carry. The names
+// follow common Muse video APIs so clients written for them work unchanged.
+type videoExtras struct {
+	AspectRatio        string   `json:"aspect_ratio"`
+	CameraMovement     string   `json:"camera_movement"`
+	Style              string   `json:"style"`
+	NegativePrompt     string   `json:"negative_prompt"`
+	ReferenceImageURLs []string `json:"reference_image_urls"`
+	FirstImageURL      string   `json:"first_image_url"`
+	LastImageURL       string   `json:"last_image_url"`
+}
+
+func (e videoExtras) hasImages() bool {
+	return e.FirstImageURL != "" || e.LastImageURL != "" || len(e.ReferenceImageURLs) > 0
+}
+
+func videoExtrasOf(c *gin.Context) videoExtras {
+	var extras videoExtras
+	if form := c.Request.MultipartForm; form != nil {
+		get := func(key string) string {
+			if values := form.Value[key]; len(values) > 0 {
+				return values[0]
+			}
+			return ""
+		}
+		extras = videoExtras{
+			AspectRatio:        get("aspect_ratio"),
+			CameraMovement:     get("camera_movement"),
+			Style:              get("style"),
+			NegativePrompt:     get("negative_prompt"),
+			ReferenceImageURLs: form.Value["reference_image_urls"],
+			FirstImageURL:      get("first_image_url"),
+			LastImageURL:       get("last_image_url"),
+		}
+	} else if strings.HasPrefix(c.GetHeader("Content-Type"), "application/json") {
+		_ = common.UnmarshalBodyReusable(c, &extras)
+	}
+	extras.AspectRatio = strings.TrimSpace(extras.AspectRatio)
+	extras.CameraMovement = strings.TrimSpace(extras.CameraMovement)
+	extras.Style = strings.TrimSpace(extras.Style)
+	extras.NegativePrompt = strings.TrimSpace(extras.NegativePrompt)
+	extras.FirstImageURL = strings.TrimSpace(extras.FirstImageURL)
+	extras.LastImageURL = strings.TrimSpace(extras.LastImageURL)
+	return extras
 }
 
 func videoSeconds(req relaycommon.TaskSubmitReq) int {
@@ -143,12 +194,29 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if err != nil {
 		return nil, err
 	}
-	sources := append([]string(nil), req.Images...)
+	extras := videoExtrasOf(c)
+	// Frames go first so the prompt can name them by position.
+	var sources []string
+	if extras.FirstImageURL != "" {
+		sources = append(sources, extras.FirstImageURL)
+	}
+	if extras.LastImageURL != "" {
+		sources = append(sources, extras.LastImageURL)
+	}
+	sources = append(sources, req.Images...)
+	for _, source := range extras.ReferenceImageURLs {
+		if source = strings.TrimSpace(source); source != "" {
+			sources = append(sources, source)
+		}
+	}
 	if req.InputReference != "" {
 		sources = append(sources, req.InputReference)
 	}
 	if len(sources) == 0 && strings.TrimSpace(req.Image) != "" {
 		sources = append(sources, strings.TrimSpace(req.Image))
+	}
+	if len(sources) > musesdk.MaxRefImages {
+		return nil, fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages)
 	}
 	var refs []musesdk.RefImage
 	for _, source := range sources {
@@ -179,7 +247,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if len(refs) > musesdk.MaxRefImages {
 		return nil, fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages)
 	}
-	prompt := videoPrompt(req, len(refs) > 0)
+	prompt := videoPrompt(req, extras, len(refs) > 0)
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
 	if err != nil {
 		return nil, err
@@ -210,18 +278,37 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 // videoPrompt wraps the user's description in an explicit instruction. Muse is
 // a general agent: given a bare description such as "a cat running on the
 // beach" it often answers in text instead of calling its video tool.
-func videoPrompt(req relaycommon.TaskSubmitReq, hasRefs bool) string {
+func videoPrompt(req relaycommon.TaskSubmitReq, extras videoExtras, hasRefs bool) string {
 	var b strings.Builder
 	if hasRefs {
 		b.WriteString("Use your video generation tool to animate the attached image(s) into a video. Do not answer with text only; produce the video file.")
 	} else {
 		b.WriteString("Use your video generation tool to create a video. Do not answer with text only; produce the video file.")
 	}
-	if ratio := aspectRatio(req.Size); ratio != "" {
+	switch {
+	case extras.FirstImageURL != "" && extras.LastImageURL != "":
+		b.WriteString("\nThe first attached image is the opening frame and the second attached image is the final frame.")
+	case extras.FirstImageURL != "":
+		b.WriteString("\nThe first attached image is the opening frame.")
+	}
+	ratio := aspectRatio(req.Size)
+	if ratio == "" {
+		ratio = aspectRatio(extras.AspectRatio)
+	}
+	if ratio != "" {
 		b.WriteString("\nVideo aspect ratio: " + ratio + ".")
 	}
 	if seconds := videoSeconds(req); seconds > 0 {
 		b.WriteString(fmt.Sprintf("\nVideo length: %d seconds.", seconds))
+	}
+	if extras.CameraMovement != "" {
+		b.WriteString("\nCamera movement: " + extras.CameraMovement + ".")
+	}
+	if extras.Style != "" {
+		b.WriteString("\nStyle: " + extras.Style + ".")
+	}
+	if extras.NegativePrompt != "" {
+		b.WriteString("\nAvoid: " + extras.NegativePrompt + ".")
 	}
 	b.WriteString("\n\nVideo description:\n")
 	b.WriteString(req.Prompt)

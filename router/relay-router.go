@@ -7,6 +7,7 @@ import (
 	"github.com/QuantumNous/new-api/controller"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/relay"
+	"github.com/QuantumNous/new-api/relay/channel/muse"
 	"github.com/QuantumNous/new-api/relaykit/types"
 
 	"github.com/gin-gonic/gin"
@@ -73,6 +74,8 @@ func SetRelayRouter(router *gin.Engine) {
 	}
 	// Studio images are opened by <img> tags, so the signed URL is the credential.
 	router.GET("/pg/studio/media/:access/:name", middleware.RouteTag("relay"), controller.StudioImageContent)
+	// Muse images returned with response_format "url"; the signed link is the credential.
+	router.GET("/muse/media/:access/:name", middleware.RouteTag("relay"), muse.ServePublicImage)
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.RouteTag("relay"))
 	relayV1Router.Use(middleware.SystemPerformanceCheck())

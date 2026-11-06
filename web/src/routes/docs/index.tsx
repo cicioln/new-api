@@ -16,16 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute } from "@tanstack/react-router";
-import z from "zod";
+import { createFileRoute } from '@tanstack/react-router'
+import z from 'zod'
 
-import { DocsGuidePage } from "@/features/docs";
+import { DocsGuidePage } from '@/features/docs'
 
 const docsSearchSchema = z.object({
   page: z.string().optional().catch(undefined),
-});
+})
 
-export const Route = createFileRoute("/docs/")({
+export const Route = createFileRoute('/docs/')({
   validateSearch: docsSearchSchema,
   component: DocsGuidePage,
-});
+})

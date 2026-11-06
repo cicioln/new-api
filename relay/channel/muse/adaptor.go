@@ -300,12 +300,21 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 		return nil, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
 	}
 	var refs []musesdk.RefImage
-	if info.RelayMode == relayconstant.RelayModeImagesEdits {
+	if info.RelayMode == relayconstant.RelayModeImagesEdits && c.Request.MultipartForm != nil {
 		refs, err = multipartImages(c)
 		if err != nil {
 			return nil, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
 		}
 	}
+	urlRefs, err := jsonImageRefs(c, request)
+	if err != nil {
+		return nil, types.NewErrorWithStatusCode(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
+	}
+	refs = append(refs, urlRefs...)
+	if len(refs) > musesdk.MaxRefImages {
+		return nil, types.NewErrorWithStatusCode(fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages), types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
+	}
+	extras := imageExtrasOf(c, request)
 	// Muse is a general agent; without an explicit instruction it sometimes
 	// describes the picture in text instead of calling its image tool.
 	prompt := "Use your image generation tool to create the image. Do not answer with text only; produce the image file."
@@ -314,11 +323,21 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	}
 	// Muse picks its own pixel size (1:1 is about 1600×1600), so only the
 	// aspect ratio of the requested size is passed on.
-	if ratio := aspectRatio(request.Size); ratio != "" {
+	ratio := aspectRatio(request.Size)
+	if ratio == "" {
+		ratio = aspectRatio(extras.aspectRatio)
+	}
+	if ratio != "" {
 		prompt += "\nImage aspect ratio: " + ratio + "."
 	}
 	if count > 1 {
 		prompt += fmt.Sprintf("\nGenerate %d separate images.", count)
+	}
+	if extras.style != "" {
+		prompt += "\nStyle: " + extras.style + "."
+	}
+	if extras.negative != "" {
+		prompt += "\nDo not include: " + extras.negative + "."
 	}
 	prompt += "\n\nImage description:\n" + request.Prompt
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
@@ -332,6 +351,14 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	defer removeMedia(files)
 	response := dto.ImageResponse{Created: common.GetTimestamp(), Data: make([]dto.ImageData, 0, len(files))}
 	for _, file := range files {
+		if strings.EqualFold(strings.TrimSpace(request.ResponseFormat), "url") {
+			link, err := publishImage(c, mediaPath(file))
+			if err != nil {
+				return nil, types.NewErrorWithStatusCode(fmt.Errorf("store generated image failed: %w", err), types.ErrorCodeBadResponse, http.StatusBadGateway, types.ErrOptionWithSkipRetry())
+			}
+			response.Data = append(response.Data, dto.ImageData{Url: link})
+			continue
+		}
 		raw, err := os.ReadFile(mediaPath(file))
 		if err != nil {
 			return nil, types.NewErrorWithStatusCode(fmt.Errorf("read generated image failed: %w", err), types.ErrorCodeBadResponse, http.StatusBadGateway, types.ErrOptionWithSkipRetry())

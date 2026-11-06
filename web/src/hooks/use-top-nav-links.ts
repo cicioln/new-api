@@ -16,23 +16,23 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { useStatus } from "@/hooks/use-status";
+import { useStatus } from '@/hooks/use-status'
 import {
   isSidebarModuleEnabled,
   parseHeaderNavModulesFromStatus,
-} from "@/lib/nav-modules";
-import { useAuthStore } from "@/stores/auth-store";
+} from '@/lib/nav-modules'
+import { useAuthStore } from '@/stores/auth-store'
 
 export type TopNavLink = {
-  title: string;
-  href: string;
-  disabled?: boolean;
-  requiresAuth?: boolean;
-  external?: boolean;
-};
+  title: string
+  href: string
+  disabled?: boolean
+  requiresAuth?: boolean
+  external?: boolean
+}
 
 /**
  * Generate top navigation links based on HeaderNavModules configuration from backend /api/status
@@ -47,77 +47,77 @@ export type TopNavLink = {
  * }
  */
 export function useTopNavLinks(): TopNavLink[] {
-  const { t } = useTranslation();
-  const { status } = useStatus();
-  const { auth } = useAuthStore();
+  const { t } = useTranslation()
+  const { status } = useStatus()
+  const { auth } = useAuthStore()
 
   // Parse HeaderNavModules
   const modules = useMemo(() => {
     return parseHeaderNavModulesFromStatus(
-      status as Record<string, unknown> | null,
-    );
-  }, [status]);
+      status as Record<string, unknown> | null
+    )
+  }, [status])
 
   // Documentation link (may be external)
-  const docsLink: string | undefined = status?.docs_link as string | undefined;
+  const docsLink: string | undefined = status?.docs_link as string | undefined
 
-  const isAuthed = !!auth?.user;
+  const isAuthed = !!auth?.user
 
-  const links: TopNavLink[] = [];
+  const links: TopNavLink[] = []
 
   // Home
   if (modules?.home !== false) {
-    links.push({ title: t("Home page"), href: "/" });
+    links.push({ title: t('Home page'), href: '/' })
   }
 
   // Console
   if (modules?.console !== false) {
     links.push({
-      title: t("Console"),
-      href: "/dashboard",
+      title: t('Console'),
+      href: '/dashboard',
       requiresAuth: !isAuthed,
-    });
+    })
   }
 
   // Pricing
-  const pricing = modules?.pricing;
-  if (pricing && typeof pricing === "object" && pricing.enabled) {
-    const requiresAuth = pricing.requireAuth && !isAuthed;
-    links.push({ title: t("Model Square"), href: "/pricing", requiresAuth });
+  const pricing = modules?.pricing
+  if (pricing && typeof pricing === 'object' && pricing.enabled) {
+    const requiresAuth = pricing.requireAuth && !isAuthed
+    links.push({ title: t('Model Square'), href: '/pricing', requiresAuth })
   }
 
   // Rankings
-  const rankings = modules?.rankings;
-  if (rankings && typeof rankings === "object" && rankings.enabled) {
-    const requiresAuth = rankings.requireAuth && !isAuthed;
-    links.push({ title: t("Rankings"), href: "/rankings", requiresAuth });
+  const rankings = modules?.rankings
+  if (rankings && typeof rankings === 'object' && rankings.enabled) {
+    const requiresAuth = rankings.requireAuth && !isAuthed
+    links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
   }
 
   // Creative Studio needs a signed-in user; the sidebar switch also hides it.
-  if (modules?.studio !== false && isSidebarModuleEnabled("chat", "studio")) {
+  if (modules?.studio !== false && isSidebarModuleEnabled('chat', 'studio')) {
     links.push({
-      title: t("Creative Studio"),
-      href: "/studio",
+      title: t('Creative Studio'),
+      href: '/studio',
       requiresAuth: !isAuthed,
-    });
+    })
   }
 
   // Docs (supports external links)
   // The built-in /docs pages are used unless an admin points Docs elsewhere.
   if (modules?.docs !== false) {
     const external =
-      !!docsLink && !/^https?:\/\/docs\.newapi\.pro\/?$/i.test(docsLink.trim());
+      !!docsLink && !/^https?:\/\/docs\.newapi\.pro\/?$/i.test(docsLink.trim())
     links.push(
       external
-        ? { title: t("Docs"), href: docsLink, external: true }
-        : { title: t("Docs"), href: "/docs" },
-    );
+        ? { title: t('Docs'), href: docsLink, external: true }
+        : { title: t('Docs'), href: '/docs' }
+    )
   }
 
   // About
   if (modules?.about !== false) {
-    links.push({ title: t("About"), href: "/about" });
+    links.push({ title: t('About'), href: '/about' })
   }
 
-  return links;
+  return links
 }

@@ -16,16 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute } from "@tanstack/react-router";
-import z from "zod";
+import { createFileRoute } from '@tanstack/react-router'
+import z from 'zod'
 
-import { DocsModelPage } from "@/features/docs";
+import { DocsModelPage } from '@/features/docs'
 
 const docsModelSearchSchema = z.object({
-  view: z.enum(["overview", "api", "examples"]).optional().catch(undefined),
-});
+  view: z.enum(['overview', 'api', 'examples']).optional().catch(undefined),
+})
 
-export const Route = createFileRoute("/docs/models/$modelId/")({
+export const Route = createFileRoute('/docs/models/$modelId/')({
   validateSearch: docsModelSearchSchema,
   component: DocsModelPage,
-});
+})
