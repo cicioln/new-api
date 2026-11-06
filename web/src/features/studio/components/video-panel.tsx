@@ -17,16 +17,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
-import { Frame } from 'lucide-react'
+import { Frame, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { Button } from '@/components/ui/button'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 
-import { submitVideo } from '../api'
+import { retryVideoTask, submitVideo } from '../api'
 import { readAsDataUrl, useStudioModels } from '../lib/options'
 import { RUNNING_VIDEO, useVideoTasks, VIDEO_TASKS_KEY } from '../lib/queries'
 import { Composer } from './composer'
@@ -40,7 +41,7 @@ import {
   type ReferenceImage,
   type SizePreset,
 } from './form-parts'
-import { MediaViewer, VideoTile, type MediaItem } from './media'
+import { MediaViewer, useDeleteMedia, VideoTile, type MediaItem } from './media'
 import { FailedTile, JobHeader, PendingTile, StudioHero, Tag } from './shared'
 
 const RATIOS: SizePreset[] = [
@@ -66,6 +67,8 @@ export function VideoPanel(props: {
   const [seconds, setSeconds] = useState(5)
   const [submitting, setSubmitting] = useState(false)
   const [viewing, setViewing] = useState<MediaItem | null>(null)
+  const [retrying, setRetrying] = useState<string | null>(null)
+  const remove = useDeleteMedia()
 
   const ratioLabel =
     RATIOS.find((item) => item.value === ratio)?.label ?? ratio.replace('x', '×')
@@ -100,6 +103,19 @@ export function VideoPanel(props: {
     }
   }
 
+  const retry = async (taskId: string) => {
+    setRetrying(taskId)
+    try {
+      await retryVideoTask(taskId)
+      toast.success(t('Video task submitted'))
+      await queryClient.invalidateQueries({ queryKey: VIDEO_TASKS_KEY })
+    } catch (error) {
+      toast.error(getServerErrorMessage(error, t('Video submission failed')))
+    } finally {
+      setRetrying(null)
+    }
+  }
+
   const list = tasks.data ?? []
 
   return (
@@ -129,7 +145,7 @@ export function VideoPanel(props: {
               const done = task.status === TASK_STATUS.SUCCESS
               const progress = Number.parseInt(task.progress ?? '', 10)
               const aspect = '16 / 9'
-              const text = (task.properties?.input ?? '').trim()
+              const text = (task.studio?.prompt || task.properties?.input || '').trim()
               const model = task.properties?.origin_model_name ?? ''
               return (
                 <section key={task.task_id} className='grid gap-2.5'>
@@ -144,6 +160,10 @@ export function VideoPanel(props: {
                     {done && <Tag tone='success'>{t('Completed')}</Tag>}
                     {failed && <Tag tone='failed'>{t('Failed')}</Tag>}
                     {model && <Tag>{model}</Tag>}
+                    {task.studio?.size && <Tag>{task.studio.size.replace('x', '×')}</Tag>}
+                    {task.studio?.seconds && (
+                      <Tag>{t('{{count}} s', { count: Number(task.studio.seconds) })}</Tag>
+                    )}
                     {task.action === 'image_to_video' && <Tag>{t('Image to video')}</Tag>}
                     {failed && task.quota > 0 && (
                       <Tag>{t('Refunded {{amount}}', { amount: formatQuotaWithCurrency(task.quota) })}</Tag>
@@ -168,6 +188,37 @@ export function VideoPanel(props: {
                         <FailedTile
                           message={task.fail_reason || t('Generation failed')}
                           className='size-full'
+                          actions={
+                            <>
+                              {task.studio && (
+                                <Button
+                                  size='xs'
+                                  variant='outline'
+                                  disabled={retrying !== null}
+                                  onClick={() => void retry(task.task_id)}
+                                >
+                                  <RotateCcw className={retrying === task.task_id ? 'animate-spin' : undefined} />
+                                  {t('Retry')}
+                                </Button>
+                              )}
+                              <Button
+                                size='xs'
+                                variant='outline'
+                                onClick={() =>
+                                  remove.ask({
+                                    kind: 'video',
+                                    src: '',
+                                    prompt: text,
+                                    model,
+                                    taskId: task.task_id,
+                                  })
+                                }
+                              >
+                                <Trash2 />
+                                {t('Delete')}
+                              </Button>
+                            </>
+                          }
                         />
                       </div>
                     )}
@@ -246,6 +297,7 @@ export function VideoPanel(props: {
       </div>
 
       <MediaViewer item={viewing} onClose={() => setViewing(null)} />
+      {remove.dialog}
     </>
   )
 }

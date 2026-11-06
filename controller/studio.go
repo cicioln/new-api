@@ -477,7 +477,7 @@ func GetStudioVideos(c *gin.Context) {
 			break
 		}
 	}
-	common.ApiSuccess(c, tasksToDto(kept, false, common.RoleCommonUser))
+	common.ApiSuccess(c, studioVideoViews(userID, tasksToDto(kept, false, common.RoleCommonUser)))
 }
 
 // DeleteStudioVideo removes a finished video from the studio and deletes
@@ -500,6 +500,7 @@ func DeleteStudioVideo(c *gin.Context) {
 	if task.Platform == muse.TaskPlatform {
 		muse.DeleteVideo(task)
 	}
+	removeStudioVideoRequest(userID, task.TaskID)
 
 	studioMu.Lock()
 	defer studioMu.Unlock()

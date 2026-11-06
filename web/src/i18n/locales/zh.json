@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "视频时长（秒），以字符串传入，例如 \"4\"",
     "Output size as width x height, such as 1280x720": "输出尺寸，格式为 宽x高，例如 1280x720",
     "Reference image URLs or data URLs for image to video": "图生视频的参考图，可以是图片链接或 data URL",
-    "Reference image file in a multipart request": "multipart 请求中上传的参考图文件"
+    "Reference image file in a multipart request": "multipart 请求中上传的参考图文件",
+    "The original request of this video is no longer available": "该视频的原始请求已不可用"
   }
 }

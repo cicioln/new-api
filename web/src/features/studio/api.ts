@@ -127,11 +127,43 @@ export async function submitVideo(
   return res.data.task_id || res.data.id || ''
 }
 
+/** A studio video task with the request the studio submitted for it. */
+export type StudioVideoTask = TaskLog & {
+  /** Present when the request was saved, which makes the task retryable. */
+  studio?: {
+    prompt: string
+    size?: string
+    seconds?: string
+    has_images?: boolean
+  }
+}
+
 /** The signed-in user's most recent video tasks shown in the studio. */
-export async function getVideoTasks(): Promise<TaskLog[]> {
+export async function getVideoTasks(): Promise<StudioVideoTask[]> {
   const res = await api.get('/api/studio/videos')
-  const data = requireServerSuccess(res.data) as { data?: TaskLog[] }
+  const data = requireServerSuccess(res.data) as { data?: StudioVideoTask[] }
   return data.data ?? []
+}
+
+/** Submits the saved request of a video task again. */
+export async function retryVideoTask(taskId: string): Promise<string> {
+  const res = await api.get(
+    `/api/studio/videos/${encodeURIComponent(taskId)}/request`,
+    { skipErrorHandler: true }
+  )
+  const saved = requireServerSuccess(res.data) as {
+    data: { group: string; body: Record<string, unknown> }
+  }
+  const submitted = await api.post<{ id?: string; task_id?: string }>(
+    '/pg/videos',
+    saved.data.body,
+    {
+      params: { group: saved.data.group },
+      timeout: LONG_REQUEST_TIMEOUT_MS,
+      skipErrorHandler: true,
+    }
+  )
+  return submitted.data.task_id || submitted.data.id || ''
 }
 
 /** Removes a finished video from the studio and deletes its stored file. */

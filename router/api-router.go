@@ -408,6 +408,7 @@ func SetApiRouter(router *gin.Engine) {
 			studioRoute.DELETE("/images/:id", controller.DeleteStudioImage)
 			studioRoute.GET("/videos", controller.GetStudioVideos)
 			studioRoute.DELETE("/videos/:task_id", controller.DeleteStudioVideo)
+			studioRoute.GET("/videos/:task_id/request", controller.GetStudioVideoRequest)
 		}
 
 		vendorRoute := apiRouter.Group("/vendors")

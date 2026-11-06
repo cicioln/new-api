@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "影片長度（秒），以字串傳入，例如 \"4\"",
     "Output size as width x height, such as 1280x720": "輸出尺寸，格式為 寬x高，例如 1280x720",
     "Reference image URLs or data URLs for image to video": "圖生影片的參考圖，可以是圖片連結或 data URL",
-    "Reference image file in a multipart request": "multipart 請求中上傳的參考圖檔案"
+    "Reference image file in a multipart request": "multipart 請求中上傳的參考圖檔案",
+    "The original request of this video is no longer available": "該影片的原始請求已無法使用"
   }
 }

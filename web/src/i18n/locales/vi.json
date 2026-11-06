@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "Độ dài video tính bằng giây, gửi dạng chuỗi, ví dụ \"4\"",
     "Output size as width x height, such as 1280x720": "Kích thước đầu ra dạng rộng x cao, ví dụ 1280x720",
     "Reference image URLs or data URLs for image to video": "URL hoặc data URL của ảnh tham chiếu cho tạo video từ ảnh",
-    "Reference image file in a multipart request": "Tệp ảnh tham chiếu trong yêu cầu multipart"
+    "Reference image file in a multipart request": "Tệp ảnh tham chiếu trong yêu cầu multipart",
+    "The original request of this video is no longer available": "Yêu cầu gốc của video này không còn khả dụng"
   }
 }

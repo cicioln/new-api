@@ -28,9 +28,10 @@ func PlaygroundImage(c *gin.Context) {
 	playgroundRelay(c, func(c *gin.Context) { Relay(c, types.RelayFormatOpenAIImage) })
 }
 
-// PlaygroundVideo submits a video task for the console studio.
+// PlaygroundVideo submits a video task for the console studio. The request
+// is kept so the studio can show its prompt and retry a failed task.
 func PlaygroundVideo(c *gin.Context) {
-	playgroundRelay(c, RelayTask)
+	playgroundRelay(c, relayStudioVideo)
 }
 
 // playgroundRelay runs a relay handler for a signed-in console user. The

@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "Video length in seconds, sent as a string such as \"4\"",
     "Output size as width x height, such as 1280x720": "Output size as width x height, such as 1280x720",
     "Reference image URLs or data URLs for image to video": "Reference image URLs or data URLs for image to video",
-    "Reference image file in a multipart request": "Reference image file in a multipart request"
+    "Reference image file in a multipart request": "Reference image file in a multipart request",
+    "The original request of this video is no longer available": "The original request of this video is no longer available"
   }
 }

@@ -50,7 +50,7 @@ export type MediaItem = {
 }
 
 /** Delete with confirmation; refreshes the list the item came from. */
-function useDeleteMedia(onLocalDeleted?: (id: string) => void) {
+export function useDeleteMedia(onLocalDeleted?: (id: string) => void) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [target, setTarget] = useState<MediaItem | null>(null)

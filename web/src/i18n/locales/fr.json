@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "Durée de la vidéo en secondes, envoyée sous forme de chaîne, par exemple \"4\"",
     "Output size as width x height, such as 1280x720": "Taille de sortie au format largeur x hauteur, par exemple 1280x720",
     "Reference image URLs or data URLs for image to video": "URL ou data URL des images de référence pour l’image vers vidéo",
-    "Reference image file in a multipart request": "Fichier d’image de référence dans une requête multipart"
+    "Reference image file in a multipart request": "Fichier d’image de référence dans une requête multipart",
+    "The original request of this video is no longer available": "La requête d’origine de cette vidéo n’est plus disponible"
   }
 }

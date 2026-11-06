@@ -8016,6 +8016,7 @@
     "Video length in seconds, sent as a string such as \"4\"": "Длина видео в секундах, передаётся строкой, например \"4\"",
     "Output size as width x height, such as 1280x720": "Размер в формате ширина x высота, например 1280x720",
     "Reference image URLs or data URLs for image to video": "URL или data URL опорных изображений для генерации видео из изображения",
-    "Reference image file in a multipart request": "Файл опорного изображения в multipart-запросе"
+    "Reference image file in a multipart request": "Файл опорного изображения в multipart-запросе",
+    "The original request of this video is no longer available": "Исходный запрос этого видео больше недоступен"
   }
 }

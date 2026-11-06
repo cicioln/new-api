@@ -172,17 +172,25 @@ export function PendingTile(props: {
   )
 }
 
-export function FailedTile(props: { message: string; className?: string }) {
+export function FailedTile(props: {
+  message: string
+  className?: string
+  /** Buttons such as retry and delete, shown under the message. */
+  actions?: ReactNode
+}) {
   return (
     <div
       className={cn(
-        'bg-muted/60 text-destructive flex items-center justify-center rounded-xl border p-3 text-center text-xs',
+        'bg-muted/60 text-destructive flex flex-col items-center justify-center gap-2.5 rounded-xl border p-3 text-center text-xs',
         props.className
       )}
     >
       <span className='line-clamp-4' title={props.message}>
         {props.message}
       </span>
+      {props.actions && (
+        <div className='flex items-center gap-1.5'>{props.actions}</div>
+      )}
     </div>
   )
 }
