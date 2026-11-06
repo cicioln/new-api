@@ -145,11 +145,20 @@ export function SizeOptions(props: {
   presets: SizePreset[]
   value: string
   onChange: (value: string) => void
+  /** Offer the custom width × height tile. Defaults to true. */
+  allowCustom?: boolean
+  /** Note shown under the tiles. */
+  hint?: string
 }) {
   const { t } = useTranslation()
-  const [custom, setCustom] = useState(
+  const allowCustom = props.allowCustom ?? true
+  const [customState, setCustom] = useState(
     () => !props.presets.some((preset) => preset.value === props.value)
   )
+  const custom = allowCustom && customState
+  const tiles = allowCustom
+    ? [...props.presets, { value: CUSTOM, label: t('Custom'), w: 0, h: 0 }]
+    : props.presets
   const [width = '', height = ''] = props.value.split('x')
   const update = (nextWidth: string, nextHeight: string) =>
     props.onChange(`${nextWidth}x${nextHeight}`)
@@ -157,7 +166,7 @@ export function SizeOptions(props: {
   return (
     <div className='grid gap-2'>
       <div role='radiogroup' className='grid grid-cols-4 gap-1.5'>
-        {[...props.presets, { value: CUSTOM, label: t('Custom'), w: 0, h: 0 }].map(
+        {tiles.map(
           (preset) => {
             const active = custom
               ? preset.value === CUSTOM
@@ -244,6 +253,7 @@ export function SizeOptions(props: {
           </p>
         </>
       )}
+      {props.hint && <p className='text-muted-foreground text-xs'>{props.hint}</p>}
     </div>
   )
 }

@@ -8017,6 +8017,8 @@
     "Output size as width x height, such as 1280x720": "Размер в формате ширина x высота, например 1280x720",
     "Reference image URLs or data URLs for image to video": "URL или data URL опорных изображений для генерации видео из изображения",
     "Reference image file in a multipart request": "Файл опорного изображения в multipart-запросе",
-    "The original request of this video is no longer available": "Исходный запрос этого видео больше недоступен"
+    "The original request of this video is no longer available": "Исходный запрос этого видео больше недоступен",
+    "This model picks its own resolution. 1:1 is about 1600×1600.": "Модель сама выбирает разрешение. 1:1 — примерно 1600×1600.",
+    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "Соотношение сторон, например 1:1. Изображение возвращается в исходном размере: 1:1 — примерно 1600×1600, 16:9 — примерно 2048×1152"
   }
 }

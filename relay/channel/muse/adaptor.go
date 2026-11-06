@@ -312,8 +312,10 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	if len(refs) > 0 {
 		prompt = "Use your image generation tool to edit the attached image(s) as described. Do not answer with text only; produce the image file."
 	}
-	if request.Size != "" {
-		prompt += "\nImage size: " + request.Size + "."
+	// Muse picks its own pixel size (1:1 is about 1600×1600), so only the
+	// aspect ratio of the requested size is passed on.
+	if ratio := aspectRatio(request.Size); ratio != "" {
+		prompt += "\nImage aspect ratio: " + ratio + "."
 	}
 	if count > 1 {
 		prompt += fmt.Sprintf("\nGenerate %d separate images.", count)
@@ -346,6 +348,26 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	}
 	c.Data(http.StatusOK, "application/json", body)
 	return &dto.Usage{}, nil
+}
+
+// aspectRatio turns a size such as "1600x900" or "16:9" into "16:9". It
+// returns "" for sizes it cannot read, such as "auto".
+func aspectRatio(size string) string {
+	size = strings.TrimSpace(size)
+	var w, h int
+	if _, err := fmt.Sscanf(size, "%d:%d", &w, &h); err != nil || strings.Count(size, ":") != 1 {
+		if _, err := fmt.Sscanf(strings.ToLower(size), "%dx%d", &w, &h); err != nil {
+			return ""
+		}
+	}
+	if w <= 0 || h <= 0 {
+		return ""
+	}
+	a, b := w, h
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return fmt.Sprintf("%d:%d", w/a, h/a)
 }
 
 // multipartImages reads the reference images of an /images/edits request.

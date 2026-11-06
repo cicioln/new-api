@@ -60,7 +60,6 @@ export function GalleryPanel(props: { onToVideo: (src: string) => void }) {
           src,
           prompt: job.prompt,
           model: job.model,
-          meta: job.size?.replace('x', '×'),
           jobId: job.id,
           jobImages: job.images.length,
         },

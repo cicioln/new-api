@@ -217,8 +217,8 @@ func videoPrompt(req relaycommon.TaskSubmitReq, hasRefs bool) string {
 	} else {
 		b.WriteString("Use your video generation tool to create a video. Do not answer with text only; produce the video file.")
 	}
-	if req.Size != "" {
-		b.WriteString("\nVideo size: " + req.Size + ".")
+	if ratio := aspectRatio(req.Size); ratio != "" {
+		b.WriteString("\nVideo aspect ratio: " + ratio + ".")
 	}
 	if seconds := videoSeconds(req); seconds > 0 {
 		b.WriteString(fmt.Sprintf("\nVideo length: %d seconds.", seconds))

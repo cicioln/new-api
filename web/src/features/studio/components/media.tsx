@@ -117,6 +117,9 @@ export function ImageTile(props: {
 }) {
   const { t } = useTranslation()
   const remove = useDeleteMedia(props.onLocalDeleted)
+  // The real pixel size, read from the loaded file.
+  const [pixels, setPixels] = useState('')
+  const item = pixels && !props.item.meta ? { ...props.item, meta: pixels } : props.item
   return (
     <div
       className={cn('group bg-muted relative overflow-hidden rounded-xl border', props.className)}
@@ -125,7 +128,7 @@ export function ImageTile(props: {
       <button
         type='button'
         aria-label={t('View image')}
-        onClick={() => props.onOpen(props.item)}
+        onClick={() => props.onOpen(item)}
         className='block size-full cursor-zoom-in'
       >
         <img
@@ -133,8 +136,17 @@ export function ImageTile(props: {
           alt={props.item.prompt}
           loading='lazy'
           className='size-full object-cover'
+          onLoad={(event) => {
+            const { naturalWidth, naturalHeight } = event.currentTarget
+            if (naturalWidth && naturalHeight) setPixels(`${naturalWidth}×${naturalHeight}`)
+          }}
         />
       </button>
+      {pixels && (
+        <span className='pointer-events-none absolute bottom-1.5 left-1.5 rounded bg-black/55 px-1.5 py-px font-mono text-[10.5px] text-white'>
+          {pixels}
+        </span>
+      )}
       <div className='absolute top-1.5 right-1.5 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100'>
         <IconAction overlay label={t('Download')} href={props.item.src} download>
           <Download />

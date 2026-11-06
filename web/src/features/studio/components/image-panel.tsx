@@ -56,10 +56,36 @@ const SIZES: SizePreset[] = [
   { value: '1024x1536', label: '2:3', w: 2, h: 3 },
   { value: '1536x1024', label: '3:2', w: 3, h: 2 },
 ]
+// Muse only takes an aspect ratio and returns its own native pixel size
+// (1:1 is about 1600×1600), so it gets ratio tiles and no custom size.
+const MUSE_SIZES: SizePreset[] = [
+  { value: '1600x1600', label: '1:1', w: 1, h: 1 },
+  { value: '2048x1152', label: '16:9', w: 16, h: 9 },
+  { value: '1152x2048', label: '9:16', w: 9, h: 16 },
+  { value: '1600x1200', label: '4:3', w: 4, h: 3 },
+  { value: '1200x1600', label: '3:4', w: 3, h: 4 },
+  { value: '1680x1120', label: '3:2', w: 3, h: 2 },
+  { value: '1120x1680', label: '2:3', w: 2, h: 3 },
+]
 const COUNTS = [1, 2, 4]
 const MAX_COUNT = 10
 
-function sizeLabel(size: string) {
+function isMuseModel(name: string) {
+  return /muse/i.test(name)
+}
+
+/** "16:9" for "2048x1152". */
+function ratioOf(size: string): string {
+  const match = /^(\d+)x(\d+)$/.exec(size)
+  if (!match) return size
+  let [a, b] = [Number(match[1]), Number(match[2])]
+  const [w, h] = [a, b]
+  while (b) [a, b] = [b, a % b]
+  return a ? `${w / a}:${h / a}` : size
+}
+
+function sizeLabel(size: string, muse: boolean) {
+  if (muse) return ratioOf(size)
   const preset = SIZES.find((item) => item.value === size)
   const text = size.replace('x', '×')
   return preset ? `${preset.label} · ${text}` : text
@@ -81,6 +107,15 @@ export function ImagePanel(props: {
   const [submitting, setSubmitting] = useState(false)
   const [legacy, setLegacy] = useState<StoredImage[]>([])
   const [viewing, setViewing] = useState<MediaItem | null>(null)
+  const muse = isMuseModel(models.modelName)
+  const sizes = muse ? MUSE_SIZES : SIZES
+
+  // Switching to Muse resets a size it cannot take to its 1:1 ratio.
+  useEffect(() => {
+    if (muse && !MUSE_SIZES.some((item) => item.value === size)) {
+      setSize(MUSE_SIZES[0].value)
+    }
+  }, [muse, size])
 
   // Images generated before server storage existed stay in this browser.
   useEffect(() => {
@@ -157,7 +192,13 @@ export function ImagePanel(props: {
                       <DurationTag start={job.created_at} end={job.finished_at} />
                     )}
                     <Tag>{job.model}</Tag>
-                    {job.size && <Tag>{job.size.replace('x', '×')}</Tag>}
+                    {job.size && (
+                      <Tag>
+                        {isMuseModel(job.model)
+                          ? ratioOf(job.size)
+                          : job.size.replace('x', '×')}
+                      </Tag>
+                    )}
                     <button
                       type='button'
                       aria-label={t('Copy prompt')}
@@ -197,7 +238,6 @@ export function ImagePanel(props: {
                             src,
                             prompt: job.prompt,
                             model: job.model,
-                            meta: job.size?.replace('x', '×'),
                             jobId: job.id,
                             jobImages: job.images.length,
                           }}
@@ -263,10 +303,21 @@ export function ImagePanel(props: {
               <ToolbarPopover
                 label={t('Size')}
                 icon={<Frame />}
-                summary={sizeLabel(size)}
+                summary={sizeLabel(size, muse)}
               >
-                <PanelSection title={t('Size')}>
-                  <SizeOptions presets={SIZES} value={size} onChange={setSize} />
+                <PanelSection title={t(muse ? 'Aspect ratio' : 'Size')}>
+                  <SizeOptions
+                    key={muse ? 'muse' : 'any'}
+                    presets={sizes}
+                    value={size}
+                    onChange={setSize}
+                    allowCustom={!muse}
+                    hint={
+                      muse
+                        ? t('This model picks its own resolution. 1:1 is about 1600×1600.')
+                        : undefined
+                    }
+                  />
                 </PanelSection>
               </ToolbarPopover>
               <ToolbarPopover

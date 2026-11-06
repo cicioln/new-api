@@ -8017,6 +8017,8 @@
     "Output size as width x height, such as 1280x720": "出力サイズ（幅x高さ）。例: 1280x720",
     "Reference image URLs or data URLs for image to video": "画像から動画用の参照画像（URL または data URL）",
     "Reference image file in a multipart request": "multipart リクエストで送る参照画像ファイル",
-    "The original request of this video is no longer available": "この動画の元のリクエストは利用できなくなりました"
+    "The original request of this video is no longer available": "この動画の元のリクエストは利用できなくなりました",
+    "This model picks its own resolution. 1:1 is about 1600×1600.": "このモデルは解像度を自動で決めます。1:1 は約 1600×1600 です。",
+    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "アスペクト比（例: 1:1）。ネイティブサイズで返されます: 1:1 は約 1600×1600、16:9 は約 2048×1152"
   }
 }

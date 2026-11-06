@@ -8017,6 +8017,8 @@
     "Output size as width x height, such as 1280x720": "Taille de sortie au format largeur x hauteur, par exemple 1280x720",
     "Reference image URLs or data URLs for image to video": "URL ou data URL des images de référence pour l’image vers vidéo",
     "Reference image file in a multipart request": "Fichier d’image de référence dans une requête multipart",
-    "The original request of this video is no longer available": "La requête d’origine de cette vidéo n’est plus disponible"
+    "The original request of this video is no longer available": "La requête d’origine de cette vidéo n’est plus disponible",
+    "This model picks its own resolution. 1:1 is about 1600×1600.": "Ce modèle choisit sa propre résolution. 1:1 fait environ 1600×1600.",
+    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "Format d'image, par exemple 1:1. L'image est renvoyée à sa taille native : 1:1 fait environ 1600×1600, 16:9 environ 2048×1152"
   }
 }

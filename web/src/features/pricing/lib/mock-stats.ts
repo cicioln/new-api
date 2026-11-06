@@ -690,6 +690,30 @@ const EMBEDDING_PARAMS: SupportedParameter[] = [
   },
 ]
 
+// Muse takes only an aspect ratio and returns its native resolution.
+const MUSE_IMAGE_PARAMS: SupportedParameter[] = [
+  {
+    name: 'prompt',
+    type: 'string',
+    required: true,
+    descriptionKey: 'Text description of the desired image',
+  },
+  {
+    name: 'size',
+    type: 'enum',
+    enumValues: ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'],
+    defaultValue: '1:1',
+    descriptionKey:
+      'Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152',
+  },
+  {
+    name: 'n',
+    type: 'integer',
+    defaultValue: 1,
+    descriptionKey: 'Number of images to generate',
+  },
+]
+
 const IMAGE_PARAMS: SupportedParameter[] = [
   {
     name: 'prompt',
@@ -823,7 +847,7 @@ export function buildSupportedParameters(
   const endpoints = model.supported_endpoint_types ?? []
   if (endpoints.includes('openai-video')) return OPENAI_VIDEO_PARAMS
   if (endpoints.length > 0 && endpoints.every((type) => type === 'image-generation'))
-    return IMAGE_PARAMS
+    return /muse/i.test(model.model_name) ? MUSE_IMAGE_PARAMS : IMAGE_PARAMS
   const cat = apiCategoryOf(model)
   if (cat === 'reasoning') return REASONING_PARAMS
   if (cat === 'embedding') return EMBEDDING_PARAMS

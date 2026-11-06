@@ -354,10 +354,12 @@ function buildEmbeddingSample(lang: Lang, ctx: SampleContext): string {
 function buildImageSample(lang: Lang, ctx: SampleContext): string {
   const url = `${ctx.baseUrl}${ctx.endpointPath}`
   const prompt = 'A serene koi pond at sunset, ukiyo-e style.'
+  // Muse takes an aspect ratio, not pixels.
+  const size = /muse/i.test(ctx.modelName) ? '1:1' : '1024x1024'
 
   if (lang === 'curl') {
     const body = JSON.stringify(
-      { model: ctx.modelName, prompt, size: '1024x1024', n: 1 },
+      { model: ctx.modelName, prompt, size, n: 1 },
       null,
       2
     )
@@ -377,7 +379,7 @@ function buildImageSample(lang: Lang, ctx: SampleContext): string {
       'response = client.images.generate(',
       `    model="${ctx.modelName}",`,
       `    prompt="${prompt}",`,
-      `    size="1024x1024",`,
+      `    size="${size}",`,
       `    n=1,`,
       ')',
       '',
@@ -396,7 +398,7 @@ function buildImageSample(lang: Lang, ctx: SampleContext): string {
       `const response = await client.images.generate({`,
       `  model: '${ctx.modelName}',`,
       `  prompt: '${prompt}',`,
-      `  size: '1024x1024',`,
+      `  size: '${size}',`,
       `  n: 1,`,
       `})`,
       '',
@@ -413,7 +415,7 @@ function buildImageSample(lang: Lang, ctx: SampleContext): string {
     `  body: JSON.stringify({`,
     `    model: '${ctx.modelName}',`,
     `    prompt: '${prompt}',`,
-    `    size: '1024x1024',`,
+    `    size: '${size}',`,
     `    n: 1,`,
     `  }),`,
     `})`,
