@@ -8019,6 +8019,15 @@
     "Reference image file in a multipart request": "multipart 請求中上傳的參考圖檔案",
     "The original request of this video is no longer available": "該影片的原始請求已無法使用",
     "This model picks its own resolution. 1:1 is about 1600×1600.": "此模型自行決定解析度，1:1 約 1600×1600。",
-    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "畫面比例，例如 1:1。按原生尺寸返回：1:1 約 1600×1600，16:9 約 2048×1152"
+    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "畫面比例，例如 1:1。按原生尺寸返回：1:1 約 1600×1600，16:9 約 2048×1152",
+    "Media Storage": "媒體儲存",
+    "How long generated images and videos are kept on the server.": "生成的圖片和影片在伺服器上保留多久。",
+    "Video retention days": "影片保留天數",
+    "Image retention days": "圖片保留天數",
+    "Images generated in the studio are stored on this server. Images older than this are deleted automatically; 0 keeps them permanently.": "創作工作室生成的圖片保存在本伺服器上，超過該天數的圖片會被自動刪除；0 表示永久保留。",
+    "Videos are kept on the server for {{count}} days. Download the ones you want to keep.": "影片在伺服器保留 {{count}} 天，請及時下載需要的影片。",
+    "Images are kept on the server for {{count}} days.": "圖片在伺服器保留 {{count}} 天。",
+    "Keep a copy in this browser": "在本瀏覽器保存副本",
+    "Saved in this browser": "僅存於本瀏覽器"
   }
 }

@@ -404,6 +404,7 @@ func SetApiRouter(router *gin.Engine) {
 		studioRoute := apiRouter.Group("/studio")
 		studioRoute.Use(middleware.UserAuth())
 		{
+			studioRoute.GET("/settings", controller.GetStudioSettings)
 			studioRoute.GET("/images", controller.GetStudioImages)
 			studioRoute.DELETE("/images/:id", controller.DeleteStudioImage)
 			studioRoute.GET("/videos", controller.GetStudioVideos)

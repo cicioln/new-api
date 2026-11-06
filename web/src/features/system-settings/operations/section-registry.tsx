@@ -122,13 +122,16 @@ const OPERATIONS_SECTIONS = [
   },
   {
     id: 'video-storage',
-    titleKey: 'Video Storage',
-    descriptionKey: 'How long generated videos are kept on the server.',
+    titleKey: 'Media Storage',
+    descriptionKey:
+      'How long generated images and videos are kept on the server.',
     build: (settings: OperationsSettings) => (
       <VideoStorageSection
         defaultValues={{
           'video_setting.retention_days':
             settings['video_setting.retention_days'] ?? 0,
+          'video_setting.image_retention_days':
+            settings['video_setting.image_retention_days'] ?? 0,
         }}
       />
     ),

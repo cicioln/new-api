@@ -63,7 +63,9 @@ export function Studio() {
       const image = { id: newId(), file, url: URL.createObjectURL(file) }
       setVideoRefs((list) => {
         const next = [image, ...list]
-        next.slice(MAX_REFERENCE_IMAGES).forEach((old) => URL.revokeObjectURL(old.url))
+        next
+          .slice(MAX_REFERENCE_IMAGES)
+          .forEach((old) => URL.revokeObjectURL(old.url))
         return next.slice(0, MAX_REFERENCE_IMAGES)
       })
       setView('video')
@@ -109,10 +111,14 @@ export function Studio() {
                   if (value) groups.setGroup(String(value))
                 }}
               >
-                <SelectTrigger aria-label={t('Group')} size='sm' className='bg-card h-8 w-full min-w-28'>
+                <SelectTrigger
+                  aria-label={t('Group')}
+                  size='sm'
+                  className='bg-card h-8 w-full min-w-28'
+                >
                   <SelectValue>
-                    {groups.groups.find((item) => item.value === groups.group)?.label ??
-                      groups.group}
+                    {groups.groups.find((item) => item.value === groups.group)
+                      ?.label ?? groups.group}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false}>
@@ -133,13 +139,16 @@ export function Studio() {
           {/* Faint grid with a glow behind the composer. */}
           <div
             aria-hidden
-            className='pointer-events-none absolute inset-0 bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] bg-size-[48px_48px] opacity-40 [mask-image:radial-gradient(ellipse_at_50%_60%,black,transparent_75%)]'
+            className='pointer-events-none absolute inset-0 bg-[linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_50%_60%,black,transparent_75%)] bg-size-[48px_48px] opacity-40'
           />
           <div
             aria-hidden
             className='from-primary/10 pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-radial-[at_50%_100%] to-transparent to-70%'
           />
-          <div className='relative flex min-h-0 flex-1 flex-col' hidden={view !== 'image'}>
+          <div
+            className='relative flex min-h-0 flex-1 flex-col'
+            hidden={view !== 'image'}
+          >
             <ImagePanel
               group={imageGroups.group}
               references={imageRefs}
@@ -147,7 +156,10 @@ export function Studio() {
               onToVideo={(src) => void sendToVideo(src)}
             />
           </div>
-          <div className='relative flex min-h-0 flex-1 flex-col' hidden={view !== 'video'}>
+          <div
+            className='relative flex min-h-0 flex-1 flex-col'
+            hidden={view !== 'video'}
+          >
             <VideoPanel
               group={videoGroups.group}
               references={videoRefs}

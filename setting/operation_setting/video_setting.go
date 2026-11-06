@@ -8,6 +8,9 @@ type VideoSetting struct {
 	// RetentionDays deletes stored videos older than this many days. 0 keeps
 	// them permanently.
 	RetentionDays int `json:"retention_days"`
+	// ImageRetentionDays deletes studio images older than this many days. 0
+	// keeps them permanently.
+	ImageRetentionDays int `json:"image_retention_days"`
 }
 
 var videoSetting = VideoSetting{RetentionDays: 0}

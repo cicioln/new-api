@@ -20,7 +20,16 @@ import { useQuery } from '@tanstack/react-query'
 
 import { TASK_STATUS } from '@/features/usage-logs/constants'
 
-import { getImageJobs, getVideoTasks } from '../api'
+import { getImageJobs, getStudioSettings, getVideoTasks } from '../api'
+
+/** Server retention periods for studio media. */
+export function useStudioSettings() {
+  return useQuery({
+    queryKey: ['studio-settings'],
+    queryFn: getStudioSettings,
+    staleTime: 5 * 60 * 1000,
+  })
+}
 
 export const IMAGE_JOBS_KEY = ['studio-image-jobs']
 export const VIDEO_TASKS_KEY = ['studio-video-tasks']

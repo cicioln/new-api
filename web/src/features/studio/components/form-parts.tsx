@@ -34,8 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { cn } from '@/lib/utils'
 import type { PricingModel } from '@/features/pricing/types'
+import { cn } from '@/lib/utils'
 
 export type ReferenceImage = { id: string; file: File; url: string }
 
@@ -94,7 +94,13 @@ export function ToolbarPopover(props: {
   return (
     <Popover>
       <PopoverTrigger
-        render={<button type='button' aria-label={props.label} className={pickClass} />}
+        render={
+          <button
+            type='button'
+            aria-label={props.label}
+            className={pickClass}
+          />
+        }
       >
         {props.icon}
         <span className='font-mono tabular-nums'>{props.summary}</span>
@@ -110,7 +116,9 @@ export function ToolbarPopover(props: {
 export function PanelSection(props: { title: string; children: ReactNode }) {
   return (
     <div className='grid gap-2'>
-      <div className='text-muted-foreground text-xs font-medium'>{props.title}</div>
+      <div className='text-muted-foreground text-xs font-medium'>
+        {props.title}
+      </div>
       {props.children}
     </div>
   )
@@ -135,8 +143,7 @@ export function isValidSize(value: string): boolean {
   if (value === '') return true
   const size = parseSize(value)
   return (
-    size !== null &&
-    size.every((side) => side >= MIN_SIDE && side <= MAX_SIDE)
+    size !== null && size.every((side) => side >= MIN_SIDE && side <= MAX_SIDE)
   )
 }
 
@@ -166,54 +173,59 @@ export function SizeOptions(props: {
   return (
     <div className='grid gap-2'>
       <div role='radiogroup' className='grid grid-cols-4 gap-1.5'>
-        {tiles.map(
-          (preset) => {
-            const active = custom
-              ? preset.value === CUSTOM
-              : preset.value === props.value
-            return (
-              <button
-                key={preset.value || 'auto'}
-                type='button'
-                role='radio'
-                aria-checked={active}
-                onClick={() => {
-                  if (preset.value === CUSTOM) {
-                    setCustom(true)
-                    const current = parseSize(props.value)
-                    update(String(current?.[0] ?? 1024), String(current?.[1] ?? 1024))
-                    return
-                  }
-                  setCustom(false)
-                  props.onChange(preset.value)
-                }}
-                className={cn(
-                  'flex h-14 flex-col items-center justify-center gap-1 rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-                  active
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'bg-muted/40 hover:bg-muted'
+        {tiles.map((preset) => {
+          const active = custom
+            ? preset.value === CUSTOM
+            : preset.value === props.value
+          return (
+            <button
+              key={preset.value || 'auto'}
+              type='button'
+              role='radio'
+              aria-checked={active}
+              onClick={() => {
+                if (preset.value === CUSTOM) {
+                  setCustom(true)
+                  const current = parseSize(props.value)
+                  update(
+                    String(current?.[0] ?? 1024),
+                    String(current?.[1] ?? 1024)
+                  )
+                  return
+                }
+                setCustom(false)
+                props.onChange(preset.value)
+              }}
+              className={cn(
+                'flex h-14 flex-col items-center justify-center gap-1 rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                active
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'bg-muted/40 hover:bg-muted'
+              )}
+            >
+              <span className='flex h-5 items-center'>
+                {preset.w > 0 ? (
+                  <span
+                    className='rounded-[2px] border-[1.5px] border-current'
+                    style={{
+                      width: Math.round(
+                        (preset.w / Math.max(preset.w, preset.h)) * 18
+                      ),
+                      height: Math.round(
+                        (preset.h / Math.max(preset.w, preset.h)) * 18
+                      ),
+                    }}
+                  />
+                ) : (
+                  <span className='text-[11px] leading-none'>
+                    {preset.value === CUSTOM ? '…' : 'A'}
+                  </span>
                 )}
-              >
-                <span className='flex h-5 items-center'>
-                  {preset.w > 0 ? (
-                    <span
-                      className='rounded-[2px] border-[1.5px] border-current'
-                      style={{
-                        width: Math.round((preset.w / Math.max(preset.w, preset.h)) * 18),
-                        height: Math.round((preset.h / Math.max(preset.w, preset.h)) * 18),
-                      }}
-                    />
-                  ) : (
-                    <span className='text-[11px] leading-none'>
-                      {preset.value === CUSTOM ? '…' : 'A'}
-                    </span>
-                  )}
-                </span>
-                {preset.label}
-              </button>
-            )
-          }
-        )}
+              </span>
+              {preset.label}
+            </button>
+          )
+        })}
       </div>
       {custom && (
         <>
@@ -246,14 +258,18 @@ export function SizeOptions(props: {
           <p
             className={cn(
               'text-xs',
-              isValidSize(props.value) ? 'text-muted-foreground' : 'text-destructive'
+              isValidSize(props.value)
+                ? 'text-muted-foreground'
+                : 'text-destructive'
             )}
           >
             {t('Between {{min}} and {{max}}', { min: MIN_SIDE, max: MAX_SIDE })}
           </p>
         </>
       )}
-      {props.hint && <p className='text-muted-foreground text-xs'>{props.hint}</p>}
+      {props.hint && (
+        <p className='text-muted-foreground text-xs'>{props.hint}</p>
+      )}
     </div>
   )
 }
@@ -326,7 +342,10 @@ export function NumberOptions(props: {
             }}
           />
           <p className='text-muted-foreground text-xs'>
-            {t('Between {{min}} and {{max}}', { min: props.min, max: props.max })}
+            {t('Between {{min}} and {{max}}', {
+              min: props.min,
+              max: props.max,
+            })}
           </p>
         </>
       )}

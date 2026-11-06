@@ -26,6 +26,7 @@ import { getServerErrorMessage } from '@/lib/server-error-message'
 
 import { submitImages } from '../api'
 import { loadImages, type StoredImage } from '../lib/image-history'
+import { useCopyImagesLocally, useLocalOnlyJobs } from '../lib/local-copies'
 import { useStudioModels } from '../lib/options'
 import { IMAGE_JOBS_KEY, useImageJobs } from '../lib/queries'
 import { Composer } from './composer'
@@ -45,6 +46,7 @@ import {
   FailedTile,
   JobHeader,
   PendingTile,
+  RetentionNotice,
   sizeAspect,
   StudioHero,
   Tag,
@@ -109,6 +111,9 @@ export function ImagePanel(props: {
   const [viewing, setViewing] = useState<MediaItem | null>(null)
   const muse = isMuseModel(models.modelName)
   const sizes = muse ? MUSE_SIZES : SIZES
+  // This panel stays mounted, so it copies finished images for every view.
+  useCopyImagesLocally(jobs.data)
+  const localJobs = useLocalOnlyJobs(jobs.data)
 
   // Switching to Muse resets a size it cannot take to its 1:1 ratio.
   useEffect(() => {
@@ -151,7 +156,8 @@ export function ImagePanel(props: {
   }
 
   const jobList = jobs.data ?? []
-  const empty = jobList.length === 0 && legacy.length === 0
+  const empty =
+    jobList.length === 0 && legacy.length === 0 && localJobs.length === 0
 
   return (
     <>
@@ -175,6 +181,7 @@ export function ImagePanel(props: {
           )
         ) : (
           <div className='mx-auto grid max-w-[900px] gap-6'>
+            <RetentionNotice kind='image' />
             {jobList.map((job) => {
               const aspect = sizeAspect(job.size)
               const tiles = Math.max(job.count ?? 1, 1)
@@ -183,13 +190,21 @@ export function ImagePanel(props: {
                   <JobHeader prompt={job.prompt}>
                     {job.status === 'running' && (
                       <Tag tone='running'>
-                        {t('Generating')} · <ElapsedSeconds since={job.created_at * 1000} />s
+                        {t('Generating')} ·{' '}
+                        <ElapsedSeconds since={job.created_at * 1000} />s
                       </Tag>
                     )}
-                    {job.status === 'success' && <Tag tone='success'>{t('Completed')}</Tag>}
-                    {job.status === 'failed' && <Tag tone='failed'>{t('Failed')}</Tag>}
+                    {job.status === 'success' && (
+                      <Tag tone='success'>{t('Completed')}</Tag>
+                    )}
+                    {job.status === 'failed' && (
+                      <Tag tone='failed'>{t('Failed')}</Tag>
+                    )}
                     {job.status !== 'running' && (
-                      <DurationTag start={job.created_at} end={job.finished_at} />
+                      <DurationTag
+                        start={job.created_at}
+                        end={job.finished_at}
+                      />
                     )}
                     <Tag>{job.model}</Tag>
                     {job.size && (
@@ -216,15 +231,23 @@ export function ImagePanel(props: {
                   </JobHeader>
                   <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(168px,1fr))]'>
                     {job.status === 'running' &&
-                      Array.from({ length: Math.min(tiles, MAX_COUNT) }, (_, index) => (
-                        <div key={index} style={{ aspectRatio: aspect }}>
-                          <PendingTile label={t('Generating')} className='size-full' />
-                        </div>
-                      ))}
+                      Array.from(
+                        { length: Math.min(tiles, MAX_COUNT) },
+                        (_, index) => (
+                          <div key={index} style={{ aspectRatio: aspect }}>
+                            <PendingTile
+                              label={t('Generating')}
+                              className='size-full'
+                            />
+                          </div>
+                        )
+                      )}
                     {job.status === 'failed' && (
                       <div style={{ aspectRatio: aspect }}>
                         <FailedTile
-                          message={job.error ? t(job.error) : t('Generation failed')}
+                          message={
+                            job.error ? t(job.error) : t('Generation failed')
+                          }
                           className='size-full'
                         />
                       </div>
@@ -250,6 +273,39 @@ export function ImagePanel(props: {
                 </section>
               )
             })}
+            {localJobs.map((job) => (
+              <section key={job.jobId} className='grid min-w-0 gap-2.5'>
+                <JobHeader prompt={job.prompt}>
+                  <Tag>{t('Saved in this browser')}</Tag>
+                  <Tag>{job.model}</Tag>
+                  {job.size && (
+                    <Tag>
+                      {isMuseModel(job.model)
+                        ? ratioOf(job.size)
+                        : job.size.replace('x', '×')}
+                    </Tag>
+                  )}
+                </JobHeader>
+                <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(168px,1fr))]'>
+                  {job.images.map((src) => (
+                    <ImageTile
+                      key={src}
+                      item={{
+                        kind: 'image',
+                        src,
+                        prompt: job.prompt,
+                        model: job.model,
+                        savedJobId: job.jobId,
+                        jobImages: job.images.length,
+                      }}
+                      aspect={sizeAspect(job.size)}
+                      onOpen={setViewing}
+                      onToVideo={props.onToVideo}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
             {legacy.length > 0 && (
               <section className='grid gap-2.5'>
                 <JobHeader prompt={t('Earlier images')}>
@@ -270,7 +326,9 @@ export function ImagePanel(props: {
                       onOpen={setViewing}
                       onToVideo={props.onToVideo}
                       onLocalDeleted={(id) =>
-                        setLegacy((list) => list.filter((item) => item.id !== id))
+                        setLegacy((list) =>
+                          list.filter((item) => item.id !== id)
+                        )
                       }
                     />
                   ))}
@@ -286,7 +344,9 @@ export function ImagePanel(props: {
           id='studio-image-prompt'
           prompt={prompt}
           onPromptChange={setPrompt}
-          placeholder={t('Describe the image: style, composition, subject. Add a reference image to edit it.')}
+          placeholder={t(
+            'Describe the image: style, composition, subject. Add a reference image to edit it.'
+          )}
           references={props.references}
           onReferencesChange={props.onReferencesChange}
           estimate={models.estimate(count)}
@@ -314,7 +374,9 @@ export function ImagePanel(props: {
                     allowCustom={!muse}
                     hint={
                       muse
-                        ? t('This model picks its own resolution. 1:1 is about 1600×1600.')
+                        ? t(
+                            'This model picks its own resolution. 1:1 is about 1600×1600.'
+                          )
                         : undefined
                     }
                   />

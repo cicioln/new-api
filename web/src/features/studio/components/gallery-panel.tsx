@@ -19,8 +19,8 @@ For commercial licensing, please contact support@quantumnous.com
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { cn } from '@/lib/utils'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
+import { cn } from '@/lib/utils'
 
 import { useImageJobs, useVideoTasks } from '../lib/queries'
 import { ImageTile, MediaViewer, VideoTile, type MediaItem } from './media'
@@ -81,7 +81,11 @@ export function GalleryPanel(props: { onToVideo: (src: string) => void }) {
   ].sort((a, b) => b.at - a.at)
 
   const filters: { value: Filter; label: string; count: number }[] = [
-    { value: 'all', label: t('All'), count: imageEntries.length + videoEntries.length },
+    {
+      value: 'all',
+      label: t('All'),
+      count: imageEntries.length + videoEntries.length,
+    },
     { value: 'image', label: t('Images'), count: imageEntries.length },
     { value: 'video', label: t('Videos'), count: videoEntries.length },
   ]
@@ -91,7 +95,10 @@ export function GalleryPanel(props: { onToVideo: (src: string) => void }) {
       <div className='mx-auto grid max-w-[1000px] gap-4'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <h2 className='text-lg font-semibold'>{t('Gallery')}</h2>
-          <div role='radiogroup' className='bg-muted/50 flex rounded-lg border p-0.5'>
+          <div
+            role='radiogroup'
+            className='bg-muted/50 flex rounded-lg border p-0.5'
+          >
             {filters.map((item) => (
               <button
                 key={item.value}

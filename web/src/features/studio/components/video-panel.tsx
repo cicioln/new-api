@@ -23,9 +23,9 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
+import { TASK_STATUS } from '@/features/usage-logs/constants'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 import { getServerErrorMessage } from '@/lib/server-error-message'
-import { TASK_STATUS } from '@/features/usage-logs/constants'
 
 import { retryVideoTask, submitVideo } from '../api'
 import { readAsDataUrl, useStudioModels } from '../lib/options'
@@ -48,6 +48,7 @@ import {
   FailedTile,
   JobHeader,
   PendingTile,
+  RetentionNotice,
   StudioHero,
   Tag,
 } from './shared'
@@ -79,7 +80,8 @@ export function VideoPanel(props: {
   const remove = useDeleteMedia()
 
   const ratioLabel =
-    RATIOS.find((item) => item.value === ratio)?.label ?? ratio.replace('x', '×')
+    RATIOS.find((item) => item.value === ratio)?.label ??
+    ratio.replace('x', '×')
   const canSubmit =
     !submitting &&
     prompt.trim() !== '' &&
@@ -147,13 +149,18 @@ export function VideoPanel(props: {
           )
         ) : (
           <div className='mx-auto grid max-w-[900px] gap-6'>
+            <RetentionNotice kind='video' />
             {list.map((task) => {
               const running = RUNNING_VIDEO.has(task.status)
               const failed = task.status === TASK_STATUS.FAILURE
               const done = task.status === TASK_STATUS.SUCCESS
               const progress = Number.parseInt(task.progress ?? '', 10)
               const aspect = '16 / 9'
-              const text = (task.studio?.prompt || task.properties?.input || '').trim()
+              const text = (
+                task.studio?.prompt ||
+                task.properties?.input ||
+                ''
+              ).trim()
               const model = task.properties?.origin_model_name ?? ''
               return (
                 <section key={task.task_id} className='grid min-w-0 gap-2.5'>
@@ -173,16 +180,31 @@ export function VideoPanel(props: {
                     {done && <Tag tone='success'>{t('Completed')}</Tag>}
                     {failed && <Tag tone='failed'>{t('Failed')}</Tag>}
                     {!running && (
-                      <DurationTag start={task.submit_time} end={task.finish_time} />
+                      <DurationTag
+                        start={task.submit_time}
+                        end={task.finish_time}
+                      />
                     )}
                     {model && <Tag>{model}</Tag>}
-                    {task.studio?.size && <Tag>{task.studio.size.replace('x', '×')}</Tag>}
-                    {task.studio?.seconds && (
-                      <Tag>{t('{{count}} s', { count: Number(task.studio.seconds) })}</Tag>
+                    {task.studio?.size && (
+                      <Tag>{task.studio.size.replace('x', '×')}</Tag>
                     )}
-                    {task.action === 'image_to_video' && <Tag>{t('Image to video')}</Tag>}
+                    {task.studio?.seconds && (
+                      <Tag>
+                        {t('{{count}} s', {
+                          count: Number(task.studio.seconds),
+                        })}
+                      </Tag>
+                    )}
+                    {task.action === 'image_to_video' && (
+                      <Tag>{t('Image to video')}</Tag>
+                    )}
                     {failed && task.quota > 0 && (
-                      <Tag>{t('Refunded {{amount}}', { amount: formatQuotaWithCurrency(task.quota) })}</Tag>
+                      <Tag>
+                        {t('Refunded {{amount}}', {
+                          amount: formatQuotaWithCurrency(task.quota),
+                        })}
+                      </Tag>
                     )}
                   </JobHeader>
                   <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]'>
@@ -213,7 +235,13 @@ export function VideoPanel(props: {
                                   disabled={retrying !== null}
                                   onClick={() => void retry(task.task_id)}
                                 >
-                                  <RotateCcw className={retrying === task.task_id ? 'animate-spin' : undefined} />
+                                  <RotateCcw
+                                    className={
+                                      retrying === task.task_id
+                                        ? 'animate-spin'
+                                        : undefined
+                                    }
+                                  />
                                   {t('Retry')}
                                 </Button>
                               )}
@@ -263,7 +291,9 @@ export function VideoPanel(props: {
           id='studio-video-prompt'
           prompt={prompt}
           onPromptChange={setPrompt}
-          placeholder={t('Describe the video: camera, motion, pace and style. Add a reference image to animate it.')}
+          placeholder={t(
+            'Describe the video: camera, motion, pace and style. Add a reference image to animate it.'
+          )}
           references={props.references}
           onReferencesChange={props.onReferencesChange}
           estimate={models.estimate(1)}
@@ -286,7 +316,13 @@ export function VideoPanel(props: {
                   <SizeOptions
                     presets={RATIOS.map((item) =>
                       item.value === ''
-                        ? { ...item, label: props.references.length > 0 ? t('Match image') : t('Auto') }
+                        ? {
+                            ...item,
+                            label:
+                              props.references.length > 0
+                                ? t('Match image')
+                                : t('Auto'),
+                          }
                         : item
                     )}
                     value={ratio}
@@ -304,7 +340,9 @@ export function VideoPanel(props: {
                   />
                 </PanelSection>
                 <p className='text-muted-foreground text-xs'>
-                  {t('Some models treat ratio and duration as hints only. A single video is at most 10 seconds.')}
+                  {t(
+                    'Some models treat ratio and duration as hints only. A single video is at most 10 seconds.'
+                  )}
                 </p>
               </ToolbarPopover>
             </>

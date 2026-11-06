@@ -26,6 +26,7 @@ import (
 	kitdto "github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
 )
@@ -429,17 +430,86 @@ func DeleteStudioImage(c *gin.Context) {
 		common.ApiErrorStatus(c, http.StatusNotFound, common.NewMessage("Image not found"))
 		return
 	}
-	dir := studioImageDir(userID)
+	if err := removeStudioImageJob(job); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, nil)
+}
+
+func removeStudioImageJob(job *studioImageJob) error {
+	dir := studioImageDir(job.UserID)
 	for _, name := range job.Files {
 		if studioImageFilePattern.MatchString(name) {
 			_ = os.Remove(filepath.Join(dir, name))
 		}
 	}
-	if err := os.Remove(filepath.Join(dir, id+".json")); err != nil {
-		common.ApiError(c, err)
+	return os.Remove(filepath.Join(dir, job.ID+".json"))
+}
+
+// GetStudioSettings tells the studio how long the server keeps its media.
+func GetStudioSettings(c *gin.Context) {
+	setting := operation_setting.GetVideoSetting()
+	common.ApiSuccess(c, gin.H{
+		"video_retention_days": setting.RetentionDays,
+		"image_retention_days": setting.ImageRetentionDays,
+	})
+}
+
+// StartStudioImageCleanup deletes studio images older than the image
+// retention period. Each node cleans its own STUDIO_DATA_DIR.
+func StartStudioImageCleanup() {
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			if days := operation_setting.GetVideoSetting().ImageRetentionDays; days > 0 {
+				removeExpiredStudioImages(time.Now().AddDate(0, 0, -days).Unix())
+			}
+		}
+	}()
+}
+
+func removeExpiredStudioImages(cutoff int64) {
+	users, err := os.ReadDir(filepath.Join(studioDataDir(), "images"))
+	if err != nil {
 		return
 	}
-	common.ApiSuccess(c, nil)
+	studioMu.Lock()
+	active := make(map[string]bool, len(studioActiveImages))
+	for id := range studioActiveImages {
+		active[id] = true
+	}
+	studioMu.Unlock()
+	for _, user := range users {
+		userID, err := strconv.Atoi(user.Name())
+		if !user.IsDir() || err != nil || userID <= 0 {
+			continue
+		}
+		entries, err := os.ReadDir(studioImageDir(userID))
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			id, ok := strings.CutSuffix(entry.Name(), ".json")
+			if !ok || entry.IsDir() || active[id] || !studioImageJobPattern.MatchString(id) {
+				continue
+			}
+			job, err := loadStudioImageJob(userID, id)
+			if err != nil || job.UserID != userID {
+				continue
+			}
+			at := job.FinishedAt
+			if at == 0 {
+				at = job.CreatedAt
+			}
+			if at > 0 && at < cutoff {
+				if err := removeStudioImageJob(job); err != nil {
+					common.SysError(common.LogText("failed to remove expired studio image %s: %s", id, err.Error()))
+				}
+			}
+		}
+	}
 }
 
 var studioVideoActions = []string{constant.TaskActionTextToVideo, constant.TaskActionImageToVideo}

@@ -1,3 +1,5 @@
+import { getTaskArtifacts } from '@/features/usage-logs/api'
+import type { TaskLog } from '@/features/usage-logs/types'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -18,8 +20,6 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
 import { requireServerSuccess } from '@/lib/server-error-message'
-import { getTaskArtifacts } from '@/features/usage-logs/api'
-import type { TaskLog } from '@/features/usage-logs/types'
 
 // Submissions can upload large reference images; the console relay endpoints
 // bill the signed-in user, so no API key is involved.
@@ -38,7 +38,9 @@ export type StudioImageRequest = {
  * Starts a server-side image job and returns its ID. The job keeps running
  * when the page is closed; its images are stored on the server.
  */
-export async function submitImages(request: StudioImageRequest): Promise<string> {
+export async function submitImages(
+  request: StudioImageRequest
+): Promise<string> {
   const config = {
     params: { group: request.group, background: 1 },
     timeout: LONG_REQUEST_TIMEOUT_MS,
@@ -82,6 +84,18 @@ export type StudioImageJob = {
   finished_at?: number
   error?: string
   images: string[]
+}
+
+/** How many days the server keeps studio media; 0 keeps it permanently. */
+export type StudioSettings = {
+  video_retention_days: number
+  image_retention_days: number
+}
+
+export async function getStudioSettings(): Promise<StudioSettings> {
+  const res = await api.get('/api/studio/settings')
+  const data = requireServerSuccess(res.data) as { data?: StudioSettings }
+  return data.data ?? { video_retention_days: 0, image_retention_days: 0 }
 }
 
 /** The signed-in user's studio image jobs, newest first. */
@@ -168,7 +182,9 @@ export async function retryVideoTask(taskId: string): Promise<string> {
 
 /** Removes a finished video from the studio and deletes its stored file. */
 export async function deleteVideoTask(taskId: string): Promise<void> {
-  const res = await api.delete(`/api/studio/videos/${encodeURIComponent(taskId)}`)
+  const res = await api.delete(
+    `/api/studio/videos/${encodeURIComponent(taskId)}`
+  )
   requireServerSuccess(res.data)
 }
 

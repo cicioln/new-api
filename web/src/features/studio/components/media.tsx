@@ -17,7 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Clapperboard, Copy, Download, LoaderCircle, Play, Trash2 } from 'lucide-react'
+import {
+  Clapperboard,
+  Copy,
+  Download,
+  LoaderCircle,
+  Play,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -28,7 +35,8 @@ import { getServerErrorMessage } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
 import { deleteImageJob, deleteVideoTask, getVideoUrl } from '../api'
-import { deleteImage } from '../lib/image-history'
+import { deleteImage, deleteSavedJob } from '../lib/image-history'
+import { SAVED_IMAGES_KEY } from '../lib/local-copies'
 import { IMAGE_JOBS_KEY, VIDEO_TASKS_KEY } from '../lib/queries'
 import { IconAction } from './shared'
 
@@ -45,6 +53,8 @@ export type MediaItem = {
   jobImages?: number
   /** Image kept only in this browser. */
   localId?: string
+  /** Job whose images remain only as copies in this browser. */
+  savedJobId?: string
   /** Video task ID. */
   taskId?: string
 }
@@ -65,7 +75,12 @@ export function useDeleteMedia(onLocalDeleted?: (id: string) => void) {
         await queryClient.invalidateQueries({ queryKey: VIDEO_TASKS_KEY })
       } else if (target.jobId) {
         await deleteImageJob(target.jobId)
+        await deleteSavedJob(target.jobId)
         await queryClient.invalidateQueries({ queryKey: IMAGE_JOBS_KEY })
+        await queryClient.invalidateQueries({ queryKey: SAVED_IMAGES_KEY })
+      } else if (target.savedJobId) {
+        await deleteSavedJob(target.savedJobId)
+        await queryClient.invalidateQueries({ queryKey: SAVED_IMAGES_KEY })
       } else if (target.localId) {
         await deleteImage(target.localId)
         onLocalDeleted?.(target.localId)
@@ -90,7 +105,9 @@ export function useDeleteMedia(onLocalDeleted?: (id: string) => void) {
       title={video ? t('Delete video') : t('Delete image')}
       desc={
         video
-          ? t('The video is removed from this list and its file is deleted from the server. This action cannot be undone.')
+          ? t(
+              'The video is removed from this list and its file is deleted from the server. This action cannot be undone.'
+            )
           : many
             ? t(
                 'All {{count}} images from this generation will be deleted. This action cannot be undone.',
@@ -119,10 +136,14 @@ export function ImageTile(props: {
   const remove = useDeleteMedia(props.onLocalDeleted)
   // The real pixel size, read from the loaded file.
   const [pixels, setPixels] = useState('')
-  const item = pixels && !props.item.meta ? { ...props.item, meta: pixels } : props.item
+  const item =
+    pixels && !props.item.meta ? { ...props.item, meta: pixels } : props.item
   return (
     <div
-      className={cn('group bg-muted relative overflow-hidden rounded-xl border', props.className)}
+      className={cn(
+        'group bg-muted relative overflow-hidden rounded-xl border',
+        props.className
+      )}
       style={{ aspectRatio: props.aspect }}
     >
       <button
@@ -138,7 +159,8 @@ export function ImageTile(props: {
           className='size-full object-cover'
           onLoad={(event) => {
             const { naturalWidth, naturalHeight } = event.currentTarget
-            if (naturalWidth && naturalHeight) setPixels(`${naturalWidth}×${naturalHeight}`)
+            if (naturalWidth && naturalHeight)
+              setPixels(`${naturalWidth}×${naturalHeight}`)
           }}
         />
       </button>
@@ -148,15 +170,28 @@ export function ImageTile(props: {
         </span>
       )}
       <div className='absolute top-1.5 right-1.5 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100'>
-        <IconAction overlay label={t('Download')} href={props.item.src} download>
+        <IconAction
+          overlay
+          label={t('Download')}
+          href={props.item.src}
+          download
+        >
           <Download />
         </IconAction>
         {props.onToVideo && (
-          <IconAction overlay label={t('Make video')} onClick={() => props.onToVideo?.(props.item.src)}>
+          <IconAction
+            overlay
+            label={t('Make video')}
+            onClick={() => props.onToVideo?.(props.item.src)}
+          >
             <Clapperboard />
           </IconAction>
         )}
-        <IconAction overlay label={t('Delete')} onClick={() => remove.ask(props.item)}>
+        <IconAction
+          overlay
+          label={t('Delete')}
+          onClick={() => remove.ask(props.item)}
+        >
           <Trash2 />
         </IconAction>
       </div>
@@ -193,7 +228,10 @@ export function VideoTile(props: {
 
   return (
     <div
-      className={cn('group bg-muted relative overflow-hidden rounded-xl border', props.className)}
+      className={cn(
+        'group bg-muted relative overflow-hidden rounded-xl border',
+        props.className
+      )}
       style={{ aspectRatio: props.aspect }}
     >
       {item && !expired ? (
@@ -224,7 +262,11 @@ export function VideoTile(props: {
         </button>
       ) : (
         <div className='text-muted-foreground flex size-full items-center justify-center text-xs'>
-          {video.isLoading ? <LoaderCircle className='size-5 animate-spin' /> : t('Expired')}
+          {video.isLoading ? (
+            <LoaderCircle className='size-5 animate-spin' />
+          ) : (
+            t('Expired')
+          )}
         </div>
       )}
       <div className='absolute top-1.5 right-1.5 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100'>

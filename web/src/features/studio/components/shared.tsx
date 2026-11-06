@@ -16,11 +16,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { LoaderCircle, Sparkles } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Clock, LoaderCircle, Sparkles } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+
+import { getSaveLocally, setSaveLocally } from '../lib/image-history'
+import { SAVED_IMAGES_KEY } from '../lib/local-copies'
+import { useStudioSettings } from '../lib/queries'
 
 export function IconAction(props: {
   label: string
@@ -99,6 +105,58 @@ export function StudioHero(props: {
           </button>
         ))}
       </div>
+    </div>
+  )
+}
+
+/**
+ * How long the server keeps this kind of media. For images it also holds the
+ * switch that copies finished images into this browser.
+ */
+export function RetentionNotice(props: { kind: 'image' | 'video' }) {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const settings = useStudioSettings()
+  const [saveLocally, setSaveLocallyState] = useState(getSaveLocally)
+  const days =
+    props.kind === 'video'
+      ? settings.data?.video_retention_days
+      : settings.data?.image_retention_days
+  const limited = (days ?? 0) > 0
+  if (props.kind === 'video' && !limited) return null
+  return (
+    <div className='bg-muted/40 text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border px-3 py-2 text-xs'>
+      {limited && (
+        <span className='flex min-w-0 flex-1 items-center gap-1.5'>
+          <Clock className='size-3.5 shrink-0' />
+          {props.kind === 'video'
+            ? t(
+                'Videos are kept on the server for {{count}} days. Download the ones you want to keep.',
+                { count: days }
+              )
+            : t('Images are kept on the server for {{count}} days.', {
+                count: days,
+              })}
+        </span>
+      )}
+      {props.kind === 'image' && (
+        <label className='ml-auto flex cursor-pointer items-center gap-2'>
+          <Switch
+            size='sm'
+            checked={saveLocally}
+            onCheckedChange={(checked) => {
+              setSaveLocally(checked)
+              setSaveLocallyState(checked)
+              // Refreshing the saved list re-runs the copier.
+              if (checked)
+                void queryClient.invalidateQueries({
+                  queryKey: SAVED_IMAGES_KEY,
+                })
+            }}
+          />
+          {t('Keep a copy in this browser')}
+        </label>
+      )}
     </div>
   )
 }

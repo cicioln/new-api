@@ -209,7 +209,7 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
-	if option.Key == "video_setting.retention_days" {
+	if option.Key == "video_setting.retention_days" || option.Key == "video_setting.image_retention_days" {
 		if days, err := strconv.Atoi(option.Value.(string)); err != nil || days < 0 {
 			common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid parameters"))
 			return

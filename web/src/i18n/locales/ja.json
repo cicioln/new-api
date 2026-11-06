@@ -8019,6 +8019,15 @@
     "Reference image file in a multipart request": "multipart リクエストで送る参照画像ファイル",
     "The original request of this video is no longer available": "この動画の元のリクエストは利用できなくなりました",
     "This model picks its own resolution. 1:1 is about 1600×1600.": "このモデルは解像度を自動で決めます。1:1 は約 1600×1600 です。",
-    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "アスペクト比（例: 1:1）。ネイティブサイズで返されます: 1:1 は約 1600×1600、16:9 は約 2048×1152"
+    "Aspect ratio, such as 1:1. The image comes back at its native size: 1:1 is about 1600×1600, 16:9 about 2048×1152": "アスペクト比（例: 1:1）。ネイティブサイズで返されます: 1:1 は約 1600×1600、16:9 は約 2048×1152",
+    "Media Storage": "メディアの保存",
+    "How long generated images and videos are kept on the server.": "生成した画像と動画をサーバーに保存する期間。",
+    "Video retention days": "動画の保持日数",
+    "Image retention days": "画像の保持日数",
+    "Images generated in the studio are stored on this server. Images older than this are deleted automatically; 0 keeps them permanently.": "スタジオで生成した画像はこのサーバーに保存されます。この日数を過ぎた画像は自動的に削除されます。0 は無期限に保持します。",
+    "Videos are kept on the server for {{count}} days. Download the ones you want to keep.": "動画はサーバーに {{count}} 日間保存されます。必要な動画は早めにダウンロードしてください。",
+    "Images are kept on the server for {{count}} days.": "画像はサーバーに {{count}} 日間保存されます。",
+    "Keep a copy in this browser": "このブラウザにコピーを保存",
+    "Saved in this browser": "このブラウザのみに保存"
   }
 }

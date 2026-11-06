@@ -21,7 +21,11 @@ import { useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { MAX_REFERENCE_BYTES, MAX_REFERENCE_IMAGES, newId } from '../lib/options'
+import {
+  MAX_REFERENCE_BYTES,
+  MAX_REFERENCE_IMAGES,
+  newId,
+} from '../lib/options'
 import type { ReferenceImage } from './form-parts'
 
 /**
@@ -62,13 +66,16 @@ export function Composer(props: {
       file,
       url: URL.createObjectURL(file),
     }))
-    if (added.length > 0) props.onReferencesChange([...props.references, ...added])
+    if (added.length > 0)
+      props.onReferencesChange([...props.references, ...added])
   }
 
   const remove = (id: string) => {
     const removed = props.references.find((image) => image.id === id)
     if (removed) URL.revokeObjectURL(removed.url)
-    props.onReferencesChange(props.references.filter((image) => image.id !== id))
+    props.onReferencesChange(
+      props.references.filter((image) => image.id !== id)
+    )
   }
 
   return (
@@ -87,7 +94,10 @@ export function Composer(props: {
     >
       <div className='flex flex-wrap gap-2'>
         {props.references.map((image) => (
-          <div key={image.id} className='relative size-14 overflow-hidden rounded-lg border'>
+          <div
+            key={image.id}
+            className='relative size-14 overflow-hidden rounded-lg border'
+          >
             <img src={image.url} alt='' className='size-full object-cover' />
             <button
               type='button'
@@ -158,7 +168,7 @@ export function Composer(props: {
           title={t('Generate')}
           disabled={!props.canSubmit}
           onClick={props.onSubmit}
-          className='from-primary flex size-9 items-center justify-center rounded-xl bg-linear-to-br to-violet-500 text-white outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-40'
+          className='from-primary focus-visible:ring-ring/50 flex size-9 items-center justify-center rounded-xl bg-linear-to-br to-violet-500 text-white outline-none focus-visible:ring-3 disabled:opacity-40'
         >
           {props.submitting ? (
             <LoaderCircle className='size-4 animate-spin' />
