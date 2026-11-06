@@ -41,7 +41,6 @@ import {
   formatLogQuota,
   formatNumber,
   formatTimestampToDate,
-  formatUseTime,
 } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -69,7 +68,7 @@ import {
 import type { LogOtherData } from '../../types'
 import { DetailsDialog } from '../dialogs/details-dialog'
 import { LogCostDisplay } from '../log-cost-display'
-import { StreamTpsCell } from '../timing-metrics-cell'
+import { StreamTpsCell, TimingMetricsCell } from '../timing-metrics-cell'
 import { useUsageLogsContext } from '../usage-logs-provider'
 
 interface DetailSegment {
@@ -317,8 +316,6 @@ function buildTypeDetailSegments(
 
 const numericCellClass = 'font-mono! text-[12.5px]! tabular-nums'
 const secondLineClass = 'text-subtle-foreground text-[11px]! leading-4'
-/** Total time above this many seconds is highlighted as slow. */
-const SLOW_REQUEST_SECONDS = 15
 /** Cache hit rates at or above this percentage are highlighted. */
 const HIGH_CACHE_HIT_RATE = 50
 const tagClass =
@@ -533,7 +530,11 @@ export function useCommonLogsColumns(
                 'grid grid-cols-[auto_auto] justify-end gap-x-3 gap-y-0.5'
               )}
             >
-              {cell(t('In short'), tokens.input, 'text-sky-600 dark:text-sky-400')}
+              {cell(
+                t('In short'),
+                tokens.input,
+                'text-sky-600 dark:text-sky-400'
+              )}
               {cell(
                 t('Out short'),
                 tokens.output,
@@ -573,7 +574,9 @@ export function useCommonLogsColumns(
           return (
             <span
               className='flex flex-col items-end gap-1'
-              title={t('Cache hit rate: cached input tokens / all input tokens')}
+              title={t(
+                'Cache hit rate: cached input tokens / all input tokens'
+              )}
             >
               <span
                 className={cn(
@@ -597,43 +600,17 @@ export function useCommonLogsColumns(
       },
       {
         accessorKey: 'use_time',
-        header: t('First token / Total'),
+        header: t('Timing'),
         cell: ({ row }) => {
           const log = row.original
-          if (!isTimingLogType(log.type)) {
-            return <span className={numericCellClass}>—</span>
-          }
-          const other = parseLogOther(log.other)
-          const frt = other?.frt
-          const firstToken =
-            log.is_stream && frt != null && frt > 0
-              ? formatUseTime(frt / 1000)
-              : '—'
-          const slow = log.use_time > SLOW_REQUEST_SECONDS
+          if (!isTimingLogType(log.type)) return null
           return (
-            <span className='flex flex-col items-end gap-1'>
-              <span
-                className={cn(
-                  numericCellClass,
-                  slow && 'text-amber-600 dark:text-amber-400'
-                )}
-                title={slow ? t('Slow request') : undefined}
-              >
-                {firstToken} / {formatUseTime(log.use_time)}
-              </span>
-              {other?.is_task !== true && (
-                <span
-                  className={cn(
-                    'inline-flex h-[18px] items-center rounded px-1.5 text-[10.5px]!',
-                    log.is_stream
-                      ? 'bg-sky-500/12 text-sky-600 dark:text-sky-400'
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {log.is_stream ? t('Stream badge') : t('Non-stream badge')}
-                </span>
-              )}
-            </span>
+            <TimingMetricsCell
+              useTimeSec={log.use_time}
+              completionTokens={log.completion_tokens}
+              frtMs={parseLogOther(log.other)?.frt}
+              isStream={log.is_stream}
+            />
           )
         },
       },

@@ -158,7 +158,7 @@ it('shows the design columns in order for administrators', async () => {
     'Type',
     'Input',
     'Output',
-    'First token / Total',
+    'Timing',
     'Cost',
     'Channel',
   ])
