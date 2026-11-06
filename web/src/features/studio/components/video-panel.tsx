@@ -42,7 +42,15 @@ import {
   type SizePreset,
 } from './form-parts'
 import { MediaViewer, useDeleteMedia, VideoTile, type MediaItem } from './media'
-import { FailedTile, JobHeader, PendingTile, StudioHero, Tag } from './shared'
+import {
+  DurationTag,
+  ElapsedSeconds,
+  FailedTile,
+  JobHeader,
+  PendingTile,
+  StudioHero,
+  Tag,
+} from './shared'
 
 const RATIOS: SizePreset[] = [
   { value: '', label: 'Auto', w: 0, h: 0 },
@@ -148,7 +156,7 @@ export function VideoPanel(props: {
               const text = (task.studio?.prompt || task.properties?.input || '').trim()
               const model = task.properties?.origin_model_name ?? ''
               return (
-                <section key={task.task_id} className='grid gap-2.5'>
+                <section key={task.task_id} className='grid min-w-0 gap-2.5'>
                   <JobHeader prompt={text || t('Video')}>
                     {running && (
                       <Tag tone='running'>
@@ -157,8 +165,16 @@ export function VideoPanel(props: {
                           : t('Queued')}
                       </Tag>
                     )}
+                    {running && task.submit_time > 0 && (
+                      <Tag tone='running'>
+                        <ElapsedSeconds since={task.submit_time * 1000} />s
+                      </Tag>
+                    )}
                     {done && <Tag tone='success'>{t('Completed')}</Tag>}
                     {failed && <Tag tone='failed'>{t('Failed')}</Tag>}
+                    {!running && (
+                      <DurationTag start={task.submit_time} end={task.finish_time} />
+                    )}
                     {model && <Tag>{model}</Tag>}
                     {task.studio?.size && <Tag>{task.studio.size.replace('x', '×')}</Tag>}
                     {task.studio?.seconds && (

@@ -121,13 +121,19 @@ export function Tag(props: { tone?: TagTone; children: ReactNode }) {
   )
 }
 
-/** Prompt and facts above one generation's results. */
+/** Prompt and facts above one generation's results. A long prompt is
+ * clamped to two lines and expands on click. */
 export function JobHeader(props: { prompt: string; children: ReactNode }) {
+  const [expanded, setExpanded] = useState(false)
   return (
-    <div className='flex flex-wrap items-center gap-x-2 gap-y-1.5'>
+    <div className='flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5'>
       <p
-        className='min-w-0 flex-[1_1_280px] truncate text-[13.5px] font-medium'
-        title={props.prompt}
+        className={cn(
+          'min-w-0 flex-[1_1_280px] cursor-pointer text-[13.5px] font-medium whitespace-pre-wrap [overflow-wrap:anywhere]',
+          !expanded && 'line-clamp-2'
+        )}
+        title={expanded ? undefined : props.prompt}
+        onClick={() => setExpanded((value) => !value)}
       >
         {props.prompt}
       </p>
@@ -143,6 +149,25 @@ export function ElapsedSeconds(props: { since: number }) {
     return () => clearInterval(timer)
   }, [])
   return <>{Math.max(0, Math.round((now - props.since) / 1000))}</>
+}
+
+/** "45s" or "2m 05s" for a span of seconds. */
+export function formatSpan(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds))
+  if (total < 60) return `${total}s`
+  const minutes = Math.floor(total / 60)
+  return `${minutes}m ${String(total % 60).padStart(2, '0')}s`
+}
+
+/** Time a finished generation took, from unix-second timestamps. */
+export function DurationTag(props: { start?: number; end?: number }) {
+  const { t } = useTranslation()
+  if (!props.start || !props.end || props.end < props.start) return null
+  return (
+    <Tag>
+      {t('Duration')} {formatSpan(props.end - props.start)}
+    </Tag>
+  )
 }
 
 /** Placeholder tile while a result is being generated. */

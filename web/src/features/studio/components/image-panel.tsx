@@ -48,6 +48,7 @@ import {
   sizeAspect,
   StudioHero,
   Tag,
+  DurationTag,
 } from './shared'
 
 const SIZES: SizePreset[] = [
@@ -143,7 +144,7 @@ export function ImagePanel(props: {
               const aspect = sizeAspect(job.size)
               const tiles = Math.max(job.count ?? 1, 1)
               return (
-                <section key={job.id} className='grid gap-2.5'>
+                <section key={job.id} className='grid min-w-0 gap-2.5'>
                   <JobHeader prompt={job.prompt}>
                     {job.status === 'running' && (
                       <Tag tone='running'>
@@ -152,6 +153,9 @@ export function ImagePanel(props: {
                     )}
                     {job.status === 'success' && <Tag tone='success'>{t('Completed')}</Tag>}
                     {job.status === 'failed' && <Tag tone='failed'>{t('Failed')}</Tag>}
+                    {job.status !== 'running' && (
+                      <DurationTag start={job.created_at} end={job.finished_at} />
+                    )}
                     <Tag>{job.model}</Tag>
                     {job.size && <Tag>{job.size.replace('x', '×')}</Tag>}
                     <button
