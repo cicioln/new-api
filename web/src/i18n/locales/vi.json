@@ -7992,6 +7992,26 @@
     "Image not found": "Không tìm thấy ảnh",
     "This image is still generating": "Ảnh này vẫn đang được tạo",
     "Video not found": "Không tìm thấy video",
-    "This video is still generating": "Video này vẫn đang được tạo"
+    "This video is still generating": "Video này vẫn đang được tạo",
+    "AI images": "Ảnh AI",
+    "AI videos": "Video AI",
+    "Gallery": "Thư viện",
+    "Images": "Ảnh",
+    "Videos": "Video",
+    "Reference image": "Ảnh tham chiếu",
+    "{{count}} images": "{{count}} ảnh",
+    "Earlier images": "Ảnh trước đây",
+    "Describe what you want to create below": "Mô tả nội dung bạn muốn tạo ở bên dưới",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "Mô tả ảnh: phong cách, bố cục, chủ thể. Thêm ảnh tham chiếu để chỉnh sửa ảnh đó.",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "Mô tả video: góc máy, chuyển động, nhịp độ và phong cách. Thêm ảnh tham chiếu để làm ảnh chuyển động.",
+    "A watercolor cat by the window": "Chú mèo màu nước bên cửa sổ",
+    "Product shot on a white background": "Ảnh sản phẩm nền trắng",
+    "Cyberpunk city at night": "Thành phố cyberpunk về đêm",
+    "Minimal poster design": "Áp phích tối giản",
+    "Hot air balloons rising out of a valley": "Khinh khí cầu bay lên từ thung lũng",
+    "City time-lapse from day to night": "Time-lapse thành phố từ ngày sang đêm",
+    "Waves on rocks in slow motion at sunset": "Sóng vỗ đá lúc hoàng hôn, quay chậm",
+    "Finished images and videos appear here.": "Ảnh và video đã hoàn tất sẽ hiển thị ở đây.",
+    "Image and video generation for signed-in users.": "Tạo ảnh và video cho người dùng đã đăng nhập."
   }
 }

@@ -7992,6 +7992,26 @@
     "Image not found": "圖片不存在",
     "This image is still generating": "圖片還在生成中",
     "Video not found": "影片不存在",
-    "This video is still generating": "影片還在生成中"
+    "This video is still generating": "影片還在生成中",
+    "AI images": "AI 圖片",
+    "AI videos": "AI 影片",
+    "Gallery": "作品集",
+    "Images": "圖片",
+    "Videos": "影片",
+    "Reference image": "參考圖",
+    "{{count}} images": "{{count}} 張",
+    "Earlier images": "之前的圖片",
+    "Describe what you want to create below": "在下方輸入你想創作的內容",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "描述你想生成的圖片，可以寫風格、構圖、主體。加參考圖即為改圖",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "描述你想生成的影片，可以寫鏡頭、動作、節奏和風格。加參考圖即為圖生影片",
+    "A watercolor cat by the window": "窗邊的水彩風格小貓",
+    "Product shot on a white background": "白底產品圖",
+    "Cyberpunk city at night": "賽博龐克城市夜景",
+    "Minimal poster design": "極簡風格海報",
+    "Hot air balloons rising out of a valley": "熱氣球從山谷中緩緩升起",
+    "City time-lapse from day to night": "城市從白天到夜晚的縮時攝影",
+    "Waves on rocks in slow motion at sunset": "日落時海浪拍打礁石，慢動作",
+    "Finished images and videos appear here.": "完成的圖片和影片會顯示在這裡。",
+    "Image and video generation for signed-in users.": "登入使用者可用的圖片和影片生成。"
   }
 }

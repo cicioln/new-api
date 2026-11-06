@@ -20,7 +20,10 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
-import { parseHeaderNavModulesFromStatus } from '@/lib/nav-modules'
+import {
+  isSidebarModuleEnabled,
+  parseHeaderNavModulesFromStatus,
+} from '@/lib/nav-modules'
 import { useAuthStore } from '@/stores/auth-store'
 
 export type TopNavLink = {
@@ -88,6 +91,15 @@ export function useTopNavLinks(): TopNavLink[] {
   if (rankings && typeof rankings === 'object' && rankings.enabled) {
     const requiresAuth = rankings.requireAuth && !isAuthed
     links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
+  }
+
+  // Creative Studio needs a signed-in user; the sidebar switch also hides it.
+  if (modules?.studio !== false && isSidebarModuleEnabled('chat', 'studio')) {
+    links.push({
+      title: t('Creative Studio'),
+      href: '/studio',
+      requiresAuth: !isAuthed,
+    })
   }
 
   // Docs (supports external links)

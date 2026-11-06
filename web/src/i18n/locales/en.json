@@ -7992,6 +7992,26 @@
     "Image not found": "Image not found",
     "This image is still generating": "This image is still generating",
     "Video not found": "Video not found",
-    "This video is still generating": "This video is still generating"
+    "This video is still generating": "This video is still generating",
+    "AI images": "AI images",
+    "AI videos": "AI videos",
+    "Gallery": "Gallery",
+    "Images": "Images",
+    "Videos": "Videos",
+    "Reference image": "Reference image",
+    "{{count}} images": "{{count}} images",
+    "Earlier images": "Earlier images",
+    "Describe what you want to create below": "Describe what you want to create below",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "Describe the image: style, composition, subject. Add a reference image to edit it.",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "Describe the video: camera, motion, pace and style. Add a reference image to animate it.",
+    "A watercolor cat by the window": "A watercolor cat by the window",
+    "Product shot on a white background": "Product shot on a white background",
+    "Cyberpunk city at night": "Cyberpunk city at night",
+    "Minimal poster design": "Minimal poster design",
+    "Hot air balloons rising out of a valley": "Hot air balloons rising out of a valley",
+    "City time-lapse from day to night": "City time-lapse from day to night",
+    "Waves on rocks in slow motion at sunset": "Waves on rocks in slow motion at sunset",
+    "Finished images and videos appear here.": "Finished images and videos appear here.",
+    "Image and video generation for signed-in users.": "Image and video generation for signed-in users."
   }
 }

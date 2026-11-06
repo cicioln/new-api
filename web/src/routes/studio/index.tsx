@@ -19,10 +19,21 @@ For commercial licensing, please contact support@quantumnous.com
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import { Studio } from '@/features/studio'
+import { resolveAuthentication } from '@/lib/auth-session'
 import { isSidebarModuleEnabled } from '@/lib/nav-modules'
+import { useAuthStore } from '@/stores/auth-store'
 
-export const Route = createFileRoute('/_authenticated/studio/')({
-  beforeLoad: () => {
+// Full-page workspace under the site header, outside the console sidebar.
+export const Route = createFileRoute('/studio/')({
+  beforeLoad: async ({ location }) => {
+    await resolveAuthentication()
+    const { auth } = useAuthStore.getState()
+    if (!auth.user || !auth.accessToken) {
+      throw redirect({
+        to: '/sign-in',
+        search: { redirect: location.href },
+      })
+    }
     if (!isSidebarModuleEnabled('chat', 'studio')) {
       throw redirect({ to: '/dashboard' })
     }

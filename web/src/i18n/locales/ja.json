@@ -7992,6 +7992,26 @@
     "Image not found": "画像が見つかりません",
     "This image is still generating": "この画像はまだ生成中です",
     "Video not found": "動画が見つかりません",
-    "This video is still generating": "この動画はまだ生成中です"
+    "This video is still generating": "この動画はまだ生成中です",
+    "AI images": "AI 画像",
+    "AI videos": "AI 動画",
+    "Gallery": "ギャラリー",
+    "Images": "画像",
+    "Videos": "動画",
+    "Reference image": "参考画像",
+    "{{count}} images": "{{count}} 枚",
+    "Earlier images": "以前の画像",
+    "Describe what you want to create below": "作りたいものを下に入力してください",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "画像を説明してください（スタイル、構図、被写体）。参考画像を追加すると編集になります。",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "動画を説明してください（カメラ、動き、テンポ、スタイル）。参考画像を追加するとその画像を動かします。",
+    "A watercolor cat by the window": "窓辺の水彩画の猫",
+    "Product shot on a white background": "白背景の商品写真",
+    "Cyberpunk city at night": "サイバーパンクな夜の街",
+    "Minimal poster design": "ミニマルなポスター",
+    "Hot air balloons rising out of a valley": "谷から昇る熱気球",
+    "City time-lapse from day to night": "昼から夜への街のタイムラプス",
+    "Waves on rocks in slow motion at sunset": "夕暮れの岩に打ち寄せる波、スローモーション",
+    "Finished images and videos appear here.": "完成した画像と動画がここに表示されます。",
+    "Image and video generation for signed-in users.": "ログインユーザー向けの画像・動画生成。"
   }
 }

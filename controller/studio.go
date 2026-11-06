@@ -62,6 +62,9 @@ type studioImageJob struct {
 	Status     string   `json:"status"`
 	Prompt     string   `json:"prompt"`
 	Model      string   `json:"model"`
+	Group      string   `json:"group,omitempty"`
+	Size       string   `json:"size,omitempty"`
+	Count      int      `json:"count,omitempty"`
 	CreatedAt  int64    `json:"created_at"`
 	FinishedAt int64    `json:"finished_at,omitempty"`
 	Error      string   `json:"error,omitempty"`
@@ -74,6 +77,9 @@ type studioImageView struct {
 	Status     string   `json:"status"`
 	Prompt     string   `json:"prompt"`
 	Model      string   `json:"model"`
+	Group      string   `json:"group,omitempty"`
+	Size       string   `json:"size,omitempty"`
+	Count      int      `json:"count,omitempty"`
 	CreatedAt  int64    `json:"created_at"`
 	FinishedAt int64    `json:"finished_at,omitempty"`
 	Error      string   `json:"error,omitempty"`
@@ -133,6 +139,9 @@ func startStudioImageJob(c *gin.Context) {
 	var request struct {
 		Model  string `json:"model"`
 		Prompt string `json:"prompt"`
+		Size   string `json:"size"`
+		// Multipart forms carry n as a string, JSON bodies as a number.
+		N any `json:"n"`
 	}
 	if err := common.UnmarshalBodyReusable(c, &request); err != nil {
 		writeStudioSubmitError(c, http.StatusBadRequest, "Invalid parameters")
@@ -160,6 +169,9 @@ func startStudioImageJob(c *gin.Context) {
 		Status:    studioImageRunning,
 		Prompt:    request.Prompt,
 		Model:     request.Model,
+		Group:     c.Query("group"),
+		Size:      request.Size,
+		Count:     studioImageCount(request.N),
 		CreatedAt: common.GetTimestamp(),
 	}
 
@@ -228,6 +240,17 @@ func startStudioImageJob(c *gin.Context) {
 	}()
 
 	c.JSON(http.StatusOK, gin.H{"id": job.ID})
+}
+
+func studioImageCount(raw any) int {
+	switch value := raw.(type) {
+	case float64:
+		return int(value)
+	case string:
+		count, _ := strconv.Atoi(value)
+		return count
+	}
+	return 0
 }
 
 func writeStudioSubmitError(c *gin.Context, status int, message string) {
@@ -338,6 +361,9 @@ func GetStudioImages(c *gin.Context) {
 			Status:     job.Status,
 			Prompt:     job.Prompt,
 			Model:      job.Model,
+			Group:      job.Group,
+			Size:       job.Size,
+			Count:      job.Count,
 			CreatedAt:  job.CreatedAt,
 			FinishedAt: job.FinishedAt,
 			Error:      job.Error,

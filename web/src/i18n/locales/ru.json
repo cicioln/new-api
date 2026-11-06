@@ -7992,6 +7992,26 @@
     "Image not found": "Изображение не найдено",
     "This image is still generating": "Изображение ещё создаётся",
     "Video not found": "Видео не найдено",
-    "This video is still generating": "Видео ещё создаётся"
+    "This video is still generating": "Видео ещё создаётся",
+    "AI images": "ИИ-изображения",
+    "AI videos": "ИИ-видео",
+    "Gallery": "Галерея",
+    "Images": "Изображения",
+    "Videos": "Видео",
+    "Reference image": "Референс",
+    "{{count}} images": "Изображений: {{count}}",
+    "Earlier images": "Ранние изображения",
+    "Describe what you want to create below": "Опишите ниже, что хотите создать",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "Опишите изображение: стиль, композицию, объект. Добавьте референс, чтобы изменить его.",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "Опишите видео: камеру, движение, темп и стиль. Добавьте референс, чтобы оживить его.",
+    "A watercolor cat by the window": "Акварельный кот у окна",
+    "Product shot on a white background": "Фото товара на белом фоне",
+    "Cyberpunk city at night": "Киберпанк-город ночью",
+    "Minimal poster design": "Минималистичный постер",
+    "Hot air balloons rising out of a valley": "Воздушные шары поднимаются из долины",
+    "City time-lapse from day to night": "Таймлапс города от дня к ночи",
+    "Waves on rocks in slow motion at sunset": "Волны о скалы на закате, замедленно",
+    "Finished images and videos appear here.": "Здесь появятся готовые изображения и видео.",
+    "Image and video generation for signed-in users.": "Создание изображений и видео для вошедших пользователей."
   }
 }

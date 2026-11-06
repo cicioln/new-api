@@ -36,20 +36,46 @@ const KIND_ENDPOINT: Record<StudioKind, string> = {
 export const MAX_REFERENCE_IMAGES = 4
 export const MAX_REFERENCE_BYTES = 10 * 1024 * 1024
 
-export function useStudioGroups() {
-  const { data: groups = [] } = useQuery({
+/**
+ * The user's groups that offer at least one model of this kind, and the
+ * selected one. A group qualifies when a model with the kind's endpoint is
+ * enabled in it; "auto" qualifies when any other listed group does.
+ */
+export function useStudioGroups(kind: StudioKind) {
+  const pricing = usePricingData()
+  const { data: userGroups = [], isLoading } = useQuery({
     queryKey: ['playground-groups'],
     queryFn: async () => requireServerSuccess(await getUserGroups()),
   })
+  const groups = useMemo(() => {
+    const enabled = new Set<string>()
+    for (const model of pricing.models) {
+      if (!(model.supported_endpoint_types ?? []).includes(KIND_ENDPOINT[kind]))
+        continue
+      for (const group of model.enable_groups ?? []) enabled.add(group)
+    }
+    const direct = userGroups.filter((item) => enabled.has(item.value))
+    return userGroups.filter(
+      (item) =>
+        enabled.has(item.value) || (item.value === 'auto' && direct.length > 0)
+    )
+  }, [pricing.models, userGroups, kind])
+
   const [group, setGroup] = useState('')
   useEffect(() => {
-    if (groups.length === 0 || groups.some((item) => item.value === group))
-      return
+    if (groups.some((item) => item.value === group)) return
     setGroup(
-      groups.find((item) => item.value === 'default')?.value ?? groups[0].value
+      groups.find((item) => item.value === 'default')?.value ??
+        groups[0]?.value ??
+        ''
     )
   }, [groups, group])
-  return { groups, group, setGroup }
+  return {
+    groups,
+    group,
+    setGroup,
+    isLoading: isLoading || pricing.isLoading,
+  }
 }
 
 /** Models of one kind the user can call in the group, with their pricing. */

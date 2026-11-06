@@ -622,6 +622,9 @@ export const STATIC_I18N_KEYS = [
   'Creative Studio',
   // Studio job errors returned by the server.
   'Generation was interrupted by a server restart',
+  'AI images',
+  'AI videos',
+  'Gallery',
   'Text to image',
   'Text to video',
   'Image to video',

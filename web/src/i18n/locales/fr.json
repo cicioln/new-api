@@ -7992,6 +7992,26 @@
     "Image not found": "Image introuvable",
     "This image is still generating": "Cette image est encore en cours de génération",
     "Video not found": "Vidéo introuvable",
-    "This video is still generating": "Cette vidéo est encore en cours de génération"
+    "This video is still generating": "Cette vidéo est encore en cours de génération",
+    "AI images": "Images IA",
+    "AI videos": "Vidéos IA",
+    "Gallery": "Galerie",
+    "Images": "Images",
+    "Videos": "Vidéos",
+    "Reference image": "Image de référence",
+    "{{count}} images": "{{count}} images",
+    "Earlier images": "Images précédentes",
+    "Describe what you want to create below": "Décrivez ci-dessous ce que vous voulez créer",
+    "Describe the image: style, composition, subject. Add a reference image to edit it.": "Décrivez l’image : style, composition, sujet. Ajoutez une image de référence pour la modifier.",
+    "Describe the video: camera, motion, pace and style. Add a reference image to animate it.": "Décrivez la vidéo : caméra, mouvement, rythme et style. Ajoutez une image de référence pour l’animer.",
+    "A watercolor cat by the window": "Un chat à l’aquarelle près de la fenêtre",
+    "Product shot on a white background": "Photo produit sur fond blanc",
+    "Cyberpunk city at night": "Ville cyberpunk la nuit",
+    "Minimal poster design": "Affiche minimaliste",
+    "Hot air balloons rising out of a valley": "Montgolfières s’élevant d’une vallée",
+    "City time-lapse from day to night": "Time-lapse d’une ville du jour à la nuit",
+    "Waves on rocks in slow motion at sunset": "Vagues sur les rochers au ralenti au coucher du soleil",
+    "Finished images and videos appear here.": "Les images et vidéos terminées apparaissent ici.",
+    "Image and video generation for signed-in users.": "Génération d’images et de vidéos pour les utilisateurs connectés."
   }
 }

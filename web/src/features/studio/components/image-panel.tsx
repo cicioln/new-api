@@ -16,107 +16,97 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Clapperboard,
-  Copy,
-  Download,
-  LoaderCircle,
-  Trash2,
-} from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Copy, Frame, Layers } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { ConfirmDialog } from '@/components/confirm-dialog'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 
-import { deleteImageJob, getImageJobs, submitImages } from '../api'
-import { deleteImage, loadImages, type StoredImage } from '../lib/image-history'
-import { newId, useStudioModels } from '../lib/options'
+import { submitImages } from '../api'
+import { loadImages, type StoredImage } from '../lib/image-history'
+import { useStudioModels } from '../lib/options'
+import { IMAGE_JOBS_KEY, useImageJobs } from '../lib/queries'
+import { Composer } from './composer'
 import {
-  CostLine,
-  FieldLabel,
-  ModelSelect,
-  NumberPicker,
-  ReferencePicker,
-  SizePicker,
+  isValidSize,
+  ModelPicker,
+  NumberOptions,
+  PanelSection,
+  SizeOptions,
+  ToolbarPopover,
   type ReferenceImage,
+  type SizePreset,
 } from './form-parts'
+import { ImageTile, MediaViewer, type MediaItem } from './media'
+import {
+  ElapsedSeconds,
+  FailedTile,
+  JobHeader,
+  PendingTile,
+  sizeAspect,
+  StudioHero,
+  Tag,
+} from './shared'
 
-const SIZES = ['1024x1024', '1024x1536', '1536x1024']
+const SIZES: SizePreset[] = [
+  { value: '1024x1024', label: '1:1', w: 1, h: 1 },
+  { value: '1024x1536', label: '2:3', w: 2, h: 3 },
+  { value: '1536x1024', label: '3:2', w: 3, h: 2 },
+]
 const COUNTS = [1, 2, 4]
 const MAX_COUNT = 10
-const POLL_MS = 3000
-const JOBS_KEY = ['studio-image-jobs']
 
-/** One card in the results grid. */
-type ResultImage = {
-  key: string
-  src: string
-  prompt: string
-  model: string
-  /** Server job ID; absent for images kept only in this browser. */
-  jobId?: string
-  localId?: string
+function sizeLabel(size: string) {
+  const preset = SIZES.find((item) => item.value === size)
+  const text = size.replace('x', '×')
+  return preset ? `${preset.label} · ${text}` : text
 }
 
 export function ImagePanel(props: {
   group: string
+  references: ReferenceImage[]
+  onReferencesChange: (images: ReferenceImage[]) => void
   onToVideo: (src: string) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const models = useStudioModels('image', props.group)
+  const jobs = useImageJobs()
   const [prompt, setPrompt] = useState('')
-  const [size, setSize] = useState(SIZES[0])
+  const [size, setSize] = useState(SIZES[0].value)
   const [count, setCount] = useState(1)
-  const [references, setReferences] = useState<ReferenceImage[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [legacy, setLegacy] = useState<StoredImage[]>([])
-  const [preview, setPreview] = useState<ResultImage | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<ResultImage | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  const jobs = useQuery({
-    queryKey: JOBS_KEY,
-    queryFn: getImageJobs,
-    refetchInterval: (query) =>
-      (query.state.data ?? []).some((job) => job.status === 'running')
-        ? POLL_MS
-        : false,
-  })
+  const [viewing, setViewing] = useState<MediaItem | null>(null)
 
   // Images generated before server storage existed stay in this browser.
   useEffect(() => {
     void loadImages().then(setLegacy)
   }, [])
 
-  useEffect(
-    () => () => references.forEach((image) => URL.revokeObjectURL(image.url)),
-    // Revoke on unmount only; removals revoke their own URL.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  )
+  const canSubmit =
+    !submitting &&
+    prompt.trim() !== '' &&
+    models.modelName !== '' &&
+    isValidSize(size)
 
   const submit = async () => {
-    const text = prompt.trim()
-    if (!text || !models.modelName) return
+    if (!canSubmit) return
     setSubmitting(true)
     try {
       await submitImages({
         group: props.group,
         model: models.modelName,
-        prompt: text,
+        prompt: prompt.trim(),
         size,
         n: count,
-        references: references.map((image) => image.file),
+        references: props.references.map((image) => image.file),
       })
       toast.success(t('Image task submitted'))
-      await queryClient.invalidateQueries({ queryKey: JOBS_KEY })
+      setPrompt('')
+      await queryClient.invalidateQueries({ queryKey: IMAGE_JOBS_KEY })
     } catch (error) {
       toast.error(getServerErrorMessage(error, t('Image generation failed')))
     } finally {
@@ -124,339 +114,183 @@ export function ImagePanel(props: {
     }
   }
 
-  const confirmDelete = async () => {
-    const target = pendingDelete
-    if (!target) return
-    setDeleting(true)
-    try {
-      if (target.jobId) {
-        await deleteImageJob(target.jobId)
-        await queryClient.invalidateQueries({ queryKey: JOBS_KEY })
-      } else if (target.localId) {
-        await deleteImage(target.localId)
-        setLegacy((list) => list.filter((item) => item.id !== target.localId))
-      }
-      toast.success(t('Deleted successfully'))
-      setPendingDelete(null)
-    } catch (error) {
-      toast.error(getServerErrorMessage(error, t('Delete failed')))
-    } finally {
-      setDeleting(false)
-    }
-  }
-
   const jobList = jobs.data ?? []
-  const running = jobList.filter((job) => job.status === 'running')
-  const failed = jobList.filter((job) => job.status === 'failed')
-  const results: ResultImage[] = [
-    ...jobList
-      .filter((job) => job.status === 'success')
-      .flatMap((job) =>
-        job.images.map((src, index) => ({
-          key: `${job.id}-${index}`,
-          src,
-          prompt: job.prompt,
-          model: job.model,
-          jobId: job.id,
-        }))
-      ),
-    ...legacy.map((image) => ({
-      key: image.id,
-      src: image.src,
-      prompt: image.prompt,
-      model: image.model,
-      localId: image.id,
-    })),
-  ]
-  const deletingJobImages = pendingDelete?.jobId
-    ? (jobList.find((job) => job.id === pendingDelete.jobId)?.images.length ?? 0)
-    : 0
+  const empty = jobList.length === 0 && legacy.length === 0
 
   return (
-    <div className='grid grid-cols-1 items-start gap-3.5 lg:grid-cols-[320px_minmax(0,1fr)]'>
-      <section className='bg-card grid gap-3.5 rounded-[10px] border p-[18px]'>
-        <ModelSelect
-          id='studio-image-model'
-          models={models.models}
-          value={models.modelName}
-          onChange={models.setModelName}
-        />
-        <div>
-          <FieldLabel htmlFor='studio-image-prompt'>{t('Prompt')}</FieldLabel>
-          <Textarea
-            id='studio-image-prompt'
-            className='min-h-28'
-            value={prompt}
-            placeholder={t('Describe the image you want')}
-            onChange={(event) => setPrompt(event.target.value)}
-          />
-        </div>
-        <ReferencePicker
-          label={t('Reference images (optional)')}
-          hint={t('With reference images the model edits them. Up to 4, 10 MB each.')}
-          images={references}
-          onAdd={(files) =>
-            setReferences((list) => [
-              ...list,
-              ...files.map((file) => ({
-                id: newId(),
-                file,
-                url: URL.createObjectURL(file),
-              })),
-            ])
-          }
-          onRemove={(id) =>
-            setReferences((list) => {
-              const removed = list.find((image) => image.id === id)
-              if (removed) URL.revokeObjectURL(removed.url)
-              return list.filter((image) => image.id !== id)
-            })
-          }
-        />
-        <SizePicker
-          label={t('Size')}
-          presets={SIZES.map((value) => ({ value, label: value.replace('x', '×') }))}
-          value={size}
-          onChange={setSize}
-        />
-        <NumberPicker
-          label={t('Count')}
-          presets={COUNTS}
-          format={String}
-          min={1}
-          max={MAX_COUNT}
-          value={count}
-          onChange={setCount}
-        />
-        <CostLine label={t('Estimated cost')} value={models.estimate(count)} />
-        <Button
-          disabled={submitting || !prompt.trim() || !models.modelName}
-          onClick={() => void submit()}
-        >
-          {submitting && <LoaderCircle className='animate-spin' />}
-          {t('Generate images')}
-        </Button>
-      </section>
-
-      <section className='grid min-w-0 gap-3'>
-        <h2 className='text-sm font-medium'>{t('Results')}</h2>
-        {running.length === 0 && failed.length === 0 && results.length === 0 ? (
-          <div className='text-muted-foreground rounded-[10px] border border-dashed p-10 text-center text-sm'>
-            {jobs.isLoading ? t('Loading...') : t('Generated images appear here.')}
-          </div>
+    <>
+      <div className='min-h-0 flex-1 overflow-y-auto px-4 pt-5 pb-3 md:px-7'>
+        {empty ? (
+          jobs.isLoading ? (
+            <p className='text-muted-foreground py-24 text-center text-sm'>
+              {t('Loading...')}
+            </p>
+          ) : (
+            <StudioHero
+              title={t('Image')}
+              suggestions={[
+                t('A watercolor cat by the window'),
+                t('Product shot on a white background'),
+                t('Cyberpunk city at night'),
+                t('Minimal poster design'),
+              ]}
+              onPick={setPrompt}
+            />
+          )
         ) : (
-          <div className='grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3'>
-            {running.map((job) => (
-              <PendingCard
-                key={job.id}
-                prompt={job.prompt}
-                startedAt={job.created_at * 1000}
-              />
-            ))}
-            {failed.map((job) => (
-              <div key={job.id} className='bg-card overflow-hidden rounded-lg border'>
-                <div className='bg-muted text-destructive flex aspect-square items-center justify-center p-3 text-center text-xs'>
-                  <span className='line-clamp-4' title={job.error}>
-                    {job.error ? t(job.error) : t('Generation failed')}
-                  </span>
-                </div>
-                <div className='flex items-center gap-1 p-2 text-xs'>
-                  <p className='text-muted-foreground min-w-0 flex-1 truncate' title={job.prompt}>
-                    {job.prompt}
-                  </p>
-                  <IconAction
-                    label={t('Delete')}
-                    onClick={() =>
-                      setPendingDelete({
-                        key: job.id,
-                        src: '',
-                        prompt: job.prompt,
-                        model: job.model,
-                        jobId: job.id,
-                      })
-                    }
-                  >
-                    <Trash2 />
-                  </IconAction>
-                </div>
-              </div>
-            ))}
-            {results.map((image) => (
-              <figure
-                key={image.key}
-                className='bg-card overflow-hidden rounded-lg border'
-              >
-                <button
-                  type='button'
-                  aria-label={t('View image')}
-                  onClick={() => setPreview(image)}
-                  className='block w-full cursor-zoom-in'
-                >
-                  <img
-                    src={image.src}
-                    alt={image.prompt}
-                    loading='lazy'
-                    className='aspect-square w-full object-cover'
-                  />
-                </button>
-                <figcaption className='grid gap-1.5 p-2 text-xs'>
-                  <p className='text-muted-foreground truncate' title={image.prompt}>
-                    {image.prompt}
-                  </p>
-                  <div className='flex gap-1'>
-                    <IconAction label={t('Download')} href={image.src} download>
-                      <Download />
-                    </IconAction>
-                    <IconAction
-                      label={t('Copy prompt')}
-                      onClick={() => {
+          <div className='mx-auto grid max-w-[900px] gap-6'>
+            {jobList.map((job) => {
+              const aspect = sizeAspect(job.size)
+              const tiles = Math.max(job.count ?? 1, 1)
+              return (
+                <section key={job.id} className='grid gap-2.5'>
+                  <JobHeader prompt={job.prompt}>
+                    {job.status === 'running' && (
+                      <Tag tone='running'>
+                        {t('Generating')} · <ElapsedSeconds since={job.created_at * 1000} />s
+                      </Tag>
+                    )}
+                    {job.status === 'success' && <Tag tone='success'>{t('Completed')}</Tag>}
+                    {job.status === 'failed' && <Tag tone='failed'>{t('Failed')}</Tag>}
+                    <Tag>{job.model}</Tag>
+                    {job.size && <Tag>{job.size.replace('x', '×')}</Tag>}
+                    <button
+                      type='button'
+                      aria-label={t('Copy prompt')}
+                      title={t('Copy prompt')}
+                      onClick={() =>
                         void navigator.clipboard
-                          .writeText(image.prompt)
+                          .writeText(job.prompt)
                           .then(() => toast.success(t('Copied')))
                           .catch(() => toast.error(t('Copy failed')))
-                      }}
+                      }
+                      className='text-muted-foreground hover:text-foreground px-1'
                     >
-                      <Copy />
-                    </IconAction>
-                    <IconAction
-                      label={t('Make video')}
-                      onClick={() => props.onToVideo(image.src)}
-                    >
-                      <Clapperboard />
-                    </IconAction>
-                    <IconAction
-                      label={t('Delete')}
-                      onClick={() => setPendingDelete(image)}
-                    >
-                      <Trash2 />
-                    </IconAction>
+                      <Copy className='size-3.5' />
+                    </button>
+                  </JobHeader>
+                  <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(168px,1fr))]'>
+                    {job.status === 'running' &&
+                      Array.from({ length: Math.min(tiles, MAX_COUNT) }, (_, index) => (
+                        <div key={index} style={{ aspectRatio: aspect }}>
+                          <PendingTile label={t('Generating')} className='size-full' />
+                        </div>
+                      ))}
+                    {job.status === 'failed' && (
+                      <div style={{ aspectRatio: aspect }}>
+                        <FailedTile
+                          message={job.error ? t(job.error) : t('Generation failed')}
+                          className='size-full'
+                        />
+                      </div>
+                    )}
+                    {job.status === 'success' &&
+                      job.images.map((src) => (
+                        <ImageTile
+                          key={src}
+                          item={{
+                            kind: 'image',
+                            src,
+                            prompt: job.prompt,
+                            model: job.model,
+                            meta: job.size?.replace('x', '×'),
+                            jobId: job.id,
+                            jobImages: job.images.length,
+                          }}
+                          aspect={aspect}
+                          onOpen={setViewing}
+                          onToVideo={props.onToVideo}
+                        />
+                      ))}
                   </div>
-                </figcaption>
-              </figure>
-            ))}
+                </section>
+              )
+            })}
+            {legacy.length > 0 && (
+              <section className='grid gap-2.5'>
+                <JobHeader prompt={t('Earlier images')}>
+                  <Tag>{legacy.length}</Tag>
+                </JobHeader>
+                <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(168px,1fr))]'>
+                  {legacy.map((image) => (
+                    <ImageTile
+                      key={image.id}
+                      item={{
+                        kind: 'image',
+                        src: image.src,
+                        prompt: image.prompt,
+                        model: image.model,
+                        localId: image.id,
+                      }}
+                      aspect='1 / 1'
+                      onOpen={setViewing}
+                      onToVideo={props.onToVideo}
+                      onLocalDeleted={(id) =>
+                        setLegacy((list) => list.filter((item) => item.id !== id))
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
-      </section>
-
-      <Dialog
-        open={preview !== null}
-        onOpenChange={(open) => {
-          if (!open) setPreview(null)
-        }}
-      >
-        <DialogContent className='sm:max-w-4xl'>
-          <DialogTitle className='pr-8 text-sm font-medium'>
-            {t('Image preview')}
-          </DialogTitle>
-          {preview && (
-            <div className='grid gap-3'>
-              <img
-                src={preview.src}
-                alt={preview.prompt}
-                className='bg-muted mx-auto max-h-[70dvh] w-auto max-w-full rounded-lg object-contain'
-              />
-              <p className='text-muted-foreground text-xs break-words whitespace-pre-wrap'>
-                {preview.prompt}
-              </p>
-              <div className='flex items-center justify-between gap-2'>
-                <span className='text-muted-foreground font-mono text-xs'>
-                  {preview.model}
-                </span>
-                <div className='flex gap-1'>
-                  <IconAction label={t('Download')} href={preview.src} download>
-                    <Download />
-                  </IconAction>
-                  <IconAction
-                    label={t('Make video')}
-                    onClick={() => {
-                      props.onToVideo(preview.src)
-                      setPreview(null)
-                    }}
-                  >
-                    <Clapperboard />
-                  </IconAction>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => {
-          if (!open && !deleting) setPendingDelete(null)
-        }}
-        title={t('Delete image')}
-        desc={
-          deletingJobImages > 1
-            ? t(
-                'All {{count}} images from this generation will be deleted. This action cannot be undone.',
-                { count: deletingJobImages }
-              )
-            : t('This action cannot be undone.')
-        }
-        confirmText={t('Delete')}
-        destructive
-        isLoading={deleting}
-        handleConfirm={() => void confirmDelete()}
-      />
-    </div>
-  )
-}
-
-function PendingCard(props: { prompt: string; startedAt: number }) {
-  const { t } = useTranslation()
-  const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(timer)
-  }, [])
-  const seconds = Math.max(0, Math.round((now - props.startedAt) / 1000))
-  return (
-    <div className='bg-card overflow-hidden rounded-lg border'>
-      <div className='bg-muted text-muted-foreground flex aspect-square flex-col items-center justify-center gap-2 text-xs'>
-        <LoaderCircle className='size-5 animate-spin' />
-        {t('Generating · {{seconds}}s', { seconds })}
       </div>
-      <p className='text-muted-foreground truncate p-2 text-xs'>{props.prompt}</p>
-    </div>
-  )
-}
 
-export function IconAction(props: {
-  label: string
-  children: ReactNode
-  onClick?: () => void
-  href?: string
-  download?: boolean
-}) {
-  const className =
-    'text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-7 items-center justify-center rounded-md [&_svg]:size-3.5'
-  if (props.href) {
-    return (
-      <a
-        href={props.href}
-        download={props.download ? `studio-${Date.now()}` : undefined}
-        target={props.download ? undefined : '_blank'}
-        rel='noreferrer'
-        aria-label={props.label}
-        title={props.label}
-        className={className}
-      >
-        {props.children}
-      </a>
-    )
-  }
-  return (
-    <button
-      type='button'
-      aria-label={props.label}
-      title={props.label}
-      onClick={props.onClick}
-      className={className}
-    >
-      {props.children}
-    </button>
+      <div className='shrink-0 px-3 pt-1 pb-4 md:px-7'>
+        <Composer
+          id='studio-image-prompt'
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          placeholder={t('Describe the image: style, composition, subject. Add a reference image to edit it.')}
+          references={props.references}
+          onReferencesChange={props.onReferencesChange}
+          estimate={models.estimate(count)}
+          canSubmit={canSubmit}
+          submitting={submitting}
+          onSubmit={() => void submit()}
+          toolbar={
+            <>
+              <ModelPicker
+                models={models.models}
+                value={models.modelName}
+                onChange={models.setModelName}
+              />
+              <ToolbarPopover
+                label={t('Size')}
+                icon={<Frame />}
+                summary={sizeLabel(size)}
+              >
+                <PanelSection title={t('Size')}>
+                  <SizeOptions presets={SIZES} value={size} onChange={setSize} />
+                </PanelSection>
+              </ToolbarPopover>
+              <ToolbarPopover
+                label={t('Count')}
+                icon={<Layers />}
+                summary={t('{{count}} images', { count })}
+              >
+                <PanelSection title={t('Count')}>
+                  <NumberOptions
+                    presets={COUNTS}
+                    format={String}
+                    min={1}
+                    max={MAX_COUNT}
+                    value={count}
+                    onChange={setCount}
+                  />
+                </PanelSection>
+              </ToolbarPopover>
+            </>
+          }
+        />
+      </div>
+
+      <MediaViewer
+        item={viewing}
+        onClose={() => setViewing(null)}
+        onToVideo={props.onToVideo}
+      />
+    </>
   )
 }

@@ -74,6 +74,10 @@ export type StudioImageJob = {
   status: 'running' | 'success' | 'failed'
   prompt: string
   model: string
+  group?: string
+  size?: string
+  /** Requested image count. */
+  count?: number
   created_at: number
   finished_at?: number
   error?: string

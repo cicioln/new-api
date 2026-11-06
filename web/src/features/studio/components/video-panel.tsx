@@ -16,90 +16,72 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Download, LoaderCircle, Play, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Frame } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { ConfirmDialog } from '@/components/confirm-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { formatQuotaWithCurrency } from '@/lib/currency'
 import { getServerErrorMessage } from '@/lib/server-error-message'
 import { TASK_STATUS } from '@/features/usage-logs/constants'
-import type { TaskLog } from '@/features/usage-logs/types'
 
-import { deleteVideoTask, getVideoTasks, getVideoUrl, submitVideo } from '../api'
-import { newId, readAsDataUrl, useStudioModels } from '../lib/options'
+import { submitVideo } from '../api'
+import { readAsDataUrl, useStudioModels } from '../lib/options'
+import { RUNNING_VIDEO, useVideoTasks, VIDEO_TASKS_KEY } from '../lib/queries'
+import { Composer } from './composer'
 import {
-  CostLine,
-  FieldLabel,
-  ModelSelect,
-  NumberPicker,
-  ReferencePicker,
-  SizePicker,
+  isValidSize,
+  ModelPicker,
+  NumberOptions,
+  PanelSection,
+  SizeOptions,
+  ToolbarPopover,
   type ReferenceImage,
+  type SizePreset,
 } from './form-parts'
-import { IconAction } from './image-panel'
+import { MediaViewer, VideoTile, type MediaItem } from './media'
+import { FailedTile, JobHeader, PendingTile, StudioHero, Tag } from './shared'
 
-export type VideoMode = 'text' | 'image'
-
-const RATIOS = [
-  { value: '', label: 'Auto' },
-  { value: '1280x720', label: '16:9' },
-  { value: '720x1280', label: '9:16' },
-  { value: '1024x1024', label: '1:1' },
+const RATIOS: SizePreset[] = [
+  { value: '', label: 'Auto', w: 0, h: 0 },
+  { value: '1280x720', label: '16:9', w: 16, h: 9 },
+  { value: '720x1280', label: '9:16', w: 9, h: 16 },
+  { value: '1024x1024', label: '1:1', w: 1, h: 1 },
 ]
 const DURATIONS = [5, 10]
 const MAX_SECONDS = 10
-const POLL_MS = 5000
-
-const RUNNING = new Set<string>([
-  TASK_STATUS.NOT_START,
-  TASK_STATUS.SUBMITTED,
-  TASK_STATUS.QUEUED,
-  TASK_STATUS.IN_PROGRESS,
-])
 
 export function VideoPanel(props: {
   group: string
-  mode: VideoMode
   references: ReferenceImage[]
   onReferencesChange: (images: ReferenceImage[]) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const models = useStudioModels('video', props.group)
+  const tasks = useVideoTasks()
   const [prompt, setPrompt] = useState('')
   const [ratio, setRatio] = useState('')
   const [seconds, setSeconds] = useState(5)
   const [submitting, setSubmitting] = useState(false)
+  const [viewing, setViewing] = useState<MediaItem | null>(null)
 
-  const tasks = useQuery({
-    queryKey: ['studio-video-tasks'],
-    queryFn: getVideoTasks,
-    refetchInterval: (query) =>
-      (query.state.data ?? []).some((task) => RUNNING.has(task.status))
-        ? POLL_MS
-        : false,
-  })
-
-  const needsImage = props.mode === 'image'
+  const ratioLabel =
+    RATIOS.find((item) => item.value === ratio)?.label ?? ratio.replace('x', '×')
   const canSubmit =
     !submitting &&
     prompt.trim() !== '' &&
     models.modelName !== '' &&
-    (!needsImage || props.references.length > 0)
+    isValidSize(ratio)
 
   const submit = async () => {
+    if (!canSubmit) return
     setSubmitting(true)
     try {
-      const images = needsImage
-        ? await Promise.all(props.references.map((image) => readAsDataUrl(image.file)))
-        : []
+      const images = await Promise.all(
+        props.references.map((image) => readAsDataUrl(image.file))
+      )
       await submitVideo({
         group: props.group,
         model: models.modelName,
@@ -109,7 +91,8 @@ export function VideoPanel(props: {
         images,
       })
       toast.success(t('Video task submitted'))
-      await queryClient.invalidateQueries({ queryKey: ['studio-video-tasks'] })
+      setPrompt('')
+      await queryClient.invalidateQueries({ queryKey: VIDEO_TASKS_KEY })
     } catch (error) {
       toast.error(getServerErrorMessage(error, t('Video submission failed')))
     } finally {
@@ -117,275 +100,152 @@ export function VideoPanel(props: {
     }
   }
 
-  return (
-    <div className='grid grid-cols-1 items-start gap-3.5 lg:grid-cols-[320px_minmax(0,1fr)]'>
-      <section className='bg-card grid gap-3.5 rounded-[10px] border p-[18px]'>
-        <ModelSelect
-          id={`studio-video-model-${props.mode}`}
-          models={models.models}
-          value={models.modelName}
-          onChange={models.setModelName}
-        />
-        {needsImage && (
-          <ReferencePicker
-            label={t('First frame / reference images')}
-            hint={t('Required. Upload, paste, or send an image from the image tab. Up to 4, 10 MB each.')}
-            images={props.references}
-            onAdd={(files) =>
-              props.onReferencesChange([
-                ...props.references,
-                ...files.map((file) => ({
-                  id: newId(),
-                  file,
-                  url: URL.createObjectURL(file),
-                })),
-              ])
-            }
-            onRemove={(id) => {
-              const removed = props.references.find((image) => image.id === id)
-              if (removed) URL.revokeObjectURL(removed.url)
-              props.onReferencesChange(
-                props.references.filter((image) => image.id !== id)
-              )
-            }}
-            disabled={submitting}
-          />
-        )}
-        <div>
-          <FieldLabel htmlFor={`studio-video-prompt-${props.mode}`}>
-            {needsImage ? t('Motion description') : t('Prompt')}
-          </FieldLabel>
-          <Textarea
-            id={`studio-video-prompt-${props.mode}`}
-            className='min-h-28'
-            value={prompt}
-            placeholder={
-              needsImage
-                ? t('Describe how the image should move')
-                : t('Describe the video you want')
-            }
-            onChange={(event) => setPrompt(event.target.value)}
-          />
-        </div>
-        <SizePicker
-          label={t('Aspect ratio')}
-          presets={RATIOS.map((option) => ({
-            value: option.value,
-            label: option.value ? option.label : t(needsImage ? 'Match image' : 'Auto'),
-          }))}
-          value={ratio}
-          onChange={setRatio}
-        />
-        <NumberPicker
-          label={t('Duration')}
-          presets={DURATIONS}
-          format={(value) => t('{{count}} s', { count: value })}
-          min={1}
-          max={MAX_SECONDS}
-          value={seconds}
-          onChange={setSeconds}
-        />
-        <p className='text-muted-foreground -mt-1.5 text-xs'>
-          {t('Some models treat ratio and duration as hints only. A single video is at most 10 seconds.')}
-        </p>
-        <CostLine label={t('Estimated cost')} value={models.estimate(1)} />
-        <Button disabled={!canSubmit} onClick={() => void submit()}>
-          {submitting && <LoaderCircle className='animate-spin' />}
-          {t('Submit video task')}
-        </Button>
-      </section>
-
-      <section className='grid min-w-0 gap-3'>
-        <div className='flex items-baseline justify-between gap-3'>
-          <h2 className='text-sm font-medium'>{t('My video tasks')}</h2>
-          <span className='text-muted-foreground text-xs'>
-            {t('Text-to-video and image-to-video share this list')}
-          </span>
-        </div>
-        {(tasks.data ?? []).length === 0 ? (
-          <div className='text-muted-foreground rounded-[10px] border border-dashed p-10 text-center text-sm'>
-            {tasks.isLoading ? t('Loading...') : t('Submitted video tasks appear here.')}
-          </div>
-        ) : (
-          <div className='grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3'>
-            {(tasks.data ?? []).map((task) => (
-              <VideoTaskCard key={task.task_id} task={task} />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  )
-}
-
-function VideoTaskCard(props: { task: TaskLog }) {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const task = props.task
-  const [playing, setPlaying] = useState(false)
-  const [confirming, setConfirming] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const done = task.status === TASK_STATUS.SUCCESS
-  const failed = task.status === TASK_STATUS.FAILURE
-  const running = RUNNING.has(task.status)
-  const video = useQuery({
-    queryKey: ['studio-video-url', task.task_id],
-    queryFn: () => getVideoUrl(task.task_id),
-    enabled: done,
-    staleTime: Infinity,
-    retry: false,
-  })
-  const [expired, setExpired] = useState(false)
-  useEffect(() => setExpired(false), [video.data])
-
-  const remove = async () => {
-    setDeleting(true)
-    try {
-      await deleteVideoTask(task.task_id)
-      toast.success(t('Deleted successfully'))
-      setConfirming(false)
-      await queryClient.invalidateQueries({ queryKey: ['studio-video-tasks'] })
-    } catch (error) {
-      toast.error(getServerErrorMessage(error, t('Delete failed')))
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const progress = Number.parseInt(task.progress ?? '', 10)
-  const prompt = (task.properties?.input ?? '').trim()
+  const list = tasks.data ?? []
 
   return (
-    <article className='bg-card overflow-hidden rounded-lg border'>
-      <div className='bg-muted text-muted-foreground relative flex aspect-video items-center justify-center text-xs'>
-        {done && video.data && !expired ? (
-          <button
-            type='button'
-            aria-label={t('Play video')}
-            onClick={() => setPlaying(true)}
-            className='group relative size-full cursor-pointer bg-black'
-          >
-            <video
-              src={video.data}
-              preload='metadata'
-              muted
-              playsInline
-              className='pointer-events-none size-full object-contain'
-              onError={() => setExpired(true)}
-            />
-            <span className='absolute inset-0 flex items-center justify-center bg-black/10 transition-colors group-hover:bg-black/30'>
-              <span className='flex size-11 items-center justify-center rounded-full bg-black/60 text-white'>
-                <Play className='size-5 fill-current' />
-              </span>
-            </span>
-          </button>
-        ) : done ? (
-          video.isLoading ? (
-            <LoaderCircle className='size-5 animate-spin' />
+    <>
+      <div className='min-h-0 flex-1 overflow-y-auto px-4 pt-5 pb-3 md:px-7'>
+        {list.length === 0 ? (
+          tasks.isLoading ? (
+            <p className='text-muted-foreground py-24 text-center text-sm'>
+              {t('Loading...')}
+            </p>
           ) : (
-            t('Expired')
-          )
-        ) : running ? (
-          <div className='flex flex-col items-center gap-2'>
-            <LoaderCircle className='size-5 animate-spin' />
-            {Number.isFinite(progress) && progress > 0
-              ? `${progress}%`
-              : t('Queued')}
-          </div>
-        ) : (
-          t('Failed')
-        )}
-      </div>
-      <div className='grid gap-1.5 p-2.5 text-xs'>
-        <div className='flex items-center justify-between gap-2'>
-          <StatusBadge status={task.status} />
-          <span className='text-muted-foreground font-mono'>
-            {task.properties?.origin_model_name}
-          </span>
-        </div>
-        {running && Number.isFinite(progress) && (
-          <div className='bg-muted h-1 overflow-hidden rounded-full'>
-            <div
-              className='bg-primary h-full transition-[width]'
-              style={{ width: `${Math.min(progress, 100)}%` }}
+            <StudioHero
+              title={t('Video')}
+              suggestions={[
+                t('Hot air balloons rising out of a valley'),
+                t('City time-lapse from day to night'),
+                t('Waves on rocks in slow motion at sunset'),
+              ]}
+              onPick={setPrompt}
             />
-          </div>
-        )}
-        {prompt && (
-          <p className='text-muted-foreground truncate' title={prompt}>
-            {prompt}
-          </p>
-        )}
-        {failed && (
-          <p className='text-destructive line-clamp-2' title={task.fail_reason}>
-            {task.fail_reason || t('Generation failed')}
-            {task.quota > 0 &&
-              ` · ${t('Refunded {{amount}}', { amount: formatQuotaWithCurrency(task.quota) })}`}
-          </p>
-        )}
-        {!running && (
-          <div className='flex gap-1'>
-            {done && video.data && !expired && (
-              <IconAction label={t('Download')} href={video.data} download>
-                <Download />
-              </IconAction>
-            )}
-            <IconAction label={t('Delete')} onClick={() => setConfirming(true)}>
-              <Trash2 />
-            </IconAction>
+          )
+        ) : (
+          <div className='mx-auto grid max-w-[900px] gap-6'>
+            {list.map((task) => {
+              const running = RUNNING_VIDEO.has(task.status)
+              const failed = task.status === TASK_STATUS.FAILURE
+              const done = task.status === TASK_STATUS.SUCCESS
+              const progress = Number.parseInt(task.progress ?? '', 10)
+              const aspect = '16 / 9'
+              const text = (task.properties?.input ?? '').trim()
+              const model = task.properties?.origin_model_name ?? ''
+              return (
+                <section key={task.task_id} className='grid gap-2.5'>
+                  <JobHeader prompt={text || t('Video')}>
+                    {running && (
+                      <Tag tone='running'>
+                        {Number.isFinite(progress) && progress > 0
+                          ? `${t('Generating')} · ${progress}%`
+                          : t('Queued')}
+                      </Tag>
+                    )}
+                    {done && <Tag tone='success'>{t('Completed')}</Tag>}
+                    {failed && <Tag tone='failed'>{t('Failed')}</Tag>}
+                    {model && <Tag>{model}</Tag>}
+                    {task.action === 'image_to_video' && <Tag>{t('Image to video')}</Tag>}
+                    {failed && task.quota > 0 && (
+                      <Tag>{t('Refunded {{amount}}', { amount: formatQuotaWithCurrency(task.quota) })}</Tag>
+                    )}
+                  </JobHeader>
+                  <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(240px,1fr))]'>
+                    {running && (
+                      <div style={{ aspectRatio: aspect }}>
+                        <PendingTile
+                          label={
+                            Number.isFinite(progress) && progress > 0
+                              ? `${progress}%`
+                              : t('Queued')
+                          }
+                          progress={Number.isFinite(progress) ? progress : 0}
+                          className='size-full'
+                        />
+                      </div>
+                    )}
+                    {failed && (
+                      <div style={{ aspectRatio: aspect }}>
+                        <FailedTile
+                          message={task.fail_reason || t('Generation failed')}
+                          className='size-full'
+                        />
+                      </div>
+                    )}
+                    {done && (
+                      <VideoTile
+                        item={{
+                          kind: 'video',
+                          prompt: text,
+                          model,
+                          taskId: task.task_id,
+                        }}
+                        aspect={aspect}
+                        onOpen={setViewing}
+                      />
+                    )}
+                  </div>
+                </section>
+              )
+            })}
           </div>
         )}
       </div>
 
-      <Dialog open={playing} onOpenChange={setPlaying}>
-        <DialogContent className='sm:max-w-4xl'>
-          <DialogTitle className='pr-8 text-sm font-medium'>
-            {t('Video preview')}
-          </DialogTitle>
-          {playing && video.data && (
-            <div className='grid gap-3'>
-              <video
-                src={video.data}
-                controls
-                autoPlay
-                className='mx-auto max-h-[70dvh] w-full rounded-lg bg-black object-contain'
+      <div className='shrink-0 px-3 pt-1 pb-4 md:px-7'>
+        <Composer
+          id='studio-video-prompt'
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          placeholder={t('Describe the video: camera, motion, pace and style. Add a reference image to animate it.')}
+          references={props.references}
+          onReferencesChange={props.onReferencesChange}
+          estimate={models.estimate(1)}
+          canSubmit={canSubmit}
+          submitting={submitting}
+          onSubmit={() => void submit()}
+          toolbar={
+            <>
+              <ModelPicker
+                models={models.models}
+                value={models.modelName}
+                onChange={models.setModelName}
               />
-              {prompt && (
-                <p className='text-muted-foreground text-xs break-words whitespace-pre-wrap'>
-                  {prompt}
+              <ToolbarPopover
+                label={t('Aspect ratio')}
+                icon={<Frame />}
+                summary={`${ratio === '' ? t('Auto') : ratioLabel} · ${t('{{count}} s', { count: seconds })}`}
+              >
+                <PanelSection title={t('Aspect ratio')}>
+                  <SizeOptions
+                    presets={RATIOS.map((item) =>
+                      item.value === ''
+                        ? { ...item, label: props.references.length > 0 ? t('Match image') : t('Auto') }
+                        : item
+                    )}
+                    value={ratio}
+                    onChange={setRatio}
+                  />
+                </PanelSection>
+                <PanelSection title={t('Duration')}>
+                  <NumberOptions
+                    presets={DURATIONS}
+                    format={(value) => t('{{count}} s', { count: value })}
+                    min={1}
+                    max={MAX_SECONDS}
+                    value={seconds}
+                    onChange={setSeconds}
+                  />
+                </PanelSection>
+                <p className='text-muted-foreground text-xs'>
+                  {t('Some models treat ratio and duration as hints only. A single video is at most 10 seconds.')}
                 </p>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+              </ToolbarPopover>
+            </>
+          }
+        />
+      </div>
 
-      <ConfirmDialog
-        open={confirming}
-        onOpenChange={(open) => {
-          if (!deleting) setConfirming(open)
-        }}
-        title={t('Delete video')}
-        desc={t('The video is removed from this list and its file is deleted from the server. This action cannot be undone.')}
-        confirmText={t('Delete')}
-        destructive
-        isLoading={deleting}
-        handleConfirm={() => void remove()}
-      />
-    </article>
+      <MediaViewer item={viewing} onClose={() => setViewing(null)} />
+    </>
   )
-}
-
-function StatusBadge(props: { status: string }) {
-  const { t } = useTranslation()
-  if (props.status === TASK_STATUS.SUCCESS) {
-    return <Badge variant='secondary'>{t('Completed')}</Badge>
-  }
-  if (props.status === TASK_STATUS.FAILURE) {
-    return <Badge variant='destructive'>{t('Failed')}</Badge>
-  }
-  if (props.status === TASK_STATUS.IN_PROGRESS) {
-    return <Badge variant='outline'>{t('Generating')}</Badge>
-  }
-  return <Badge variant='warning'>{t('Queued')}</Badge>
 }

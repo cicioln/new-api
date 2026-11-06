@@ -16,13 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ImagePlus, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -34,197 +37,112 @@ import {
 import { cn } from '@/lib/utils'
 import type { PricingModel } from '@/features/pricing/types'
 
-import { MAX_REFERENCE_BYTES, MAX_REFERENCE_IMAGES } from '../lib/options'
+export type ReferenceImage = { id: string; file: File; url: string }
 
-export function FieldLabel(props: { htmlFor?: string; children: string }) {
-  return (
-    <Label htmlFor={props.htmlFor} className='mb-1.5 text-[13px] font-medium'>
-      {props.children}
-    </Label>
-  )
-}
+export const MIN_SIDE = 64
+export const MAX_SIDE = 4096
 
-export function ModelSelect(props: {
-  id: string
+const pickClass =
+  'bg-muted/50 hover:bg-muted data-[popup-open]:border-primary data-[popup-open]:text-primary inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 [&_svg]:size-3.5 [&_svg]:shrink-0'
+
+/** Compact model select for the composer toolbar. */
+export function ModelPicker(props: {
   models: PricingModel[]
   value: string
   onChange: (value: string) => void
-  disabled?: boolean
 }) {
   const { t } = useTranslation()
   return (
-    <div>
-      <FieldLabel htmlFor={props.id}>{t('Model')}</FieldLabel>
-      <Select
-        value={props.value}
-        onValueChange={(value) => {
-          if (value) props.onChange(String(value))
-        }}
-        disabled={props.disabled || props.models.length === 0}
+    <Select
+      value={props.value}
+      onValueChange={(value) => {
+        if (value) props.onChange(String(value))
+      }}
+      disabled={props.models.length === 0}
+    >
+      <SelectTrigger
+        aria-label={t('Model')}
+        size='sm'
+        className='bg-muted/50 h-8 max-w-[240px] min-w-0 flex-[0_1_240px] rounded-lg text-[13px]'
       >
-        <SelectTrigger id={props.id} className='h-10 w-full'>
-          <SelectValue>
+        <SelectValue>
+          <span className='truncate'>
             {props.value || t('No models available')}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent alignItemWithTrigger={false}>
-          <SelectGroup>
-            {props.models.map((model) => (
-              <SelectItem key={model.model_name} value={model.model_name}>
-                {model.model_name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
+          </span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent alignItemWithTrigger={false}>
+        <SelectGroup>
+          {props.models.map((model) => (
+            <SelectItem key={model.model_name} value={model.model_name}>
+              {model.model_name}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   )
 }
 
-export function ChipGroup<T extends string | number>(props: {
+/** Toolbar button that opens a settings panel above the composer. */
+export function ToolbarPopover(props: {
   label: string
-  options: { value: T; label: string }[]
-  value: T
-  onChange: (value: T) => void
-  disabled?: boolean
+  icon: ReactNode
+  summary: string
+  children: ReactNode
 }) {
   return (
-    <div>
-      <FieldLabel>{props.label}</FieldLabel>
-      <div role='radiogroup' aria-label={props.label} className='flex flex-wrap gap-1.5'>
-        {props.options.map((option) => {
-          const active = option.value === props.value
-          return (
-            <button
-              key={String(option.value)}
-              type='button'
-              role='radio'
-              aria-checked={active}
-              disabled={props.disabled}
-              onClick={() => props.onChange(option.value)}
-              className={cn(
-                'focus-visible:ring-ring/50 rounded-full border px-3 py-1 text-xs transition-colors outline-none focus-visible:ring-3 disabled:opacity-50',
-                active
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
-              )}
-            >
-              {option.label}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-export type ReferenceImage = { id: string; file: File; url: string }
-
-export function ReferencePicker(props: {
-  label: string
-  hint: string
-  images: ReferenceImage[]
-  onAdd: (files: File[]) => void
-  onRemove: (id: string) => void
-  disabled?: boolean
-}) {
-  const { t } = useTranslation()
-  const input = useRef<HTMLInputElement>(null)
-  const room = MAX_REFERENCE_IMAGES - props.images.length
-
-  const accept = (files: File[]) => {
-    const images = files.filter((file) => file.type.startsWith('image/'))
-    const oversized = images.filter((file) => file.size > MAX_REFERENCE_BYTES)
-    if (oversized.length > 0) {
-      toast.error(t('Each image must be 10 MB or smaller'))
-    }
-    const usable = images.filter((file) => file.size <= MAX_REFERENCE_BYTES)
-    if (usable.length > room) {
-      toast.error(
-        t('At most {{count}} reference images', { count: MAX_REFERENCE_IMAGES })
-      )
-    }
-    if (usable.length > 0) props.onAdd(usable.slice(0, Math.max(room, 0)))
-  }
-
-  return (
-    <div>
-      <FieldLabel>{props.label}</FieldLabel>
-      <div
-        className='grid grid-cols-4 gap-1.5 rounded-lg border border-dashed p-2'
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={(event) => {
-          event.preventDefault()
-          if (!props.disabled) accept(Array.from(event.dataTransfer.files))
-        }}
-        onPaste={(event) => {
-          if (!props.disabled) accept(Array.from(event.clipboardData.files))
-        }}
+    <Popover>
+      <PopoverTrigger
+        render={<button type='button' aria-label={props.label} className={pickClass} />}
       >
-        {props.images.map((image) => (
-          <div key={image.id} className='relative aspect-square'>
-            <img
-              src={image.url}
-              alt=''
-              className='size-full rounded-md object-cover'
-            />
-            <button
-              type='button'
-              aria-label={t('Remove image')}
-              disabled={props.disabled}
-              onClick={() => props.onRemove(image.id)}
-              className='bg-background/80 absolute top-1 right-1 rounded-full p-0.5'
-            >
-              <X className='size-3' />
-            </button>
-          </div>
-        ))}
-        {room > 0 && (
-          <button
-            type='button'
-            aria-label={t('Add image')}
-            disabled={props.disabled}
-            onClick={() => input.current?.click()}
-            className='text-muted-foreground hover:bg-muted flex aspect-square items-center justify-center rounded-md border border-dashed'
-          >
-            <ImagePlus className='size-5' />
-          </button>
-        )}
-        <input
-          ref={input}
-          type='file'
-          accept='image/*'
-          multiple
-          hidden
-          onChange={(event) => {
-            accept(Array.from(event.target.files ?? []))
-            event.target.value = ''
-          }}
-        />
-      </div>
-      <p className='text-muted-foreground mt-1.5 text-xs'>{props.hint}</p>
-    </div>
+        {props.icon}
+        <span className='font-mono tabular-nums'>{props.summary}</span>
+        <ChevronDown className='text-muted-foreground' />
+      </PopoverTrigger>
+      <PopoverContent side='top' align='start' className='w-80 gap-3.5 p-3.5'>
+        {props.children}
+      </PopoverContent>
+    </Popover>
   )
 }
 
-export function CostLine(props: { label: string; value?: string }) {
-  if (!props.value) return null
+export function PanelSection(props: { title: string; children: ReactNode }) {
   return (
-    <div className='text-muted-foreground flex justify-between border-t pt-3 text-xs'>
-      <span>{props.label}</span>
-      <span className='text-foreground font-mono tabular-nums'>
-        {props.value}
-      </span>
+    <div className='grid gap-2'>
+      <div className='text-muted-foreground text-xs font-medium'>{props.title}</div>
+      {props.children}
     </div>
   )
 }
 
 const CUSTOM = 'custom'
 
-/** Preset sizes plus a custom width × height. The value is "WxH" or "". */
-export function SizePicker(props: {
+export type SizePreset = {
+  value: string
   label: string
-  presets: { value: string; label: string }[]
+  /** Shape drawn on the tile; 0 × 0 draws no shape. */
+  w: number
+  h: number
+}
+
+export function parseSize(value: string): [number, number] | null {
+  const match = /^(\d+)x(\d+)$/.exec(value)
+  return match ? [Number(match[1]), Number(match[2])] : null
+}
+
+export function isValidSize(value: string): boolean {
+  if (value === '') return true
+  const size = parseSize(value)
+  return (
+    size !== null &&
+    size.every((side) => side >= MIN_SIDE && side <= MAX_SIDE)
+  )
+}
+
+/** Ratio tiles plus a custom width × height. The value is "WxH" or "". */
+export function SizeOptions(props: {
+  presets: SizePreset[]
   value: string
   onChange: (value: string) => void
 }) {
@@ -232,59 +150,106 @@ export function SizePicker(props: {
   const [custom, setCustom] = useState(
     () => !props.presets.some((preset) => preset.value === props.value)
   )
-  const [width, height] = props.value.split('x')
+  const [width = '', height = ''] = props.value.split('x')
   const update = (nextWidth: string, nextHeight: string) =>
-    props.onChange(
-      nextWidth && nextHeight ? `${nextWidth}x${nextHeight}` : ''
-    )
+    props.onChange(`${nextWidth}x${nextHeight}`)
+
   return (
     <div className='grid gap-2'>
-      <ChipGroup
-        label={props.label}
-        options={[...props.presets, { value: CUSTOM, label: t('Custom') }]}
-        value={custom ? CUSTOM : props.value}
-        onChange={(value) => {
-          if (value === CUSTOM) {
-            setCustom(true)
-            update(width || '1024', height || '1024')
-            return
+      <div role='radiogroup' className='grid grid-cols-4 gap-1.5'>
+        {[...props.presets, { value: CUSTOM, label: t('Custom'), w: 0, h: 0 }].map(
+          (preset) => {
+            const active = custom
+              ? preset.value === CUSTOM
+              : preset.value === props.value
+            return (
+              <button
+                key={preset.value || 'auto'}
+                type='button'
+                role='radio'
+                aria-checked={active}
+                onClick={() => {
+                  if (preset.value === CUSTOM) {
+                    setCustom(true)
+                    const current = parseSize(props.value)
+                    update(String(current?.[0] ?? 1024), String(current?.[1] ?? 1024))
+                    return
+                  }
+                  setCustom(false)
+                  props.onChange(preset.value)
+                }}
+                className={cn(
+                  'flex h-14 flex-col items-center justify-center gap-1 rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                  active
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'bg-muted/40 hover:bg-muted'
+                )}
+              >
+                <span className='flex h-5 items-center'>
+                  {preset.w > 0 ? (
+                    <span
+                      className='rounded-[2px] border-[1.5px] border-current'
+                      style={{
+                        width: Math.round((preset.w / Math.max(preset.w, preset.h)) * 18),
+                        height: Math.round((preset.h / Math.max(preset.w, preset.h)) * 18),
+                      }}
+                    />
+                  ) : (
+                    <span className='text-[11px] leading-none'>
+                      {preset.value === CUSTOM ? '…' : 'A'}
+                    </span>
+                  )}
+                </span>
+                {preset.label}
+              </button>
+            )
           }
-          setCustom(false)
-          props.onChange(value)
-        }}
-      />
+        )}
+      </div>
       {custom && (
-        <div className='flex items-center gap-2'>
-          <Input
-            type='number'
-            min={64}
-            max={4096}
-            step={1}
-            aria-label={t('Width')}
-            placeholder={t('Width')}
-            value={width ?? ''}
-            onChange={(event) => update(event.target.value, height ?? '')}
-          />
-          <span className='text-muted-foreground text-xs'>×</span>
-          <Input
-            type='number'
-            min={64}
-            max={4096}
-            step={1}
-            aria-label={t('Height')}
-            placeholder={t('Height')}
-            value={height ?? ''}
-            onChange={(event) => update(width ?? '', event.target.value)}
-          />
-        </div>
+        <>
+          <div className='flex items-center gap-2 text-xs'>
+            <Input
+              type='number'
+              min={MIN_SIDE}
+              max={MAX_SIDE}
+              step={1}
+              aria-label={t('Width')}
+              placeholder={t('Width')}
+              className='h-8 font-mono'
+              value={width}
+              onChange={(event) => update(event.target.value, height)}
+            />
+            <span className='text-muted-foreground'>×</span>
+            <Input
+              type='number'
+              min={MIN_SIDE}
+              max={MAX_SIDE}
+              step={1}
+              aria-label={t('Height')}
+              placeholder={t('Height')}
+              className='h-8 font-mono'
+              value={height}
+              onChange={(event) => update(width, event.target.value)}
+            />
+            <span className='text-muted-foreground'>px</span>
+          </div>
+          <p
+            className={cn(
+              'text-xs',
+              isValidSize(props.value) ? 'text-muted-foreground' : 'text-destructive'
+            )}
+          >
+            {t('Between {{min}} and {{max}}', { min: MIN_SIDE, max: MAX_SIDE })}
+          </p>
+        </>
       )}
     </div>
   )
 }
 
 /** Preset numbers plus a custom value within [min, max]. */
-export function NumberPicker(props: {
-  label: string
+export function NumberOptions(props: {
   presets: number[]
   format: (value: number) => string
   min: number
@@ -296,48 +261,64 @@ export function NumberPicker(props: {
   const [custom, setCustom] = useState(
     () => !props.presets.includes(props.value)
   )
+  const options: { value: number | typeof CUSTOM; label: string }[] = [
+    ...props.presets.map((value) => ({ value, label: props.format(value) })),
+    { value: CUSTOM, label: t('Custom') },
+  ]
   return (
     <div className='grid gap-2'>
-      <ChipGroup<number | typeof CUSTOM>
-        label={props.label}
-        options={[
-          ...props.presets.map((value) => ({
-            value,
-            label: props.format(value),
-          })),
-          { value: CUSTOM, label: t('Custom') },
-        ]}
-        value={custom ? CUSTOM : props.value}
-        onChange={(value) => {
-          if (value === CUSTOM) {
-            setCustom(true)
-            return
-          }
-          setCustom(false)
-          props.onChange(value)
-        }}
-      />
+      <div role='radiogroup' className='grid grid-cols-4 gap-1.5'>
+        {options.map((option) => {
+          const active = custom
+            ? option.value === CUSTOM
+            : option.value === props.value
+          return (
+            <button
+              key={String(option.value)}
+              type='button'
+              role='radio'
+              aria-checked={active}
+              onClick={() => {
+                if (option.value === CUSTOM) {
+                  setCustom(true)
+                  return
+                }
+                setCustom(false)
+                props.onChange(option.value)
+              }}
+              className={cn(
+                'h-8 rounded-lg border text-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                active
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'bg-muted/40 hover:bg-muted'
+              )}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
       {custom && (
-        <Input
-          type='number'
-          min={props.min}
-          max={props.max}
-          step={1}
-          aria-label={props.label}
-          className='max-w-32'
-          value={props.value}
-          onChange={(event) => {
-            const next = Math.round(Number(event.target.value))
-            if (Number.isFinite(next)) {
-              props.onChange(Math.min(props.max, Math.max(props.min, next)))
-            }
-          }}
-        />
-      )}
-      {custom && (
-        <p className='text-muted-foreground -mt-1 text-xs'>
-          {t('Between {{min}} and {{max}}', { min: props.min, max: props.max })}
-        </p>
+        <>
+          <Input
+            type='number'
+            min={props.min}
+            max={props.max}
+            step={1}
+            aria-label={t('Custom')}
+            className='h-8 max-w-28 font-mono'
+            value={props.value}
+            onChange={(event) => {
+              const next = Math.round(Number(event.target.value))
+              if (Number.isFinite(next)) {
+                props.onChange(Math.min(props.max, Math.max(props.min, next)))
+              }
+            }}
+          />
+          <p className='text-muted-foreground text-xs'>
+            {t('Between {{min}} and {{max}}', { min: props.min, max: props.max })}
+          </p>
+        </>
       )}
     </div>
   )
