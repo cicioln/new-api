@@ -423,11 +423,99 @@ function buildImageSample(lang: Lang, ctx: SampleContext): string {
   ].join('\n')
 }
 
+// OpenAI-style video generation is asynchronous: submit, poll, download.
+function buildVideoSample(lang: Lang, ctx: SampleContext): string {
+  const url = `${ctx.baseUrl}${ctx.endpointPath}`
+  const prompt = 'Hot air balloons rising out of a misty valley at sunrise.'
+  const body = { model: ctx.modelName, prompt, size: '1280x720', seconds: '4' }
+
+  if (lang === 'curl') {
+    const json = JSON.stringify(body, null, 2)
+    return [
+      '# 1. Submit the task. The response carries the video id.',
+      `curl ${url} \\`,
+      `  -H "Authorization: Bearer $${ctx.apiKeyEnv}" \\`,
+      `  -H "Content-Type: application/json" \\`,
+      `  -d '${json.replace(/\n/g, '\n     ')}'`,
+      '',
+      '# Image to video: add "images": ["https://.../cat.png"] (URL or data URL),',
+      '# or send multipart form fields with -F input_reference=@cat.png',
+      '',
+      '# 2. Poll until status is "completed" or "failed".',
+      `curl ${url}/<VIDEO_ID> \\`,
+      `  -H "Authorization: Bearer $${ctx.apiKeyEnv}"`,
+      '',
+      '# 3. Download the video.',
+      `curl -o video.mp4 ${url}/<VIDEO_ID>/content \\`,
+      `  -H "Authorization: Bearer $${ctx.apiKeyEnv}"`,
+    ].join('\n')
+  }
+  if (lang === 'python') {
+    return [
+      'import os, time, requests',
+      '',
+      `url = "${url}"`,
+      `headers = {"Authorization": f"Bearer {os.environ['${ctx.apiKeyEnv}']}"}`,
+      '',
+      'video = requests.post(url, headers=headers, json={',
+      `    "model": "${ctx.modelName}",`,
+      `    "prompt": "${prompt}",`,
+      `    "size": "1280x720",`,
+      `    "seconds": "4",`,
+      '}).json()',
+      '',
+      'while video["status"] in ("queued", "in_progress"):',
+      '    time.sleep(5)',
+      '    video = requests.get(f"{url}/{video[\'id\']}", headers=headers).json()',
+      '',
+      'if video["status"] != "completed":',
+      '    raise RuntimeError(video.get("error"))',
+      '',
+      'content = requests.get(f"{url}/{video[\'id\']}/content", headers=headers)',
+      'open("video.mp4", "wb").write(content.content)',
+    ].join('\n')
+  }
+  const typed = lang === 'typescript'
+  return [
+    `const url = '${url}'`,
+    `const headers = { Authorization: \`Bearer \${process.env.${ctx.apiKeyEnv}}\` }`,
+    '',
+    `let video${typed ? ': { id: string; status: string; error?: unknown }' : ''} = await (`,
+    `  await fetch(url, {`,
+    `    method: 'POST',`,
+    `    headers: { ...headers, 'Content-Type': 'application/json' },`,
+    `    body: JSON.stringify({`,
+    `      model: '${ctx.modelName}',`,
+    `      prompt: '${prompt}',`,
+    `      size: '1280x720',`,
+    `      seconds: '4',`,
+    `    }),`,
+    `  })`,
+    `).json()`,
+    '',
+    `while (video.status === 'queued' || video.status === 'in_progress') {`,
+    `  await new Promise((resolve) => setTimeout(resolve, 5000))`,
+    `  video = await (await fetch(\`\${url}/\${video.id}\`, { headers })).json()`,
+    `}`,
+    `if (video.status !== 'completed') throw new Error(JSON.stringify(video.error))`,
+    '',
+    `const content = await fetch(\`\${url}/\${video.id}/content\`, { headers })`,
+    `const bytes = new Uint8Array(await content.arrayBuffer())`,
+    `// Save bytes as video.mp4, for example with fs.writeFileSync in Node.`,
+  ].join('\n')
+}
+
+// Endpoint types with no server default path still get a sample.
+const FALLBACK_ENDPOINT_PATHS: Record<string, string> = {
+  'openai-video': '/v1/videos',
+}
+
 function buildSample(
   lang: Lang,
   endpointType: string,
   ctx: SampleContext
 ): string {
+  if (endpointType === 'openai-video') return buildVideoSample(lang, ctx)
   if (endpointType === 'anthropic') return buildAnthropicSample(lang, ctx)
   if (endpointType === 'gemini') return buildGeminiSample(lang, ctx)
   if (endpointType === 'embeddings' || endpointType === 'jina-rerank')
@@ -465,7 +553,7 @@ function CodeSamplesSection(props: {
     return types
       .map((type) => {
         const info = props.endpointMap[type] || {}
-        let path = info.path || ''
+        let path = info.path || FALLBACK_ENDPOINT_PATHS[type] || ''
         if (path && path.includes('{model}')) {
           path = replaceModelInPath(path, props.model.model_name || '')
         }

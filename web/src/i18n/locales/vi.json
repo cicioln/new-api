@@ -8012,6 +8012,10 @@
     "City time-lapse from day to night": "Time-lapse thành phố từ ngày sang đêm",
     "Waves on rocks in slow motion at sunset": "Sóng vỗ đá lúc hoàng hôn, quay chậm",
     "Finished images and videos appear here.": "Ảnh và video đã hoàn tất sẽ hiển thị ở đây.",
-    "Image and video generation for signed-in users.": "Tạo ảnh và video cho người dùng đã đăng nhập."
+    "Image and video generation for signed-in users.": "Tạo ảnh và video cho người dùng đã đăng nhập.",
+    "Video length in seconds, sent as a string such as \"4\"": "Độ dài video tính bằng giây, gửi dạng chuỗi, ví dụ \"4\"",
+    "Output size as width x height, such as 1280x720": "Kích thước đầu ra dạng rộng x cao, ví dụ 1280x720",
+    "Reference image URLs or data URLs for image to video": "URL hoặc data URL của ảnh tham chiếu cho tạo video từ ảnh",
+    "Reference image file in a multipart request": "Tệp ảnh tham chiếu trong yêu cầu multipart"
   }
 }

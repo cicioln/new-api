@@ -763,6 +763,36 @@ const VIDEO_PARAMS: SupportedParameter[] = [
   },
 ]
 
+// Fields of the OpenAI-style POST /v1/videos request.
+const OPENAI_VIDEO_PARAMS: SupportedParameter[] = [
+  {
+    name: 'prompt',
+    type: 'string',
+    required: true,
+    descriptionKey: 'Text description of the desired video',
+  },
+  {
+    name: 'seconds',
+    type: 'string',
+    descriptionKey: 'Video length in seconds, sent as a string such as "4"',
+  },
+  {
+    name: 'size',
+    type: 'string',
+    descriptionKey: 'Output size as width x height, such as 1280x720',
+  },
+  {
+    name: 'images',
+    type: 'array',
+    descriptionKey: 'Reference image URLs or data URLs for image to video',
+  },
+  {
+    name: 'input_reference',
+    type: 'string',
+    descriptionKey: 'Reference image file in a multipart request',
+  },
+]
+
 type ApiCategory = 'reasoning' | 'embedding' | 'image' | 'video' | 'chat'
 
 /**
@@ -790,6 +820,10 @@ function apiCategoryOf(model: PricingModel): ApiCategory {
 export function buildSupportedParameters(
   model: PricingModel
 ): SupportedParameter[] {
+  const endpoints = model.supported_endpoint_types ?? []
+  if (endpoints.includes('openai-video')) return OPENAI_VIDEO_PARAMS
+  if (endpoints.length > 0 && endpoints.every((type) => type === 'image-generation'))
+    return IMAGE_PARAMS
   const cat = apiCategoryOf(model)
   if (cat === 'reasoning') return REASONING_PARAMS
   if (cat === 'embedding') return EMBEDDING_PARAMS

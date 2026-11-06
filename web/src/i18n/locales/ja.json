@@ -8012,6 +8012,10 @@
     "City time-lapse from day to night": "昼から夜への街のタイムラプス",
     "Waves on rocks in slow motion at sunset": "夕暮れの岩に打ち寄せる波、スローモーション",
     "Finished images and videos appear here.": "完成した画像と動画がここに表示されます。",
-    "Image and video generation for signed-in users.": "ログインユーザー向けの画像・動画生成。"
+    "Image and video generation for signed-in users.": "ログインユーザー向けの画像・動画生成。",
+    "Video length in seconds, sent as a string such as \"4\"": "動画の長さ（秒）。\"4\" のような文字列で指定",
+    "Output size as width x height, such as 1280x720": "出力サイズ（幅x高さ）。例: 1280x720",
+    "Reference image URLs or data URLs for image to video": "画像から動画用の参照画像（URL または data URL）",
+    "Reference image file in a multipart request": "multipart リクエストで送る参照画像ファイル"
   }
 }
