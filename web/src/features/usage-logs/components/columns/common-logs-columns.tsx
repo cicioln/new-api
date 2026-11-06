@@ -606,6 +606,7 @@ export function useCommonLogsColumns(
           if (!isTimingLogType(log.type)) return null
           return (
             <TimingMetricsCell
+              className='justify-end'
               useTimeSec={log.use_time}
               completionTokens={log.completion_tokens}
               frtMs={parseLogOther(log.other)?.frt}
