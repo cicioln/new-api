@@ -325,7 +325,7 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	}
 	files, err := sharedEngine().Generate(c.Request.Context(), acc, musesdk.GenRequest{Prompt: prompt, Kind: "image", Refs: refs, N: count})
 	if err != nil {
-		return nil, relayError(err, false)
+		return nil, relayError(mediaRefusal(err, "image"), false)
 	}
 	defer removeMedia(files)
 	response := dto.ImageResponse{Created: common.GetTimestamp(), Data: make([]dto.ImageData, 0, len(files))}

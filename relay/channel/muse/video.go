@@ -251,7 +251,7 @@ func runVideoJob(jobID string, req videoRequest) {
 			videoJobsMu.Unlock()
 		},
 	})
-	finishVideoJob(jobID, files, err)
+	finishVideoJob(jobID, files, mediaRefusal(err, "video"))
 }
 
 func finishVideoJob(jobID string, files []musesdk.Media, err error) {

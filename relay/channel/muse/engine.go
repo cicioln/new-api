@@ -132,6 +132,19 @@ func persistRotatedKey(channelID int, expected []string, header string) {
 	}
 }
 
+// mediaRefusal replaces the SDK's refusal error, raised when the model
+// answered with text instead of media, with a fixed message for the user.
+func mediaRefusal(err error, kind string) error {
+	if musesdk.KindOf(err) != musesdk.KindRefusal {
+		return err
+	}
+	msg := "无法生成该图片"
+	if kind == "video" {
+		msg = "无法生成该视频"
+	}
+	return &musesdk.Error{Kind: musesdk.KindRefusal, Msg: msg, Err: err}
+}
+
 // relayError maps SDK errors onto relay errors. Once output reached the
 // client, or the SDK reports that the turn may already have run, the request
 // must not be retried on another channel.

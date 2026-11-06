@@ -244,7 +244,12 @@ func storeStudioImageResult(job *studioImageJob, status int, body []byte) {
 			} `json:"error"`
 		}
 		_ = common.Unmarshal(body, &failure)
-		job.Error = strings.TrimSpace(failure.Error.Message)
+		message := failure.Error.Message
+		// Relay appends " (request id: ...)" for support; users don't need it.
+		if index := strings.LastIndex(message, " (request id: "); index >= 0 {
+			message = message[:index]
+		}
+		job.Error = strings.TrimSpace(message)
 		if job.Error == "" {
 			job.Error = "Image generation failed"
 		}
