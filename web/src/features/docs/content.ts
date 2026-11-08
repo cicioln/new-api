@@ -339,8 +339,8 @@ const MUSE_CHAT: ModelDoc = {
     zh: '文本对话，提问时可以附带图片。流式输出与 OpenAI 对话接口一致。',
   },
   notes: {
-    en: 'Images are read only from the last user message, at most 4, 10 MB each. Images or videos the model makes during chat are not returned; use muse-image or muse-video for those. Sampling parameters such as temperature are ignored.',
-    zh: '只读取最后一条用户消息里的图片，最多 4 张，每张不超过 10 MB。对话中模型生成的图片或视频不会返回，出图请用 muse-image，出视频请用 muse-video。temperature 等采样参数不生效。',
+    en: 'Images are read only from the last user message, at most 4, 10 MB each. Chat answers with text only and does not generate images or videos; use muse-image or muse-video for those. Sampling parameters such as temperature are ignored.',
+    zh: '只读取最后一条用户消息里的图片，最多 4 张，每张不超过 10 MB。对话只返回文字，不会生成图片或视频，出图请用 muse-image，出视频请用 muse-video。temperature 等采样参数不生效。',
   },
   facts: [
     {

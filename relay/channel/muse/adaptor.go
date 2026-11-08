@@ -120,6 +120,7 @@ func (a *Adaptor) chat(c *gin.Context, info *relaycommon.RelayInfo) (any, *types
 	if apiErr != nil {
 		return nil, apiErr
 	}
+	prompt = chatInstruction + "\n\n" + prompt
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
 	if err != nil {
 		return nil, relayError(err, false)
@@ -212,6 +213,11 @@ func (a *Adaptor) chat(c *gin.Context, info *relaycommon.RelayInfo) (any, *types
 	helper.Done(c)
 	return usage, nil
 }
+
+// chatInstruction keeps chat turns from starting Muse's media tools. Chat only
+// returns text, so a generated image or video would be thrown away after
+// using the account's media quota, and a video outlasts the chat timeout.
+const chatInstruction = "Answer with text only. Do not use your image or video generation tools in this conversation."
 
 // chatPrompt flattens the conversation into one prompt, because every Muse
 // turn opens a new session. Images attached to the last user message are sent
