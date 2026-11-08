@@ -604,9 +604,10 @@ export function useCommonLogsColumns(
         cell: ({ row }) => {
           const log = row.original
           if (!isTimingLogType(log.type)) return null
+          // A fixed width at the right edge keeps every row's bar in line.
           return (
             <TimingMetricsCell
-              className='justify-end'
+              className='ml-auto w-28'
               useTimeSec={log.use_time}
               completionTokens={log.completion_tokens}
               frtMs={parseLogOther(log.other)?.frt}
