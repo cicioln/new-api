@@ -19,6 +19,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/model_setting"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
 )
 
 func stopReasonClaude2OpenAI(reason string) string {
@@ -33,6 +34,22 @@ func maybeMarkClaudeRefusal(c *gin.Context, info *relaycommon.RelayInfo, stopRea
 		info.PerformanceBusinessRejection = true
 		common.SetContextKey(c, constant.ContextKeyAdminRejectReason, "claude_stop_reason=refusal")
 	}
+}
+
+// clearUnbilledRefusalUsage drops the usage of a refusal the upstream did not
+// charge for: a message_delta with stop_reason=refusal that reports explicit
+// zero input and output (Kiro proxies send this when Kiro bills no credits).
+// Its message_start usage is only a pre-request estimate, and message_delta
+// zeros never override it, so without this the refusal is still billed. An
+// absent input_tokens (Bedrock omits it) keeps the message_start usage.
+func clearUnbilledRefusalUsage(claudeResponse *dto.ClaudeResponse, data string, claudeInfo *ClaudeResponseInfo) {
+	if claudeResponse.Type != "message_delta" || claudeInfo == nil || claudeInfo.Usage == nil ||
+		claudeResponse.Delta == nil || claudeResponse.Delta.StopReason == nil ||
+		!strings.EqualFold(*claudeResponse.Delta.StopReason, "refusal") ||
+		!gjson.Get(data, "usage.input_tokens").Exists() || dto.HasClaudeUsageTokens(claudeResponse.Usage) {
+		return
+	}
+	*claudeInfo.Usage = dto.Usage{}
 }
 
 func StreamResponseClaude2OpenAI(claudeResponse *dto.ClaudeResponse) *dto.ChatCompletionsStreamResponse {
@@ -108,6 +125,7 @@ func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claud
 	if claudeResponse.Type == "message_stop" {
 		info.StreamStatus.MarkCompleted()
 	}
+	clearUnbilledRefusalUsage(&claudeResponse, data, claudeInfo)
 	if info.RelayFormat == types.RelayFormatClaude {
 		FormatClaudeResponseInfo(&claudeResponse, nil, claudeInfo)
 
@@ -260,9 +278,12 @@ func HandleStreamFinalResponse(c *gin.Context, info *relaycommon.RelayInfo, clau
 	// Claude input_tokens excludes cache reads and writes, so a fully cached
 	// prompt reports zero input; the prompt is uncounted only when the total
 	// with cache is zero as well. Zero output is uncounted only when content
-	// was streamed, so a refusal before any output keeps its zeros.
-	missingInputUsage := buildOpenAIStyleUsageFromClaudeUsage(claudeInfo.Usage).PromptTokens == 0
-	missingOutputUsage := claudeInfo.Usage.CompletionTokens == 0 && claudeInfo.ResponseText.Len() > 0
+	// was streamed, so a refusal before any output keeps its zeros. A refusal
+	// that reached message_delta keeps the usage the upstream reported: zeros
+	// there mean the upstream billed nothing for the refused request.
+	refused := claudeInfo.Done && info.PerformanceBusinessRejection
+	missingInputUsage := !refused && buildOpenAIStyleUsageFromClaudeUsage(claudeInfo.Usage).PromptTokens == 0
+	missingOutputUsage := !refused && claudeInfo.Usage.CompletionTokens == 0 && claudeInfo.ResponseText.Len() > 0
 	if missingInputUsage || missingOutputUsage || !claudeInfo.Done {
 		if common.DebugEnabled {
 			common.SysLog(common.LogText("claude response usage is not complete, maybe upstream error"))

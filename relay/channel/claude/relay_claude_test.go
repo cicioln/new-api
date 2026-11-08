@@ -30,9 +30,11 @@ func TestClaudeStreamFinalUsageEstimatesOnlyUncountedUsage(t *testing.T) {
 		name, startUsage, deltaUsage, stopReason string // no deltaUsage: the stream broke before message_delta
 		streamText                               bool
 		wantInput, wantOutput                    int
-		wantLocalCount                           bool
+		wantLocalCount, wantNoBilling            bool
 	}{
 		{name: "cache-only refusal keeps zeros", startUsage: `{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":20000,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":20000}}`, deltaUsage: `{"output_tokens":0}`, stopReason: "refusal"},
+		{name: "unbilled refusal drops the message_start estimate", startUsage: `{"input_tokens":50000,"output_tokens":0}`, deltaUsage: `{"input_tokens":0,"output_tokens":0}`, stopReason: "refusal", streamText: true, wantNoBilling: true},
+		{name: "refusal without delta input keeps start input", startUsage: `{"input_tokens":50000,"output_tokens":0}`, deltaUsage: `{"output_tokens":0}`, stopReason: "refusal", wantInput: 50000},
 		{name: "broken stream keeps cache-only input", startUsage: `{"input_tokens":0,"output_tokens":1,"cache_read_input_tokens":50000}`, streamText: true, wantOutput: 2, wantLocalCount: true},
 		{name: "zeros after streamed text are estimated", startUsage: `{"input_tokens":0,"output_tokens":0}`, deltaUsage: `{"output_tokens":0}`, stopReason: "end_turn", streamText: true, wantInput: 1200, wantOutput: 2, wantLocalCount: true},
 		{name: "zero delta input keeps start input", startUsage: `{"input_tokens":1000,"output_tokens":1}`, deltaUsage: `{"input_tokens":0,"output_tokens":50}`, stopReason: "end_turn", streamText: true, wantInput: 1000, wantOutput: 50},
@@ -57,6 +59,10 @@ func TestClaudeStreamFinalUsageEstimatesOnlyUncountedUsage(t *testing.T) {
 			assert.Equal(t, tc.wantInput, state.Usage.PromptTokens)
 			assert.Equal(t, tc.wantOutput, state.Usage.CompletionTokens)
 			assert.Equal(t, tc.wantLocalCount, common.GetContextKeyBool(c, constant.ContextKeyLocalCountTokens))
+			if tc.wantNoBilling {
+				assert.Nil(t, state.Usage.BillingUsage, "settlement must see no usage")
+				return
+			}
 			canonical, ok := state.Usage.BillingUsage.CanonicalUsage()
 			require.True(t, ok)
 			assert.Equal(t, tc.wantInput, canonical.PromptTokens, "settlement must bill the same input")
