@@ -339,8 +339,8 @@ const MUSE_CHAT: ModelDoc = {
     zh: '文本对话，提问时可以附带图片。流式输出与 OpenAI 对话接口一致。',
   },
   notes: {
-    en: 'Images are read only from the last user message, at most 4, 10 MB each. Chat answers with text only and does not generate images or videos; use muse-image or muse-video for those. Sampling parameters such as temperature are ignored.',
-    zh: '只读取最后一条用户消息里的图片，最多 4 张，每张不超过 10 MB。对话只返回文字，不会生成图片或视频，出图请用 muse-image，出视频请用 muse-video。temperature 等采样参数不生效。',
+    en: 'Images are read only from the last user message, at most 10, 10 MB each. Chat answers with text only and does not generate images or videos; use muse-image or muse-video for those. Sampling parameters such as temperature are ignored.',
+    zh: '只读取最后一条用户消息里的图片，最多 10 张，每张不超过 10 MB。对话只返回文字，不会生成图片或视频，出图请用 muse-image，出视频请用 muse-video。temperature 等采样参数不生效。',
   },
   facts: [
     {
@@ -354,7 +354,7 @@ const MUSE_CHAT: ModelDoc = {
     },
     {
       label: { en: 'Reference images', zh: '参考图' },
-      value: { en: 'Up to 4', zh: '最多 4 张' },
+      value: { en: 'Up to 10', zh: '最多 10 张' },
     },
   ],
   endpoints: [
@@ -386,7 +386,7 @@ const MUSE_CHAT: ModelDoc = {
     {
       name: 'image_url',
       type: 'object',
-      values: '≤ 4',
+      values: '≤ 10',
       desc: {
         en: 'An image part: an HTTPS URL or a data URL. Only images in the last user message are used.',
         zh: '图片内容，填 HTTPS 地址或 data URL。只使用最后一条用户消息里的图片。',
@@ -395,8 +395,8 @@ const MUSE_CHAT: ModelDoc = {
   ],
   rules: [
     {
-      en: 'At most 4 images per request, each up to 10 MB.',
-      zh: '每次请求最多 4 张图片，每张不超过 10 MB。',
+      en: 'At most 10 images per request, each up to 10 MB.',
+      zh: '每次请求最多 10 张图片，每张不超过 10 MB。',
     },
     {
       en: 'Messages must contain some text.',
@@ -452,8 +452,8 @@ const MUSE_CHAT: ModelDoc = {
 
 const MUSE_IMAGE: ModelDoc = {
   summary: {
-    en: 'Text to image, or edit with up to 4 reference images. Images come back at the model’s native size.',
-    zh: '文生图，或用最多 4 张参考图改图。图片按模型原生尺寸返回。',
+    en: 'Text to image, or edit with up to 10 reference images. Images come back at the model’s native size.',
+    zh: '文生图，或用最多 10 张参考图改图。图片按模型原生尺寸返回。',
   },
   notes: {
     en: 'Give size as an aspect ratio such as 16:9. A pixel size such as 1024x1024 is reduced to its ratio. 1:1 is about 1600×1600 and 16:9 about 2048×1152; images are not upscaled. Put reference image URLs in images; style and things to avoid go in style and negative_prompt.',
@@ -470,7 +470,7 @@ const MUSE_IMAGE: ModelDoc = {
     },
     {
       label: { en: 'Reference images', zh: '参考图' },
-      value: { en: 'Up to 4', zh: '最多 4 张' },
+      value: { en: 'Up to 10', zh: '最多 10 张' },
     },
     {
       label: { en: 'Billing', zh: '计费' },
@@ -535,7 +535,7 @@ const MUSE_IMAGE: ModelDoc = {
     {
       name: 'images',
       type: 'array',
-      values: '≤ 4',
+      values: '≤ 10',
       desc: {
         en: 'Reference images as HTTPS URLs or data URLs. Works on /v1/images/generations.',
         zh: '参考图，HTTPS 地址或 data URL 组成的数组，可直接用于 /v1/images/generations。',
@@ -569,7 +569,7 @@ const MUSE_IMAGE: ModelDoc = {
     {
       name: 'image',
       type: 'file',
-      values: '≤ 4',
+      values: '≤ 10',
       desc: {
         en: '/v1/images/edits only. Reference image files as multipart fields named image or image[].',
         zh: '仅 /v1/images/edits。参考图文件，multipart 字段名为 image 或 image[]。',
@@ -582,8 +582,8 @@ const MUSE_IMAGE: ModelDoc = {
       zh: '参考图可以用 images 传地址给 /v1/images/generations，也可以用文件传给 /v1/images/edits。',
     },
     {
-      en: 'At most 4 reference images, each up to 10 MB.',
-      zh: '参考图最多 4 张，每张不超过 10 MB。',
+      en: 'At most 10 reference images, each up to 10 MB.',
+      zh: '参考图最多 10 张，每张不超过 10 MB。',
     },
   ],
   callouts: [
@@ -664,12 +664,12 @@ const MUSE_IMAGE: ModelDoc = {
 
 const MUSE_VIDEO: ModelDoc = {
   summary: {
-    en: 'Short video from a prompt, 1 to 10 seconds. You can also give a first frame, a last frame, or up to 4 reference images.',
-    zh: '单段短视频，1 到 10 秒。可以只写提示词，也可以带首帧、尾帧或最多 4 张参考图。',
+    en: 'Short video from a prompt, 1 to 10 seconds. You can also give a first frame, a last frame, or up to 10 reference images.',
+    zh: '单段短视频，1 到 10 秒。可以只写提示词，也可以带首帧、尾帧或最多 10 张参考图。',
   },
   notes: {
-    en: 'Length goes in duration (number) or seconds (string), at most 10. Use first_image_url for the first frame and last_image_url for the last; the first frame can be sent alone. Reference images go in reference_image_urls, up to 4. Generation takes a few minutes; poll the task. Realistic violence, weapons or explosions may fail.',
-    zh: '时长填 duration（数字）或 seconds（字符串），最多 10 秒。首帧用 first_image_url，尾帧用 last_image_url，可以只传首帧。参考图用 reference_image_urls，最多 4 张。生成需要几分钟，请轮询任务。写实暴力、枪械或爆炸可能生成失败。',
+    en: 'Length goes in duration (number) or seconds (string), at most 10. Use first_image_url for the first frame and last_image_url for the last; the first frame can be sent alone. Reference images go in reference_image_urls, up to 10. Generation takes a few minutes; poll the task. Realistic violence, weapons or explosions may fail.',
+    zh: '时长填 duration（数字）或 seconds（字符串），最多 10 秒。首帧用 first_image_url，尾帧用 last_image_url，可以只传首帧。参考图用 reference_image_urls，最多 10 张。生成需要几分钟，请轮询任务。写实暴力、枪械或爆炸可能生成失败。',
   },
   facts: [
     {
@@ -678,7 +678,7 @@ const MUSE_VIDEO: ModelDoc = {
     },
     {
       label: { en: 'Reference images', zh: '参考素材' },
-      value: { en: 'Up to 4 images', zh: '最多 4 张图片' },
+      value: { en: 'Up to 10 images', zh: '最多 10 张图片' },
     },
     {
       label: { en: 'Mode', zh: '调用方式' },
@@ -777,7 +777,7 @@ const MUSE_VIDEO: ModelDoc = {
     {
       name: 'reference_image_urls',
       type: 'array',
-      values: '≤ 4',
+      values: '≤ 10',
       desc: {
         en: 'Reference image URLs. images and input_reference are also accepted.',
         zh: '参考图地址数组。也兼容 images 和 input_reference。',
@@ -790,8 +790,8 @@ const MUSE_VIDEO: ModelDoc = {
       zh: '可以只提供首帧；提供尾帧时必须同时提供首帧。',
     },
     {
-      en: 'Frames and reference images together hold at most 4 images, each up to 10 MB.',
-      zh: '首尾帧与参考图合计最多 4 张，每张不超过 10 MB。',
+      en: 'Frames and reference images together hold at most 10 images, each up to 10 MB.',
+      zh: '首尾帧与参考图合计最多 10 张，每张不超过 10 MB。',
     },
     {
       en: 'More than 10 seconds is rejected with invalid_seconds.',

@@ -33,7 +33,7 @@ const KIND_ENDPOINT: Record<StudioKind, string> = {
   video: 'openai-video',
 }
 
-export const MAX_REFERENCE_IMAGES = 4
+export const MAX_REFERENCE_IMAGES = 10
 export const MAX_REFERENCE_BYTES = 10 * 1024 * 1024
 
 /**
