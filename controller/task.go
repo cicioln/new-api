@@ -424,6 +424,9 @@ func GetAllTask(c *gin.Context) {
 	startTimestamp, _ := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
 	endTimestamp, _ := strconv.ParseInt(c.Query("end_timestamp"), 10, 64)
 	queryParams := model.SyncTaskQueryParams{Platform: constant.TaskPlatform(c.Query("platform")), TaskID: c.Query("task_id"), Status: c.Query("status"), Action: c.Query("action"), StartTimestamp: startTimestamp, EndTimestamp: endTimestamp, ChannelID: c.Query("channel_id")}
+	if userID, err := strconv.Atoi(c.Query("user_id")); err == nil && userID > 0 {
+		queryParams.UserID = strconv.Itoa(userID)
+	}
 	items := model.TaskGetAllTasks(pageInfo.GetStartIdx(), pageInfo.GetPageSize(), queryParams)
 	pageInfo.SetTotal(int(model.TaskCountAllTasks(queryParams)))
 	pageInfo.SetItems(tasksToDto(items, true, c.GetInt("role")))

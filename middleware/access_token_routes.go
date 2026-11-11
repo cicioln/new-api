@@ -118,6 +118,10 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"DELETE /api/user/:id/oauth/bindings/:provider_id": accessTokenScopeRule("user:write"),
 	"DELETE /api/user/:id/bindings/:binding_type":      accessTokenScopeRule("user:write"),
 	"GET /api/user/:id":                                accessTokenScopeRule("user:read"),
+	"GET /api/user/:id/tokens":                         accessTokenScopeRule("user:read"),
+	"PUT /api/user/:id/tokens/:token_id/group":         accessTokenScopeRule("user:write"),
+	"GET /api/user/:id/groups":                         accessTokenScopeRule("user:read"),
+	"GET /api/user/:id/access_check":                   accessTokenScopeRule("user:read"),
 	"POST /api/user/":                                  accessTokenScopeRule("user:write"),
 	"POST /api/user/manage":                            accessTokenScopeRule("user:write"),
 	"PUT /api/user/":                                   accessTokenScopeRule("user:write"),
@@ -262,9 +266,9 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"DELETE /api/prefill_group/:id": accessTokenScopeRule("group:write"),
 
 	// router/api-router.go: /api/mj, /api/task
-	"GET /api/mj/self":                 accessTokenScopeRule("usage:read"),
-	"GET /api/mj/":                     accessTokenScopeRule("log:read"),
-	"GET /api/task/self":               accessTokenScopeRule("usage:read"),
+	"GET /api/mj/self":   accessTokenScopeRule("usage:read"),
+	"GET /api/mj/":       accessTokenScopeRule("log:read"),
+	"GET /api/task/self": accessTokenScopeRule("usage:read"),
 
 	"GET /api/studio/settings":           accessTokenScopeRule("usage:read"),
 	"GET /api/studio/images":             accessTokenScopeRule("usage:read"),
@@ -317,7 +321,7 @@ var accessTokenRouteRules = map[string]accessTokenRouteRule{
 	"DELETE /api/deployments/:id":                       accessTokenScopeRule("deployment:write"),
 
 	// router/relay-router.go
-	"POST /pg/chat/completions":    accessTokenSessionRule,
+	"POST /pg/chat/completions":   accessTokenSessionRule,
 	"POST /pg/images/generations": accessTokenSessionRule,
 	"POST /pg/images/edits":       accessTokenSessionRule,
 	"POST /pg/videos":             accessTokenSessionRule,

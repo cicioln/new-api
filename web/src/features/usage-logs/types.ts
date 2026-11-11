@@ -503,6 +503,8 @@ export interface GetMidjourneyLogsParams {
 export interface GetTaskLogsParams {
   p?: number
   page_size?: number
+  /** Admin only: tasks of one user. */
+  user_id?: number
   channel_id?: string
   task_id?: string
   start_timestamp?: number

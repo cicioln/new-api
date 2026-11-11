@@ -32,6 +32,10 @@ import type {
   ManageUserAction,
   ManageUserQuotaPayload,
   ApiResponse,
+  AdminUserTokensResponse,
+  AdminUserGroupsResponse,
+  AccessCheckParams,
+  AccessCheckResult,
 } from './types'
 
 // A step-up proof is single-use, so the request carrying it must never be
@@ -196,6 +200,63 @@ export async function resetUserTwoFA(
 ): Promise<ApiResponse> {
   const res = await api.delete(
     `/api/user/${id}/2fa`,
+    securityProofConfig(proofToken)
+  )
+  return res.data
+}
+
+// ============================================================================
+// User Detail APIs (admin)
+// ============================================================================
+
+/**
+ * List a user's tokens with masked keys and the group each one runs under
+ */
+export async function getUserTokensByAdmin(
+  userId: number
+): Promise<ApiResponse<AdminUserTokensResponse>> {
+  const res = await api.get(`/api/user/${userId}/tokens`)
+  return res.data
+}
+
+/**
+ * List the groups a user may select, with ratio, channels and models
+ */
+export async function getUserGroupsByAdmin(
+  userId: number
+): Promise<ApiResponse<AdminUserGroupsResponse>> {
+  const res = await api.get(`/api/user/${userId}/groups`)
+  return res.data
+}
+
+/**
+ * Dry-run the gateway's channel selection for one user and model
+ */
+export async function checkUserAccess(
+  userId: number,
+  params: AccessCheckParams
+): Promise<ApiResponse<AccessCheckResult>> {
+  const query: Record<string, string> = { model: params.model }
+  if (params.tokenId) query.token_id = String(params.tokenId)
+  if (params.group !== undefined) query.group = params.group
+  const res = await api.get(`/api/user/${userId}/access_check`, {
+    params: query,
+  })
+  return res.data
+}
+
+/**
+ * Move one of a user's tokens to another group the user may select
+ */
+export async function updateUserTokenGroup(
+  userId: number,
+  tokenId: number,
+  group: string,
+  proofToken: string
+): Promise<ApiResponse> {
+  const res = await api.put(
+    `/api/user/${userId}/tokens/${tokenId}/group`,
+    { group },
     securityProofConfig(proofToken)
   )
   return res.data

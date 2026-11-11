@@ -47,6 +47,22 @@ func GetGroupEnabledModels(group string) []string {
 	return models
 }
 
+// GetEnabledChannelIDsForGroupModel lists the enabled channels that serve
+// modelName in group, read from abilities so it holds with or without the
+// in-memory channel cache.
+func GetEnabledChannelIDsForGroupModel(group string, modelName string) []int {
+	var ids []int
+	DB.Table("abilities").Where(commonGroupCol+" = ? and model = ? and enabled = ?", group, modelName, true).Distinct("channel_id").Pluck("channel_id", &ids)
+	return ids
+}
+
+// CountEnabledChannelsInGroup counts the distinct enabled channels of group.
+func CountEnabledChannelsInGroup(group string) int {
+	var ids []int
+	DB.Table("abilities").Where(commonGroupCol+" = ? and enabled = ?", group, true).Distinct("channel_id").Pluck("channel_id", &ids)
+	return len(ids)
+}
+
 func GetEnabledModels() []string {
 	var models []string
 	// Find distinct models

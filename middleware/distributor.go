@@ -68,7 +68,9 @@ func Distribute() func(c *gin.Context) {
 					tokenModelLimit = map[string]bool{}
 				}
 				if !TokenModelLimitAllows(tokenModelLimit, modelRequest.Model) {
-					abortWithOpenAiMessage(c, http.StatusForbidden, i18n.T(c, i18n.MsgDistributorTokenModelForbidden, map[string]any{"Model": modelRequest.Model}))
+					message := i18n.T(c, i18n.MsgDistributorTokenModelForbidden, map[string]any{"Model": modelRequest.Model})
+					abortWithOpenAiMessage(c, http.StatusForbidden, message)
+					recordDistributorRejection(c, http.StatusForbidden, modelRequest.Model, message)
 					return
 				}
 			}
@@ -119,6 +121,7 @@ func Distribute() func(c *gin.Context) {
 					message = i18n.T(c, selectErr.MessageID, selectErr.Params)
 				}
 				abortWithOpenAiMessage(c, selectErr.StatusCode, message, selectErr.Code)
+				recordDistributorRejection(c, selectErr.StatusCode, modelRequest.Model, message)
 				return
 			}
 		}

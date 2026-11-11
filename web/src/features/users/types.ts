@@ -146,7 +146,75 @@ export interface ManageUserQuotaPayload {
 }
 
 // ============================================================================
+// User Detail Types
+// ============================================================================
+
+export interface AdminUserToken {
+  id: number
+  name: string
+  key: string
+  status: number
+  group: string
+  expired_time: number
+  remain_quota: number
+  unlimited_quota: boolean
+  used_quota: number
+  accessed_time: number
+  model_limits_enabled: boolean
+  model_limits: string
+  /** The group requests with this token run under. */
+  effective_group: string
+  /** True when the token sets no group and uses the user group. */
+  inherits_user_group: boolean
+  /** False when the token group is no longer selectable for the user. */
+  token_group_usable: boolean
+}
+
+export interface AdminUserTokensResponse {
+  items: AdminUserToken[]
+  total: number
+}
+
+export interface UserGroupOverview {
+  group: string
+  description: string
+  ratio: number
+  is_user_group: boolean
+  channels: number
+  models: string[]
+}
+
+export interface AdminUserGroupsResponse {
+  user_group: string
+  groups: UserGroupOverview[]
+}
+
+export type AccessCheckStepResult = 'pass' | 'fail' | 'info'
+
+export interface AccessCheckStep {
+  key: string
+  result: AccessCheckStepResult
+  detail?: Record<string, unknown>
+}
+
+export interface AccessCheckResult {
+  allowed: boolean
+  model: string
+  effective_group: string
+  steps: AccessCheckStep[]
+  channels: Array<{ id: number; name: string; status: number }>
+  groups_with_model: string[]
+}
+
+export interface AccessCheckParams {
+  model: string
+  tokenId?: number
+  /** Simulated token group; undefined keeps the token's own group. */
+  group?: string
+}
+
+// ============================================================================
 // Dialog Types
 // ============================================================================
 
-export type UsersDialogType = 'create' | 'update' | 'delete'
+export type UsersDialogType = 'create' | 'update' | 'delete' | 'detail'

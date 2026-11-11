@@ -29,6 +29,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { USER_ROLE, USER_STATUS, isUserDeleted } from '../constants'
 import type { User } from '../types'
 import { DataTableRowActions } from './data-table-row-actions'
+import { UserNameCell } from './user-name-cell'
 import { UserQuotaCell } from './user-quota-cell'
 
 const tagClass =
@@ -65,17 +66,7 @@ export function useUsersColumns(): ColumnDef<User>[] {
         header: t('User'),
         enableSorting: false,
         enableHiding: false,
-        cell: ({ row }) => {
-          const user = row.original
-          return (
-            <span className='whitespace-nowrap'>
-              <b className='font-medium!'>
-                {user.display_name || user.username}
-              </b>{' '}
-              <span className='text-muted-foreground'>{user.username}</span>
-            </span>
-          )
-        },
+        cell: ({ row }) => <UserNameCell user={row.original} />,
         meta: { mobileTitle: true },
       },
       {

@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   Link2,
   CreditCard,
+  Eye,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -86,6 +87,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const handleEdit = () => {
     setCurrentRow(user)
     setOpen('update')
+  }
+
+  const handleDetail = () => {
+    setCurrentRow(user)
+    setOpen('detail')
   }
 
   const handleDelete = () => {
@@ -192,6 +198,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         ariaLabel={t('Open menu')}
         contentClassName='w-48'
       >
+        <DropdownMenuItem onClick={handleDetail}>
+          {t('View details')}
+          <DropdownMenuShortcut>
+            <Eye size={16} />
+          </DropdownMenuShortcut>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEdit}>
           {t('Edit')}
           <DropdownMenuShortcut>
