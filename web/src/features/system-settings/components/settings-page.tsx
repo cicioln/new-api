@@ -86,11 +86,15 @@ function SettingsPageFrame(props: SettingsPageFrameProps) {
             <SettingsNav />
             <div className='min-w-0'>
               <section className='bg-card min-w-0 rounded-lg border p-[18px]'>
-                <div className='flex items-center justify-between gap-2'>
-                  <h3 className='text-sm font-semibold'>{props.title}</h3>
+                {/* Wraps so a wide status slot (a tab strip) moves below
+                    the title on a phone instead of squeezing it. */}
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <h3 className='shrink-0 text-sm font-semibold'>
+                    {props.title}
+                  </h3>
                   <span
                     ref={setTitleStatusContainer}
-                    className='inline-flex min-w-0 shrink-0 items-center'
+                    className='inline-flex max-w-full min-w-0 items-center overflow-x-auto'
                   />
                 </div>
                 {props.description != null && (

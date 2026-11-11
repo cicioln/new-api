@@ -94,13 +94,10 @@ export function SectionPageLayout(props: SectionPageLayoutProps) {
             <div className='mb-2 sm:mb-3'>{breadcrumb}</div>
           )}
           <div className='flex flex-wrap items-end justify-between gap-x-4 gap-y-3'>
-            <div
-              className={
-                props.stackActionsOnMobile
-                  ? 'min-w-0 flex-1 max-sm:basis-full'
-                  : 'min-w-0 flex-1'
-              }
-            >
+            {/* On a phone the title takes the full row and the actions wrap
+                below it; sharing the row squeezed the description into a
+                column a few characters wide. */}
+            <div className='min-w-0 flex-1 max-sm:basis-full'>
               <h2 className='truncate text-xl leading-[1.55] font-[650] tracking-[-0.02em] sm:text-2xl sm:leading-[1.55]'>
                 {title}
               </h2>

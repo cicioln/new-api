@@ -221,7 +221,10 @@ export function DataTablePagination<TData>({
           </span>
         </div>
 
-        <div className='flex shrink-0 items-center gap-1.5 @lg/pagination:gap-2'>
+        {/* The row is right-aligned and clipped, so on a phone a too-wide
+            row cut off the total on the left. The page size picker goes
+            first when space runs out. */}
+        <div className='flex shrink-0 items-center gap-1.5 @max-md/pagination:hidden @lg/pagination:gap-2'>
           <p className='text-muted-foreground/80 hidden text-sm font-medium whitespace-nowrap @2xl/pagination:block'>
             {t('Rows per page')}
           </p>

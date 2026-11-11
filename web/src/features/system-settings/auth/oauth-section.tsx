@@ -393,8 +393,14 @@ export function OAuthSection(props: OAuthSectionProps) {
             />
             <FormDirtyIndicator isDirty={form.formState.isDirty} />
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className='grid w-full grid-cols-6'>
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className='min-w-0'
+            >
+              {/* Six equal columns overlap on a phone; there the tabs keep
+                  their width and the strip scrolls instead. */}
+              <TabsList className='flex w-full justify-start overflow-x-auto sm:grid sm:grid-cols-6 [&>*]:max-sm:flex-none'>
                 <TabsTrigger value='github'>{t('GitHub')}</TabsTrigger>
                 <TabsTrigger value='discord'>{t('Discord')}</TabsTrigger>
                 <TabsTrigger value='oidc'>{t('OIDC')}</TabsTrigger>
