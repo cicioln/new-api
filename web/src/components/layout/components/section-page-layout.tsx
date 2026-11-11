@@ -111,7 +111,7 @@ export function SectionPageLayout(props: SectionPageLayoutProps) {
               )}
             </div>
             {actions != null && (
-              <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
+              <div className='flex max-w-full shrink-0 flex-wrap items-center justify-end gap-2'>
                 {actions}
               </div>
             )}
