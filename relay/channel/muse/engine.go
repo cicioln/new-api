@@ -20,7 +20,12 @@ import (
 
 const ChannelName = "muse"
 
-var ModelList = []string{"muse", "muse-image", "muse-video"}
+// Models named muse-video-<N>s make videos of up to N seconds from
+// consecutive 10-second segments; see videoTierSeconds.
+var ModelList = []string{
+	"muse", "muse-image", "muse-video",
+	"muse-video-20s", "muse-video-30s", "muse-video-40s", "muse-video-50s", "muse-video-60s",
+}
 
 // TaskPlatform is the platform recorded on Muse video tasks.
 var TaskPlatform = constant.TaskPlatform(strconv.Itoa(constant.ChannelTypeMuse))
@@ -36,7 +41,8 @@ var (
 func sharedEngine() *musesdk.ProtoEngine {
 	engineOnce.Do(func() {
 		engineConfig = musesdk.Config{
-			DataDir: common.GetEnvOrDefaultString("MUSE_DATA_DIR", "muse-data"),
+			DataDir:    common.GetEnvOrDefaultString("MUSE_DATA_DIR", "muse-data"),
+			FFmpegPath: common.GetEnvOrDefaultString("MUSE_FFMPEG_PATH", ""),
 		}
 		engine = musesdk.NewClient(engineConfig)
 		engine.SetHooks(onCookiesRotated, nil)

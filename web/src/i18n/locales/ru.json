@@ -7962,6 +7962,7 @@
     "Aspect ratio": "Соотношение сторон",
     "{{count}} s": "{{count}} с",
     "Some models treat ratio and duration as hints only. A single video is at most 10 seconds.": "Некоторые модели учитывают формат и длительность лишь как подсказку. Одно видео — не более 10 секунд.",
+    "This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.": "Эта модель склеивает 10-секундные клипы в одно видео длиной до {{count}} секунд. Каждый клип создаётся несколько минут.",
     "Submit video task": "Отправить задачу видео",
     "Videos run as background tasks. You can leave this page and check back here or in Task Logs.": "Видео создаются в фоне. Можно уйти со страницы и вернуться сюда или в журнал задач.",
     "My video tasks": "Мои задачи видео",

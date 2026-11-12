@@ -62,6 +62,13 @@ const RATIOS: SizePreset[] = [
 const DURATIONS = [5, 10]
 const MAX_SECONDS = 10
 
+/** Longest video a model makes: N for muse-video-<N>s, 10 otherwise. */
+function maxSecondsFor(modelName: string): number {
+  const match = /^muse-video-(\d+)s$/.exec(modelName)
+  const seconds = match ? Number(match[1]) : 0
+  return seconds > MAX_SECONDS ? seconds : MAX_SECONDS
+}
+
 export function VideoPanel(props: {
   group: string
   references: ReferenceImage[]
@@ -78,6 +85,16 @@ export function VideoPanel(props: {
   const [viewing, setViewing] = useState<MediaItem | null>(null)
   const [retrying, setRetrying] = useState<string | null>(null)
   const remove = useDeleteMedia()
+  const maxSeconds = maxSecondsFor(models.modelName)
+  const durations = maxSeconds > MAX_SECONDS ? [maxSeconds] : DURATIONS
+  // A long-video model is priced per video, so start at its full length.
+  const [lengthModel, setLengthModel] = useState(models.modelName)
+  if (lengthModel !== models.modelName) {
+    setLengthModel(models.modelName)
+    setSeconds(
+      maxSeconds > MAX_SECONDS ? maxSeconds : Math.min(seconds, maxSeconds)
+    )
+  }
 
   const ratioLabel =
     RATIOS.find((item) => item.value === ratio)?.label ??
@@ -331,18 +348,24 @@ export function VideoPanel(props: {
                 </PanelSection>
                 <PanelSection title={t('Duration')}>
                   <NumberOptions
-                    presets={DURATIONS}
+                    key={maxSeconds}
+                    presets={durations}
                     format={(value) => t('{{count}} s', { count: value })}
                     min={1}
-                    max={MAX_SECONDS}
+                    max={maxSeconds}
                     value={seconds}
                     onChange={setSeconds}
                   />
                 </PanelSection>
                 <p className='text-muted-foreground text-xs'>
-                  {t(
-                    'Some models treat ratio and duration as hints only. A single video is at most 10 seconds.'
-                  )}
+                  {maxSeconds > MAX_SECONDS
+                    ? t(
+                        'This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.',
+                        { count: maxSeconds }
+                      )
+                    : t(
+                        'Some models treat ratio and duration as hints only. A single video is at most 10 seconds.'
+                      )}
                 </p>
               </ToolbarPopover>
             </>

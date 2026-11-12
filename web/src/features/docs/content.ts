@@ -794,8 +794,8 @@ const MUSE_VIDEO: ModelDoc = {
       zh: '首尾帧与参考图合计最多 10 张，每张不超过 10 MB。',
     },
     {
-      en: 'More than 10 seconds is rejected with invalid_seconds.',
-      zh: '超过 10 秒会被拒绝，错误码 invalid_seconds。',
+      en: 'More than 10 seconds is rejected with invalid_seconds. For longer videos use muse-video-20s to muse-video-60s.',
+      zh: '超过 10 秒会被拒绝，错误码 invalid_seconds。更长的视频请用 muse-video-20s 到 muse-video-60s。',
     },
   ],
   callouts: [
@@ -882,12 +882,90 @@ const MUSE_VIDEO: ModelDoc = {
   ],
 }
 
+/** Docs for muse-video-<N>s, which joins 10-second clips into one video. */
+function museLongVideo(max: number): ModelDoc {
+  const parts = max / 10
+  return {
+    ...MUSE_VIDEO,
+    summary: {
+      en: `Video of up to ${max} seconds, made from up to ${parts} clips of 10 seconds that are joined into one MP4. Each clip continues from the last frame of the one before.`,
+      zh: `最长 ${max} 秒的视频。按最多 ${parts} 段 10 秒生成，每段从上一段的最后一帧接着拍，最后拼成一个 MP4。`,
+    },
+    notes: {
+      en: `Length goes in duration (number) or seconds (string), at most ${max}; leave it out to get ${max} seconds. The length is split evenly into clips of at most 10 seconds, for example 25 seconds becomes 9 + 8 + 8. The prompt describes the whole video. first_image_url opens the first clip and last_image_url closes the last one. Reference images go to every clip, up to 9 images in all. Each clip takes a few minutes, so a ${max}-second video takes about ${parts * 3} to ${parts * 6} minutes.`,
+      zh: `时长填 duration（数字）或 seconds（字符串），最多 ${max} 秒，不传就是 ${max} 秒。时长会平均拆成每段不超过 10 秒，例如 25 秒拆成 9 + 8 + 8。prompt 写整个视频的内容。first_image_url 作为第一段的首帧，last_image_url 作为最后一段的尾帧。参考图会发给每一段，图片合计最多 9 张。每段需要几分钟，${max} 秒大约要 ${parts * 3} 到 ${parts * 6} 分钟。`,
+    },
+    facts: [
+      {
+        label: { en: 'Length', zh: '成片时长' },
+        value: { en: `1–${max} s`, zh: `1–${max} 秒` },
+      },
+      {
+        label: { en: 'Clips', zh: '分段' },
+        value: {
+          en: `Up to ${parts} × 10 s, joined`,
+          zh: `最多 ${parts} 段 × 10 秒，拼接成片`,
+        },
+      },
+      {
+        label: { en: 'Reference images', zh: '参考素材' },
+        value: { en: 'Up to 9 images', zh: '最多 9 张图片' },
+      },
+      {
+        label: { en: 'Output', zh: '输出' },
+        value: {
+          en: 'One MP4 (H.264/AAC), size of the first clip',
+          zh: '单个 MP4（H.264/AAC），分辨率同第一段',
+        },
+      },
+    ],
+    params: MUSE_VIDEO.params.map((param) =>
+      param.name === 'duration'
+        ? {
+            ...param,
+            values: `1–${max}`,
+            desc: {
+              en: `Length of the finished video in seconds. Defaults to ${max}.`,
+              zh: `成片总秒数，不传默认 ${max} 秒。`,
+            },
+          }
+        : param.name === 'reference_image_urls'
+          ? { ...param, values: '≤ 9' }
+          : param
+    ),
+    rules: [
+      {
+        en: 'The first frame can be sent alone; a last frame needs a first frame.',
+        zh: '可以只提供首帧；提供尾帧时必须同时提供首帧。',
+      },
+      {
+        en: 'Frames and reference images together hold at most 9 images, each up to 10 MB. Later clips also receive the previous clip’s last frame.',
+        zh: '首尾帧与参考图合计最多 9 张，每张不超过 10 MB。后面的每一段还会带上上一段的末帧。',
+      },
+      {
+        en: `More than ${max} seconds is rejected with invalid_seconds.`,
+        zh: `超过 ${max} 秒会被拒绝，错误码 invalid_seconds。`,
+      },
+    ],
+    callouts: [
+      {
+        en: 'If any clip fails, the whole task fails and is refunded. Clips are not returned separately.',
+        zh: '任何一段失败，整个任务失败并退款，不会单独返回已完成的分段。',
+      },
+      ...MUSE_VIDEO.callouts,
+    ],
+  }
+}
+
 /** Hand-written docs for a model, or undefined to fall back to generic docs. */
 export function curatedModelDoc(
   modelName: string,
   endpointTypes: string[]
 ): ModelDoc | undefined {
   if (!/muse/i.test(modelName)) return undefined
+  const long = /^muse-video-(\d+)s$/i.exec(modelName)
+  if (long && Number(long[1]) > 10 && endpointTypes.includes('openai-video'))
+    return museLongVideo(Number(long[1]))
   if (endpointTypes.includes('openai-video')) return MUSE_VIDEO
   if (endpointTypes.includes('image-generation')) return MUSE_IMAGE
   if (endpointTypes.includes('openai')) return MUSE_CHAT

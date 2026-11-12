@@ -177,5 +177,5 @@ replace github.com/QuantumNous/new-api/relaykit => ./relaykit
 
 replace github.com/QuantumNous/new-api/tokenkit => ./tokenkit
 
-// Muse SDK fork with fixes for chat limit classification and gateway proxy routing, and a 10 reference image limit.
-replace github.com/CoolkHz/muse-protocol-go => github.com/cicioln/muse-protocol-go v0.0.0-20261111060515-550ec4775440
+// Muse SDK fork with fixes for chat limit classification and gateway proxy routing, a 10 reference image limit, and long videos joined from segments.
+replace github.com/CoolkHz/muse-protocol-go => github.com/cicioln/muse-protocol-go v0.0.0-20261112182059-2cf3c68118d2

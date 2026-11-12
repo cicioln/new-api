@@ -7962,6 +7962,7 @@
     "Aspect ratio": "Aspect ratio",
     "{{count}} s": "{{count}} s",
     "Some models treat ratio and duration as hints only. A single video is at most 10 seconds.": "Some models treat ratio and duration as hints only. A single video is at most 10 seconds.",
+    "This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.": "This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.",
     "Submit video task": "Submit video task",
     "Videos run as background tasks. You can leave this page and check back here or in Task Logs.": "Videos run as background tasks. You can leave this page and check back here or in Task Logs.",
     "My video tasks": "My video tasks",

@@ -7962,6 +7962,7 @@
     "Aspect ratio": "畫面比例",
     "{{count}} s": "{{count}} 秒",
     "Some models treat ratio and duration as hints only. A single video is at most 10 seconds.": "部分模型僅將比例和時長作為參考。單個影片最長 10 秒。",
+    "This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.": "此模型把多段 10 秒影片拼成一部最長 {{count}} 秒的影片，每段需要幾分鐘。",
     "Submit video task": "提交影片任務",
     "Videos run as background tasks. You can leave this page and check back here or in Task Logs.": "影片以背景任務方式生成，可以離開本頁，稍後在這裡或任務日誌中查看。",
     "My video tasks": "我的影片任務",

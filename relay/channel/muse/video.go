@@ -41,7 +41,39 @@ import (
 const videoGenerateTimeout = 20 * time.Minute
 
 // maxVideoSeconds is the longest clip Muse generates in one request.
-const maxVideoSeconds = 10
+const maxVideoSeconds = musesdk.MaxVideoSegmentSeconds
+
+// videoTierSeconds returns the longest video a model makes: 10 seconds for
+// muse-video, N for muse-video-<N>s. Videos longer than 10 seconds are
+// generated as consecutive segments, each continuing from the last frame of
+// the one before, and joined with ffmpeg.
+func videoTierSeconds(modelName string) int {
+	rest, ok := strings.CutPrefix(modelName, "muse-video-")
+	if !ok {
+		return maxVideoSeconds
+	}
+	digits, ok := strings.CutSuffix(rest, "s")
+	if !ok {
+		return maxVideoSeconds
+	}
+	seconds, err := strconv.Atoi(digits)
+	if err != nil || seconds <= maxVideoSeconds || seconds > musesdk.MaxLongVideoSeconds {
+		return maxVideoSeconds
+	}
+	return seconds
+}
+
+func videoModelName(info *relaycommon.RelayInfo) string {
+	if info.UpstreamModelName != "" {
+		return info.UpstreamModelName
+	}
+	return info.OriginModelName
+}
+
+// longVideoTimeout bounds a whole segmented job.
+func longVideoTimeout(segments int) time.Duration {
+	return time.Duration(segments)*videoGenerateTimeout + 5*time.Minute
+}
 
 type videoJob struct {
 	Status   string `json:"status"`
@@ -89,6 +121,19 @@ type videoRequest struct {
 	acc    *musesdk.Account
 	prompt string
 	refs   []musesdk.RefImage
+	// long is set for videos made of several segments; prompt and refs are
+	// then unused.
+	long *longVideo
+}
+
+// longVideo is a video longer than one Muse clip.
+type longVideo struct {
+	seconds int
+	req     relaycommon.TaskSubmitReq
+	extras  videoExtras
+	first   *musesdk.RefImage
+	last    *musesdk.RefImage
+	refs    []musesdk.RefImage
 }
 
 // TaskAdaptor serves Muse video generation through the async task relay.
@@ -107,12 +152,23 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 	if err != nil {
 		return service.TaskErrorWrapperLocal(err, "invalid_request", http.StatusBadRequest)
 	}
-	if videoSeconds(req) > maxVideoSeconds {
-		return service.TaskErrorWrapperLocal(fmt.Errorf("muse videos are at most %d seconds", maxVideoSeconds), "invalid_seconds", http.StatusBadRequest)
+	modelName := videoModelName(info)
+	if limit := videoTierSeconds(modelName); videoSeconds(req) > limit {
+		msg := fmt.Sprintf("%s makes videos of at most %d seconds", modelName, limit)
+		if limit == maxVideoSeconds {
+			msg += "; use muse-video-20s to muse-video-60s for longer videos"
+		}
+		return service.TaskErrorWrapperLocal(errors.New(msg), "invalid_seconds", http.StatusBadRequest)
 	}
 	extras := videoExtrasOf(c)
 	if extras.LastImageURL != "" && extras.FirstImageURL == "" {
 		return service.TaskErrorWrapperLocal(errors.New("last_image_url requires first_image_url"), "invalid_request", http.StatusBadRequest)
+	}
+	if videoTierSeconds(modelName) > maxVideoSeconds {
+		// Later segments also carry the previous segment's last frame.
+		if n := videoImageCount(c, req, extras); n > musesdk.MaxRefImages-1 {
+			return service.TaskErrorWrapperLocal(fmt.Errorf("long videos take at most %d images", musesdk.MaxRefImages-1), "invalid_request", http.StatusBadRequest)
+		}
 	}
 	if req.InputReference != "" || len(req.Images) > 0 || hasMultipartReference(c) || extras.hasImages() {
 		info.Action = constant.TaskActionImageToVideo
@@ -172,6 +228,33 @@ func videoSeconds(req relaycommon.TaskSubmitReq) int {
 	}
 	seconds, _ := strconv.Atoi(req.Seconds)
 	return seconds
+}
+
+// videoImageCount counts the frames and reference images of a request the
+// way BuildRequestBody loads them.
+func videoImageCount(c *gin.Context, req relaycommon.TaskSubmitReq, extras videoExtras) int {
+	n := len(req.Images)
+	if extras.FirstImageURL != "" {
+		n++
+	}
+	if extras.LastImageURL != "" {
+		n++
+	}
+	for _, source := range extras.ReferenceImageURLs {
+		if strings.TrimSpace(source) != "" {
+			n++
+		}
+	}
+	if req.InputReference != "" {
+		n++
+	}
+	if n == 0 && strings.TrimSpace(req.Image) != "" {
+		n++
+	}
+	if form := c.Request.MultipartForm; form != nil {
+		n += len(form.File["input_reference"])
+	}
+	return n
 }
 
 func hasMultipartReference(c *gin.Context) bool {
@@ -247,13 +330,94 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if len(refs) > musesdk.MaxRefImages {
 		return nil, fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages)
 	}
-	prompt := videoPrompt(req, extras, len(refs) > 0)
 	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
 	if err != nil {
 		return nil, err
 	}
+	if limit := videoTierSeconds(videoModelName(info)); limit > maxVideoSeconds {
+		if len(refs) > musesdk.MaxRefImages-1 {
+			return nil, fmt.Errorf("long videos take at most %d images", musesdk.MaxRefImages-1)
+		}
+		long := &longVideo{seconds: videoSeconds(req), req: req, extras: extras}
+		if long.seconds <= 0 {
+			long.seconds = limit
+		}
+		rest := refs
+		if extras.FirstImageURL != "" {
+			long.first, rest = &rest[0], rest[1:]
+		}
+		if extras.LastImageURL != "" {
+			long.last, rest = &rest[0], rest[1:]
+		}
+		long.refs = rest
+		a.request = &videoRequest{acc: acc, long: long}
+		return strings.NewReader(""), nil
+	}
+	prompt := videoPrompt(req, extras, len(refs) > 0)
 	a.request = &videoRequest{acc: acc, prompt: prompt, refs: refs}
 	return strings.NewReader(""), nil
+}
+
+// segment returns the prompt and images of one segment of a long video.
+// Every segment gets the user's reference images. The first segment also
+// gets the requested first frame; later segments start from the previous
+// segment's last frame, and the final segment ends on the requested last
+// frame.
+func (v *longVideo) segment(s musesdk.VideoSegment) (string, []musesdk.RefImage) {
+	var refs []musesdk.RefImage
+	var frames []string
+	if s.LastFrame != nil {
+		refs = append(refs, *s.LastFrame)
+		frames = append(frames, "The first attached image is the last frame of the previous part. Start this part exactly from that frame and continue the motion smoothly, keeping the same characters, setting, lighting and style.")
+	} else if v.first != nil {
+		refs = append(refs, *v.first)
+		frames = append(frames, "The first attached image is the opening frame.")
+	}
+	if s.Index == s.Count-1 && v.last != nil {
+		refs = append(refs, *v.last)
+		frames = append(frames, fmt.Sprintf("Attached image %d is the final frame; end this part on it.", len(refs)))
+	}
+	if len(v.refs) > 0 {
+		refs = append(refs, v.refs...)
+		frames = append(frames, "The other attached images are references for characters, objects and style.")
+	}
+
+	var b strings.Builder
+	if len(refs) > 0 {
+		b.WriteString("Use your video generation tool to create a video from the attached image(s). Do not answer with text only; produce the video file.")
+	} else {
+		b.WriteString("Use your video generation tool to create a video. Do not answer with text only; produce the video file.")
+	}
+	if s.Count > 1 {
+		fmt.Fprintf(&b, "\nThis is part %d of %d of one continuous %d-second video. It covers seconds %d to %d. Make only this part.", s.Index+1, s.Count, v.seconds, s.Start, s.Start+s.Seconds)
+	}
+	for _, line := range frames {
+		b.WriteString("\n" + line)
+	}
+	ratio := aspectRatio(v.req.Size)
+	if ratio == "" {
+		ratio = aspectRatio(v.extras.AspectRatio)
+	}
+	if ratio != "" {
+		b.WriteString("\nVideo aspect ratio: " + ratio + ".")
+	}
+	fmt.Fprintf(&b, "\nVideo length: %d seconds.", s.Seconds)
+	if v.extras.CameraMovement != "" {
+		b.WriteString("\nCamera movement: " + v.extras.CameraMovement + ".")
+	}
+	if v.extras.Style != "" {
+		b.WriteString("\nStyle: " + v.extras.Style + ".")
+	}
+	if v.extras.NegativePrompt != "" {
+		b.WriteString("\nAvoid: " + v.extras.NegativePrompt + ".")
+	}
+	if s.Count > 1 {
+		b.WriteString("\n\nDescription of the whole video (make only the part above):\n")
+	} else {
+		b.WriteString("\n\nVideo description:\n")
+	}
+	b.WriteString(v.req.Prompt)
+	return b.String(), refs
 }
 
 // DoRequest starts the background job. Jobs are keyed by the public task ID,
@@ -321,22 +485,40 @@ func runVideoJob(jobID string, req videoRequest) {
 			finishVideoJob(jobID, nil, fmt.Errorf("muse video job panic: %v", recovered))
 		}
 	}()
+	onProgress := func(pct int) {
+		videoJobsMu.Lock()
+		if job := videoJobs[jobID]; job != nil {
+			job.Status = model.TaskStatusInProgress
+			job.Progress = min(pct, 99)
+		}
+		videoJobsMu.Unlock()
+	}
+	if long := req.long; long != nil {
+		segments := len(musesdk.SplitVideoSeconds(long.seconds, maxVideoSeconds))
+		ctx, cancel := context.WithTimeout(context.Background(), longVideoTimeout(segments))
+		defer cancel()
+		file, err := sharedEngine().GenerateLongVideo(ctx, req.acc, musesdk.LongVideoRequest{
+			Seconds:    long.seconds,
+			Segment:    long.segment,
+			Timeout:    videoGenerateTimeout,
+			OnProgress: onProgress,
+		})
+		var files []musesdk.Media
+		if file != nil {
+			files = []musesdk.Media{*file}
+		}
+		finishVideoJob(jobID, files, mediaRefusal(err, "video"))
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+time.Minute)
 	defer cancel()
 	files, err := sharedEngine().Generate(ctx, req.acc, musesdk.GenRequest{
-		Prompt:  req.prompt,
-		Kind:    "video",
-		Refs:    req.refs,
-		N:       1,
-		Timeout: videoGenerateTimeout,
-		OnProgress: func(pct int) {
-			videoJobsMu.Lock()
-			if job := videoJobs[jobID]; job != nil {
-				job.Status = model.TaskStatusInProgress
-				job.Progress = min(pct, 99)
-			}
-			videoJobsMu.Unlock()
-		},
+		Prompt:     req.prompt,
+		Kind:       "video",
+		Refs:       req.refs,
+		N:          1,
+		Timeout:    videoGenerateTimeout,
+		OnProgress: onProgress,
 	})
 	finishVideoJob(jobID, files, mediaRefusal(err, "video"))
 }

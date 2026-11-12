@@ -7962,6 +7962,7 @@
     "Aspect ratio": "アスペクト比",
     "{{count}} s": "{{count}} 秒",
     "Some models treat ratio and duration as hints only. A single video is at most 10 seconds.": "一部のモデルでは比率と長さは参考扱いです。1 本の動画は最長 10 秒です。",
+    "This model joins 10-second clips into one video of up to {{count}} seconds. Generation takes several minutes per clip.": "このモデルは 10 秒のクリップをつなげて最長 {{count}} 秒の動画を作ります。1 クリップごとに数分かかります。",
     "Submit video task": "動画タスクを送信",
     "Videos run as background tasks. You can leave this page and check back here or in Task Logs.": "動画はバックグラウンドで生成されます。このページを離れても、後でここかタスクログで確認できます。",
     "My video tasks": "動画タスク",
