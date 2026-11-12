@@ -530,6 +530,8 @@
     "Amount discount": "金额折扣",
     "Amount Due": "应付金额",
     "Amount must be a whole number": "金额必须为整数",
+    "Amount can have at most 2 decimal places": "金额最多保留 2 位小数",
+    "Top-up amount can have at most {{places}} decimal places": "充值数量最多保留 {{places}} 位小数",
     "Amount must be greater than 0": "金额必须大于 0",
     "Amount of quota to credit to user account.": "添加到用户账户的配额数量。",
     "Amount options must be a JSON array": "金额选项必须是 JSON 数组",

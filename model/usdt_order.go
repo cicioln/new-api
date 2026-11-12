@@ -55,7 +55,7 @@ type UsdtOrder struct {
 	Chain      string  `json:"chain" gorm:"column:pay_chain;type:varchar(16);uniqueIndex:idx_usdt_orders_chain_tx"`
 	Address    string  `json:"address" gorm:"type:varchar(128)"`
 	PayUnits   int64   `json:"pay_units"`
-	Amount     int64   `json:"amount"`
+	Amount     float64 `json:"amount"`
 	Status     string  `json:"status" gorm:"type:varchar(16);index"`
 	TxId       *string `json:"tx_id" gorm:"type:varchar(160);uniqueIndex:idx_usdt_orders_chain_tx"`
 	CreateTime int64   `json:"create_time"`
@@ -79,7 +79,7 @@ type UsdtScanCursor struct {
 }
 
 // FindReusableUsdtOrder 返回同一用户、同一收款地址、同一充值数量且仍可支付的订单，重复点击下单时直接复用。
-func FindReusableUsdtOrder(userId int, chain string, address string, amount int64, now int64) *UsdtOrder {
+func FindReusableUsdtOrder(userId int, chain string, address string, amount float64, now int64) *UsdtOrder {
 	var order UsdtOrder
 	err := DB.Where("user_id = ? AND pay_chain = ? AND address = ? AND amount = ? AND status = ? AND expire_at > ?",
 		userId, chain, address, amount, UsdtOrderStatusPending, now+60).

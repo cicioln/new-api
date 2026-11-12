@@ -97,7 +97,7 @@ export function UsdtPayDialog(props: {
     setCreating(true)
     try {
       const res = await requestUsdtPayment({
-        amount: Math.floor(props.topupAmount),
+        amount: props.topupAmount,
         address,
       })
       if (!isApiSuccess(res) || !res.data) {

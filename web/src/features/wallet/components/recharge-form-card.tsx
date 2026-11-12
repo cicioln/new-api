@@ -189,7 +189,8 @@ export function RechargeFormCard({
 
   const handleAmountChange = (value: string) => {
     setLocalAmount(value)
-    const numValue = Number.parseInt(value) || 0
+    // Amounts may carry two decimals (e.g. 9.98); extra digits are rounded off
+    const numValue = Math.round((Number.parseFloat(value) || 0) * 100) / 100
     if (numValue >= 0) {
       onTopupAmountChange(numValue)
     }
@@ -353,6 +354,8 @@ export function RechargeFormCard({
                   <Input
                     id='topup-amount'
                     type='number'
+                    inputMode='decimal'
+                    step='0.01'
                     value={localAmount}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     min={minTopup}

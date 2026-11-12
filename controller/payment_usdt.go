@@ -79,8 +79,8 @@ func usdtOrderResponse(order *model.UsdtOrder) gin.H {
 }
 
 type UsdtPayRequest struct {
-	Amount  int64  `json:"amount"`
-	Address string `json:"address"`
+	Amount  float64 `json:"amount"`
+	Address string  `json:"address"`
 }
 
 func RequestUsdtPay(c *gin.Context) {
@@ -100,12 +100,16 @@ func RequestUsdtPay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Payment method does not exist"))
 		return
 	}
-	if req.Amount < getMinTopup() {
-		paymentError(c, common.NewMessage("Top-up amount cannot be less than {{min}}", map[string]any{"min": getMinTopup()}))
+	requestAmount, err := topUpAmountFromRequest(req.Amount)
+	if err != nil {
+		paymentError(c, err)
+		return
+	}
+	if rejectBelowMinTopup(c, requestAmount) {
 		return
 	}
 	id := c.GetInt("id")
-	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+	if rejectInvalidTopUpQuota(c, id, requestAmount) {
 		return
 	}
 	group, err := model.GetUserGroup(id, true)
@@ -113,20 +117,17 @@ func RequestUsdtPay(c *gin.Context) {
 		paymentError(c, common.NewMessage("Failed to get the user group"))
 		return
 	}
-	quote := getTopUpQuote(req.Amount, group, operation_setting.PayMethodUsdt)
+	quote := getTopUpQuote(requestAmount, group, operation_setting.PayMethodUsdt)
 	payMoney := quote.PayMoney
 	if payMoney < 0.01 {
 		paymentError(c, common.NewMessage("Payment amount is too low"))
 		return
 	}
-	if rejectInvalidBonusQuota(c, id, req.Amount, quote.BonusQuota) {
+	if rejectInvalidBonusQuota(c, id, requestAmount, quote.BonusQuota) {
 		return
 	}
 
-	amount := req.Amount
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		amount = decimal.NewFromInt(amount).Div(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
-	}
+	amount := storedTopUpAmount(requestAmount)
 	now := time.Now().Unix()
 	if order := model.FindReusableUsdtOrder(id, receiver.Chain, receiver.Address, amount, now); order != nil {
 		common.ApiSuccess(c, usdtOrderResponse(order))

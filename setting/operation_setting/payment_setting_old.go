@@ -19,7 +19,8 @@ var CustomCallbackAddress = ""
 var EpayId = ""
 var EpayKey = ""
 var Price = 7.3
-var MinTopUp = 1
+// MinTopUp 是最低充值数量，可以带两位小数。
+var MinTopUp = 1.0
 var USDExchangeRate = 7.3
 
 var PayMethods = []map[string]string{

@@ -16,6 +16,7 @@ import (
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"github.com/thanhpk/randstr"
 	waffo "github.com/waffo-com/waffo-go"
 	"github.com/waffo-com/waffo-go/config"
@@ -95,12 +96,7 @@ func getWaffoPayMoney(amount float64, group string) float64 {
 	if topupGroupRatio == 0 {
 		topupGroupRatio = 1
 	}
-	discount := 1.0
-	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(originalAmount)]; ok {
-		if ds > 0 {
-			discount = ds
-		}
-	}
+	discount := operation_setting.GetAmountDiscount(decimal.NewFromFloat(originalAmount))
 	return amount * setting.WaffoUnitPrice * topupGroupRatio * discount
 }
 
@@ -124,7 +120,7 @@ func RequestWaffoAmount(c *gin.Context) {
 		return
 	}
 	id := c.GetInt("id")
-	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+	if rejectInvalidTopUpQuota(c, id, decimal.NewFromInt(req.Amount)) {
 		return
 	}
 
@@ -161,7 +157,7 @@ func RequestWaffoPay(c *gin.Context) {
 		return
 	}
 	id := c.GetInt("id")
-	if rejectInvalidTopUpQuota(c, id, req.Amount) {
+	if rejectInvalidTopUpQuota(c, id, decimal.NewFromInt(req.Amount)) {
 		return
 	}
 
@@ -223,7 +219,7 @@ func RequestWaffoPay(c *gin.Context) {
 	// 创建本地订单
 	topUp := &model.TopUp{
 		UserId:          id,
-		Amount:          amount,
+		Amount:          float64(amount),
 		Money:           payMoney,
 		TradeNo:         merchantOrderId,
 		PaymentMethod:   model.PaymentMethodWaffo,

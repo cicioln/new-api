@@ -134,20 +134,16 @@ func xingyeTradeNo(prefix string) string {
 	return fmt.Sprintf("%s%d%s", prefix, time.Now().Unix(), common.GetRandomString(6))
 }
 
-func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, quote topUpQuote, bankcode string) {
+func startXingyeTopUp(c *gin.Context, userId int, paymentMethod string, amount decimal.Decimal, quote topUpQuote, bankcode string) {
 	payMoney := quote.PayMoney
 	// 星烨订单号最长 20 位：前缀 2 位 + 时间戳 10 位 + 随机 6 位。
 	tradeNo := xingyeTradeNo("XY")
-	amount := req.Amount
-	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeTokens {
-		amount = decimal.NewFromInt(amount).Div(decimal.NewFromFloat(common.QuotaPerUnit)).IntPart()
-	}
 	topUp := &model.TopUp{
 		UserId:          userId,
-		Amount:          amount,
+		Amount:          storedTopUpAmount(amount),
 		Money:           payMoney,
 		TradeNo:         tradeNo,
-		PaymentMethod:   req.PaymentMethod,
+		PaymentMethod:   paymentMethod,
 		PaymentProvider: model.PaymentProviderXingye,
 		CreateTime:      time.Now().Unix(),
 		Status:          common.TopUpStatusPending,
@@ -159,8 +155,8 @@ func startXingyeTopUp(c *gin.Context, userId int, req EpayRequest, quote topUpQu
 		paymentError(c, common.NewMessage("Failed to create order"))
 		return
 	}
-	payLink := xingyePurchase(tradeNo, payMoney, bankcode, "/api/user/xingye/notify", "/api/user/xingye/return", fmt.Sprintf("TUC%d", req.Amount))
-	logger.LogInfo(c.Request.Context(), common.LogText("Xingye top-up order created user_id=%d trade_no=%s payment_method=%s amount=%d money=%.2f", userId, tradeNo, req.PaymentMethod, req.Amount, payMoney))
+	payLink := xingyePurchase(tradeNo, payMoney, bankcode, "/api/user/xingye/notify", "/api/user/xingye/return", "TUC"+amount.String())
+	logger.LogInfo(c.Request.Context(), common.LogText("Xingye top-up order created user_id=%d trade_no=%s payment_method=%s amount=%s money=%.2f", userId, tradeNo, paymentMethod, amount.String(), payMoney))
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": gin.H{"pay_link": payLink}})
 }
 

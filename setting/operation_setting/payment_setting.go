@@ -1,10 +1,18 @@
 package operation_setting
 
-import "github.com/QuantumNous/new-api/setting/config"
+import (
+	"strings"
+
+	"github.com/QuantumNous/new-api/setting/config"
+
+	"github.com/shopspring/decimal"
+)
 
 type PaymentSetting struct {
-	AmountOptions  []int           `json:"amount_options"`
-	AmountDiscount map[int]float64 `json:"amount_discount"` // 充值金额对应的折扣，例如 100 元 0.9 表示 100 元充值享受 9 折优惠
+	// AmountOptions 是充值页的预设数量，可以带两位小数（如 9.98）。
+	AmountOptions []float64 `json:"amount_options"`
+	// AmountDiscount 是充值数量对应的折扣，例如 "100": 0.9 表示充值 100 享受 9 折；键可以带小数（如 "9.98"）。
+	AmountDiscount map[string]float64 `json:"amount_discount"`
 
 	ComplianceConfirmed    bool   `json:"compliance_confirmed"`
 	ComplianceTermsVersion string `json:"compliance_terms_version"`
@@ -42,8 +50,8 @@ const CurrentComplianceTermsVersion = "v1"
 
 // 默认配置
 var paymentSetting = PaymentSetting{
-	AmountOptions:  []int{10, 20, 50, 100, 200, 500},
-	AmountDiscount: map[int]float64{},
+	AmountOptions:  []float64{10, 20, 50, 100, 200, 500},
+	AmountDiscount: map[string]float64{},
 }
 
 func init() {
@@ -58,4 +66,16 @@ func GetPaymentSetting() *PaymentSetting {
 func IsPaymentComplianceConfirmed() bool {
 	return paymentSetting.ComplianceConfirmed &&
 		paymentSetting.ComplianceTermsVersion == CurrentComplianceTermsVersion
+}
+
+// GetAmountDiscount 返回充值数量对应的折扣，未配置或配置不大于 0 时为 1。
+// 键按数值比较，"10"、"10.0" 和 "10.00" 是同一档。
+func GetAmountDiscount(amount decimal.Decimal) float64 {
+	for key, rate := range paymentSetting.AmountDiscount {
+		value, err := decimal.NewFromString(strings.TrimSpace(key))
+		if err == nil && rate > 0 && value.Equal(amount) {
+			return rate
+		}
+	}
+	return 1
 }

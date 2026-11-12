@@ -530,6 +530,8 @@
     "Amount discount": "Скидка на сумму",
     "Amount Due": "Сумма к оплате",
     "Amount must be a whole number": "Сумма должна быть целым числом",
+    "Amount can have at most 2 decimal places": "Сумма может содержать не более 2 знаков после запятой",
+    "Top-up amount can have at most {{places}} decimal places": "Сумма пополнения может содержать не более {{places}} знаков после запятой",
     "Amount must be greater than 0": "Сумма должна быть больше 0",
     "Amount of quota to credit to user account.": "Количество квоты для зачисления на счет пользователя.",
     "Amount options must be a JSON array": "Варианты сумм должны быть JSON-массивом",

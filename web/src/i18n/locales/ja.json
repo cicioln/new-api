@@ -530,6 +530,8 @@
     "Amount discount": "割引額",
     "Amount Due": "お支払い金額",
     "Amount must be a whole number": "金額は整数でなければなりません",
+    "Amount can have at most 2 decimal places": "金額は小数点以下 2 桁までです",
+    "Top-up amount can have at most {{places}} decimal places": "チャージ数量は小数点以下 {{places}} 桁までです",
     "Amount must be greater than 0": "金額は 0 より大きくなければなりません",
     "Amount of quota to credit to user account.": "ユーザーアカウントに付与するクォータの量。",
     "Amount options must be a JSON array": "金額オプションは JSON 配列でなければなりません",

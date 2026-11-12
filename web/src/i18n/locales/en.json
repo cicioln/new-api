@@ -530,6 +530,8 @@
     "Amount discount": "Amount discount",
     "Amount Due": "Amount Due",
     "Amount must be a whole number": "Amount must be a whole number",
+    "Amount can have at most 2 decimal places": "Amount can have at most 2 decimal places",
+    "Top-up amount can have at most {{places}} decimal places": "Top-up amount can have at most {{places}} decimal places",
     "Amount must be greater than 0": "Amount must be greater than 0",
     "Amount of quota to credit to user account.": "Amount of quota to credit to user account.",
     "Amount options must be a JSON array": "Amount options must be a JSON array",

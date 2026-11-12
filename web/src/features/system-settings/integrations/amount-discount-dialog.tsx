@@ -40,7 +40,10 @@ const createAmountDiscountDialogSchema = (t: (key: string) => string) =>
     amount: z
       .number()
       .positive(t('Amount must be greater than 0'))
-      .int(t('Amount must be a whole number')),
+      .refine(
+        (value) => Math.round(value * 100) / 100 === value,
+        t('Amount can have at most 2 decimal places')
+      ),
     discountRate: z
       .number()
       .positive(t('Discount rate must be greater than 0'))
@@ -151,12 +154,12 @@ export function AmountDiscountDialog({
                 <FormControl>
                   <Input
                     type='number'
-                    step='1'
-                    min='1'
+                    step='0.01'
+                    min='0.01'
                     placeholder={t('e.g., 100')}
                     {...field}
                     onChange={(e) =>
-                      field.onChange(parseInt(e.target.value) || 0)
+                      field.onChange(parseFloat(e.target.value) || 0)
                     }
                     disabled={isEditMode}
                   />

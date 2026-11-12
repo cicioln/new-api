@@ -139,15 +139,15 @@ export function usePayment() {
         setProcessing(true)
 
         const isStripe = isStripePayment(paymentType)
-        const amount = Math.floor(topupAmount)
 
+        // Stripe charges whole units; the regular gateways accept two decimals
         const response = isStripe
           ? await requestStripePayment({
-              amount,
+              amount: Math.floor(topupAmount),
               payment_method: 'stripe',
             })
           : await requestPayment({
-              amount,
+              amount: topupAmount,
               payment_method: paymentType,
             })
 

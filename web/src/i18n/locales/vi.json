@@ -530,6 +530,8 @@
     "Amount discount": "Số tiền giảm giá",
     "Amount Due": "Số tiền cần thanh toán",
     "Amount must be a whole number": "Số tiền phải là số nguyên",
+    "Amount can have at most 2 decimal places": "Số tiền chỉ được có tối đa 2 chữ số thập phân",
+    "Top-up amount can have at most {{places}} decimal places": "Số lượng nạp chỉ được có tối đa {{places}} chữ số thập phân",
     "Amount must be greater than 0": "Số tiền phải lớn hơn 0",
     "Amount of quota to credit to user account.": "Số lượng quota để ghi có vào tài khoản người dùng.",
     "Amount options must be a JSON array": "Tùy chọn số tiền phải là mảng JSON",

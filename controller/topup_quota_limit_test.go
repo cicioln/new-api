@@ -63,7 +63,7 @@ func TestTopUpQuotaValidation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			operation_setting.GetGeneralSetting().QuotaDisplayType = tc.displayType
-			quota, err := getTopUpQuota(tc.amount)
+			quota, err := getTopUpQuota(decimal.NewFromInt(tc.amount))
 			if tc.wantErr {
 				require.Error(t, err)
 				return
@@ -88,9 +88,9 @@ func TestValidateTopUpQuotaReturnsMaximumAmount(t *testing.T) {
 		Div(decimal.NewFromFloat(common.QuotaPerUnit)).
 		Floor().IntPart()
 
-	_, err := validateTopUpQuota(maxAmount)
+	_, err := validateTopUpQuota(decimal.NewFromInt(maxAmount))
 	require.NoError(t, err)
-	_, err = validateTopUpQuota(maxAmount + 1)
+	_, err = validateTopUpQuota(decimal.NewFromInt(maxAmount + 1))
 	require.EqualError(t, err, fmt.Sprintf("Top-up amount cannot exceed %d", maxAmount))
 }
 
@@ -200,4 +200,37 @@ func TestStripeCreditedQuotaIncludesGroupRatio(t *testing.T) {
 
 	require.NoError(t, common.UpdateTopupGroupRatioByJSONString(`{"free":0}`))
 	assert.True(t, decimal.NewFromInt(500000).Equal(getStripeCreditedQuota(1, "free")))
+}
+
+func TestDecimalTopUpAmount(t *testing.T) {
+	oldQuotaPerUnit := common.QuotaPerUnit
+	oldDisplayType := operation_setting.GetGeneralSetting().QuotaDisplayType
+	oldPrice := operation_setting.Price
+	oldDiscounts := operation_setting.GetPaymentSetting().AmountDiscount
+	common.QuotaPerUnit = 500000
+	operation_setting.Price = 1
+	operation_setting.GetPaymentSetting().AmountDiscount = map[string]float64{"9.98": 0.5, "20.00": 0.8}
+	t.Cleanup(func() {
+		common.QuotaPerUnit = oldQuotaPerUnit
+		operation_setting.GetGeneralSetting().QuotaDisplayType = oldDisplayType
+		operation_setting.Price = oldPrice
+		operation_setting.GetPaymentSetting().AmountDiscount = oldDiscounts
+	})
+
+	operation_setting.GetGeneralSetting().QuotaDisplayType = operation_setting.QuotaDisplayTypeCNY
+	amount, err := topUpAmountFromRequest(9.98)
+	require.NoError(t, err)
+	quota, err := getTopUpQuota(amount)
+	require.NoError(t, err)
+	assert.Equal(t, 4_990_000, quota, "9.98 credits 9.98 units, not 9")
+	assert.Equal(t, 9.98, storedTopUpAmount(amount))
+	assert.InDelta(t, 4.99, getPayMoney(amount, "default"), 1e-9, "decimal key 9.98 applies its discount")
+	assert.InDelta(t, 16, getPayMoney(decimal.NewFromInt(20), "default"), 1e-9, "key 20.00 matches amount 20")
+
+	_, err = topUpAmountFromRequest(9.985)
+	require.Error(t, err, "more than two decimals is rejected")
+
+	operation_setting.GetGeneralSetting().QuotaDisplayType = operation_setting.QuotaDisplayTypeTokens
+	_, err = topUpAmountFromRequest(1000.5)
+	require.Error(t, err, "token amounts must be whole")
 }
