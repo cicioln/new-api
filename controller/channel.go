@@ -1891,9 +1891,19 @@ func ManageMultiKeys(c *gin.Context) {
 				}
 			}
 
-			// Create key preview (first 10 chars)
+			// Create key preview (first 10 chars, or hatch_sess value for Muse)
 			keyPreview := key
-			if len(key) > 10 {
+			if channel.Type == constant.ChannelTypeMuse {
+				if sess := musesdk.ParseCookies(key)["hatch_sess"]; sess != "" {
+					if len(sess) > 12 {
+						keyPreview = "hatch_sess=" + sess[:8] + "..." + sess[len(sess)-4:]
+					} else {
+						keyPreview = "hatch_sess=" + sess
+					}
+				} else if len(key) > 10 {
+					keyPreview = key[:10] + "..."
+				}
+			} else if len(key) > 10 {
 				keyPreview = key[:10] + "..."
 			}
 

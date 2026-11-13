@@ -4387,9 +4387,64 @@ export function ChannelMutateDrawer({
                       'Enter one API key per line for batch creation'
                     )
                   }
+                  const savedChannelInfo =
+                    channelData?.data?.channel_info ?? currentRow?.channel_info
+                  const savedKeyCount = originIsMultiKeyChannel
+                    ? Math.max(savedChannelInfo?.multi_key_size || 0, 1)
+                    : isEditing
+                      ? 1
+                      : 0
+                  const savedDisabledCount =
+                    originIsMultiKeyChannel &&
+                    savedChannelInfo?.multi_key_status_list
+                      ? Object.values(
+                          savedChannelInfo.multi_key_status_list
+                        ).filter((s) => s !== 1).length
+                      : 0
+                  const savedEnabledCount = Math.max(
+                    savedKeyCount - savedDisabledCount,
+                    0
+                  )
+                  const enteredKeyCount =
+                    isBatchMode || isMultiKeyChannel
+                      ? String(field.value || '')
+                          .split('\n')
+                          .map((line) => line.trim())
+                          .filter(Boolean).length
+                      : field.value?.trim()
+                        ? 1
+                        : 0
+                  const projectedTotalKeys =
+                    isEditing && isMultiKeyChannel && keyMode === 'append'
+                      ? savedKeyCount + enteredKeyCount
+                      : enteredKeyCount
+
                   return (
                     <FormItem>
-                      <FormLabel required>{t('API Key')}</FormLabel>
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <FormLabel required>{t('API Key')}</FormLabel>
+                        <div className='flex flex-wrap items-center gap-1.5'>
+                          {isEditing && (
+                            <Badge variant='secondary' className='font-mono text-xs'>
+                              {originIsMultiKeyChannel
+                                ? savedDisabledCount > 0
+                                  ? `当前已保存 ${savedEnabledCount}/${savedKeyCount} 个密钥`
+                                  : `当前已保存 ${savedKeyCount} 个密钥`
+                                : '当前已保存 1 个密钥'}
+                            </Badge>
+                          )}
+                          {enteredKeyCount > 0 &&
+                            (isBatchMode || isMultiKeyChannel) && (
+                              <Badge variant='outline' className='font-mono text-xs'>
+                                {isEditing &&
+                                isMultiKeyChannel &&
+                                keyMode === 'append'
+                                  ? `新增 ${enteredKeyCount} 个 · 保存后共 ${projectedTotalKeys} 个`
+                                  : `已输入 ${enteredKeyCount} 个密钥`}
+                              </Badge>
+                            )}
+                        </div>
+                      </div>
                       <FormControl>
                         <Textarea
                           placeholder={keyPlaceholder}

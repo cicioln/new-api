@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 /* eslint-disable react-refresh/only-export-components */
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Loader2 } from 'lucide-react'
+import { Key, Loader2 } from 'lucide-react'
 import { useContext, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -143,6 +143,55 @@ function ChannelStatusCell(props: { channel: Channel }) {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  )
+}
+
+/** Channel name cell with key count badge (clickable on multi-key channels). */
+function ChannelNameCell({ channel }: { channel: Channel }) {
+  const { t } = useTranslation()
+  const { setCurrentRow, setOpen } = useChannels()
+  const info = channel.channel_info
+  const isMultiKey = info?.is_multi_key === true
+  const totalKeys = isMultiKey ? Math.max(info?.multi_key_size || 0, 1) : 1
+  const disabledCount =
+    isMultiKey && info?.multi_key_status_list
+      ? Object.values(info.multi_key_status_list).filter((s) => s !== 1).length
+      : 0
+  const enabledKeys = Math.max(totalKeys - disabledCount, 0)
+
+  return (
+    <div className='flex items-center gap-1.5'>
+      <span className='font-mono! text-[12.5px]!'>{channel.name}</span>
+      {isMultiKey ? (
+        <button
+          type='button'
+          onClick={(e) => {
+            e.stopPropagation()
+            setCurrentRow(channel)
+            setOpen('multi-key-manage')
+          }}
+          title={t('Manage Keys')}
+          className={cn(
+            'inline-flex h-5 shrink-0 cursor-pointer items-center gap-1 rounded px-1.5 font-mono text-[11px] font-medium tabular-nums transition-colors',
+            disabledCount > 0
+              ? 'bg-warning/15 text-warning hover:bg-warning/25'
+              : 'bg-primary/10 text-primary hover:bg-primary/20'
+          )}
+        >
+          <Key className='h-3 w-3' aria-hidden='true' />
+          <span>
+            {disabledCount > 0
+              ? `${enabledKeys}/${totalKeys} Keys`
+              : `${totalKeys} Keys`}
+          </span>
+        </button>
+      ) : (
+        <span className='text-muted-foreground/80 bg-muted/60 inline-flex h-5 shrink-0 items-center gap-1 rounded px-1.5 font-mono text-[11px] tabular-nums'>
+          <Key className='h-2.5 w-2.5' aria-hidden='true' />
+          <span>1 Key</span>
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -400,11 +449,9 @@ export function useChannelsColumns(): ColumnDef<Channel>[] {
       },
       {
         accessorKey: 'name',
-        size: 140,
+        size: 180,
         header: t('Name'),
-        cell: ({ row }) => (
-          <span className='font-mono! text-[12.5px]!'>{row.original.name}</span>
-        ),
+        cell: ({ row }) => <ChannelNameCell channel={row.original} />,
         meta: { mobileTitle: true },
       },
       {
