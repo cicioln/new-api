@@ -70,6 +70,10 @@ func videoModelName(info *relaycommon.RelayInfo) string {
 	return info.OriginModelName
 }
 
+// videoJoinMode is where long videos are joined: "" (on the Muse VM, falling
+// back to this server's ffmpeg), "vm", or "local".
+var videoJoinMode = common.GetEnvOrDefaultString("MUSE_VIDEO_JOIN", musesdk.JoinAuto)
+
 // longVideoTimeout bounds a whole segmented job.
 func longVideoTimeout(segments int) time.Duration {
 	return time.Duration(segments)*videoGenerateTimeout + 5*time.Minute
@@ -118,12 +122,21 @@ func cleanupVideoJobs(ctx context.Context) {
 }
 
 type videoRequest struct {
-	acc    *musesdk.Account
+	slot   videoSlot
 	prompt string
 	refs   []musesdk.RefImage
 	// long is set for videos made of several segments; prompt and refs are
 	// then unused.
 	long *longVideo
+}
+
+func videoSlotOf(info *relaycommon.RelayInfo) videoSlot {
+	return videoSlot{
+		channelID: info.ChannelId,
+		multiKey:  info.ChannelIsMultiKey,
+		proxy:     info.ChannelSetting.Proxy,
+		keys:      channelVideoKeys(info.ChannelId, info.ChannelMultiKeyIndex, info.ApiKey, info.ChannelIsMultiKey),
+	}
 }
 
 // longVideo is a video longer than one Muse clip.
@@ -172,6 +185,11 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 	}
 	if req.InputReference != "" || len(req.Images) > 0 || hasMultipartReference(c) || extras.hasImages() {
 		info.Action = constant.TaskActionImageToVideo
+	}
+	// A busy channel answers 429 before billing, so the relay can retry on
+	// another channel. LocalError keeps the channel from being disabled.
+	if videoQueueFull(videoSlotOf(info)) {
+		return service.TaskErrorWrapperLocal(errors.New("all Muse accounts of this channel are busy and its queue is full; try again later"), "channel_busy", http.StatusTooManyRequests)
 	}
 	return nil
 }
@@ -330,10 +348,12 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if len(refs) > musesdk.MaxRefImages {
 		return nil, fmt.Errorf("at most %d reference images are supported", musesdk.MaxRefImages)
 	}
-	acc, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy)
-	if err != nil {
+	// Check the selected key's cookies now, so a broken key fails the
+	// submission instead of a queued job.
+	if _, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy); err != nil {
 		return nil, err
 	}
+	slot := videoSlotOf(info)
 	if limit := videoTierSeconds(videoModelName(info)); limit > maxVideoSeconds {
 		if len(refs) > musesdk.MaxRefImages-1 {
 			return nil, fmt.Errorf("long videos take at most %d images", musesdk.MaxRefImages-1)
@@ -350,11 +370,11 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 			long.last, rest = &rest[0], rest[1:]
 		}
 		long.refs = rest
-		a.request = &videoRequest{acc: acc, long: long}
+		a.request = &videoRequest{slot: slot, long: long}
 		return strings.NewReader(""), nil
 	}
 	prompt := videoPrompt(req, extras, len(refs) > 0)
-	a.request = &videoRequest{acc: acc, prompt: prompt, refs: refs}
+	a.request = &videoRequest{slot: slot, prompt: prompt, refs: refs}
 	return strings.NewReader(""), nil
 }
 
@@ -430,12 +450,19 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 		return nil, errors.New("muse video task id is missing")
 	}
 	jobID := info.PublicTaskID
+	req := *a.request
 	videoJobsMu.Lock()
-	if _, exists := videoJobs[jobID]; !exists {
+	_, exists := videoJobs[jobID]
+	if !exists {
 		videoJobs[jobID] = &videoJob{Status: model.TaskStatusQueued}
-		go runVideoJob(jobID, *a.request)
 	}
 	videoJobsMu.Unlock()
+	if !exists {
+		scheduleVideo(&queuedVideo{jobID: jobID, slot: req.slot, start: func(acc *musesdk.Account, release func()) {
+			defer release()
+			runVideoJob(jobID, acc, req)
+		}})
+	}
 	return jsonResponse(http.StatusOK, []byte(`{}`)), nil
 }
 
@@ -479,7 +506,12 @@ func videoPrompt(req relaycommon.TaskSubmitReq, extras videoExtras, hasRefs bool
 	return b.String()
 }
 
-func runVideoJob(jobID string, req videoRequest) {
+func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
+	videoJobsMu.Lock()
+	if job := videoJobs[jobID]; job != nil && job.Status == model.TaskStatusQueued {
+		job.Status = model.TaskStatusInProgress
+	}
+	videoJobsMu.Unlock()
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			finishVideoJob(jobID, nil, fmt.Errorf("muse video job panic: %v", recovered))
@@ -497,11 +529,17 @@ func runVideoJob(jobID string, req videoRequest) {
 		segments := len(musesdk.SplitVideoSeconds(long.seconds, maxVideoSeconds))
 		ctx, cancel := context.WithTimeout(context.Background(), longVideoTimeout(segments))
 		defer cancel()
-		file, err := sharedEngine().GenerateLongVideo(ctx, req.acc, musesdk.LongVideoRequest{
+		file, err := sharedEngine().GenerateLongVideo(ctx, acc, musesdk.LongVideoRequest{
 			Seconds:    long.seconds,
 			Segment:    long.segment,
 			Timeout:    videoGenerateTimeout,
 			OnProgress: onProgress,
+			Join:       videoJoinMode,
+			OnJoin: func(where string, vmErr error) {
+				if vmErr != nil {
+					common.SysLog(common.LogText("muse video %s: VM join failed, joined locally: %s", jobID, vmErr.Error()))
+				}
+			},
 		})
 		var files []musesdk.Media
 		if file != nil {
@@ -512,7 +550,7 @@ func runVideoJob(jobID string, req videoRequest) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+time.Minute)
 	defer cancel()
-	files, err := sharedEngine().Generate(ctx, req.acc, musesdk.GenRequest{
+	files, err := sharedEngine().Generate(ctx, acc, musesdk.GenRequest{
 		Prompt:     req.prompt,
 		Kind:       "video",
 		Refs:       req.refs,
@@ -648,6 +686,7 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 func DeleteVideo(task *model.Task) {
 	sharedEngine() // initializes engineConfig, which locates the media dir
 	id := task.GetUpstreamTaskID()
+	dropQueuedVideo(id)
 	videoJobsMu.Lock()
 	delete(videoJobs, id)
 	videoJobsMu.Unlock()

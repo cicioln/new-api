@@ -952,6 +952,10 @@ function museLongVideo(max: number): ModelDoc {
         en: 'If any clip fails, the whole task fails and is refunded. Clips are not returned separately.',
         zh: '任何一段失败，整个任务失败并退款，不会单独返回已完成的分段。',
       },
+      {
+        en: 'When every account is busy the task waits in a queue and shows status queued. If the queue is full the submission is rejected with HTTP 429; try again later.',
+        zh: '账号都在忙时，任务会排队，状态显示 queued。队列满了会直接拒绝提交，返回 HTTP 429，请稍后再试。',
+      },
       ...MUSE_VIDEO.callouts,
     ],
   }
