@@ -329,10 +329,16 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 		if err != nil {
 			return nil, fmt.Errorf("decode reference image failed: %w", err)
 		}
+		if len(raw) == 0 || len(raw) > musesdk.MaxRefImageBytes {
+			return nil, fmt.Errorf("reference image exceeds %d bytes", musesdk.MaxRefImageBytes)
+		}
 		refs = append(refs, musesdk.RefImage{Data: raw, Mime: mime})
 	}
 	if form := c.Request.MultipartForm; form != nil {
 		for _, header := range form.File["input_reference"] {
+			if header.Size > musesdk.MaxRefImageBytes {
+				return nil, fmt.Errorf("reference image %s exceeds %d bytes", header.Filename, musesdk.MaxRefImageBytes)
+			}
 			file, err := header.Open()
 			if err != nil {
 				return nil, err
@@ -341,6 +347,9 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 			file.Close()
 			if err != nil {
 				return nil, err
+			}
+			if len(raw) == 0 || len(raw) > musesdk.MaxRefImageBytes {
+				return nil, fmt.Errorf("reference image %s exceeds %d bytes", header.Filename, musesdk.MaxRefImageBytes)
 			}
 			refs = append(refs, musesdk.RefImage{Data: raw, Mime: http.DetectContentType(raw)})
 		}

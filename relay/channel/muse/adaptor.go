@@ -265,6 +265,9 @@ func chatPrompt(c *gin.Context, messages []dto.Message) (string, []musesdk.RefIm
 				if err != nil {
 					return "", nil, badRequest(fmt.Errorf("decode image failed: %w", err))
 				}
+				if len(raw) == 0 || len(raw) > musesdk.MaxRefImageBytes {
+					return "", nil, badRequest(fmt.Errorf("image exceeds %d bytes", musesdk.MaxRefImageBytes))
+				}
 				refs = append(refs, musesdk.RefImage{Data: raw, Mime: mime})
 			}
 		}
@@ -438,6 +441,9 @@ func multipartImages(c *gin.Context) ([]musesdk.RefImage, error) {
 		file.Close()
 		if err != nil {
 			return nil, err
+		}
+		if len(raw) == 0 || len(raw) > musesdk.MaxRefImageBytes {
+			return nil, fmt.Errorf("image %s exceeds %d bytes", header.Filename, musesdk.MaxRefImageBytes)
 		}
 		mime := header.Header.Get("Content-Type")
 		if !strings.HasPrefix(mime, "image/") {

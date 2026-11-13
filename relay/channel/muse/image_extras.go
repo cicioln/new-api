@@ -127,6 +127,9 @@ func jsonImageRefs(c *gin.Context, request *dto.ImageRequest) ([]musesdk.RefImag
 		if err != nil {
 			return nil, fmt.Errorf("decode reference image failed: %w", err)
 		}
+		if len(raw) == 0 || len(raw) > musesdk.MaxRefImageBytes {
+			return nil, fmt.Errorf("reference image exceeds %d bytes", musesdk.MaxRefImageBytes)
+		}
 		refs = append(refs, musesdk.RefImage{Data: raw, Mime: mime})
 	}
 	return refs, nil
