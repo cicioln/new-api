@@ -169,6 +169,7 @@ export function VideoPanel(props: {
             <RetentionNotice kind='video' />
             {list.map((task) => {
               const running = RUNNING_VIDEO.has(task.status)
+              const inProgress = task.status === TASK_STATUS.IN_PROGRESS
               const failed = task.status === TASK_STATUS.FAILURE
               const done = task.status === TASK_STATUS.SUCCESS
               const progress = Number.parseInt(task.progress ?? '', 10)
@@ -184,7 +185,7 @@ export function VideoPanel(props: {
                   <JobHeader prompt={text || t('Video')}>
                     {running && (
                       <Tag tone='running'>
-                        {Number.isFinite(progress) && progress > 0
+                        {inProgress && Number.isFinite(progress) && progress > 0
                           ? `${t('Generating')} · ${progress}%`
                           : t('Queued')}
                       </Tag>
@@ -229,11 +230,17 @@ export function VideoPanel(props: {
                       <div style={{ aspectRatio: aspect }}>
                         <PendingTile
                           label={
-                            Number.isFinite(progress) && progress > 0
+                            inProgress &&
+                            Number.isFinite(progress) &&
+                            progress > 0
                               ? `${progress}%`
                               : t('Queued')
                           }
-                          progress={Number.isFinite(progress) ? progress : 0}
+                          progress={
+                            inProgress && Number.isFinite(progress)
+                              ? progress
+                              : 0
+                          }
                           className='size-full'
                         />
                       </div>

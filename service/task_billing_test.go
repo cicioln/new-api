@@ -916,6 +916,21 @@ func TestRefundTaskQuota_Wallet(t *testing.T) {
 	assert.Equal(t, "test-model", log.ModelName)
 	assert.Zero(t, task.Quota)
 	assert.Zero(t, getTaskQuota(t, task.ID))
+
+	// Spend statistics subtract refunded quota from consumption.
+	model.RecordTaskBillingLog(model.RecordTaskBillingLogParams{
+		UserId:    userID,
+		LogType:   model.LogTypeConsume,
+		ChannelId: channelID,
+		ModelName: "test-model",
+		Quota:     preConsumed + 500,
+		TokenId:   tokenID,
+		Group:     task.Group,
+		Other:     model.NewLogOther(),
+	})
+	stat, err := model.SumUsedQuota(0, 0, 0, "test-model", "", "", channelID, "")
+	require.NoError(t, err)
+	assert.Equal(t, 500, stat.Quota)
 }
 
 func TestRefundTaskQuota_Subscription(t *testing.T) {

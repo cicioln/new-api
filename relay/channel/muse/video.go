@@ -666,7 +666,9 @@ func (a *TaskAdaptor) ParseTaskResult(task *model.Task, resp *http.Response, res
 		return nil, err
 	}
 	result := &relaycommon.TaskInfo{TaskID: task.GetUpstreamTaskID(), Status: job.Status, Reason: job.Reason}
-	if job.Status == model.TaskStatusInProgress && job.Progress > 0 {
+	if job.Status == model.TaskStatusQueued {
+		result.Progress = "0%"
+	} else if job.Status == model.TaskStatusInProgress && job.Progress > 0 {
 		result.Progress = fmt.Sprintf("%d%%", min(job.Progress, 99))
 	}
 	return result, nil

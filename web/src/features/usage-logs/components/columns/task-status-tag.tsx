@@ -38,9 +38,12 @@ export function TaskStatusTag(props: { log: TaskLog }) {
     toneClass = 'bg-destructive/10 text-destructive'
     // A refunded failure has its pre-consumed quota cleared back to zero.
     label = props.log.quota === 0 ? t('Failed · Refunded') : t('Failed')
-  } else if (RUNNING_TASK_STATUSES.has(status)) {
+  } else if (status === TASK_STATUS.IN_PROGRESS) {
     toneClass = 'bg-primary/12 text-primary'
     label = t('In Progress')
+  } else if (RUNNING_TASK_STATUSES.has(status)) {
+    toneClass = 'bg-warning/12 text-warning'
+    label = t('Queued')
   }
   return (
     <span className={cn(tagClass, toneClass)}>

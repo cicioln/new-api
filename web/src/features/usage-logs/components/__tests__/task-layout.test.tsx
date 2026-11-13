@@ -63,6 +63,24 @@ const refundedTask: TaskLog = {
   fail_reason: 'content rejected',
 }
 
+const queuedTask: TaskLog = {
+  ...successTask,
+  id: 3,
+  task_id: 'task_queued_waiting_01',
+  finish_time: 0,
+  progress: '0%',
+  status: 'QUEUED',
+}
+
+const inProgressTask: TaskLog = {
+  ...successTask,
+  id: 4,
+  task_id: 'task_running_active_01',
+  finish_time: 0,
+  progress: '65%',
+  status: 'IN_PROGRESS',
+}
+
 async function renderTasks() {
   useAuthStore
     .getState()
@@ -73,7 +91,10 @@ async function renderTasks() {
       const status = new URLSearchParams(url.split('?')[1]).get('status')
       data = status
         ? { items: [refundedTask], total: 2 }
-        : { items: [successTask, refundedTask], total: 126 }
+        : {
+            items: [successTask, refundedTask, queuedTask, inProgressTask],
+            total: 126,
+          }
     }
     return { data: { success: true, data } }
   })
@@ -163,6 +184,14 @@ it('tags a refunded failure and shows no duration for it', async () => {
   expect(
     screen.getByText('task_8f3a…b0').closest('tr')?.querySelectorAll('td')[6]
   ).toHaveTextContent('2m 05s')
+})
+
+it('distinguishes queued tasks from in-progress tasks', async () => {
+  await renderTasks()
+  const queuedRow = screen.getByText('task_queu…01').closest('tr')
+  const runningRow = screen.getByText('task_runn…01').closest('tr')
+  expect(queuedRow?.querySelectorAll('td')[4]).toHaveTextContent('Queued')
+  expect(runningRow?.querySelectorAll('td')[4]).toHaveTextContent('In Progress')
 })
 
 it('opens the task details dialog when a row is clicked', async () => {

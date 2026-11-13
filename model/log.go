@@ -446,16 +446,20 @@ func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
 	if err != nil {
 		common.SysLog(common.LogText("failed to record task billing log: %s", err.Error()))
 	}
-	if params.LogType == LogTypeConsume && common.DataExportEnabled {
+	if (params.LogType == LogTypeConsume || params.LogType == LogTypeRefund) && common.DataExportEnabled {
 		nodeName := params.NodeName
 		if nodeName == "" {
 			nodeName = common.NodeName
+		}
+		quota := params.Quota
+		if params.LogType == LogTypeRefund {
+			quota = -quota
 		}
 		LogQuotaData(QuotaDataLogParams{
 			UserID:    params.UserId,
 			Username:  username,
 			ModelName: params.ModelName,
-			Quota:     params.Quota,
+			Quota:     quota,
 			CreatedAt: createdAt,
 			UseGroup:  params.Group,
 			TokenID:   params.TokenId,
@@ -818,6 +822,17 @@ func SumUsedQuota(logType int, startTimestamp int64, endTimestamp int64, modelNa
 	if err := tx.Scan(&stat).Error; err != nil {
 		common.SysError(common.LogText("failed to query log stat: %s", err.Error()))
 		return stat, common.NewMessage("Failed to query statistics")
+	}
+
+	// Refunds (failed tasks, settled overcharges) give quota back, so they
+	// are not consumption: subtract them from the spent total.
+	if refundQuery, err := filtered(true); err == nil {
+		var refunded int64
+		if err := refundQuery.Select("COALESCE(sum(quota), 0)").Where("type = ?", LogTypeRefund).Scan(&refunded).Error; err != nil {
+			common.SysError(common.LogText("failed to query refund log stat: %s", err.Error()))
+		} else {
+			stat.Quota = max(stat.Quota-int(refunded), 0)
+		}
 	}
 
 	if errorQuery, err := filtered(true); err == nil {

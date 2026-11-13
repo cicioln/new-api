@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	musesdk "github.com/CoolkHz/muse-protocol-go/muse"
+	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,4 +74,19 @@ func TestLongVideoSingleSegmentPrompt(t *testing.T) {
 	assert.Empty(t, refs)
 	assert.NotContains(t, prompt, "part 1")
 	assert.Contains(t, prompt, "Video length: 8 seconds.")
+}
+
+func TestParseTaskResultKeepsQueuedAtZeroProgress(t *testing.T) {
+	var a TaskAdaptor
+	task := &model.Task{TaskID: "task_muse_q1"}
+
+	queued, err := a.ParseTaskResult(task, nil, []byte(`{"status":"QUEUED","progress":0}`))
+	require.NoError(t, err)
+	assert.Equal(t, model.TaskStatusQueued, queued.Status)
+	assert.Equal(t, "0%", queued.Progress)
+
+	running, err := a.ParseTaskResult(task, nil, []byte(`{"status":"IN_PROGRESS","progress":45}`))
+	require.NoError(t, err)
+	assert.Equal(t, model.TaskStatusInProgress, running.Status)
+	assert.Equal(t, "45%", running.Progress)
 }
