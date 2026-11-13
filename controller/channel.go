@@ -741,13 +741,18 @@ func validateChannel(channel *model.Channel, isAdd bool) error {
 			if channel.ChannelInfo.IsMultiKey {
 				keys = strings.Split(trimmedKey, "\n")
 			}
+			hasKey := false
 			for _, key := range keys {
 				if strings.TrimSpace(key) == "" {
 					continue
 				}
+				hasKey = true
 				if missing := musesdk.MissingCookies(musesdk.ParseCookies(key)); len(missing) > 0 {
 					return fmt.Errorf("Muse key must include the cookies: %s", strings.Join(missing, ", "))
 				}
+			}
+			if !hasKey {
+				return fmt.Errorf("Muse key must include the cookies: %s", strings.Join(musesdk.RequiredCookies, ", "))
 			}
 		}
 	}
@@ -849,6 +854,9 @@ func AddChannel(c *gin.Context) {
 	baseURLFromPluginDefault := addChannelRequest.Channel != nil &&
 		addChannelRequest.Channel.Type == constant.ChannelTypeTaskPlugin &&
 		(addChannelRequest.Channel.BaseURL == nil || strings.TrimSpace(*addChannelRequest.Channel.BaseURL) == "")
+	if addChannelRequest.Channel != nil && addChannelRequest.Mode == "multi_to_single" {
+		addChannelRequest.Channel.ChannelInfo.IsMultiKey = true
+	}
 	// 使用统一的校验函数
 	if err := validateChannel(addChannelRequest.Channel, true); err != nil {
 		common.ApiError(c, err)
@@ -902,11 +910,18 @@ func AddChannel(c *gin.Context) {
 
 	channels := make([]model.Channel, 0, len(keys))
 	for _, key := range keys {
-		if key == "" {
+		if strings.TrimSpace(key) == "" {
 			continue
 		}
-		localChannel := addChannelRequest.Channel
+		localChannel := *addChannelRequest.Channel
 		localChannel.Key = key
+		if addChannelRequest.Mode == "batch" {
+			localChannel.Key = strings.TrimSpace(key)
+			if err := validateChannel(&localChannel, true); err != nil {
+				common.ApiError(c, err)
+				return
+			}
+		}
 		if addChannelRequest.BatchAddSetKeyPrefix2Name && len(keys) > 1 {
 			keyPrefix := localChannel.Key
 			if len(localChannel.Key) > 8 {
@@ -914,7 +929,7 @@ func AddChannel(c *gin.Context) {
 			}
 			localChannel.Name = fmt.Sprintf("%s %s", localChannel.Name, keyPrefix)
 		}
-		channels = append(channels, *localChannel)
+		channels = append(channels, localChannel)
 	}
 	err = model.BatchInsertChannels(channels)
 	if err != nil {
@@ -1323,6 +1338,12 @@ func UpdateChannel(c *gin.Context) {
 			}
 		case "replace":
 			// 覆盖模式：直接使用新密钥（默认行为，不需要特殊处理）
+		}
+	}
+	if channel.ChannelInfo.IsMultiKey && strings.TrimSpace(channel.Key) != "" {
+		if err := validateChannel(&channel.Channel, false); err != nil {
+			common.ApiError(c, err)
+			return
 		}
 	}
 	err = channel.Update()

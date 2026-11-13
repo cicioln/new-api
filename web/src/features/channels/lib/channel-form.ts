@@ -379,18 +379,6 @@ export const channelFormSchema = z
     }
 
     if (
-      data.type === 64 &&
-      data.multi_key_mode &&
-      data.multi_key_mode !== 'single'
-    ) {
-      addRequiredIssue(
-        ctx,
-        'multi_key_mode',
-        'Muse channels do not support batch creation'
-      )
-    }
-
-    if (
       data.type === 41 &&
       data.vertex_key_type === 'json' &&
       data.key?.trim() &&
