@@ -1259,8 +1259,15 @@ func UpdateChannel(c *gin.Context) {
 	}
 
 	// If the request explicitly specifies a new MultiKeyMode, apply it on top of the original info.
+	switchedToSingle := false
 	if channel.MultiKeyMode != nil && *channel.MultiKeyMode != "" {
-		channel.ChannelInfo.MultiKeyMode = constant.MultiKeyMode(*channel.MultiKeyMode)
+		if *channel.MultiKeyMode == "single" {
+			channel.ChannelInfo = model.ChannelInfo{}
+			switchedToSingle = true
+		} else {
+			channel.ChannelInfo.IsMultiKey = true
+			channel.ChannelInfo.MultiKeyMode = constant.MultiKeyMode(*channel.MultiKeyMode)
+		}
 	}
 
 	// 处理多key模式下的密钥追加/覆盖逻辑
@@ -1338,6 +1345,17 @@ func UpdateChannel(c *gin.Context) {
 			}
 		case "replace":
 			// 覆盖模式：直接使用新密钥（默认行为，不需要特殊处理）
+			if !(channel.Type == constant.ChannelTypeVertexAi && channel.GetOtherSettings().VertexKeyType != dto.VertexKeyTypeAPIKey) {
+				var cleanKeys []string
+				for key := range strings.SplitSeq(channel.Key, "\n") {
+					if key = strings.TrimSpace(key); key != "" {
+						cleanKeys = append(cleanKeys, key)
+					}
+				}
+				if len(cleanKeys) > 0 {
+					channel.Key = strings.Join(cleanKeys, "\n")
+				}
+			}
 		}
 	}
 	if channel.ChannelInfo.IsMultiKey && strings.TrimSpace(channel.Key) != "" {
@@ -1350,6 +1368,12 @@ func UpdateChannel(c *gin.Context) {
 	if err != nil {
 		common.ApiError(c, err)
 		return
+	}
+	if switchedToSingle {
+		if err := channel.SaveChannelInfo(); err != nil {
+			common.ApiError(c, err)
+			return
+		}
 	}
 	model.InitChannelCache()
 	if proxyChanged {

@@ -81,9 +81,14 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
             delete payload[field]
           }
         }
+        const isTargetMultiKey =
+          data.multi_key_mode === 'multi_to_single' ||
+          (props.isMultiKeyChannel && data.multi_key_mode !== 'single')
+        const switchedToSingle =
+          props.isMultiKeyChannel && data.multi_key_mode === 'single'
         const payloadWithKeyMode =
           canEditSensitive &&
-          props.isMultiKeyChannel &&
+          isTargetMultiKey &&
           data.key?.trim() &&
           data.key_mode
             ? {
@@ -94,8 +99,11 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
 
         const response = await updateChannel(props.currentRow.id, {
           ...payloadWithKeyMode,
-          ...(canEditSensitive && props.isMultiKeyChannel
+          ...(canEditSensitive && isTargetMultiKey
             ? { multi_key_mode: data.multi_key_type }
+            : {}),
+          ...(canEditSensitive && switchedToSingle
+            ? { multi_key_mode: 'single' }
             : {}),
         })
         if (!response.success) {

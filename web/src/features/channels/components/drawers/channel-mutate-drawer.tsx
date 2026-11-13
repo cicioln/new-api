@@ -566,7 +566,7 @@ export function ChannelMutateDrawer({
     useChannelKeyDisclosure(open, channelId)
 
   // Check if this is a multi-key channel
-  const isMultiKeyChannel =
+  const originIsMultiKeyChannel =
     isEditing && channelData?.data?.channel_info?.is_multi_key === true
 
   // Form setup
@@ -578,6 +578,10 @@ export function ChannelMutateDrawer({
   // Watch values once for conditional fields and configuration indicators.
   const formValues = form.watch()
   const multiKeyMode = formValues.multi_key_mode
+  const isMultiKeyChannel =
+    isEditing &&
+    (multiKeyMode === 'multi_to_single' ||
+      (originIsMultiKeyChannel && multiKeyMode !== 'single'))
   const multiKeyType = formValues.multi_key_type
   const keyMode = formValues.key_mode
   const currentGroups = formValues.group
@@ -691,13 +695,15 @@ export function ChannelMutateDrawer({
   const isChannelDetailLoading = isEditing && isChannelLoading
   const supportsMultiKeyAddMode =
     currentType !== 57 && !(currentType === 41 && vertexKeyType === 'api_key')
-  const addModeOptions = useMemo(
-    () =>
-      supportsMultiKeyAddMode
-        ? ADD_MODE_OPTIONS
-        : ADD_MODE_OPTIONS.filter((option) => option.value === 'single'),
-    [supportsMultiKeyAddMode]
-  )
+  const addModeOptions = useMemo(() => {
+    if (!supportsMultiKeyAddMode) {
+      return ADD_MODE_OPTIONS.filter((option) => option.value === 'single')
+    }
+    if (isEditing) {
+      return ADD_MODE_OPTIONS.filter((option) => option.value !== 'batch')
+    }
+    return ADD_MODE_OPTIONS
+  }, [isEditing, supportsMultiKeyAddMode])
 
   const advancedCustomStats = useMemo(
     () => getAdvancedCustomStats(currentAdvancedCustom),
@@ -1596,7 +1602,7 @@ export function ChannelMutateDrawer({
   const channelMutation = useChannelMutateForm({
     currentRow,
     isEditing,
-    isMultiKeyChannel,
+    isMultiKeyChannel: originIsMultiKeyChannel,
     onSuccess: handleSuccess,
   })
 
@@ -4283,47 +4289,45 @@ export function ChannelMutateDrawer({
             )}
 
             <ChannelAuthSection>
-              {!isEditing && (
-                <FormField
-                  control={form.control}
-                  name='multi_key_mode'
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                      <FormLabel className='text-muted-foreground text-xs font-medium'>
-                        {t('Add Mode')}
-                      </FormLabel>
-                      <Select
-                        disabled={sensitiveLocked}
-                        items={addModeOptions.map((option) => ({
-                          value: option.value,
-                          label: t(option.label),
-                        }))}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger size='sm' className='w-full sm:w-56'>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent alignItemWithTrigger={false}>
-                          <SelectGroup>
-                            {addModeOptions.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {t(option.label)}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name='multi_key_mode'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                    <FormLabel className='text-muted-foreground text-xs font-medium'>
+                      {t('Add Mode')}
+                    </FormLabel>
+                    <Select
+                      disabled={sensitiveLocked}
+                      items={addModeOptions.map((option) => ({
+                        value: option.value,
+                        label: t(option.label),
+                      }))}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger size='sm' className='w-full sm:w-56'>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          {addModeOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {t(option.label)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -4396,7 +4400,7 @@ export function ChannelMutateDrawer({
                       <FormDescription>
                         <span className='flex flex-col gap-2'>
                           <span>{keyDescription}</span>
-                          {!isEditing && isBatchMode && (
+                          {isBatchMode && (
                             <Button
                               type='button'
                               variant='outline'
