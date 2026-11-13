@@ -132,6 +132,7 @@ import {
   getChannel,
   getChannelDefaultBaseURLs,
   getGroups,
+  getMultiKeyStatus,
   getPrefillGroups,
   getTaskPluginOptions,
   refreshCodexCredential,
@@ -568,6 +569,12 @@ export function ChannelMutateDrawer({
   // Check if this is a multi-key channel
   const originIsMultiKeyChannel =
     isEditing && channelData?.data?.channel_info?.is_multi_key === true
+
+  const { data: multiKeyStatusData } = useQuery({
+    queryKey: ['channel-multi-key-status', channelId],
+    queryFn: () => getMultiKeyStatus(channelId!, 1, 200),
+    enabled: Boolean(open && isEditing && channelId && originIsMultiKeyChannel),
+  })
 
   // Form setup
   const form = useForm<ChannelFormValues>({
@@ -4681,6 +4688,166 @@ export function ChannelMutateDrawer({
                   )}
                 />
               )}
+
+              <FormField
+                control={form.control}
+                name='key_concurrency'
+                render={({ field }) => (
+                  <FormItem>
+                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                      <div>
+                        <FormLabel>全局单 Key 并发数</FormLabel>
+                        <FormDescription className='text-xs'>
+                          每个 Key 默认允许同时执行的任务数（默认 1，未单独设置的 Key 均跟随此全局值）
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min={0}
+                          max={100}
+                          placeholder='1（默认）'
+                          className='w-full font-mono sm:w-36'
+                          value={field.value && field.value > 0 ? field.value : ''}
+                          onChange={(e) => {
+                            const val = Number.parseInt(e.target.value, 10)
+                            field.onChange(
+                              Number.isFinite(val) && val > 0 ? val : 0
+                            )
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {(isMultiKeyChannel ||
+                (!isEditing && multiKeyMode === 'multi_to_single')) && (
+                  <FormField
+                    control={form.control}
+                    name='multi_key_concurrency_list'
+                    render={({ field }) => {
+                      const concMap = field.value || {}
+                      const defaultConc =
+                        formValues.key_concurrency &&
+                        formValues.key_concurrency > 0
+                          ? formValues.key_concurrency
+                          : 1
+                      const savedKeys = originIsMultiKeyChannel
+                        ? multiKeyStatusData?.data?.keys || []
+                        : isEditing
+                          ? [
+                              {
+                                index: 0,
+                                status: 1,
+                                key_preview: '已保存密钥 #1',
+                              },
+                            ]
+                          : []
+                      const enteredLines = String(currentKey || '')
+                        .split('\n')
+                        .map((l) => l.trim())
+                        .filter(Boolean)
+                      const previewLine = (line: string) =>
+                        line.length > 24
+                          ? `${line.slice(0, 16)}...${line.slice(-4)}`
+                          : line
+                      const keysList =
+                        !isEditing || keyMode === 'replace'
+                          ? enteredLines.length > 0
+                            ? enteredLines.map((line, idx) => ({
+                                index: idx,
+                                status: 1,
+                                key_preview: previewLine(line),
+                              }))
+                            : savedKeys
+                          : [
+                              ...savedKeys,
+                              ...enteredLines.map((line, idx) => ({
+                                index: savedKeys.length + idx,
+                                status: 1,
+                                key_preview: `[新增] ${previewLine(line)}`,
+                              })),
+                            ]
+                      if (keysList.length === 0) return <></>
+                      return (
+                        <FormItem className='space-y-2 border-t pt-3'>
+                          <div className='flex items-center justify-between'>
+                            <FormLabel className='text-xs font-medium'>
+                              各 Key 独立并发数配置（共 {keysList.length} 个 Key）
+                            </FormLabel>
+                            <span className='text-muted-foreground text-xs'>
+                              留空则跟随全局（{defaultConc}）
+                            </span>
+                          </div>
+                          <div className='max-h-56 space-y-1.5 overflow-y-auto rounded-md border p-2'>
+                            {keysList.map((k) => {
+                              const idxKey = String(k.index)
+                              const customVal = concMap[idxKey]
+                              return (
+                                <div
+                                  key={k.index}
+                                  className='bg-muted/30 flex items-center justify-between gap-2 rounded px-2.5 py-1.5 text-xs'
+                                >
+                                  <div className='flex min-w-0 items-center gap-2'>
+                                    <span className='text-muted-foreground shrink-0 font-mono'>
+                                      #{k.index + 1}
+                                    </span>
+                                    <span className='truncate font-mono'>
+                                      {k.key_preview || `Key #${k.index + 1}`}
+                                    </span>
+                                    <Badge
+                                      variant={
+                                        k.status === 1
+                                          ? 'secondary'
+                                          : 'destructive'
+                                      }
+                                      className='h-4 shrink-0 px-1 text-[10px]'
+                                    >
+                                      {k.status === 1 ? '启用' : '已禁用'}
+                                    </Badge>
+                                  </div>
+                                  <div className='flex shrink-0 items-center gap-1.5'>
+                                    <span className='text-muted-foreground text-[11px]'>
+                                      并发
+                                    </span>
+                                    <Input
+                                      type='number'
+                                      min={0}
+                                      max={100}
+                                      placeholder={`全局(${defaultConc})`}
+                                      className='h-7 w-24 px-2 font-mono text-xs'
+                                      value={
+                                        customVal && customVal > 0
+                                          ? customVal
+                                          : ''
+                                      }
+                                      onChange={(e) => {
+                                        const val = Number.parseInt(
+                                          e.target.value,
+                                          10
+                                        )
+                                        const next = { ...concMap }
+                                        if (Number.isFinite(val) && val > 0) {
+                                          next[idxKey] = val
+                                        } else {
+                                          delete next[idxKey]
+                                        }
+                                        field.onChange(next)
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                )}
             </ChannelAuthSection>
           </fieldset>
         </div>

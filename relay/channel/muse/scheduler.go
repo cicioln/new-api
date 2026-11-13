@@ -27,8 +27,9 @@ var (
 
 // channelKey is one key of a Muse channel.
 type channelKey struct {
-	index int
-	key   string
+	index       int
+	key         string
+	concurrency int
 }
 
 // videoSlot is where a video job may run: its channel's enabled keys.
@@ -58,22 +59,30 @@ func accountID(channelID, keyIndex int) string {
 // channelVideoKeys returns the enabled keys of a channel. It falls back to
 // the key the relay selected when the channel cannot be read.
 func channelVideoKeys(channelID, selectedIndex int, selectedKey string, multiKey bool) []channelKey {
-	selected := []channelKey{{index: selectedIndex, key: selectedKey}}
-	if !multiKey {
-		return selected
-	}
+	defaultConc := max(accountConcurrency, 1)
 	channel, err := model.CacheGetChannel(channelID)
-	if err != nil || channel == nil {
+	if err == nil && channel != nil && channel.ChannelInfo.KeyConcurrency > 0 {
+		defaultConc = channel.ChannelInfo.KeyConcurrency
+	}
+	selected := []channelKey{{index: selectedIndex, key: selectedKey, concurrency: defaultConc}}
+	if !multiKey || err != nil || channel == nil {
 		return selected
 	}
 	statuses := channel.ChannelInfo.MultiKeyStatusList
+	concList := channel.ChannelInfo.MultiKeyConcurrencyList
 	var keys []channelKey
 	for i, key := range channel.GetKeys() {
 		if status, ok := statuses[i]; ok && status != common.ChannelStatusEnabled {
 			continue
 		}
 		if key != "" {
-			keys = append(keys, channelKey{index: i, key: key})
+			conc := defaultConc
+			if concList != nil {
+				if c, ok := concList[i]; ok && c > 0 {
+					conc = c
+				}
+			}
+			keys = append(keys, channelKey{index: i, key: key, concurrency: conc})
 		}
 	}
 	if len(keys) == 0 {
@@ -87,8 +96,12 @@ func channelVideoKeys(channelID, selectedIndex int, selectedKey string, multiKey
 func freeKeyLocked(slot videoSlot) (channelKey, bool) {
 	best, bestActive, found := channelKey{}, 0, false
 	for _, k := range slot.keys {
+		limit := max(accountConcurrency, 1)
+		if k.concurrency > 0 {
+			limit = k.concurrency
+		}
 		n := activeVideos[accountID(slot.channelID, k.index)]
-		if n >= max(accountConcurrency, 1) {
+		if n >= limit {
 			continue
 		}
 		if !found || n < bestActive {

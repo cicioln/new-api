@@ -62,13 +62,15 @@ type Channel struct {
 const ChannelStatusReasonAllKeysDisabled = "All keys are disabled"
 
 type ChannelInfo struct {
-	IsMultiKey             bool                  `json:"is_multi_key"`                        // 是否多Key模式
-	MultiKeySize           int                   `json:"multi_key_size"`                      // 多Key模式下的Key数量
-	MultiKeyStatusList     map[int]int           `json:"multi_key_status_list"`               // key状态列表，key index -> status
-	MultiKeyDisabledReason map[int]string        `json:"multi_key_disabled_reason,omitempty"` // key禁用原因列表，key index -> reason
-	MultiKeyDisabledTime   map[int]int64         `json:"multi_key_disabled_time,omitempty"`   // key禁用时间列表，key index -> time
-	MultiKeyPollingIndex   int                   `json:"multi_key_polling_index"`             // 多Key模式下轮询的key索引
-	MultiKeyMode           constant.MultiKeyMode `json:"multi_key_mode"`
+	IsMultiKey              bool                  `json:"is_multi_key"`                         // 是否多Key模式
+	MultiKeySize            int                   `json:"multi_key_size"`                       // 多Key模式下的Key数量
+	MultiKeyStatusList      map[int]int           `json:"multi_key_status_list"`                // key状态列表，key index -> status
+	MultiKeyDisabledReason  map[int]string        `json:"multi_key_disabled_reason,omitempty"`  // key禁用原因列表，key index -> reason
+	MultiKeyDisabledTime    map[int]int64         `json:"multi_key_disabled_time,omitempty"`    // key禁用时间列表，key index -> time
+	MultiKeyPollingIndex    int                   `json:"multi_key_polling_index"`              // 多Key模式下轮询的key索引
+	MultiKeyMode            constant.MultiKeyMode `json:"multi_key_mode"`
+	KeyConcurrency          int                   `json:"key_concurrency,omitempty"`            // 渠道默认单Key并发数（全局并发数，0表示默认1）
+	MultiKeyConcurrencyList map[int]int           `json:"multi_key_concurrency_list,omitempty"` // 针对特定Key的独立并发数，key index -> concurrency
 }
 
 type ChannelSortOptions struct {
@@ -591,6 +593,13 @@ func (channel *Channel) Update() error {
 			for idx := range channel.ChannelInfo.MultiKeyStatusList {
 				if idx >= channel.ChannelInfo.MultiKeySize {
 					delete(channel.ChannelInfo.MultiKeyStatusList, idx)
+				}
+			}
+		}
+		if channel.ChannelInfo.MultiKeyConcurrencyList != nil {
+			for idx, conc := range channel.ChannelInfo.MultiKeyConcurrencyList {
+				if idx < 0 || idx >= channel.ChannelInfo.MultiKeySize || conc <= 0 {
+					delete(channel.ChannelInfo.MultiKeyConcurrencyList, idx)
 				}
 			}
 		}

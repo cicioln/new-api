@@ -30,6 +30,8 @@ export const channelInfoSchema = z.object({
   multi_key_disabled_time: z.record(z.string(), z.number()).optional(),
   multi_key_polling_index: z.number().default(0),
   multi_key_mode: z.enum(['random', 'polling']).default('random'),
+  key_concurrency: z.number().default(0),
+  multi_key_concurrency_list: z.record(z.string(), z.number()).optional(),
 })
 
 export type ChannelInfo = z.infer<typeof channelInfoSchema>
@@ -69,6 +71,7 @@ export const channelSchema = z.object({
     multi_key_size: 0,
     multi_key_polling_index: 0,
     multi_key_mode: 'random',
+    key_concurrency: 0,
   }),
   settings: z.string().default('{}'), // other_settings JSON
 })
@@ -265,6 +268,7 @@ export interface KeyStatus {
   disabled_time?: number
   reason?: string
   key_preview?: string
+  concurrency?: number
 }
 
 export type MultiKeyConfirmAction = {
@@ -418,6 +422,8 @@ export interface ChannelFormData {
 export interface AddChannelRequest {
   mode: 'single' | 'batch' | 'multi_to_single'
   multi_key_mode?: 'random' | 'polling'
+  key_concurrency?: number
+  multi_key_concurrency_list?: Record<string, number>
   batch_add_set_key_prefix_2_name?: boolean
   channel: Partial<Channel>
 }

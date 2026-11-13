@@ -97,6 +97,17 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
               }
             : payload
 
+        const prevKeyConcurrency =
+          props.currentRow.channel_info?.key_concurrency || 0
+        const nextKeyConcurrency = data.key_concurrency || 0
+        const keyConcurrencyChanged = nextKeyConcurrency !== prevKeyConcurrency
+
+        const prevConcList =
+          props.currentRow.channel_info?.multi_key_concurrency_list || {}
+        const nextConcList = data.multi_key_concurrency_list || {}
+        const concListChanged =
+          JSON.stringify(prevConcList) !== JSON.stringify(nextConcList)
+
         const response = await updateChannel(props.currentRow.id, {
           ...payloadWithKeyMode,
           ...(canEditSensitive && isTargetMultiKey
@@ -104,6 +115,12 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
             : {}),
           ...(canEditSensitive && switchedToSingle
             ? { multi_key_mode: 'single' }
+            : {}),
+          ...(keyConcurrencyChanged
+            ? { key_concurrency: nextKeyConcurrency }
+            : {}),
+          ...(concListChanged
+            ? { multi_key_concurrency_list: nextConcList }
             : {}),
         })
         if (!response.success) {

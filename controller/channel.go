@@ -795,6 +795,8 @@ func RefreshCodexChannelCredential(c *gin.Context) {
 type AddChannelRequest struct {
 	Mode                      string                `json:"mode"`
 	MultiKeyMode              constant.MultiKeyMode `json:"multi_key_mode"`
+	KeyConcurrency            int                   `json:"key_concurrency"`
+	MultiKeyConcurrencyList   map[int]int           `json:"multi_key_concurrency_list"`
 	BatchAddSetKeyPrefix2Name bool                  `json:"batch_add_set_key_prefix_2_name"`
 	Channel                   *model.Channel        `json:"channel"`
 }
@@ -856,6 +858,20 @@ func AddChannel(c *gin.Context) {
 		(addChannelRequest.Channel.BaseURL == nil || strings.TrimSpace(*addChannelRequest.Channel.BaseURL) == "")
 	if addChannelRequest.Channel != nil && addChannelRequest.Mode == "multi_to_single" {
 		addChannelRequest.Channel.ChannelInfo.IsMultiKey = true
+	}
+	if addChannelRequest.Channel != nil && addChannelRequest.KeyConcurrency > 0 {
+		addChannelRequest.Channel.ChannelInfo.KeyConcurrency = addChannelRequest.KeyConcurrency
+	}
+	if addChannelRequest.Channel != nil && len(addChannelRequest.MultiKeyConcurrencyList) > 0 {
+		normalized := make(map[int]int)
+		for idx, conc := range addChannelRequest.MultiKeyConcurrencyList {
+			if idx >= 0 && conc > 0 {
+				normalized[idx] = conc
+			}
+		}
+		if len(normalized) > 0 {
+			addChannelRequest.Channel.ChannelInfo.MultiKeyConcurrencyList = normalized
+		}
 	}
 	// 使用统一的校验函数
 	if err := validateChannel(addChannelRequest.Channel, true); err != nil {
@@ -1164,8 +1180,10 @@ func DeleteChannelBatch(c *gin.Context) {
 
 type PatchChannel struct {
 	model.Channel
-	MultiKeyMode *string `json:"multi_key_mode"`
-	KeyMode      *string `json:"key_mode"` // 多key模式下密钥覆盖或者追加
+	MultiKeyMode            *string     `json:"multi_key_mode"`
+	KeyMode                 *string     `json:"key_mode"` // 多key模式下密钥覆盖或者追加
+	KeyConcurrency          *int        `json:"key_concurrency"`
+	MultiKeyConcurrencyList map[int]int `json:"multi_key_concurrency_list"`
 }
 
 // MaintenanceNote and MaintenanceUntil apply only to the maintenance status.
@@ -1260,14 +1278,35 @@ func UpdateChannel(c *gin.Context) {
 
 	// If the request explicitly specifies a new MultiKeyMode, apply it on top of the original info.
 	switchedToSingle := false
+	concurrencyUpdated := false
 	if channel.MultiKeyMode != nil && *channel.MultiKeyMode != "" {
 		if *channel.MultiKeyMode == "single" {
-			channel.ChannelInfo = model.ChannelInfo{}
+			channel.ChannelInfo = model.ChannelInfo{
+				KeyConcurrency: originChannel.ChannelInfo.KeyConcurrency,
+			}
 			switchedToSingle = true
 		} else {
 			channel.ChannelInfo.IsMultiKey = true
 			channel.ChannelInfo.MultiKeyMode = constant.MultiKeyMode(*channel.MultiKeyMode)
 		}
+	}
+	if channel.KeyConcurrency != nil {
+		channel.ChannelInfo.KeyConcurrency = max(*channel.KeyConcurrency, 0)
+		concurrencyUpdated = true
+	}
+	if _, ok := requestData["multi_key_concurrency_list"]; ok {
+		normalized := make(map[int]int)
+		for idx, conc := range channel.MultiKeyConcurrencyList {
+			if idx >= 0 && conc > 0 {
+				normalized[idx] = conc
+			}
+		}
+		if len(normalized) > 0 {
+			channel.ChannelInfo.MultiKeyConcurrencyList = normalized
+		} else {
+			channel.ChannelInfo.MultiKeyConcurrencyList = nil
+		}
+		concurrencyUpdated = true
 	}
 
 	// 处理多key模式下的密钥追加/覆盖逻辑
@@ -1369,7 +1408,7 @@ func UpdateChannel(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	if switchedToSingle {
+	if switchedToSingle || concurrencyUpdated {
 		if err := channel.SaveChannelInfo(); err != nil {
 			common.ApiError(c, err)
 			return
@@ -1801,6 +1840,7 @@ type KeyStatus struct {
 	DisabledTime int64  `json:"disabled_time,omitempty"`
 	Reason       string `json:"reason,omitempty"`
 	KeyPreview   string `json:"key_preview"` // first 10 chars of key for identification
+	Concurrency  int    `json:"concurrency,omitempty"`
 }
 
 // ManageMultiKeys handles multi-key management operations
@@ -1907,12 +1947,18 @@ func ManageMultiKeys(c *gin.Context) {
 				keyPreview = key[:10] + "..."
 			}
 
+			var keyConc int
+			if channel.ChannelInfo.MultiKeyConcurrencyList != nil {
+				keyConc = channel.ChannelInfo.MultiKeyConcurrencyList[i]
+			}
+
 			allKeyStatusList = append(allKeyStatusList, KeyStatus{
 				Index:        i,
 				Status:       status,
 				DisabledTime: disabledTime,
 				Reason:       reason,
 				KeyPreview:   keyPreview,
+				Concurrency:  keyConc,
 			})
 		}
 
@@ -2118,6 +2164,7 @@ func ManageMultiKeys(c *gin.Context) {
 		var newStatusList = make(map[int]int)
 		var newDisabledTime = make(map[int]int64)
 		var newDisabledReason = make(map[int]string)
+		var newConcurrencyList = make(map[int]int)
 
 		newIndex := 0
 		for i, key := range keys {
@@ -2144,6 +2191,11 @@ func ManageMultiKeys(c *gin.Context) {
 					newDisabledReason[newIndex] = r
 				}
 			}
+			if channel.ChannelInfo.MultiKeyConcurrencyList != nil {
+				if c, exists := channel.ChannelInfo.MultiKeyConcurrencyList[i]; exists && c > 0 {
+					newConcurrencyList[newIndex] = c
+				}
+			}
 			newIndex++
 		}
 
@@ -2158,6 +2210,7 @@ func ManageMultiKeys(c *gin.Context) {
 		channel.ChannelInfo.MultiKeyStatusList = newStatusList
 		channel.ChannelInfo.MultiKeyDisabledTime = newDisabledTime
 		channel.ChannelInfo.MultiKeyDisabledReason = newDisabledReason
+		channel.ChannelInfo.MultiKeyConcurrencyList = newConcurrencyList
 
 		shouldCloseWebSocket := disableMultiKeyChannelIfUnavailable(channel)
 		err = channel.Update()
@@ -2179,6 +2232,7 @@ func ManageMultiKeys(c *gin.Context) {
 		var newStatusList = make(map[int]int)
 		var newDisabledTime = make(map[int]int64)
 		var newDisabledReason = make(map[int]string)
+		var newConcurrencyList = make(map[int]int)
 
 		newIndex := 0
 		for i, key := range keys {
@@ -2208,6 +2262,11 @@ func ManageMultiKeys(c *gin.Context) {
 						}
 					}
 				}
+				if channel.ChannelInfo.MultiKeyConcurrencyList != nil {
+					if c, exists := channel.ChannelInfo.MultiKeyConcurrencyList[i]; exists && c > 0 {
+						newConcurrencyList[newIndex] = c
+					}
+				}
 				newIndex++
 			}
 		}
@@ -2223,6 +2282,7 @@ func ManageMultiKeys(c *gin.Context) {
 		channel.ChannelInfo.MultiKeyStatusList = newStatusList
 		channel.ChannelInfo.MultiKeyDisabledTime = newDisabledTime
 		channel.ChannelInfo.MultiKeyDisabledReason = newDisabledReason
+		channel.ChannelInfo.MultiKeyConcurrencyList = newConcurrencyList
 
 		shouldCloseWebSocket := disableMultiKeyChannelIfUnavailable(channel)
 		err = channel.Update()

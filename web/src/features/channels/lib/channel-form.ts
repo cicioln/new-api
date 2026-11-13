@@ -260,6 +260,10 @@ export const channelFormSchema = z
     multi_key_type: z.enum(['random', 'polling']).optional(),
     batch_add_set_key_prefix_2_name: z.boolean().optional(),
     key_mode: z.enum(['append', 'replace']).optional(), // For editing multi-key channels
+    key_concurrency: z.number().int().min(0).optional(),
+    multi_key_concurrency_list: z
+      .record(z.string(), z.number().int().min(0))
+      .optional(),
     // Channel extra settings (stored in setting JSON, not sent directly)
     force_format: z.boolean().optional(),
     thinking_to_content: z.boolean().optional(),
@@ -456,6 +460,8 @@ export const CHANNEL_FORM_DEFAULT_VALUES: ChannelFormValues = {
   multi_key_type: 'random',
   batch_add_set_key_prefix_2_name: false,
   key_mode: 'append',
+  key_concurrency: 0,
+  multi_key_concurrency_list: {},
   // Channel extra settings
   force_format: false,
   thinking_to_content: false,
@@ -626,6 +632,9 @@ export function transformChannelToFormDefaults(
     multi_key_type: channel.channel_info.multi_key_mode || 'random',
     batch_add_set_key_prefix_2_name: false,
     key_mode: 'append', // Default to append mode for editing multi-key channels
+    key_concurrency: channel.channel_info?.key_concurrency || 0,
+    multi_key_concurrency_list:
+      channel.channel_info?.multi_key_concurrency_list || {},
     // Channel extra settings
     ...extraSettings,
     // Type-specific settings
@@ -857,6 +866,8 @@ function normalizeBaseUrl(value: string | undefined): string {
 export function transformFormDataToCreatePayload(formData: ChannelFormValues): {
   mode: 'single' | 'batch' | 'multi_to_single'
   multi_key_mode?: 'random' | 'polling'
+  key_concurrency?: number
+  multi_key_concurrency_list?: Record<string, number>
   batch_add_set_key_prefix_2_name?: boolean
   channel: Partial<Channel>
 } {
@@ -897,6 +908,16 @@ export function transformFormDataToCreatePayload(formData: ChannelFormValues): {
     mode,
     multi_key_mode:
       mode === 'multi_to_single' ? formData.multi_key_type : undefined,
+    key_concurrency:
+      formData.key_concurrency && formData.key_concurrency > 0
+        ? formData.key_concurrency
+        : undefined,
+    multi_key_concurrency_list:
+      mode === 'multi_to_single' &&
+      formData.multi_key_concurrency_list &&
+      Object.keys(formData.multi_key_concurrency_list).length > 0
+        ? formData.multi_key_concurrency_list
+        : undefined,
     batch_add_set_key_prefix_2_name:
       mode === 'batch' ? formData.batch_add_set_key_prefix_2_name : undefined,
     channel,
