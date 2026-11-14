@@ -90,3 +90,39 @@ func TestParseTaskResultKeepsQueuedAtZeroProgress(t *testing.T) {
 	assert.Equal(t, model.TaskStatusInProgress, running.Status)
 	assert.Equal(t, "45%", running.Progress)
 }
+
+func TestLongVideoStoryboardShotsWithCutAndContinuous(t *testing.T) {
+	ref := musesdk.RefImage{Data: []byte("ref"), Mime: "image/png"}
+	prev := musesdk.RefImage{Data: []byte("prev"), Mime: "image/png"}
+	v := &longVideo{
+		limit:   20,
+		seconds: 15,
+		req:     relaycommon.TaskSubmitReq{Prompt: "1-7s: 镜头A 7-15s: 镜头B"},
+		refs:    []musesdk.RefImage{ref},
+		shots: []musesdk.VideoShot{
+			{Seconds: 7, ContinuousFromPrev: false, Prompt: "镜头A：男主在咖啡馆看表"},
+			{Seconds: 8, ContinuousFromPrev: false, Prompt: "镜头B：切到窗外警车飞驰"},
+		},
+	}
+
+	p0, refs0 := v.segment(musesdk.VideoSegment{Index: 0, Count: 2, Start: 0, Seconds: 7})
+	require.Equal(t, []musesdk.RefImage{ref}, refs0)
+	assert.Contains(t, p0, "seconds 0 to 7 (7 seconds)")
+	assert.Contains(t, p0, "Video length: 7 seconds.")
+	assert.Contains(t, p0, "镜头A：男主在咖啡馆看表")
+	assert.NotContains(t, p0, "镜头B")
+
+	// Scene cut (ContinuousFromPrev == false): LastFrame is omitted so the camera can cut cleanly.
+	p1, refs1 := v.segment(musesdk.VideoSegment{Index: 1, Count: 2, Start: 7, Seconds: 8, LastFrame: &prev})
+	require.Equal(t, []musesdk.RefImage{ref}, refs1)
+	assert.Contains(t, p1, "seconds 7 to 15 (8 seconds)")
+	assert.Contains(t, p1, "Video length: 8 seconds.")
+	assert.Contains(t, p1, "new camera angle or scene cut")
+	assert.Contains(t, p1, "镜头B：切到窗外警车飞驰")
+
+	// Continuous shot (ContinuousFromPrev == true): LastFrame is attached first.
+	v.shots[1].ContinuousFromPrev = true
+	p1Cont, refs1Cont := v.segment(musesdk.VideoSegment{Index: 1, Count: 2, Start: 7, Seconds: 8, LastFrame: &prev})
+	require.Equal(t, []musesdk.RefImage{prev, ref}, refs1Cont)
+	assert.Contains(t, p1Cont, "last frame of the previous part")
+}

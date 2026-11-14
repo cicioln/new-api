@@ -141,12 +141,14 @@ func videoSlotOf(info *relaycommon.RelayInfo) videoSlot {
 
 // longVideo is a video longer than one Muse clip.
 type longVideo struct {
+	limit   int
 	seconds int
 	req     relaycommon.TaskSubmitReq
 	extras  videoExtras
 	first   *musesdk.RefImage
 	last    *musesdk.RefImage
 	refs    []musesdk.RefImage
+	shots   []musesdk.VideoShot
 }
 
 // TaskAdaptor serves Muse video generation through the async task relay.
@@ -368,7 +370,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 		if len(refs) > musesdk.MaxRefImages-1 {
 			return nil, fmt.Errorf("long videos take at most %d images", musesdk.MaxRefImages-1)
 		}
-		long := &longVideo{seconds: videoSeconds(req), req: req, extras: extras}
+		long := &longVideo{limit: limit, seconds: videoSeconds(req), req: req, extras: extras}
 		if long.seconds <= 0 {
 			long.seconds = limit
 		}
@@ -388,20 +390,39 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	return strings.NewReader(""), nil
 }
 
+func (v *longVideo) allRefs() []musesdk.RefImage {
+	var out []musesdk.RefImage
+	if v.first != nil {
+		out = append(out, *v.first)
+	}
+	if v.last != nil {
+		out = append(out, *v.last)
+	}
+	out = append(out, v.refs...)
+	return out
+}
+
 // segment returns the prompt and images of one segment of a long video.
-// Every segment gets the user's reference images. The first segment also
-// gets the requested first frame; later segments start from the previous
-// segment's last frame, and the final segment ends on the requested last
-// frame.
+// When Muse has planned a shot-by-shot storyboard (v.shots), each segment
+// receives its dedicated shot prompt and only attaches the previous segment's
+// last frame when ContinuousFromPrev is true.
 func (v *longVideo) segment(s musesdk.VideoSegment) (string, []musesdk.RefImage) {
 	var refs []musesdk.RefImage
 	var frames []string
-	if s.LastFrame != nil {
+	hasPlannedShot := s.Index >= 0 && s.Index < len(v.shots)
+	continuous := true
+	if hasPlannedShot && s.Index > 0 {
+		continuous = v.shots[s.Index].ContinuousFromPrev
+	}
+
+	if s.LastFrame != nil && continuous {
 		refs = append(refs, *s.LastFrame)
 		frames = append(frames, "The first attached image is the last frame of the previous part. Start this part exactly from that frame and continue the motion smoothly, keeping the same characters, setting, lighting and style.")
-	} else if v.first != nil {
+	} else if s.Index == 0 && v.first != nil {
 		refs = append(refs, *v.first)
 		frames = append(frames, "The first attached image is the opening frame.")
+	} else if s.Index > 0 && !continuous {
+		frames = append(frames, "This part is a new camera angle or scene cut; keep the same character identity and overall visual style as the reference image(s) without locking to the previous shot's frame.")
 	}
 	if s.Index == s.Count-1 && v.last != nil {
 		refs = append(refs, *v.last)
@@ -419,7 +440,7 @@ func (v *longVideo) segment(s musesdk.VideoSegment) (string, []musesdk.RefImage)
 		b.WriteString("Use your video generation tool to create a video. Do not answer with text only; produce the video file.")
 	}
 	if s.Count > 1 {
-		fmt.Fprintf(&b, "\nThis is part %d of %d of one continuous %d-second video. It covers seconds %d to %d. Make only this part.", s.Index+1, s.Count, v.seconds, s.Start, s.Start+s.Seconds)
+		fmt.Fprintf(&b, "\nThis is part %d of %d of one %d-second video. It covers seconds %d to %d (%d seconds). Make only this %d-second part and ensure its action completes naturally within %d seconds.", s.Index+1, s.Count, v.seconds, s.Start, s.Start+s.Seconds, s.Seconds, s.Seconds, s.Seconds)
 	}
 	for _, line := range frames {
 		b.WriteString("\n" + line)
@@ -440,6 +461,11 @@ func (v *longVideo) segment(s musesdk.VideoSegment) (string, []musesdk.RefImage)
 	}
 	if v.extras.NegativePrompt != "" {
 		b.WriteString("\nAvoid: " + v.extras.NegativePrompt + ".")
+	}
+	if hasPlannedShot {
+		b.WriteString("\n\nCurrent shot description (generate only this shot):\n")
+		b.WriteString(v.shots[s.Index].Prompt)
+		return b.String(), refs
 	}
 	if s.Count > 1 {
 		b.WriteString("\n\nDescription of the whole video (make only the part above):\n")
@@ -536,11 +562,49 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 		videoJobsMu.Unlock()
 	}
 	if long := req.long; long != nil {
-		segments := len(musesdk.SplitVideoSeconds(long.seconds, maxVideoSeconds))
+		onProgress(5)
+		ratio := aspectRatio(long.req.Size)
+		if ratio == "" {
+			ratio = aspectRatio(long.extras.AspectRatio)
+		}
+		var plan []int
+		pctx, pcancel := context.WithTimeout(context.Background(), time.Minute)
+		shots, planErr := sharedEngine().PlanStoryboard(pctx, acc, musesdk.StoryboardRequest{
+			Prompt:         long.req.Prompt,
+			MaxSeconds:     long.limit,
+			TargetSeconds:  long.seconds,
+			SegmentSeconds: maxVideoSeconds,
+			Refs:           long.allRefs(),
+			HasFirstFrame:  long.first != nil,
+			HasLastFrame:   long.last != nil,
+			AspectRatio:    ratio,
+			CameraMovement: long.extras.CameraMovement,
+			Style:          long.extras.Style,
+			NegativePrompt: long.extras.NegativePrompt,
+		})
+		pcancel()
+		if planErr == nil && len(shots) > 0 {
+			long.shots = shots
+			plan = make([]int, len(shots))
+			total := 0
+			for i, s := range shots {
+				plan[i] = s.Seconds
+				total += s.Seconds
+			}
+			long.seconds = total
+			common.SysLog(common.LogText("muse video %s: planned %d shots (%v seconds, total %ds)", jobID, len(shots), plan, total))
+		} else if planErr != nil {
+			common.SysLog(common.LogText("muse video %s: storyboard planning fallback (%s)", jobID, planErr.Error()))
+		}
+		segments := len(plan)
+		if segments == 0 {
+			segments = len(musesdk.SplitVideoSeconds(long.seconds, maxVideoSeconds))
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), longVideoTimeout(segments))
 		defer cancel()
 		file, err := sharedEngine().GenerateLongVideo(ctx, acc, musesdk.LongVideoRequest{
 			Seconds:    long.seconds,
+			Plan:       plan,
 			Segment:    long.segment,
 			Timeout:    videoGenerateTimeout,
 			OnProgress: onProgress,
