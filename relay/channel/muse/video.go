@@ -362,6 +362,7 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if _, err := accountFor(info.ChannelId, info.ChannelMultiKeyIndex, info.ChannelIsMultiKey, info.ApiKey, info.ChannelSetting.Proxy); err != nil {
 		return nil, err
 	}
+	refs = musesdk.CompactRefImages(refs)
 	slot := videoSlotOf(info)
 	if limit := videoTierSeconds(videoModelName(info)); limit > maxVideoSeconds {
 		if len(refs) > musesdk.MaxRefImages-1 {
