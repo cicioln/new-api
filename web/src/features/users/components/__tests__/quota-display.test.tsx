@@ -157,6 +157,29 @@ it('shows the used share as a progress bar and opens quota details on click', as
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   )
   expect(trigger).toHaveFocus()
+
+  await userEvent.click(trigger)
+  const reopenedDetail = await screen.findByRole('dialog', {
+    name: 'Quota ($)',
+  })
+  await userEvent.click(reopenedDetail)
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
+
+  await userEvent.click(trigger)
+  await screen.findByRole('dialog', { name: 'Quota ($)' })
+  await userEvent.click(document.body)
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
+
+  await userEvent.click(trigger)
+  await screen.findByRole('dialog', { name: 'Quota ($)' })
+  await userEvent.click(trigger)
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
 })
 
 it.each([
@@ -277,6 +300,8 @@ it('renders the design columns with names, roles, status tags and counts', async
     'Quota usage',
     'Requests',
     'Invites',
+    'Registration time',
+    'Last Login',
     'Actions',
   ])
   const row = screen.getByRole('row', {

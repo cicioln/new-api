@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -39,8 +39,10 @@ type QuotaDetailsPopoverProps = {
 }
 
 export function QuotaDetailsPopover(props: QuotaDetailsPopoverProps) {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <div className={cn('w-full min-w-0', props.className)}>
         <PopoverTrigger
           render={
@@ -60,7 +62,8 @@ export function QuotaDetailsPopover(props: QuotaDetailsPopoverProps) {
       </div>
       <PopoverContent
         align='start'
-        className='w-72 max-w-[calc(100vw-2rem)] gap-3 p-3'
+        onClick={() => setOpen(false)}
+        className='w-72 max-w-[calc(100vw-2rem)] cursor-pointer gap-3 p-3'
       >
         <PopoverTitle>{props.title}</PopoverTitle>
         <dl className='grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-sm tabular-nums'>
