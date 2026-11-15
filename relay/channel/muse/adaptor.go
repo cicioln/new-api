@@ -355,6 +355,12 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	}
 	files, err := sharedEngine().Generate(c.Request.Context(), acc, musesdk.GenRequest{Prompt: prompt, Kind: "image", Refs: refs, N: count})
 	if err != nil {
+		if musesdk.KindOf(err) == musesdk.KindRefusal {
+			// The model answered with text instead of drawing, usually because
+			// it declined the prompt. Like a content filter, this is not a
+			// health sample for the model.
+			info.PerformanceBusinessRejection = true
+		}
 		return nil, relayError(mediaRefusal(err, "image"), false)
 	}
 	defer removeMedia(files)
