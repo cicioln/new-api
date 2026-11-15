@@ -817,6 +817,8 @@ github.com/cicioln/muse-protocol-go v0.0.0-20261114120746-a1094969591f h1:NeQQmj
 github.com/cicioln/muse-protocol-go v0.0.0-20261114120746-a1094969591f/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
 github.com/cicioln/muse-protocol-go v0.0.0-20261114135137-cf6c79ae9de0 h1:6CSkJskcbUAaXmCyucDrkU70JmBfe8/GCKjAtLL0U8Q=
 github.com/cicioln/muse-protocol-go v0.0.0-20261114135137-cf6c79ae9de0/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
+github.com/cicioln/muse-protocol-go v0.0.0-20261115100127-7c6ffcc7ec22 h1:3aHSoqnUwl82S3VtFg+L38AnPYBNUBLr/xo5TXUzDWo=
+github.com/cicioln/muse-protocol-go v0.0.0-20261115100127-7c6ffcc7ec22/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
 github.com/cilium/ebpf v0.0.0-20200110133405-4032b1d8aae3/go.mod h1:MA5e5Lr8slmEg9bt0VpxxWqJlO4iwu3FBdHUzV7wQVg=
 github.com/cilium/ebpf v0.0.0-20200702112145-1c8d4c9ef775/go.mod h1:7cR51M8ViRLIdUjrmSXlK9pkrsDlLHbO8jiB8X8JnOc=
 github.com/cilium/ebpf v0.2.0/go.mod h1:To2CFviqOWL/M0gIMsvSMlqe7em/l1ALkX1PyjrX2Qs=
