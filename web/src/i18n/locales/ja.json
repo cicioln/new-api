@@ -3313,6 +3313,7 @@
     "Email Binding Bonus": "メール連携ボーナス",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "確認済みメールで登録、またはメールを連携したときに、メールアドレスごとに一度だけ付与（{{formattedQuota}}）",
     "Email binding bonus {{quota}}": "メール連携ボーナス {{quota}}",
+    "Sign up with email to get {{amount}} in credit": "メールで登録すると {{amount}} 分のクレジットを進呈",
     "Invitee Reward": "招待された側の報酬",
     "Inviter": "招待者",
     "Inviter ID: {{id}}": "招待者 ID：{{id}}",

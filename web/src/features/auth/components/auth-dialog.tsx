@@ -63,9 +63,7 @@ export function AuthDialog() {
       ? t(
           'The administrator has disabled new user registration. Contact the administrator for an account, or sign in with a linked third-party account.'
         )
-      : t(
-          'After signing up you can create API keys. New users join the default group.'
-        )
+      : ''
   }
 
   let body: React.ReactNode
@@ -118,9 +116,11 @@ export function AuthDialog() {
           <DialogTitle className='text-[22px] leading-[1.4] font-bold tracking-[-0.02em]'>
             {title}
           </DialogTitle>
-          <p className='text-subtle-foreground mt-1.5 text-sm leading-[1.55]'>
-            {description}
-          </p>
+          {description && (
+            <p className='text-subtle-foreground mt-1.5 text-sm leading-[1.55]'>
+              {description}
+            </p>
+          )}
         </div>
         {body}
       </DialogContent>

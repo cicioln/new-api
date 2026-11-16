@@ -64,6 +64,7 @@ import {
   saveAffiliateCode,
 } from '@/features/auth/lib/storage'
 import { useStatus } from '@/hooks/use-status'
+import { formatQuota } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
 import { AuthOperationError } from '@/lib/secure-verification'
 import { createServerError } from '@/lib/server-error-message'
@@ -138,6 +139,7 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
     true
   const hasWeChatLogin = Boolean(status?.wechat_login)
   const turnstileReady = !isTurnstileEnabled || Boolean(turnstileToken)
+  const emailBonus = Number(status?.quota_for_email_bind ?? 0)
 
   const wechatQrCodeUrl = useMemo(() => {
     return (
@@ -328,6 +330,14 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+        )}
+
+        {emailBonus > 0 && (
+          <p className='text-sm font-medium text-emerald-600 dark:text-emerald-400'>
+            {t('Sign up with email to get {{amount}} in credit', {
+              amount: formatQuota(emailBonus),
+            })}
+          </p>
         )}
 
         {method === 'username' && (

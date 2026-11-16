@@ -25,7 +25,7 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
@@ -143,6 +143,18 @@ it('blocks an email sign-up with an invalid address before sending it', async ()
     await screen.findByText('Please enter a valid email address')
   ).toBeVisible()
   expect(post).not.toHaveBeenCalled()
+})
+
+it('shows the email bonus only when the administrator sets one', async () => {
+  renderSignUp({ quota_for_email_bind: 500000 })
+  expect(
+    await screen.findByText(/^Sign up with email to get .+ in credit$/)
+  ).toBeVisible()
+
+  cleanup()
+  renderSignUp({ quota_for_email_bind: 0 })
+  await screen.findByRole('tab', { name: 'Email' })
+  expect(screen.queryByText(/Sign up with email to get/)).not.toBeInTheDocument()
 })
 
 it('offers only the email method when the administrator requires email verification', async () => {

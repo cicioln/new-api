@@ -3313,6 +3313,7 @@
     "Email Binding Bonus": "Bonus de liaison d'e-mail",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "Offert une seule fois par adresse e-mail lorsqu'un utilisateur s'inscrit avec un e-mail vérifié ou en lie un ({{formattedQuota}})",
     "Email binding bonus {{quota}}": "Bonus de liaison d'e-mail {{quota}}",
+    "Sign up with email to get {{amount}} in credit": "Inscrivez-vous par e-mail pour recevoir {{amount}} de crédit",
     "Invitee Reward": "Récompense de l'invité",
     "Inviter": "Inviteur",
     "Inviter ID: {{id}}": "ID du parrain : {{id}}",

@@ -170,6 +170,8 @@ export interface SystemStatus {
   display_in_currency?: boolean
   display_token_stat_enabled?: boolean
   quota_per_unit?: number
+  // Quota given once for a verified email address; 0 when disabled.
+  quota_for_email_bind?: number
   quota_display_type?: string
   usd_exchange_rate?: number
   custom_currency_symbol?: string
