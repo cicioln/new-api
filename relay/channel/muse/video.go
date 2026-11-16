@@ -511,9 +511,8 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 	}
 	videoJobsMu.Unlock()
 	if !exists {
-		scheduleVideo(&queuedVideo{jobID: jobID, slot: req.slot, start: func(acc *musesdk.Account, release func()) {
-			defer release()
-			runVideoJob(jobID, acc, req)
+		scheduleVideo(&queuedVideo{jobID: jobID, slot: req.slot, run: func(acc *musesdk.Account) ([]musesdk.Media, error) {
+			return runVideoJob(jobID, acc, req)
 		}})
 	}
 	return jsonResponse(http.StatusOK, []byte(`{}`)), nil
@@ -559,7 +558,14 @@ func videoPrompt(req relaycommon.TaskSubmitReq, extras videoExtras, hasRefs bool
 	return b.String()
 }
 
-func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
+// videoPanic is a video job that crashed. It is not retried on another key.
+type videoPanic struct{ value any }
+
+func (p *videoPanic) Error() string { return fmt.Sprintf("muse video job panic: %v", p.value) }
+
+// runVideoJob makes the video on one account and returns its files. The
+// scheduler decides whether a failure is retried on another key.
+func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []musesdk.Media, err error) {
 	videoJobsMu.Lock()
 	if job := videoJobs[jobID]; job != nil && job.Status == model.TaskStatusQueued {
 		job.Status = model.TaskStatusInProgress
@@ -567,7 +573,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 	videoJobsMu.Unlock()
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			finishVideoJob(jobID, nil, fmt.Errorf("muse video job panic: %v", recovered))
+			files, err = nil, &videoPanic{value: recovered}
 		}
 	}()
 	onProgress := func(pct int) {
@@ -632,16 +638,14 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 				}
 			},
 		})
-		var files []musesdk.Media
 		if file != nil {
 			files = []musesdk.Media{*file}
 		}
-		finishVideoJob(jobID, files, mediaRefusal(videoTimeoutError(err), "video"))
-		return
+		return files, mediaRefusal(videoTimeoutError(err), "video")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+time.Minute)
 	defer cancel()
-	files, err := sharedEngine().Generate(ctx, acc, musesdk.GenRequest{
+	files, err = sharedEngine().Generate(ctx, acc, musesdk.GenRequest{
 		Prompt:     req.prompt,
 		Kind:       "video",
 		Refs:       req.refs,
@@ -649,7 +653,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 		Timeout:    videoGenerateTimeout,
 		OnProgress: onProgress,
 	})
-	finishVideoJob(jobID, files, mediaRefusal(videoTimeoutError(err), "video"))
+	return files, mediaRefusal(videoTimeoutError(err), "video")
 }
 
 func finishVideoJob(jobID string, files []musesdk.Media, err error) {
@@ -668,16 +672,6 @@ func finishVideoJob(jobID string, files []musesdk.Media, err error) {
 		removeMedia(files)
 		job.Status = model.TaskStatusFailure
 		job.Reason = err.Error()
-		// The reason shown to the user is a fixed sentence; the model's own
-		// words tell a refusal from a real limit notice.
-		var reply *musesdk.ModelReply
-		if errors.As(err, &reply) {
-			text := []rune(reply.Text)
-			if len(text) > 300 {
-				text = append(text[:300], '…')
-			}
-			common.SysLog(common.LogText("muse video %s failed (%s), model replied: %q", jobID, job.Reason, string(text)))
-		}
 		return
 	}
 	removeMedia(files[1:])

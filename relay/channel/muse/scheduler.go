@@ -1,6 +1,7 @@
 package muse
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -16,6 +17,10 @@ import (
 // key of its channel. When every key is busy it waits in the channel's queue
 // and starts as soon as a key of that channel frees up. A channel whose queue
 // is full rejects new jobs with 429, so the relay can try another channel.
+//
+// A job that fails on a key runs again from the start on another key of its
+// channel it has not tried, ahead of the jobs still waiting, until every key
+// has failed it. Only then does the task fail.
 //
 // Like the jobs themselves, the queue lives in this process only: queued jobs
 // are lost on restart and their tasks fail and are refunded.
@@ -43,7 +48,9 @@ type videoSlot struct {
 type queuedVideo struct {
 	jobID string
 	slot  videoSlot
-	start func(acc *musesdk.Account, release func())
+	// tried holds the indexes of the keys the job has already failed on.
+	tried map[int]bool
+	run   func(acc *musesdk.Account) ([]musesdk.Media, error)
 }
 
 var (
@@ -91,11 +98,14 @@ func channelVideoKeys(channelID, selectedIndex int, selectedKey string, multiKey
 	return keys
 }
 
-// freeKeyLocked returns the least busy key of slot with a free slot.
-// schedMu must be held.
-func freeKeyLocked(slot videoSlot) (channelKey, bool) {
+// freeKeyLocked returns the least busy key of slot with a free slot, skipping
+// the keys in tried. schedMu must be held.
+func freeKeyLocked(slot videoSlot, tried map[int]bool) (channelKey, bool) {
 	best, bestActive, found := channelKey{}, 0, false
 	for _, k := range slot.keys {
+		if tried[k.index] {
+			continue
+		}
 		limit := max(accountConcurrency, 1)
 		if k.concurrency > 0 {
 			limit = k.concurrency
@@ -116,7 +126,7 @@ func freeKeyLocked(slot videoSlot) (channelKey, bool) {
 func videoQueueFull(slot videoSlot) bool {
 	schedMu.Lock()
 	defer schedMu.Unlock()
-	if _, ok := freeKeyLocked(slot); ok && len(videoQueues[slot.channelID]) == 0 {
+	if _, ok := freeKeyLocked(slot, nil); ok && len(videoQueues[slot.channelID]) == 0 {
 		return false
 	}
 	return len(videoQueues[slot.channelID]) >= max(channelQueueLimit, 0)
@@ -125,58 +135,120 @@ func videoQueueFull(slot videoSlot) bool {
 // scheduleVideo starts the job on a free key of its channel, or queues it.
 func scheduleVideo(job *queuedVideo) {
 	schedMu.Lock()
-	// Jobs already waiting go first.
-	if len(videoQueues[job.slot.channelID]) == 0 {
-		if key, ok := freeKeyLocked(job.slot); ok {
-			startLocked(job, key)
-			schedMu.Unlock()
-			return
-		}
-	}
+	defer schedMu.Unlock()
 	videoQueues[job.slot.channelID] = append(videoQueues[job.slot.channelID], job)
-	schedMu.Unlock()
+	dispatchLocked(job.slot.channelID)
 }
 
-// startLocked reserves the key's slot and starts the job. schedMu must be
-// held; the job itself runs on its own goroutine.
+// dispatchLocked starts, in queue order, every waiting job of the channel
+// that has a free key it has not failed on. schedMu must be held.
+func dispatchLocked(channelID int) {
+	queue := videoQueues[channelID]
+	waiting := queue[:0]
+	for _, job := range queue {
+		if key, ok := freeKeyLocked(job.slot, job.tried); ok {
+			startLocked(job, key)
+			continue
+		}
+		waiting = append(waiting, job)
+	}
+	if len(waiting) == 0 {
+		delete(videoQueues, channelID)
+	} else {
+		videoQueues[channelID] = waiting
+	}
+}
+
+// startLocked reserves the key's slot and runs the job on its own goroutine.
+// schedMu must be held.
 func startLocked(job *queuedVideo, key channelKey) {
-	id := accountID(job.slot.channelID, key.index)
-	activeVideos[id]++
-	var once sync.Once
-	release := func() { once.Do(func() { releaseVideo(job.slot.channelID, id) }) }
+	activeVideos[accountID(job.slot.channelID, key.index)]++
 	go func() {
 		acc, err := accountFor(job.slot.channelID, key.index, job.slot.multiKey, key.key, job.slot.proxy)
-		if err != nil {
-			release()
-			finishVideoJob(job.jobID, nil, err)
-			return
+		var files []musesdk.Media
+		if err == nil {
+			files, err = job.run(acc)
 		}
-		job.start(acc, release)
+		finishAttempt(job, key, files, err)
 	}()
 }
 
-// releaseVideo frees one slot of the account and starts the jobs of its
-// channel that can run now.
-func releaseVideo(channelID int, id string) {
+// finishAttempt frees the key the job ran on. A job that failed there and
+// still has untried keys goes back to the front of the queue; any other job
+// is finished.
+func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err error) {
+	if err != nil {
+		logVideoFailure(job.jobID, key.index, err)
+	}
+	channelID := job.slot.channelID
 	schedMu.Lock()
-	defer schedMu.Unlock()
+	id := accountID(channelID, key.index)
 	if activeVideos[id]--; activeVideos[id] <= 0 {
 		delete(activeVideos, id)
 	}
-	queue := videoQueues[channelID]
-	for len(queue) > 0 {
-		key, ok := freeKeyLocked(queue[0].slot)
-		if !ok {
-			break
+	// videoJobsMu is taken inside schedMu here and never the other way round.
+	retry := err != nil && tryNextKey(err) && job.markTried(key.index) && requeueVideoJob(job.jobID)
+	if retry {
+		videoQueues[channelID] = append([]*queuedVideo{job}, videoQueues[channelID]...)
+	}
+	dispatchLocked(channelID)
+	schedMu.Unlock()
+	if retry {
+		removeMedia(files)
+		common.SysLog(common.LogText("muse video %s: retrying on another key after key %d failed", job.jobID, key.index))
+		return
+	}
+	finishVideoJob(job.jobID, files, err)
+}
+
+// requeueVideoJob shows a job that will run again as queued from the start.
+// It reports false when the task was deleted meanwhile.
+func requeueVideoJob(jobID string) bool {
+	videoJobsMu.Lock()
+	defer videoJobsMu.Unlock()
+	job := videoJobs[jobID]
+	if job == nil {
+		return false
+	}
+	job.Status, job.Progress = model.TaskStatusQueued, 0
+	return true
+}
+
+// markTried records that the job failed on the key and reports whether the
+// channel has a key the job has not tried yet.
+func (job *queuedVideo) markTried(index int) bool {
+	if job.tried == nil {
+		job.tried = map[int]bool{}
+	}
+	job.tried[index] = true
+	for _, k := range job.slot.keys {
+		if !job.tried[k.index] {
+			return true
 		}
-		startLocked(queue[0], key)
-		queue = queue[1:]
 	}
-	if len(queue) == 0 {
-		delete(videoQueues, channelID)
-	} else {
-		videoQueues[channelID] = queue
+	return false
+}
+
+// tryNextKey reports whether another key might succeed where this one
+// failed. Invalid input and a crashed job fail the same way on every key.
+func tryNextKey(err error) bool {
+	var crashed *videoPanic
+	return musesdk.KindOf(err) != musesdk.KindBadRequest && !errors.As(err, &crashed)
+}
+
+// logVideoFailure logs a failed attempt with the model's own reply when it
+// answered with text: the reason shown to the user is a fixed sentence.
+func logVideoFailure(jobID string, keyIndex int, err error) {
+	var reply *musesdk.ModelReply
+	if !errors.As(err, &reply) {
+		common.SysLog(common.LogText("muse video %s failed on key %d: %s", jobID, keyIndex, err.Error()))
+		return
 	}
+	text := []rune(reply.Text)
+	if len(text) > 300 {
+		text = append(text[:300], '…')
+	}
+	common.SysLog(common.LogText("muse video %s failed on key %d (%s), model replied: %q", jobID, keyIndex, err.Error(), string(text)))
 }
 
 // dropQueuedVideo removes a job that has not started. It reports whether
