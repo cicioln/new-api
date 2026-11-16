@@ -346,6 +346,7 @@ func migrateDB() error {
 		&UserSession{},
 		&AuthFlow{},
 		&ExternalIdentityClaim{},
+		&EmailBonusGrant{},
 		&PasskeyCredential{},
 		&Option{},
 		&LoginEncryptionKey{},

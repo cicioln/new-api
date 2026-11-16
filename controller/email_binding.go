@@ -104,6 +104,9 @@ func EmailBind(c *gin.Context) {
 	if err := service.NotifyAccountSecurityChange(state.Email, "Email address confirmed"); err != nil {
 		notificationFailed = true
 	}
+	if _, err := model.GrantEmailBonus(identity.UserID, state.Email); err != nil {
+		common.SysError(common.LogText("failed to grant email bonus to user %d: %s", identity.UserID, err.Error()))
+	}
 	if err := model.PublishUserAuthCache(identity.UserID); err != nil {
 		writeSecurityOperationError(c, err)
 		return

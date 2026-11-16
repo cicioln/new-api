@@ -298,6 +298,12 @@ func Register(c *gin.Context) {
 		common.ApiErrorT(c, "User registration failed or user ID retrieval failed")
 		return
 	}
+	// The address was verified by the code above.
+	if cleanUser.Email != "" {
+		if _, err := model.GrantEmailBonus(insertedUser.Id, cleanUser.Email); err != nil {
+			common.SysError(common.LogText("failed to grant email bonus to user %d: %s", insertedUser.Id, err.Error()))
+		}
+	}
 	// 生成默认令牌
 	if constant.GenerateDefaultToken {
 		key, err := common.GenerateKey()

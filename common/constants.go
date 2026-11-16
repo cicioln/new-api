@@ -130,6 +130,10 @@ var TelegramBotName = ""
 var QuotaForNewUser = 0
 var QuotaForInviter = 0
 var QuotaForInvitee = 0
+
+// QuotaForEmailBind is given once per verified email address, at sign-up or
+// when an existing user binds an email.
+var QuotaForEmailBind = 0
 var ChannelDisableThreshold = 5.0
 var AutomaticDisableChannelEnabled = false
 var AutomaticEnableChannelEnabled = false
