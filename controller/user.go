@@ -214,6 +214,26 @@ func writeLoginResponse(c *gin.Context, user *model.User, bundle *service.AuthBu
 	})
 }
 
+// emailSignUpUsername builds a username for an account created from an email
+// address alone: the letters, digits and underscores of the local part, cut to
+// 13 characters, plus a random suffix so that equal local parts do not clash.
+func emailSignUpUsername(email string) string {
+	local, _, _ := strings.Cut(email, "@")
+	var name strings.Builder
+	for _, r := range strings.ToLower(local) {
+		if name.Len() == 13 {
+			break
+		}
+		if r == '_' || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			name.WriteRune(r)
+		}
+	}
+	if name.Len() == 0 {
+		name.WriteString("user")
+	}
+	return name.String() + "_" + strings.ToLower(common.GetRandomString(6))
+}
+
 func Register(c *gin.Context) {
 	if !common.RegisterEnabled {
 		common.ApiErrorT(c, "New user registration has been disabled by administrator")
@@ -231,6 +251,12 @@ func Register(c *gin.Context) {
 	}
 	user.Username = strings.TrimSpace(user.Username)
 	user.Email = model.NormalizeEmail(user.Email)
+	// An email sign-up proves the address with a code and may leave the
+	// username to the server. The administrator can require it for everyone.
+	emailSignUp := common.EmailVerificationEnabled || user.Email != ""
+	if emailSignUp && user.Username == "" && user.Email != "" {
+		user.Username = emailSignUpUsername(user.Email)
+	}
 	if user.Username == "" {
 		common.ApiErrorT(c, "Invalid parameters")
 		return
@@ -239,7 +265,7 @@ func Register(c *gin.Context) {
 		common.ApiErrorT(c, "Invalid input {{error}}", map[string]any{"error": err.Error()})
 		return
 	}
-	if common.EmailVerificationEnabled {
+	if emailSignUp {
 		if user.Email == "" || user.VerificationCode == "" {
 			common.ApiErrorT(c, "Email verification is enabled, please enter email address and verification code")
 			return
@@ -258,7 +284,7 @@ func Register(c *gin.Context) {
 		}
 	}
 	emailForExistCheck := ""
-	if common.EmailVerificationEnabled {
+	if emailSignUp {
 		emailForExistCheck = user.Email
 	}
 	exist, err := model.CheckUserExistOrDeleted(user.Username, emailForExistCheck)
@@ -280,7 +306,7 @@ func Register(c *gin.Context) {
 		InviterId:   inviterId,
 		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
 	}
-	if common.EmailVerificationEnabled {
+	if emailSignUp {
 		cleanUser.Email = user.Email
 	}
 	if err := cleanUser.Insert(inviterId); err != nil {
@@ -290,6 +316,9 @@ func Register(c *gin.Context) {
 		}
 		common.ApiError(c, err)
 		return
+	}
+	if emailSignUp {
+		common.DeleteKey(cleanUser.Email, common.EmailVerificationPurpose)
 	}
 
 	// 获取插入后的用户ID

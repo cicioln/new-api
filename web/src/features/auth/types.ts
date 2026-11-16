@@ -37,7 +37,8 @@ export interface TwoFAPayload {
 }
 
 export interface RegisterPayload {
-  username: string
+  // Omitted for an email sign-up; the server derives one from the address.
+  username?: string
   password: string
   email?: string
   verification_code?: string

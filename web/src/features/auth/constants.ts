@@ -29,12 +29,37 @@ export const loginFormSchema = z.object({
   password: z.string().min(1, 'Please enter your password'),
 })
 
+export const SIGN_UP_METHODS = ['username', 'email'] as const
+export type SignUpMethod = (typeof SIGN_UP_METHODS)[number]
+
+// A username sign-up needs a username; an email sign-up needs an address and
+// lets the server pick the username.
 export const registerFormSchema = z
   .object({
-    username: z.string().min(1, 'Please enter your username'),
-    email: z.string().optional(),
+    method: z.enum(SIGN_UP_METHODS),
+    username: z.string(),
+    email: z.string(),
     password: accountPasswordSchema,
     confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .superRefine((data, ctx) => {
+    if (data.method === 'username' && !data.username.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Please enter your username',
+        path: ['username'],
+      })
+    }
+    if (
+      data.method === 'email' &&
+      !z.email().safeParse(data.email.trim()).success
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Please enter a valid email address',
+        path: ['email'],
+      })
+    }
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match.",

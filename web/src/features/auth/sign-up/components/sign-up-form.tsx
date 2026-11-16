@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { register, wechatLoginByCode } from '@/features/auth/api'
 import {
   AUTH_FIELD_CLASS,
@@ -51,7 +52,10 @@ import {
 } from '@/features/auth/components/auth-ui'
 import { LegalConsent } from '@/features/auth/components/legal-consent'
 import { OAuthProviders } from '@/features/auth/components/oauth-providers'
-import { registerFormSchema } from '@/features/auth/constants'
+import {
+  registerFormSchema,
+  type SignUpMethod,
+} from '@/features/auth/constants'
 import { useAuthRedirect } from '@/features/auth/hooks/use-auth-redirect'
 import { useEmailVerification } from '@/features/auth/hooks/use-email-verification'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
@@ -96,9 +100,13 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
     validateTurnstile,
   })
 
+  // When the administrator requires email verification, every account signs
+  // up with an email address, so the username method is not offered.
+  const emailVerificationRequired = !!status?.email_verification
   const form = useForm<z.infer<typeof registerFormSchema>>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
+      method: emailVerificationRequired ? 'email' : 'username',
       username: '',
       email: '',
       password: '',
@@ -107,7 +115,20 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
   })
 
   const emailValue = form.watch('email')
-  const emailVerificationRequired = !!status?.email_verification
+  const selectedMethod = form.watch('method')
+  const method: SignUpMethod = emailVerificationRequired
+    ? 'email'
+    : selectedMethod
+
+  useEffect(() => {
+    if (emailVerificationRequired) form.setValue('method', 'email')
+  }, [emailVerificationRequired, form])
+
+  function selectMethod(value: unknown) {
+    if (value !== 'username' && value !== 'email') return
+    form.setValue('method', value)
+    form.clearErrors()
+  }
   const hasUserAgreement = Boolean(status?.user_agreement_enabled)
   const hasPrivacyPolicy = Boolean(status?.privacy_policy_enabled)
   const requiresLegalConsent = hasUserAgreement || hasPrivacyPolicy
@@ -154,35 +175,43 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
       return
     }
 
-    // Validate email verification if required
-    if (emailVerificationRequired) {
-      if (!data.email) {
-        toast.error(t('Please enter your email'))
-        return
-      }
-      if (!verificationCode) {
-        toast.error(t('Please enter the verification code'))
-        return
-      }
+    const emailSignUp = method === 'email'
+    if (emailSignUp && !verificationCode.trim()) {
+      toast.error(t('Please enter the verification code'))
+      return
     }
 
     if (!validateTurnstile()) return
 
+    const email = data.email.trim()
     setIsLoading(true)
     try {
-      const res = await register({
-        username: data.username,
-        password: data.password,
-        email: data.email || undefined,
-        verification_code: verificationCode || undefined,
-        aff_code: affCode.trim() || undefined,
-        turnstile: turnstileToken,
-      })
+      const res = await register(
+        emailSignUp
+          ? {
+              email,
+              password: data.password,
+              verification_code: verificationCode.trim(),
+              aff_code: affCode.trim() || undefined,
+              turnstile: turnstileToken,
+            }
+          : {
+              username: data.username.trim(),
+              password: data.password,
+              aff_code: affCode.trim() || undefined,
+              turnstile: turnstileToken,
+            }
+      )
 
       if (res?.success) {
         // Registration signs the new user in, possibly via a verification step.
+        // Sign-in accepts the email address in place of the username.
         toast.success(t('Account created'))
-        await handleLoginResult(res.data, props.redirectTo, data.username)
+        await handleLoginResult(
+          res.data,
+          props.redirectTo,
+          emailSignUp ? email : data.username.trim()
+        )
       } else {
         handleServerError(createServerError(res, t('Failed to create account')))
       }
@@ -196,7 +225,7 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
   }
 
   async function handleSendVerificationCode() {
-    if (await sendCode(emailValue || '')) {
+    if (await sendCode(emailValue.trim())) {
       setTurnstileToken('')
       setTurnstileWidgetKey((current) => current + 1)
     }
@@ -265,9 +294,10 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
       status?.telegram_oauth ||
       (status?.custom_oauth_providers?.length ?? 0) > 0
     )
-  const dividerLabel = emailVerificationRequired
-    ? t('Or sign up with email')
-    : t('Or sign up with a username')
+  const dividerLabel =
+    method === 'email'
+      ? t('Or sign up with email')
+      : t('Or sign up with a username')
 
   return (
     <Form {...form}>
@@ -287,28 +317,43 @@ export function SignUpForm(props: { className?: string; redirectTo?: string }) {
         onSubmit={form.handleSubmit(onSubmit)}
         className={cn(AUTH_FORM_CLASS, props.className)}
       >
-        <FormField
-          control={form.control}
-          name='username'
-          render={({ field }) => (
-            <FormItem className={AUTH_FIELD_CLASS}>
-              <FormLabel className={AUTH_LABEL_CLASS}>
+        {!emailVerificationRequired && (
+          <Tabs value={method} onValueChange={selectMethod}>
+            <TabsList className='w-full'>
+              <TabsTrigger value='username' disabled={isLoading}>
                 {t('Username')}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={t('3–20 letters, digits or underscores')}
-                  autoComplete='username'
-                  className={AUTH_INPUT_CLASS}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </TabsTrigger>
+              <TabsTrigger value='email' disabled={isLoading}>
+                {t('Email')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
 
-        {emailVerificationRequired && (
+        {method === 'username' && (
+          <FormField
+            control={form.control}
+            name='username'
+            render={({ field }) => (
+              <FormItem className={AUTH_FIELD_CLASS}>
+                <FormLabel className={AUTH_LABEL_CLASS}>
+                  {t('Username')}
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('3–20 letters, digits or underscores')}
+                    autoComplete='username'
+                    className={AUTH_INPUT_CLASS}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {method === 'email' && (
           <>
             <FormField
               control={form.control}
