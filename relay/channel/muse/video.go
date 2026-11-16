@@ -668,6 +668,16 @@ func finishVideoJob(jobID string, files []musesdk.Media, err error) {
 		removeMedia(files)
 		job.Status = model.TaskStatusFailure
 		job.Reason = err.Error()
+		// The reason shown to the user is a fixed sentence; the model's own
+		// words tell a refusal from a real limit notice.
+		var reply *musesdk.ModelReply
+		if errors.As(err, &reply) {
+			text := []rune(reply.Text)
+			if len(text) > 300 {
+				text = append(text[:300], '…')
+			}
+			common.SysLog(common.LogText("muse video %s failed (%s), model replied: %q", jobID, job.Reason, string(text)))
+		}
 		return
 	}
 	removeMedia(files[1:])
