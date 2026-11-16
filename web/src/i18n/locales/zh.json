@@ -3313,7 +3313,6 @@
     "Email Binding Bonus": "邮箱绑定赠送",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "用户用已验证的邮箱注册或绑定邮箱时赠送，每个邮箱仅赠送一次（{{formattedQuota}}）",
     "Email binding bonus {{quota}}": "邮箱绑定赠送 {{quota}}",
-    "Sign up with email to get {{amount}} in credit": "使用邮箱注册，赠送 {{amount}} 额度",
     "Invitee Reward": "受邀者奖励",
     "Inviter": "邀请人",
     "Inviter ID: {{id}}": "邀请人 ID：{{id}}",

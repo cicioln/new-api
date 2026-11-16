@@ -3313,7 +3313,6 @@
     "Email Binding Bonus": "Thưởng liên kết email",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "Tặng một lần cho mỗi địa chỉ email khi người dùng đăng ký bằng email đã xác minh hoặc liên kết email ({{formattedQuota}})",
     "Email binding bonus {{quota}}": "Thưởng liên kết email {{quota}}",
-    "Sign up with email to get {{amount}} in credit": "Đăng ký bằng email để nhận {{amount}} tín dụng",
     "Invitee Reward": "Referral reward",
     "Inviter": "Người mời",
     "Inviter ID: {{id}}": "ID người mời: {{id}}",

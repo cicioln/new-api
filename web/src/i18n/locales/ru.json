@@ -3313,7 +3313,6 @@
     "Email Binding Bonus": "Бонус за привязку почты",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "Начисляется один раз на адрес, когда пользователь регистрируется с подтверждённой почтой или привязывает её ({{formattedQuota}})",
     "Email binding bonus {{quota}}": "Бонус за привязку почты {{quota}}",
-    "Sign up with email to get {{amount}} in credit": "Зарегистрируйтесь по email и получите {{amount}} на баланс",
     "Invitee Reward": "Награда приглашенному",
     "Inviter": "Пригласивший",
     "Inviter ID: {{id}}": "ID пригласившего: {{id}}",

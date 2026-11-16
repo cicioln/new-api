@@ -3313,7 +3313,6 @@
     "Email Binding Bonus": "Email Binding Bonus",
     "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})": "Given once per email address when a user signs up with a verified email or binds one ({{formattedQuota}})",
     "Email binding bonus {{quota}}": "Email binding bonus {{quota}}",
-    "Sign up with email to get {{amount}} in credit": "Sign up with email to get {{amount}} in credit",
     "Invitee Reward": "Invitee Reward",
     "Inviter": "Inviter",
     "Inviter ID: {{id}}": "Inviter ID: {{id}}",
