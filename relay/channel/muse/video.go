@@ -38,7 +38,24 @@ import (
 // stay playable across restarts. They are kept until the administrator's
 // video retention period (video_setting.retention_days, 0 = forever) ends.
 
-const videoGenerateTimeout = 20 * time.Minute
+// videoGenerateTimeout bounds one 10-second clip. Successful clips finish in
+// about 1 to 2 minutes, so a clip still missing after this long has stalled
+// upstream and only keeps the user waiting.
+const videoGenerateTimeout = 6 * time.Minute
+
+// videoTimeoutError rewords the SDK's generic "等待回复中断" so a clip that ran
+// out of time says so. A long video keeps its "第 i/n 段" prefix.
+func videoTimeoutError(err error) error {
+	if err == nil || !errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	msg := err.Error()
+	reworded := strings.Replace(msg, "等待回复中断", fmt.Sprintf("视频生成超时（%d 分钟未完成）", int(videoGenerateTimeout/time.Minute)), 1)
+	if reworded == msg {
+		return err
+	}
+	return &musesdk.Error{Kind: musesdk.KindOf(err), Msg: reworded, Err: err}
+}
 
 // maxVideoSeconds is the longest clip Muse generates in one request.
 const maxVideoSeconds = musesdk.MaxVideoSegmentSeconds
@@ -619,7 +636,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 		if file != nil {
 			files = []musesdk.Media{*file}
 		}
-		finishVideoJob(jobID, files, mediaRefusal(err, "video"))
+		finishVideoJob(jobID, files, mediaRefusal(videoTimeoutError(err), "video"))
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+time.Minute)
@@ -632,7 +649,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) {
 		Timeout:    videoGenerateTimeout,
 		OnProgress: onProgress,
 	})
-	finishVideoJob(jobID, files, mediaRefusal(err, "video"))
+	finishVideoJob(jobID, files, mediaRefusal(videoTimeoutError(err), "video"))
 }
 
 func finishVideoJob(jobID string, files []musesdk.Media, err error) {
