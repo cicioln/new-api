@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { Outlet, useRouterState } from '@tanstack/react-router'
 import { motion, useReducedMotion, type Variants } from 'motion/react'
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 
 import {
   CARD_ITEM_VARIANTS,
@@ -64,10 +64,21 @@ export function AnimatedOutlet() {
   const routeKey = useRouterState({
     select: (s) => s.matches.at(-1)?.routeId ?? s.location.pathname,
   })
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Because such a navigation keeps the page mounted, React reuses its scroll
+  // containers and the new page would open at the old page's scroll position.
+  useLayoutEffect(() => {
+    containerRef.current?.querySelectorAll('*').forEach((el) => {
+      if (el.scrollTop !== 0) el.scrollTop = 0
+      if (el.scrollLeft !== 0) el.scrollLeft = 0
+    })
+  }, [pathname])
 
   if (shouldReduce) {
     return (
-      <div className='flex min-h-0 flex-1 flex-col'>
+      <div ref={containerRef} className='flex min-h-0 flex-1 flex-col'>
         <Outlet />
       </div>
     )
@@ -75,6 +86,7 @@ export function AnimatedOutlet() {
 
   return (
     <motion.div
+      ref={containerRef}
       key={routeKey}
       initial={MOTION_VARIANTS.pageEnter.initial}
       animate={MOTION_VARIANTS.pageEnter.animate}
