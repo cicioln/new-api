@@ -1,9 +1,14 @@
 package muse
 
 import (
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -23,6 +28,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
+	_ "golang.org/x/image/webp"
 )
 
 // Adaptor drives the Muse SDK directly. Muse has no HTTP API, so DoRequest
@@ -378,7 +384,7 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 		if err != nil {
 			return nil, types.NewErrorWithStatusCode(fmt.Errorf("read generated image failed: %w", err), types.ErrorCodeBadResponse, http.StatusBadGateway, types.ErrOptionWithSkipRetry())
 		}
-		response.Data = append(response.Data, dto.ImageData{B64Json: base64.StdEncoding.EncodeToString(raw)})
+		response.Data = append(response.Data, dto.ImageData{B64Json: base64.StdEncoding.EncodeToString(imageInOutputFormat(raw, request.OutputFormat))})
 	}
 	if len(response.Data) == 0 {
 		return nil, types.NewErrorWithStatusCode(errors.New("muse returned no images"), types.ErrorCodeEmptyResponse, http.StatusBadGateway, types.ErrOptionWithSkipRetry())
@@ -390,6 +396,42 @@ func (a *Adaptor) generateImages(c *gin.Context, info *relaycommon.RelayInfo) (a
 	}
 	c.Data(http.StatusOK, "application/json", body)
 	return &dto.Usage{}, nil
+}
+
+// imageInOutputFormat re-encodes a Muse image (usually WebP) into the
+// output_format of the OpenAI image API, whose default is png. Clients that
+// read b64_json commonly assume that default. An image that cannot be decoded
+// is returned as it is.
+func imageInOutputFormat(raw []byte, outputFormat json.RawMessage) []byte {
+	var format string
+	_ = common.Unmarshal(outputFormat, &format)
+	format = strings.ToLower(strings.TrimSpace(format))
+	switch format {
+	case "":
+		format = "png"
+	case "jpg":
+		format = "jpeg"
+	}
+	if format == "webp" || http.DetectContentType(raw) == "image/"+format {
+		return raw
+	}
+	img, _, err := image.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return raw
+	}
+	var out bytes.Buffer
+	switch format {
+	case "jpeg":
+		err = jpeg.Encode(&out, img, &jpeg.Options{Quality: 95})
+	case "png":
+		err = png.Encode(&out, img)
+	default:
+		return raw
+	}
+	if err != nil {
+		return raw
+	}
+	return out.Bytes()
 }
 
 // aspectRatio turns a size such as "1600x900" or "16:9" into "16:9". It

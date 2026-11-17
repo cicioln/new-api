@@ -1,6 +1,9 @@
 package muse
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"net/http"
 	"testing"
 
 	musesdk "github.com/CoolkHz/muse-protocol-go/muse"
@@ -63,4 +66,31 @@ func TestRelayErrorClassification(t *testing.T) {
 			assert.Equal(t, tc.skipRetry, types.IsSkipRetryError(apiErr))
 		})
 	}
+}
+
+func TestImageInOutputFormat(t *testing.T) {
+	// A 1×1 lossless WebP, the format Muse returns.
+	webpImage, err := base64.StdEncoding.DecodeString("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==")
+	require.NoError(t, err)
+	require.Equal(t, "image/webp", http.DetectContentType(webpImage))
+
+	tests := []struct {
+		name   string
+		format json.RawMessage
+		raw    []byte
+		want   string
+	}{
+		{name: "default is png", raw: webpImage, want: "image/png"},
+		{name: "explicit png", format: json.RawMessage(`"png"`), raw: webpImage, want: "image/png"},
+		{name: "jpeg", format: json.RawMessage(`"jpeg"`), raw: webpImage, want: "image/jpeg"},
+		{name: "jpg alias", format: json.RawMessage(`"JPG"`), raw: webpImage, want: "image/jpeg"},
+		{name: "webp kept", format: json.RawMessage(`"webp"`), raw: webpImage, want: "image/webp"},
+		{name: "undecodable kept", raw: []byte("not an image"), want: "text/plain; charset=utf-8"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, http.DetectContentType(imageInOutputFormat(tt.raw, tt.format)))
+		})
+	}
+	assert.Equal(t, webpImage, imageInOutputFormat(webpImage, json.RawMessage(`"webp"`)))
 }
