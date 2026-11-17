@@ -3201,3 +3201,5 @@ sigs.k8s.io/yaml v1.2.0/go.mod h1:yfXDCHCao9+ENCvLSE62v9VSji2MKu5jeNfTrofGhJc=
 sigs.k8s.io/yaml v1.3.0/go.mod h1:GeOyir5tyXNByN85N/dRIT9es5UQNerPYEKK56eTBm8=
 github.com/cicioln/muse-protocol-go v0.0.0-20261116181859-6b249c61fe95 h1:w/GFdG1IPGf4p1hdanbnsPqbLWRhiCJu7gUJ+sbeHIs=
 github.com/cicioln/muse-protocol-go v0.0.0-20261116181859-6b249c61fe95/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
+github.com/cicioln/muse-protocol-go v0.0.0-20261117034711-2883ec82eb62 h1:dox2gbks3VJikKXFklU+xTjthv6TJ4IRJzCfcqLYxsk=
+github.com/cicioln/muse-protocol-go v0.0.0-20261117034711-2883ec82eb62/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
