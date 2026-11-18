@@ -89,6 +89,24 @@ test('blocks non-admin users from viewing prompt logs', () => {
   expect(getSpy).not.toHaveBeenCalled()
 })
 
+test('shows a retry action instead of an empty log list when loading fails', async () => {
+  setUserRole(ROLE.ADMIN)
+  vi.spyOn(api, 'get').mockImplementation(async (url) => {
+    if (url.startsWith('/api/prompt_log/settings')) {
+      return {
+        data: {
+          success: true,
+          data: { global: { enabled: true }, channels: [] },
+        },
+      }
+    }
+    throw new Error('Network unavailable')
+  })
+  renderPromptLogs()
+  expect(await screen.findByRole('button', { name: 'Retry' })).toBeVisible()
+  expect(screen.queryByText('No prompt logs found')).not.toBeInTheDocument()
+})
+
 test('renders admin prompt logs, detail modal with authenticated blob attachment, and switch drawer', async () => {
   setUserRole(ROLE.ADMIN)
   const user = userEvent.setup()

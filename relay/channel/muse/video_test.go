@@ -161,6 +161,30 @@ func TestExpiredQueuedVideoStopsWithoutGenerating(t *testing.T) {
 	schedMu.Unlock()
 }
 
+func TestAdminTerminationCancelsMuseWorkAndRejectsLateResult(t *testing.T) {
+	resetScheduler(t, 1, 2)
+	id := "admin-terminated"
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	job := &videoJob{Status: model.TaskStatusQueued, Stage: "queued", ctx: ctx, cancel: cancel}
+	videoJobsMu.Lock()
+	videoJobs[id] = job
+	videoJobsMu.Unlock()
+	t.Cleanup(func() { videoJobsMu.Lock(); delete(videoJobs, id); videoJobsMu.Unlock() })
+	schedMu.Lock()
+	videoQueues[9060] = []*queuedVideo{{jobID: id, slot: videoSlot{channelID: 9060}}}
+	schedMu.Unlock()
+	terminateVideoJob(id)
+	assert.ErrorIs(t, ctx.Err(), context.Canceled)
+	assert.Equal(t, model.TaskStatusFailure, job.Status)
+	assert.Equal(t, "admin_terminated", job.Code)
+	finishVideoJob(id, nil, nil)
+	assert.Equal(t, "admin_terminated", job.Code)
+	schedMu.Lock()
+	assert.Empty(t, videoQueues[9060])
+	schedMu.Unlock()
+}
+
 func TestVideoTierSeconds(t *testing.T) {
 	cases := map[string]int{
 		"muse-video":     10,

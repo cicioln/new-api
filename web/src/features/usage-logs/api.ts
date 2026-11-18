@@ -17,7 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { api, getFreshAuthHeaders, type ApiRequestConfig } from '@/lib/api'
-import { createServerError } from '@/lib/server-error-message'
+import {
+  createServerError,
+  requireServerSuccess,
+} from '@/lib/server-error-message'
 
 import type { UsageLog } from './data/schema'
 import { buildQueryParams } from './lib/query-params'
@@ -32,6 +35,17 @@ import type {
   TaskArtifactsResponse,
   UserInfo,
 } from './types'
+
+export async function terminateVideoTask(
+  taskId: string
+): Promise<{ refund_pending: boolean }> {
+  const response = await api.post<{
+    success: boolean
+    message: string
+    data: { refund_pending: boolean }
+  }>(`/api/task/${encodeURIComponent(taskId)}/terminate`)
+  return requireServerSuccess(response.data).data
+}
 
 // ============================================================================
 // Generic API Helpers

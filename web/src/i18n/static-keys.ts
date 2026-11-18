@@ -928,4 +928,8 @@ export const STATIC_I18N_KEYS = [
   'Verification method',
   'Admin permissions updated',
   'Provider ID',
+  'Video task terminated by administrator',
+  'Task is already finished',
+  'Task status changed; refresh and try again',
+  'Only video tasks can be terminated',
 ] as const

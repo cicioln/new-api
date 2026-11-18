@@ -24,7 +24,13 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 
@@ -81,10 +87,8 @@ const inProgressTask: TaskLog = {
   status: 'IN_PROGRESS',
 }
 
-async function renderTasks() {
-  useAuthStore
-    .getState()
-    .auth.setUser({ id: 1, username: 'tester', role: ROLE.ADMIN })
+async function renderTasks(role: number = ROLE.ADMIN) {
+  useAuthStore.getState().auth.setUser({ id: 1, username: 'tester', role })
   const get = vi.spyOn(api, 'get').mockImplementation(async (url) => {
     let data: unknown = {}
     if (url.startsWith('/api/task?') || url.startsWith('/api/task/self?')) {
@@ -198,4 +202,67 @@ it('opens the task details dialog when a row is clicked', async () => {
   await renderTasks()
   await userEvent.click(screen.getByText('task_8f3a…b0'))
   expect(await screen.findByRole('dialog')).toBeVisible()
+})
+
+it('requires confirmation before an administrator terminates a running video', async () => {
+  await renderTasks()
+  const post = vi
+    .spyOn(api, 'post')
+    .mockResolvedValue({
+      data: { success: true, data: { refund_pending: false } },
+    })
+  await userEvent.click(screen.getByText('task_runn…01'))
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Terminate video task' })
+  )
+  const confirmation = await screen.findByRole('alertdialog')
+  expect(post).not.toHaveBeenCalled()
+  await userEvent.click(
+    within(confirmation).getByRole('button', { name: 'Terminate video task' })
+  )
+  await waitFor(() =>
+    expect(post).toHaveBeenCalledWith(
+      `/api/task/${inProgressTask.task_id}/terminate`
+    )
+  )
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  )
+})
+
+it('does not offer termination to regular users or for completed videos', async () => {
+  await renderTasks(ROLE.USER)
+  await userEvent.click(screen.getByText('task_runn…01'))
+  await screen.findByRole('dialog')
+  expect(
+    screen.queryByRole('button', { name: 'Terminate video task' })
+  ).not.toBeInTheDocument()
+  cleanup()
+  await renderTasks()
+  await userEvent.click(screen.getByText('task_8f3a…b0'))
+  await screen.findByRole('dialog')
+  expect(
+    screen.queryByRole('button', { name: 'Terminate video task' })
+  ).not.toBeInTheDocument()
+})
+
+it('keeps the termination dialog open when the server rejects the operation', async () => {
+  await renderTasks()
+  vi.spyOn(api, 'post').mockResolvedValue({
+    data: { success: false, message: 'Task is already finished' },
+  })
+  await userEvent.click(screen.getByText('task_runn…01'))
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Terminate video task' })
+  )
+  const confirmation = await screen.findByRole('alertdialog')
+  await userEvent.click(
+    within(confirmation).getByRole('button', { name: 'Terminate video task' })
+  )
+  await waitFor(() =>
+    expect(
+      within(confirmation).getByRole('button', { name: 'Terminate video task' })
+    ).toBeEnabled()
+  )
+  expect(confirmation).toBeVisible()
 })

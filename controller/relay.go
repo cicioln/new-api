@@ -320,6 +320,11 @@ func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service
 			Name:    c.GetString("channel_name"),
 			AutoBan: &autoBanInt,
 		}
+		// The first attempt reuses the channel selected by the distributor.
+		// Preserve its settings so prompt capture observes the enabled switch.
+		if other, ok := common.GetContextKeyType[dto.ChannelOtherSettings](c, constant.ContextKeyChannelOtherSetting); ok {
+			channel.SetOtherSettings(other)
+		}
 		service.RequestPolicy(c).BeginAttempt(channel, info.UsingGroup)
 		return channel, nil
 	}

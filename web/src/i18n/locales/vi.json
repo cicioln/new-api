@@ -8121,6 +8121,16 @@
     "Groups and models": "Nhóm và mô hình",
     "View details of {{username}}": "Xem chi tiết {{username}}",
     "Changed the group of token {{token_name}} of user {{username}} from {{from}} to {{to}}": "Đã đổi nhóm token {{token_name}} của người dùng {{username}} từ {{from}} sang {{to}}",
-    "Group {{group}} is not available to this user": "Người dùng này không dùng được nhóm {{group}}"
+    "Group {{group}} is not available to this user": "Người dùng này không dùng được nhóm {{group}}",
+    "Terminate video task": "Dừng tác vụ video",
+    "Terminate video task?": "Dừng tác vụ video?",
+    "Video task terminated": "Đã dừng tác vụ video",
+    "Failed to terminate video task": "Không thể dừng tác vụ video",
+    "Video task terminated; refund requires review": "Đã dừng tác vụ video; cần kiểm tra hoàn tiền",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "Thao tác này đánh dấu tác vụ thất bại và hoàn hạn mức đã giữ. NewAPI ngừng theo dõi và dừng xử lý Muse cục bộ. Nhà cung cấp có thể tiếp tục tạo và tính phí.",
+    "Video task terminated by administrator": "Quản trị viên đã dừng tác vụ video",
+    "Task is already finished": "Tác vụ đã kết thúc",
+    "Task status changed; refresh and try again": "Trạng thái tác vụ đã thay đổi; hãy làm mới và thử lại",
+    "Only video tasks can be terminated": "Chỉ có thể dừng tác vụ video"
   }
 }

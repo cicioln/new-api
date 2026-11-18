@@ -415,6 +415,7 @@ func SetApiRouter(router *gin.Engine) {
 		{
 			taskRoute.GET("/self", middleware.UserAuth(), controller.GetUserTask)
 			taskRoute.GET("", middleware.AdminAuth(), controller.GetAllTask)
+			taskRoute.POST("/:task_id/terminate", middleware.AdminAuth(), controller.TerminateVideoTask)
 			taskRoute.GET("/:task_id/artifacts", middleware.UserAuth(), controller.GetDashboardTaskArtifacts)
 		}
 

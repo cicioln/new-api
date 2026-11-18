@@ -8121,6 +8121,16 @@
     "Groups and models": "Groupes et modèles",
     "View details of {{username}}": "Voir les détails de {{username}}",
     "Changed the group of token {{token_name}} of user {{username}} from {{from}} to {{to}}": "Groupe du jeton {{token_name}} de l'utilisateur {{username}} changé de {{from}} à {{to}}",
-    "Group {{group}} is not available to this user": "Le groupe {{group}} n'est pas disponible pour cet utilisateur"
+    "Group {{group}} is not available to this user": "Le groupe {{group}} n'est pas disponible pour cet utilisateur",
+    "Terminate video task": "Arrêter la tâche vidéo",
+    "Terminate video task?": "Arrêter la tâche vidéo ?",
+    "Video task terminated": "Tâche vidéo arrêtée",
+    "Failed to terminate video task": "Échec de l’arrêt de la tâche vidéo",
+    "Video task terminated; refund requires review": "Tâche vidéo arrêtée ; remboursement à vérifier",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "Cette action marque la tâche comme échouée et rembourse le quota réservé. NewAPI cesse son suivi et l’exécution locale de Muse. Le fournisseur peut continuer la génération et la facturation.",
+    "Video task terminated by administrator": "Tâche vidéo arrêtée par un administrateur",
+    "Task is already finished": "La tâche est déjà terminée",
+    "Task status changed; refresh and try again": "Le statut a changé ; actualisez puis réessayez",
+    "Only video tasks can be terminated": "Seules les tâches vidéo peuvent être arrêtées"
   }
 }

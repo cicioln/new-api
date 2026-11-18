@@ -18,15 +18,23 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { Shield01Icon, Wrench01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Dialog } from '@/components/dialog'
 import { StatusBadge } from '@/components/status-badge'
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
+import { handleServerError } from '@/lib/handle-server-error'
 import { translateServerText } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 
+import { terminateVideoTask } from '../../api'
+import { RUNNING_TASK_STATUSES } from '../../constants'
 import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
 import { resolveTaskDetailAccess } from '../../lib/task-details'
 import type { TaskLog } from '../../types'
@@ -85,6 +93,40 @@ interface TaskDetailsDialogProps {
 
 export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const canTerminate =
+    props.isAdmin &&
+    (RUNNING_TASK_STATUSES.has(props.log.status) ||
+      props.log.status === 'UNKNOWN') &&
+    [
+      'text_to_video',
+      'image_to_video',
+      'first_tail_to_video',
+      'reference_to_video',
+      'remix',
+      'generate',
+      'textGenerate',
+      'firstTailGenerate',
+      'referenceGenerate',
+      'remixGenerate',
+    ].includes(props.log.action)
+  const terminate = useMutation({
+    mutationFn: () => terminateVideoTask(props.log.task_id),
+    onSuccess: (result) => {
+      if (result.refund_pending) {
+        toast.warning(t('Video task terminated; refund requires review'))
+      } else {
+        toast.success(t('Video task terminated'))
+      }
+      setConfirmOpen(false)
+      props.onOpenChange(false)
+      void queryClient.invalidateQueries({ queryKey: ['logs'] })
+      void queryClient.invalidateQueries({ queryKey: ['studio-video-tasks'] })
+    },
+    onError: (error) =>
+      handleServerError(error, t('Failed to terminate video task')),
+  })
   const access = resolveTaskDetailAccess(props.log, props.isAdmin, props.isRoot)
   const plugin = access.plugin
   const runtime = access.runtime
@@ -116,6 +158,27 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
       bodyClassName='pr-2 sm:pr-4'
     >
       <div className='space-y-3'>
+        {canTerminate && (
+          <Button
+            variant='destructive'
+            size='sm'
+            onClick={() => setConfirmOpen(true)}
+          >
+            {t('Terminate video task')}
+          </Button>
+        )}
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t('Terminate video task?')}
+          desc={t(
+            'This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.'
+          )}
+          destructive
+          confirmText={t('Terminate video task')}
+          isLoading={terminate.isPending}
+          handleConfirm={() => terminate.mutate()}
+        />
         <DetailSection label={t('Basic Information')}>
           <DetailRow label={t('Task ID')} value={props.log.task_id} mono />
           <DetailRow label={t('Platform')} value={props.log.platform} mono />

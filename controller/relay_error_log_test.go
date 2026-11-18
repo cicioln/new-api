@@ -2,15 +2,22 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
+	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/config"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
@@ -18,6 +25,38 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
+
+func TestPromptLogFirstSelectedChannelRecordsEnabledRequest(t *testing.T) {
+	db, _ := openTaskDialectDatabase(t, &model.ChannelPromptLog{})
+	previous := model.DB
+	model.DB = db
+	t.Cleanup(func() { model.DB = previous })
+	cfg := config.GlobalConfig.Get("prompt_log_setting")
+	before := operation_setting.GetPromptLogSetting().Enabled
+	require.NoError(t, config.UpdateConfigFromMap(cfg, map[string]string{"enabled": "true"}))
+	t.Cleanup(func() {
+		require.NoError(t, config.UpdateConfigFromMap(cfg, map[string]string{"enabled": fmt.Sprint(before)}))
+	})
+	for _, enabled := range []bool{true, false} {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest(http.MethodPost, "/v1/videos", strings.NewReader(`{"model":"muse-video","prompt":"A fox in snow"}`))
+		c.Request.Header.Set("Content-Type", "application/json")
+		c.Set(common.RequestIdKey, fmt.Sprint("first-", enabled))
+		common.SetContextKey(c, constant.ContextKeyChannelId, 42)
+		common.SetContextKey(c, constant.ContextKeyChannelType, constant.ChannelTypeMuse)
+		common.SetContextKey(c, constant.ContextKeyChannelOtherSetting, dto.ChannelOtherSettings{PromptLogEnabled: enabled})
+		channel, apiErr := getChannel(c, &relaycommon.RelayInfo{}, nil)
+		require.Nil(t, apiErr)
+		storage, err := common.GetBodyStorage(c)
+		require.NoError(t, err)
+		service.CaptureChannelPromptFromStorage(c, channel.Id, channel.Name, channel.Type, channel.GetOtherSettings(), "muse-video", "openai", storage)
+		require.NoError(t, storage.Close())
+	}
+	logs, total, err := model.ListChannelPromptLogs(model.ChannelPromptLogFilter{}, 0, 20)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, total)
+	assert.Equal(t, "A fox in snow", logs[0].PromptPreview)
+}
 
 func TestProcessChannelErrorUsesSnapshotWithoutLeakingChannelMetadata(t *testing.T) {
 	gin.SetMode(gin.TestMode)

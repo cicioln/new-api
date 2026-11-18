@@ -36,6 +36,7 @@ import { toast } from 'sonner'
 
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { EmptyState } from '@/components/empty-state'
+import { ErrorState } from '@/components/error-state'
 import { SectionPageLayout } from '@/components/layout'
 import { LoadingState } from '@/components/loading-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -174,6 +175,14 @@ export function ChannelPromptLogs() {
   let tableContent: React.ReactNode
   if (logsQuery.isLoading) {
     tableContent = <LoadingState />
+  } else if (logsQuery.isError) {
+    tableContent = (
+      <ErrorState
+        onRetry={() => {
+          void logsQuery.refetch()
+        }}
+      />
+    )
   } else if (items.length === 0) {
     tableContent = (
       <EmptyState
@@ -358,9 +367,7 @@ export function ChannelPromptLogs() {
                   <span>
                     {settingsQuery.data.global.enabled
                       ? t('Global prompt capture is ON')
-                      : t(
-                          'Global prompt capture is OFF (all channels paused)'
-                        )}
+                      : t('Global prompt capture is OFF (all channels paused)')}
                   </span>
                   <Badge variant='secondary'>
                     {t('{{count}} channel(s) enabled', {

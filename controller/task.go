@@ -37,6 +37,38 @@ var (
 	errTaskArtifactPlugin            = errors.New("task artifact plugin error")
 )
 
+func TerminateVideoTask(c *gin.Context) {
+	if c.GetInt("role") < common.RoleAdminUser {
+		common.ApiErrorStatus(c, http.StatusForbidden, common.NewMessage("Unauthorized, insufficient privileges"))
+		return
+	}
+	task, exists, err := model.GetUniqueByOnlyTaskId(c.Param("task_id"))
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if !exists || task == nil {
+		common.ApiErrorStatus(c, http.StatusNotFound, common.NewMessage("Task not found"))
+		return
+	}
+	if err := service.TerminateVideoTask(c.Request.Context(), task); err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, service.ErrNotVideoTask) {
+			status = http.StatusBadRequest
+		}
+		if errors.Is(err, service.ErrTaskAlreadyFinished) || errors.Is(err, service.ErrTaskStatusChanged) {
+			status = http.StatusConflict
+		}
+		common.ApiErrorStatus(c, status, common.NewMessage(err.Error()))
+		return
+	}
+	if task.Platform == muse.TaskPlatform {
+		muse.TerminateVideo(task)
+	}
+	recordManageAudit(c, "task.terminate", map[string]any{"task_id": task.TaskID, "user_id": task.UserId, "channel_id": task.ChannelId})
+	common.ApiSuccess(c, gin.H{"task_id": task.TaskID, "status": task.Status, "refund_pending": task.Quota != 0})
+}
+
 func GetTask(c *gin.Context) {
 	task, exists, err := model.GetByTaskId(c.GetInt("id"), c.Param("key"))
 	if err != nil {

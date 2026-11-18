@@ -2,18 +2,19 @@ package controller
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/config"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,7 @@ func setupPromptControllerTestEnv(t *testing.T) {
 	prevDB := model.DB
 	prevLogDB := model.LOG_DB
 	prevCache := common.MemoryCacheEnabled
+	prevRedis := common.RedisEnabled
 	common.OptionMapRWMutex.Lock()
 	prevOptionMap := common.OptionMap
 	common.OptionMap = make(map[string]string)
@@ -40,18 +42,30 @@ func setupPromptControllerTestEnv(t *testing.T) {
 	model.DB = db
 	model.LOG_DB = db
 	common.MemoryCacheEnabled = false
+	common.RedisEnabled = false
 	t.Cleanup(func() {
 		model.DB = prevDB
 		model.LOG_DB = prevLogDB
 		common.MemoryCacheEnabled = prevCache
+		common.RedisEnabled = prevRedis
 		common.OptionMapRWMutex.Lock()
 		common.OptionMap = prevOptionMap
 		common.OptionMapRWMutex.Unlock()
 		_ = sqlDB.Close()
 	})
-	require.NoError(t, db.AutoMigrate(&model.Channel{}, &model.Option{}, &model.AuditLog{}, &model.ChannelPromptLog{}))
+	require.NoError(t, db.AutoMigrate(&model.Channel{}, &model.Option{}, &model.AuditLog{}, &model.ChannelPromptLog{}, &model.User{}))
+	require.NoError(t, db.Create(&model.User{Id: 1, Username: "root", Role: common.RoleRootUser}).Error)
 
 	if cfg := config.GlobalConfig.Get("prompt_log_setting"); cfg != nil {
+		previousSetting := operation_setting.GetPromptLogSetting()
+		t.Cleanup(func() {
+			require.NoError(t, config.UpdateConfigFromMap(cfg, map[string]string{
+				"enabled":          strconv.FormatBool(previousSetting.Enabled),
+				"retention_days":   strconv.Itoa(previousSetting.RetentionDays),
+				"max_text_bytes":   strconv.Itoa(previousSetting.MaxTextBytes),
+				"max_file_size_mb": strconv.Itoa(previousSetting.MaxFileSizeMB),
+			}))
+		})
 		_ = config.UpdateConfigFromMap(cfg, map[string]string{
 			"enabled":          "true",
 			"retention_days":   "7",
@@ -110,7 +124,7 @@ func TestPromptLogControllerListDetailDownloadSettingsAndDelete(t *testing.T) {
 			Items []ChannelPromptLogItemView `json:"items"`
 		} `json:"data"`
 	}
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &listResp))
+	require.NoError(t, common.Unmarshal(w.Body.Bytes(), &listResp))
 	require.True(t, listResp.Success)
 	require.Equal(t, int64(1), listResp.Data.Total)
 	require.Len(t, listResp.Data.Items, 1)

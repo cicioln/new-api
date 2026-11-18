@@ -8189,6 +8189,16 @@
     "Failed to download attachment": "Failed to download attachment",
     "Preview image": "Preview image",
     "Open URL": "Open URL",
-    "Loading preview...": "Loading preview..."
+    "Loading preview...": "Loading preview...",
+    "Terminate video task": "Terminate video task",
+    "Terminate video task?": "Terminate video task?",
+    "Video task terminated": "Video task terminated",
+    "Failed to terminate video task": "Failed to terminate video task",
+    "Video task terminated; refund requires review": "Video task terminated; refund requires review",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.",
+    "Video task terminated by administrator": "Video task terminated by administrator",
+    "Task is already finished": "Task is already finished",
+    "Task status changed; refresh and try again": "Task status changed; refresh and try again",
+    "Only video tasks can be terminated": "Only video tasks can be terminated"
   }
 }

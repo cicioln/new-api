@@ -13,6 +13,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/service"
 )
 
 var videoQueueTimeout = time.Duration(max(1, common.GetEnvOrDefault("MUSE_QUEUE_TIMEOUT_MINUTES", 10))) * time.Minute
@@ -228,6 +229,21 @@ func maintainVideoJobs() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
+		// Database state is durable across Redis outages and process restarts.
+		// Read outside videoJobsMu so termination never blocks progress updates.
+		var running []string
+		videoJobsMu.Lock()
+		for id, job := range videoJobs {
+			if job.finished.IsZero() {
+				running = append(running, id)
+			}
+		}
+		videoJobsMu.Unlock()
+		for _, id := range running {
+			if task, exists, err := model.GetUniqueByOnlyTaskId(id); err == nil && exists && task.Status == model.TaskStatusFailure && task.FailReason == service.VideoTaskTerminatedReason {
+				terminateVideoJob(id)
+			}
+		}
 		expireQueuedVideos(time.Now())
 		var snapshots = map[string][]byte{}
 		videoJobsMu.Lock()
@@ -309,6 +325,13 @@ func restoreVideoJob(id string) error {
 	videoJobs[id] = job
 	// Scheduling must acquire schedMu before videoJobsMu, never in reverse.
 	go func() {
+		if task, exists, err := model.GetUniqueByOnlyTaskId(id); err != nil {
+			finishVideoJob(id, nil, &musesdk.NoRetry{Err: err})
+			return
+		} else if exists && task.Status == model.TaskStatusFailure && task.FailReason == service.VideoTaskTerminatedReason {
+			terminateVideoJob(id)
+			return
+		}
 		if job.ctx.Err() != nil {
 			finishVideoJob(id, nil, job.ctx.Err())
 			return

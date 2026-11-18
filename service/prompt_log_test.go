@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,6 +44,15 @@ func setupPromptServiceTestEnv(t *testing.T) {
 
 	cfg := config.GlobalConfig.Get("prompt_log_setting")
 	require.NotNil(t, cfg)
+	previousSetting := operation_setting.GetPromptLogSetting()
+	t.Cleanup(func() {
+		require.NoError(t, config.UpdateConfigFromMap(cfg, map[string]string{
+			"enabled":          strconv.FormatBool(previousSetting.Enabled),
+			"retention_days":   strconv.Itoa(previousSetting.RetentionDays),
+			"max_text_bytes":   strconv.Itoa(previousSetting.MaxTextBytes),
+			"max_file_size_mb": strconv.Itoa(previousSetting.MaxFileSizeMB),
+		}))
+	})
 	require.NoError(t, config.UpdateConfigFromMap(cfg, map[string]string{
 		"enabled":          "true",
 		"retention_days":   "7",

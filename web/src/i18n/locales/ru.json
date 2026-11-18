@@ -8121,6 +8121,16 @@
     "Groups and models": "Группы и модели",
     "View details of {{username}}": "Подробнее о {{username}}",
     "Changed the group of token {{token_name}} of user {{username}} from {{from}} to {{to}}": "Группа токена {{token_name}} пользователя {{username}} изменена с {{from}} на {{to}}",
-    "Group {{group}} is not available to this user": "Группа {{group}} недоступна этому пользователю"
+    "Group {{group}} is not available to this user": "Группа {{group}} недоступна этому пользователю",
+    "Terminate video task": "Остановить видеозадачу",
+    "Terminate video task?": "Остановить видеозадачу?",
+    "Video task terminated": "Видеозадача остановлена",
+    "Failed to terminate video task": "Не удалось остановить видеозадачу",
+    "Video task terminated; refund requires review": "Видеозадача остановлена; возврат требует проверки",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "Задача будет отмечена как неудачная, зарезервированная квота будет возвращена. NewAPI остановит отслеживание и локальную работу Muse. Провайдер может продолжить генерацию и списания.",
+    "Video task terminated by administrator": "Видеозадача остановлена администратором",
+    "Task is already finished": "Задача уже завершена",
+    "Task status changed; refresh and try again": "Статус задачи изменился; обновите страницу и повторите",
+    "Only video tasks can be terminated": "Можно остановить только видеозадачи"
   }
 }

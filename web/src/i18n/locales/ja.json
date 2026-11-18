@@ -8121,6 +8121,16 @@
     "Groups and models": "グループとモデル",
     "View details of {{username}}": "{{username}} の詳細を表示",
     "Changed the group of token {{token_name}} of user {{username}} from {{from}} to {{to}}": "ユーザー {{username}} のトークン {{token_name}} のグループを {{from}} から {{to}} に変更しました",
-    "Group {{group}} is not available to this user": "このユーザーはグループ {{group}} を使用できません"
+    "Group {{group}} is not available to this user": "このユーザーはグループ {{group}} を使用できません",
+    "Terminate video task": "動画タスクを停止",
+    "Terminate video task?": "動画タスクを停止しますか？",
+    "Video task terminated": "動画タスクを停止しました",
+    "Failed to terminate video task": "動画タスクの停止に失敗しました",
+    "Video task terminated; refund requires review": "動画タスクを停止しました。返金の確認が必要です",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "タスクを失敗として記録し、予約済みクォータを返還します。NewAPI は追跡とローカルの Muse 処理を停止します。上流サービスでは生成と課金が続く場合があります。",
+    "Video task terminated by administrator": "管理者が動画タスクを停止しました",
+    "Task is already finished": "タスクはすでに終了しています",
+    "Task status changed; refresh and try again": "タスクの状態が変わりました。更新して再試行してください",
+    "Only video tasks can be terminated": "停止できるのは動画タスクのみです"
   }
 }

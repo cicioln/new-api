@@ -8189,6 +8189,16 @@
     "Failed to download attachment": "下載附件失敗",
     "Preview image": "預覽圖片",
     "Open URL": "開啟連結",
-    "Loading preview...": "正在載入預覽..."
+    "Loading preview...": "正在載入預覽...",
+    "Terminate video task": "終止影片任務",
+    "Terminate video task?": "確定終止影片任務？",
+    "Video task terminated": "影片任務已終止",
+    "Failed to terminate video task": "終止影片任務失敗",
+    "Video task terminated; refund requires review": "影片任務已終止，退款需要人工核查",
+    "This marks the task as failed and refunds its reserved quota. NewAPI stops tracking it and stops local Muse work. The upstream provider may continue generating and charging.": "此操作將任務標記為失敗並退還預扣額度。NewAPI 將停止追蹤任務及本機 Muse 執行。上游服務仍可能繼續生成並計費。",
+    "Video task terminated by administrator": "管理員已終止影片任務",
+    "Task is already finished": "任務已經結束",
+    "Task status changed; refresh and try again": "任務狀態已變更，請重新整理後重試",
+    "Only video tasks can be terminated": "只能終止影片任務"
   }
 }

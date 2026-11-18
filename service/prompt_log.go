@@ -41,73 +41,73 @@ var (
 	promptLogCleanupOnce sync.Once
 
 	mimeToExtension = map[string]string{
-		"image/png":                   ".png",
-		"image/jpeg":                  ".jpg",
-		"image/jpg":                   ".jpg",
-		"image/webp":                  ".webp",
-		"image/gif":                   ".gif",
-		"image/bmp":                   ".bmp",
-		"image/tiff":                  ".tiff",
-		"image/avif":                  ".avif",
-		"image/svg+xml":               ".svg",
-		"application/pdf":             ".pdf",
-		"audio/mpeg":                  ".mp3",
-		"audio/mp3":                   ".mp3",
-		"audio/wav":                   ".wav",
-		"audio/x-wav":                 ".wav",
-		"audio/webm":                  ".webm",
-		"audio/ogg":                   ".ogg",
-		"audio/flac":                  ".flac",
-		"audio/aac":                   ".aac",
-		"audio/mp4":                   ".m4a",
-		"audio/x-m4a":                 ".m4a",
-		"video/mp4":                   ".mp4",
-		"video/webm":                  ".webm",
-		"video/quicktime":             ".mov",
-		"text/plain":                  ".txt",
-		"text/markdown":               ".md",
-		"text/csv":                    ".csv",
-		"application/json":            ".json",
-		"application/xml":             ".xml",
-		"text/xml":                    ".xml",
-		"application/vnd.ms-excel":    ".xls",
-		"application/msword":          ".doc",
-		"application/zip":             ".zip",
-		"application/octet-stream":    ".bin",
-		"application/x-ndjson":        ".ndjson",
-		"application/x-yaml":          ".yaml",
-		"text/yaml":                   ".yaml",
-		"text/html":                   ".html",
+		"image/png":                ".png",
+		"image/jpeg":               ".jpg",
+		"image/jpg":                ".jpg",
+		"image/webp":               ".webp",
+		"image/gif":                ".gif",
+		"image/bmp":                ".bmp",
+		"image/tiff":               ".tiff",
+		"image/avif":               ".avif",
+		"image/svg+xml":            ".svg",
+		"application/pdf":          ".pdf",
+		"audio/mpeg":               ".mp3",
+		"audio/mp3":                ".mp3",
+		"audio/wav":                ".wav",
+		"audio/x-wav":              ".wav",
+		"audio/webm":               ".webm",
+		"audio/ogg":                ".ogg",
+		"audio/flac":               ".flac",
+		"audio/aac":                ".aac",
+		"audio/mp4":                ".m4a",
+		"audio/x-m4a":              ".m4a",
+		"video/mp4":                ".mp4",
+		"video/webm":               ".webm",
+		"video/quicktime":          ".mov",
+		"text/plain":               ".txt",
+		"text/markdown":            ".md",
+		"text/csv":                 ".csv",
+		"application/json":         ".json",
+		"application/xml":          ".xml",
+		"text/xml":                 ".xml",
+		"application/vnd.ms-excel": ".xls",
+		"application/msword":       ".doc",
+		"application/zip":          ".zip",
+		"application/octet-stream": ".bin",
+		"application/x-ndjson":     ".ndjson",
+		"application/x-yaml":       ".yaml",
+		"text/yaml":                ".yaml",
+		"text/html":                ".html",
 		"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   ".docx",
 		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         ".xlsx",
 		"application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
 	}
 
 	previewSafeInlineMIMEs = map[string]bool{
-		"image/png":       true,
-		"image/jpeg":      true,
-		"image/jpg":       true,
-		"image/webp":      true,
-		"image/gif":       true,
-		"image/bmp":       true,
-		"image/avif":      true,
-		"application/pdf": true,
-		"audio/mpeg":      true,
-		"audio/mp3":       true,
-		"audio/wav":       true,
-		"audio/x-wav":     true,
-		"audio/ogg":       true,
-		"audio/flac":      true,
-		"audio/aac":       true,
-		"audio/mp4":       true,
-		"audio/x-m4a":     true,
-		"audio/webm":      true,
-		"video/mp4":       true,
-		"video/webm":      true,
-		"video/quicktime": true,
-		"text/plain":      true,
-		"text/csv":        true,
-		"text/markdown":   true,
+		"image/png":        true,
+		"image/jpeg":       true,
+		"image/jpg":        true,
+		"image/webp":       true,
+		"image/gif":        true,
+		"image/bmp":        true,
+		"image/avif":       true,
+		"application/pdf":  true,
+		"audio/mpeg":       true,
+		"audio/mp3":        true,
+		"audio/wav":        true,
+		"audio/x-wav":      true,
+		"audio/ogg":        true,
+		"audio/flac":       true,
+		"audio/aac":        true,
+		"audio/mp4":        true,
+		"audio/x-m4a":      true,
+		"audio/webm":       true,
+		"video/mp4":        true,
+		"video/webm":       true,
+		"video/quicktime":  true,
+		"text/plain":       true,
+		"text/csv":         true,
+		"text/markdown":    true,
 		"application/json": true,
 	}
 )
@@ -318,18 +318,18 @@ func persistPromptLogSafely(entry *model.ChannelPromptLog) {
 }
 
 type promptExtractionAccumulator struct {
-	meta            captureContextMeta
-	maxTextBytes    int
-	maxFileBytes    int64
-	sections        []string
-	previewTexts    []string
-	messageCount    int
-	attachments     []model.ChannelPromptAttachment
-	metadata        map[string]any
-	truncated       bool
-	attachmentSeq   int
-	requestDirSlug  string
-	dateSubdir      string
+	meta           captureContextMeta
+	maxTextBytes   int
+	maxFileBytes   int64
+	sections       []string
+	previewTexts   []string
+	messageCount   int
+	attachments    []model.ChannelPromptAttachment
+	metadata       map[string]any
+	truncated      bool
+	attachmentSeq  int
+	requestDirSlug string
+	dateSubdir     string
 }
 
 func newPromptAccumulator(meta captureContextMeta, cfg operation_setting.PromptLogSetting, maxFileBytes int64) *promptExtractionAccumulator {
@@ -483,6 +483,11 @@ func (a *promptExtractionAccumulator) finalize() *model.ChannelPromptLog {
 		previewSource = a.previewTexts[len(a.previewTexts)-1]
 	} else {
 		previewSource = fullText
+	}
+	// Keep attachment identifiers and filenames in the detail, without
+	// crowding the user's prompt out of the list preview.
+	for _, attachment := range a.attachments {
+		previewSource = strings.ReplaceAll(previewSource, formatAttachmentMarker(attachment), "")
 	}
 	preview := collapseWhitespaceAndTruncate(previewSource, promptPreviewMaxRunes)
 	if preview == "" && len(a.attachments) > 0 {
@@ -984,7 +989,7 @@ func (a *promptExtractionAccumulator) extractArbitraryContent(fieldName string, 
 			}
 			filename := firstString(fileObj, "filename", "name")
 			if fileData, ok := fileObj["file_data"].(string); ok && fileData != "" {
-				att := a.ingestBase64OrDataURI("file", partType, filename, "", fileData)
+				att := a.ingestBase64OrDataURI("", partType, filename, "", fileData)
 				return formatAttachmentMarker(att)
 			}
 			if fileURL, ok := fileObj["file_url"].(string); ok && fileURL != "" {

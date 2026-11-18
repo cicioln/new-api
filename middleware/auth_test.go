@@ -329,6 +329,21 @@ func TestUserAuthAppliesAccessTokenRouteRules(t *testing.T) {
 	router.GET("/api/undeclared", UserAuth(), ok)
 	router.GET("/api/channel/", AdminAuth(), RequirePermission(authz.ChannelRead), ok)
 	router.GET("/api/pricing", TryUserAuth(), ok)
+	router.POST("/api/task/:task_id/terminate", AdminAuth(), ok)
+	for _, token := range []string{"", profile, legacy} {
+		request := httptest.NewRequest(http.MethodPost, "/api/task/task_test/terminate", nil)
+		if token != "" {
+			request.Header.Set("Authorization", "Bearer "+token)
+		}
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if token == "" {
+			assert.Equal(t, http.StatusUnauthorized, response.Code)
+		} else {
+			assert.Equal(t, http.StatusForbidden, response.Code)
+			assert.Contains(t, response.Body.String(), "AUTH_SESSION_REQUIRED")
+		}
+	}
 
 	for _, test := range []struct {
 		name, path, token, code, reason string

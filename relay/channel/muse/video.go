@@ -620,7 +620,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 	}()
 	onProgress := func(pct int) {
 		videoJobsMu.Lock()
-		if job := videoJobs[jobID]; job != nil {
+		if job := videoJobs[jobID]; job != nil && job.finished.IsZero() {
 			job.Status = model.TaskStatusInProgress
 			job.Progress = max(job.Progress, min(pct, 99))
 		}
@@ -728,6 +728,11 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 func finishVideoJob(jobID string, files []musesdk.Media, err error) {
 	videoJobsMu.Lock()
 	defer videoJobsMu.Unlock()
+	finishVideoJobLocked(jobID, files, err)
+}
+
+// finishVideoJobLocked persists a terminal snapshot while videoJobsMu is held.
+func finishVideoJobLocked(jobID string, files []musesdk.Media, err error) {
 	job := videoJobs[jobID]
 	if job == nil {
 		removeMedia(files)
@@ -940,8 +945,27 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 	return common.Marshal(video)
 }
 
-// ServeVideo writes a finished Muse video. The caller has already checked that
-// the requester may read the task.
+// TerminateVideo stops local work after the task's terminal database update.
+// Other owners observe that durable update in maintainVideoJobs and on recovery.
+func TerminateVideo(task *model.Task) {
+	sharedEngine()
+	terminateVideoJob(task.GetUpstreamTaskID())
+}
+
+func terminateVideoJob(id string) {
+	dropQueuedVideo(id)
+	videoJobsMu.Lock()
+	defer videoJobsMu.Unlock()
+	job := videoJobs[id]
+	if job != nil && job.finished.IsZero() {
+		job.Code, job.Reason = "admin_terminated", service.VideoTaskTerminatedReason
+		if job.cancel != nil {
+			job.cancel()
+		}
+	}
+	finishVideoJobLocked(id, nil, context.Canceled)
+}
+
 // DeleteVideo removes the stored file of a finished Muse video task.
 func DeleteVideo(task *model.Task) {
 	sharedEngine() // initializes engineConfig, which locates the media dir

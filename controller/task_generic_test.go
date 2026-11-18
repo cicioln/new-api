@@ -54,6 +54,72 @@ func setupGenericTaskTest(t *testing.T) *model.Task {
 	return task
 }
 
+func TestAdminTerminateVideoTaskDatabase(t *testing.T) {
+	db, dialect := openTaskDialectDatabase(t, &model.Task{}, &model.Channel{}, &model.User{}, &model.Log{})
+	// Audit writes use an explicit table name, independently of GORM's test prefix.
+	require.NoError(t, db.Table("audit_logs").AutoMigrate(&model.AuditLog{}))
+	t.Cleanup(func() { require.NoError(t, db.Migrator().DropTable("audit_logs")) })
+	oldDB, oldLogs := model.DB, model.LOG_DB
+	oldMain, oldLog := common.MainDatabaseType(), common.LogDatabaseType()
+	oldRedis, oldMemory, oldBatch := common.RedisEnabled, common.MemoryCacheEnabled, common.BatchUpdateEnabled
+	model.DB, model.LOG_DB = db, db
+	common.SetDatabaseTypes(dialect, dialect)
+	common.RedisEnabled, common.MemoryCacheEnabled, common.BatchUpdateEnabled = false, false, false
+	t.Cleanup(func() {
+		model.DB, model.LOG_DB = oldDB, oldLogs
+		common.SetDatabaseTypes(oldMain, oldLog)
+		common.RedisEnabled, common.MemoryCacheEnabled, common.BatchUpdateEnabled = oldRedis, oldMemory, oldBatch
+	})
+	user := model.User{Username: "video-owner", Quota: 900, UsedQuota: 100}
+	require.NoError(t, db.Create(&user).Error)
+	channel := model.Channel{Name: "video-provider", UsedQuota: 100}
+	require.NoError(t, db.Create(&channel).Error)
+	task := &model.Task{TaskID: "task_terminate", Platform: "test-video", Action: constant.TaskActionTextToVideo, UserId: user.Id, ChannelId: channel.Id, Status: model.TaskStatusInProgress, Quota: 100, Progress: "30%"}
+	require.NoError(t, db.Create(task).Error)
+	stale := *task
+	call := func(role int) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodPost, "/api/task/task_terminate/terminate", nil)
+		c.Params = gin.Params{{Key: "task_id", Value: task.TaskID}}
+		c.Set("id", user.Id)
+		c.Set("role", role)
+		TerminateVideoTask(c)
+		return w
+	}
+	assert.Equal(t, http.StatusForbidden, call(common.RoleCommonUser).Code)
+	assert.Equal(t, http.StatusForbidden, call(0).Code)
+	assert.Equal(t, http.StatusOK, call(common.RoleAdminUser).Code)
+	assert.Equal(t, http.StatusOK, call(common.RoleAdminUser).Code)
+	competing := stale
+	assert.ErrorIs(t, service.TerminateVideoTask(context.Background(), &competing), service.ErrTaskStatusChanged)
+	require.NoError(t, db.First(task, task.ID).Error)
+	assert.Equal(t, model.TaskStatus(model.TaskStatusFailure), task.Status)
+	assert.Equal(t, service.VideoTaskTerminatedReason, task.FailReason)
+	assert.Zero(t, task.Quota)
+	assert.Positive(t, task.FinishTime)
+	require.NoError(t, db.First(&user, user.Id).Error)
+	assert.Equal(t, 1000, user.Quota)
+	assert.Zero(t, user.UsedQuota)
+	require.NoError(t, db.First(&channel, channel.Id).Error)
+	assert.Zero(t, channel.UsedQuota)
+	var auditCount int64
+	require.NoError(t, db.Table("audit_logs").Where("action = ?", "task.terminate").Count(&auditCount).Error)
+	assert.EqualValues(t, 2, auditCount)
+	// A completion that was already in flight must lose its status CAS.
+	stale.Status = model.TaskStatusSuccess
+	won, err := stale.UpdateWithStatus(model.TaskStatusInProgress)
+	require.NoError(t, err)
+	assert.False(t, won)
+	assert.ErrorIs(t, service.TerminateVideoTask(context.Background(), &stale), service.ErrTaskAlreadyFinished)
+	assert.ErrorIs(t, service.TerminateVideoTask(context.Background(), &model.Task{Action: "text_to_image"}), service.ErrNotVideoTask)
+	// Historical IDs need not be unique: never terminate an arbitrary row.
+	duplicate := *task
+	duplicate.ID = 0
+	require.NoError(t, db.Create(&duplicate).Error)
+	assert.Equal(t, http.StatusNotFound, call(common.RoleAdminUser).Code)
+}
+
 func allowPrivateTaskMediaTest(t *testing.T) {
 	t.Helper()
 	originalFetchSetting := *system_setting.GetFetchSetting()
