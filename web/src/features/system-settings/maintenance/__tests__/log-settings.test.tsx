@@ -78,7 +78,7 @@ beforeEach(() => {
   vi.spyOn(api, 'put').mockResolvedValue({ data: { success: true } })
 })
 
-test('the page shows the four log modules in order, each with its own controls', async () => {
+test('the page shows the five log modules in order, each with its own controls', async () => {
   await renderSettings()
 
   expect(
@@ -86,6 +86,7 @@ test('the page shows the four log modules in order, each with its own controls',
   ).toEqual([
     'Log recording',
     'Log search and export',
+    'Channel Prompt Logging',
     'Clean history logs',
     'Server Log Management',
   ])
@@ -101,6 +102,19 @@ test('the page shows the four log modules in order, each with its own controls',
   expect(
     within(search).getByRole('spinbutton', {
       name: 'Longest log time range (days)',
+    })
+  ).toBeVisible()
+  const promptLogging = screen.getByRole('group', {
+    name: 'Channel Prompt Logging',
+  })
+  expect(
+    within(promptLogging).getByRole('switch', {
+      name: 'Enable global channel prompt capture',
+    })
+  ).toBeVisible()
+  expect(
+    within(promptLogging).getByRole('spinbutton', {
+      name: 'Prompt log retention (days)',
     })
   ).toBeVisible()
   const cleanup = screen.getByRole('group', { name: 'Clean history logs' })

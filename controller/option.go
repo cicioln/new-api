@@ -215,6 +215,23 @@ func UpdateOption(c *gin.Context) {
 			return
 		}
 	}
+	switch option.Key {
+	case "prompt_log_setting.retention_days":
+		if days, err := strconv.Atoi(option.Value.(string)); err != nil || days < 0 {
+			common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid parameters"))
+			return
+		}
+	case "prompt_log_setting.max_text_bytes":
+		if limit, err := strconv.Atoi(option.Value.(string)); err != nil || limit < 1024 || limit > 1048576 {
+			common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid parameters"))
+			return
+		}
+	case "prompt_log_setting.max_file_size_mb":
+		if mb, err := strconv.Atoi(option.Value.(string)); err != nil || mb < 1 || mb > 200 {
+			common.ApiErrorStatus(c, http.StatusBadRequest, common.NewMessage("Invalid parameters"))
+			return
+		}
+	}
 	if option.Key == "TaskPublicAddress" && option.Value.(string) != "" {
 		if err := service.ValidateTaskArtifactBaseURL(option.Value.(string)); err != nil {
 			common.ApiError(c, err)

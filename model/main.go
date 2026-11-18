@@ -377,6 +377,7 @@ func migrateDB() error {
 		&CasbinRule{},
 		&AuthzRole{},
 		&UserAccessToken{},
+		&ChannelPromptLog{},
 		&PelicanRecord{},
 		&UsdtOrder{},
 		&UsdtAmountSlot{},

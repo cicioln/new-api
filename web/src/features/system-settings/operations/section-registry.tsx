@@ -116,6 +116,14 @@ const OPERATIONS_SECTIONS = [
             settings['log_setting.user_export_enabled'] ?? true,
           'log_setting.max_range_days':
             settings['log_setting.max_range_days'] ?? 365,
+          'prompt_log_setting.enabled':
+            settings['prompt_log_setting.enabled'] ?? true,
+          'prompt_log_setting.retention_days':
+            settings['prompt_log_setting.retention_days'] ?? 7,
+          'prompt_log_setting.max_text_bytes':
+            settings['prompt_log_setting.max_text_bytes'] ?? 65536,
+          'prompt_log_setting.max_file_size_mb':
+            settings['prompt_log_setting.max_file_size_mb'] ?? 20,
         }}
       />
     ),

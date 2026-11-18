@@ -131,6 +131,11 @@ type ChannelOtherSettings struct {
 	// rejection. Empty follows the default allow policy. Accepted values:
 	// "", "allow", "safe", "strict".
 	ToolLossPolicy string `json:"tool_loss_policy,omitempty"`
+
+	// PromptLogEnabled enables admin-only user prompt and attachment extraction
+	// logging for requests routed through this channel when global prompt
+	// logging is enabled.
+	PromptLogEnabled bool `json:"prompt_log_enabled,omitempty"`
 }
 
 func (s *ChannelOtherSettings) IsOpenRouterEnterprise() bool {

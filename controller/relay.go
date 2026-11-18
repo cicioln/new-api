@@ -202,6 +202,18 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 			break
 		}
 		c.Request.Body = io.NopCloser(bodyStorage)
+		if !relayInfo.IsChannelTest {
+			service.CaptureChannelPromptFromStorage(
+				c,
+				channel.Id,
+				channel.Name,
+				channel.Type,
+				channel.GetOtherSettings(),
+				relayInfo.OriginModelName,
+				string(relayFormat),
+				bodyStorage,
+			)
+		}
 
 		switch relayFormat {
 		case types.RelayFormatOpenAIRealtime:
@@ -360,8 +372,14 @@ func RelayMidjourney(c *gin.Context) {
 	case relayconstant.RelayModeMidjourneyTaskImageSeed:
 		mjErr = relay.RelayMidjourneyTaskImageSeed(c)
 	case relayconstant.RelayModeSwapFace:
+		if !relayInfo.IsChannelTest {
+			service.CaptureChannelPromptFromGin(c, relayInfo.OriginModelName, string(relayInfo.RelayFormat))
+		}
 		mjErr = relay.RelaySwapFace(c, relayInfo)
 	default:
+		if !relayInfo.IsChannelTest {
+			service.CaptureChannelPromptFromGin(c, relayInfo.OriginModelName, string(relayInfo.RelayFormat))
+		}
 		mjErr = relay.RelayMidjourneySubmit(c, relayInfo)
 	}
 	//err = relayMidjourneySubmit(c, relayMode)
@@ -578,6 +596,18 @@ func executeTaskSubmissionWith(
 			break
 		}
 		c.Request.Body = io.NopCloser(bodyStorage)
+		if !relayInfo.IsChannelTest {
+			service.CaptureChannelPromptFromStorage(
+				c,
+				channel.Id,
+				channel.Name,
+				channel.Type,
+				channel.GetOtherSettings(),
+				relayInfo.OriginModelName,
+				string(relayInfo.RelayFormat),
+				bodyStorage,
+			)
+		}
 
 		stage = "submit"
 		result, taskErr = submit(c, relayInfo)

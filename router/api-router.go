@@ -350,6 +350,19 @@ func SetApiRouter(router *gin.Engine) {
 		logRoute.GET("/self/export", middleware.UserAuth(), controller.ExportUserLogs)
 		logRoute.GET("/self/search", middleware.UserAuth(), middleware.SearchRateLimit(), controller.SearchUserLogs)
 
+		promptLogRoute := apiRouter.Group("/prompt_log")
+		promptLogRoute.Use(middleware.DisableCache(), middleware.AdminAuth())
+		{
+			promptLogRoute.GET("/", controller.GetChannelPromptLogs)
+			promptLogRoute.GET("/settings", controller.GetPromptLogSettings)
+			promptLogRoute.PUT("/settings", controller.UpdatePromptLogSettings)
+			promptLogRoute.PUT("/channels/:id", controller.UpdatePromptLogChannelToggle)
+			promptLogRoute.POST("/cleanup", controller.CleanupChannelPromptLogs)
+			promptLogRoute.GET("/:id/attachments/:attachment_id", controller.DownloadChannelPromptAttachment)
+			promptLogRoute.GET("/:id", controller.GetChannelPromptLogDetail)
+			promptLogRoute.DELETE("/:id", controller.DeleteChannelPromptLog)
+		}
+
 		systemTaskRoute := apiRouter.Group("/system-task")
 		systemTaskRoute.Use(middleware.RootAuth())
 		{

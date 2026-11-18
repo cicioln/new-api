@@ -86,6 +86,7 @@ const CONFIGURATION_BLOCKS = {
       'http2_connection_shards',
       'tls_insecure_skip_verify',
       'disable_task_polling_sleep',
+      'prompt_log_enabled',
     ],
   },
   upstreamModelDetection: {

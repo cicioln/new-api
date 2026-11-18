@@ -288,6 +288,19 @@ func (s *responsesWSSession) runCall(c *gin.Context, state *responsesWSCallState
 		if apiErr != nil {
 			return apiErr
 		}
+		if wsOther, ok := common.GetContextKeyType[dto.ChannelOtherSettings](c, appconstant.ContextKeyChannelOtherSetting); ok {
+			service.CaptureChannelPromptFromBytes(
+				c,
+				info.ChannelId,
+				common.GetContextKeyString(c, appconstant.ContextKeyChannelName),
+				info.ChannelType,
+				wsOther,
+				info.OriginModelName,
+				string(info.RelayFormat),
+				create.Body,
+				"application/json",
+			)
+		}
 		if err := s.writeTarget(websocket.TextMessage, payload); err != nil {
 			state.closeCode = websocket.CloseInternalServerErr
 			return types.NewError(err, types.ErrorCodeBadResponse, types.ErrOptionWithSkipRetry())
@@ -322,6 +335,17 @@ func (s *responsesWSSession) runCall(c *gin.Context, state *responsesWSCallState
 			if apiErr != nil {
 				return apiErr
 			}
+			service.CaptureChannelPromptFromBytes(
+				c,
+				channel.Id,
+				channel.Name,
+				channel.Type,
+				channel.GetOtherSettings(),
+				info.OriginModelName,
+				string(info.RelayFormat),
+				create.Body,
+				"application/json",
+			)
 			adaptor := GetAdaptor(info.ApiType)
 			adaptor.Init(info)
 			target, dialErr := relaychannel.DoWssRequest(adaptor, c, info, nil)

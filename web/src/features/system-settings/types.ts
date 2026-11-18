@@ -392,6 +392,10 @@ export type OperationsSettings = {
   LogConsumeEnabled: boolean
   'log_setting.user_export_enabled': boolean
   'log_setting.max_range_days': number
+  'prompt_log_setting.enabled': boolean
+  'prompt_log_setting.retention_days': number
+  'prompt_log_setting.max_text_bytes': number
+  'prompt_log_setting.max_file_size_mb': number
   'video_setting.retention_days': number
   'video_setting.image_retention_days': number
   'performance_setting.disk_cache_enabled': boolean

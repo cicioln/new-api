@@ -315,6 +315,7 @@ const SENSITIVE_FORM_FIELDS = [
   'claude_beta_query',
   'ollama_openai_chat',
   'disable_task_polling_sleep',
+  'prompt_log_enabled',
   'upstream_model_update_check_enabled',
   'upstream_model_update_auto_sync_enabled',
   'upstream_model_update_ignored_models',
@@ -1948,6 +1949,32 @@ export function ChannelMutateDrawer({
             <FormDescription>
               {t(
                 'Do not wait one second between polling async tasks for this channel'
+              )}
+            </FormDescription>
+          </div>
+          <FormControl>
+            <Switch
+              disabled={sensitiveLocked}
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  )
+
+  const promptLogFields = (
+    <FormField
+      control={form.control}
+      name='prompt_log_enabled'
+      render={({ field }) => (
+        <FormItem className='flex items-center justify-between px-4 py-3'>
+          <div className='space-y-0.5'>
+            <FormLabel>{t('Extract user prompt logs')}</FormLabel>
+            <FormDescription>
+              {t(
+                'Capture user prompts, images, audio, and uploaded files for this channel (admin-only, requires global switch enabled)'
               )}
             </FormDescription>
           </div>
@@ -4963,6 +4990,7 @@ export function ChannelMutateDrawer({
                 className='space-y-4 disabled:opacity-60'
               >
                 {taskPollingFields}
+                {promptLogFields}
                 {proxyFields}
                 {httpProtocolFields}
                 {httpShardsFields}

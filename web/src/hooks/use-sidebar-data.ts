@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -17,12 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useQuery } from '@tanstack/react-query'
 import {
   Box,
   CalendarDays,
   ChartNoAxesColumn,
   ClipboardList,
   Cog,
+  FileText,
   Gift,
   House,
   Info,
@@ -109,6 +110,12 @@ export function useSidebarData(): SidebarData {
             title: t('Audit Logs'),
             url: '/usage-logs/audit',
             icon: ClipboardList,
+          },
+          {
+            title: t('Prompt Logs'),
+            url: '/usage-logs/prompts',
+            icon: FileText,
+            requiredRole: ROLE.ADMIN,
           },
           {
             title: t('Task Logs'),
