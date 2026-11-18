@@ -3207,3 +3207,5 @@ github.com/cicioln/muse-protocol-go v0.0.0-20261118082337-65a788928347 h1:M+FBt7
 github.com/cicioln/muse-protocol-go v0.0.0-20261118082337-65a788928347/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
 github.com/cicioln/muse-protocol-go v0.0.0-20261118090016-e439abeaceea h1:Hs8f0pR/C/UHwnZpM70u3O/qpk4JtcAqokwuyHbA0TU=
 github.com/cicioln/muse-protocol-go v0.0.0-20261118090016-e439abeaceea/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
+github.com/cicioln/muse-protocol-go v0.0.0-20261118092123-b7c30af54bb3 h1:cT+xPtZP8bP0NL7l3rTfnOdkLKeI8Sc+oxS6HufQgpI=
+github.com/cicioln/muse-protocol-go v0.0.0-20261118092123-b7c30af54bb3/go.mod h1:f5IlwzolTzt3RlhmSw82I0T6EpyoXhXCEjZj1n67xeI=
