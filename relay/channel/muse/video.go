@@ -91,9 +91,10 @@ func videoModelName(info *relaycommon.RelayInfo) string {
 // back to this server's ffmpeg), "vm", or "local".
 var videoJoinMode = common.GetEnvOrDefaultString("MUSE_VIDEO_JOIN", musesdk.JoinAuto)
 
-// longVideoTimeout bounds a whole segmented job.
+// longVideoTimeout bounds a whole segmented job, including per-segment file
+// retrieval and final join.
 func longVideoTimeout(segments int) time.Duration {
-	return time.Duration(segments)*videoGenerateTimeout + 5*time.Minute
+	return time.Duration(segments)*(videoGenerateTimeout+4*time.Minute) + 6*time.Minute
 }
 
 type videoJob struct {
@@ -643,7 +644,7 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 		}
 		return files, mediaRefusal(videoTimeoutError(err), "video")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+4*time.Minute)
 	defer cancel()
 	files, err = sharedEngine().Generate(ctx, acc, musesdk.GenRequest{
 		Prompt:     req.prompt,
