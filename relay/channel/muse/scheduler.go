@@ -230,10 +230,12 @@ func (job *queuedVideo) markTried(index int) bool {
 }
 
 // tryNextKey reports whether another key might succeed where this one
-// failed. Invalid input and a crashed job fail the same way on every key.
+// failed. Invalid input, a model refusal, and a crashed job fail the same
+// way on every key.
 func tryNextKey(err error) bool {
 	var crashed *videoPanic
-	return musesdk.KindOf(err) != musesdk.KindBadRequest && !errors.As(err, &crashed)
+	kind := musesdk.KindOf(err)
+	return kind != musesdk.KindBadRequest && kind != musesdk.KindRefusal && !errors.As(err, &crashed)
 }
 
 // logVideoFailure logs a failed attempt with the model's own reply when it

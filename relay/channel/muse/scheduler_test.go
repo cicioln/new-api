@@ -218,21 +218,37 @@ func TestSchedulerRetriesFailedJobOnEveryOtherKey(t *testing.T) {
 	r := newRecorder()
 	slot := videoSlot{channelID: 9006, multiKey: true, keys: []channelKey{{index: 0, key: testCookie}, {index: 1, key: testCookie}, {index: 2, key: testCookie}}}
 	final := trackJob(t, "a")
-	refusal := &musesdk.Error{Kind: musesdk.KindRefusal, Msg: "无法生成该视频"}
+	transient := &musesdk.Error{Kind: musesdk.KindTransient, Msg: "视频生成超时（6 分钟未完成）"}
 
 	scheduleVideo(r.job("a", slot))
 	r.wait(t, "a")
-	r.fail("a", refusal)
+	r.fail("a", transient)
 	r.wait(t, "a")
-	r.fail("a", refusal)
+	r.fail("a", transient)
 	r.wait(t, "a")
-	r.fail("a", refusal)
+	r.fail("a", transient)
+
+	job := final()
+	assert.Equal(t, model.TaskStatusFailure, job.Status)
+	assert.Equal(t, "视频生成超时（6 分钟未完成）", job.Reason)
+	assert.ElementsMatch(t, []string{accountID(9006, 0), accountID(9006, 1), accountID(9006, 2)}, r.accountsOf("a"), "each key tried exactly once")
+	r.idle(t)
+}
+
+func TestSchedulerDoesNotRetryRefusal(t *testing.T) {
+	resetScheduler(t, 1, 5)
+	r := newRecorder()
+	final := trackJob(t, "a")
+
+	scheduleVideo(r.job("a", twoKeySlot(9010)))
+	r.wait(t, "a")
+	r.fail("a", &musesdk.Error{Kind: musesdk.KindRefusal, Msg: "无法生成该视频"})
 
 	job := final()
 	assert.Equal(t, model.TaskStatusFailure, job.Status)
 	assert.Equal(t, "无法生成该视频", job.Reason)
-	assert.ElementsMatch(t, []string{accountID(9006, 0), accountID(9006, 1), accountID(9006, 2)}, r.accountsOf("a"), "each key tried exactly once")
 	r.idle(t)
+	assert.Len(t, r.accountsOf("a"), 1)
 }
 
 func TestSchedulerStopsRetryingOnceAKeySucceeds(t *testing.T) {
