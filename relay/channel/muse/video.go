@@ -3,9 +3,11 @@ package muse
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,32 +32,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Video generation runs in a background goroutine on the node that accepted
-// the request. Jobs and their files live on that node only: the task poller
-// reads job state from this process, and an unfinished job missing after a
-// restart (or on another node) is reported as not found, which fails and
-// refunds the task. Finished videos are stored under their task ID, so they
-// stay playable across restarts. They are kept until the administrator's
-// video retention period (video_setting.retention_days, 0 = forever) ends.
+// Jobs checkpoint their input and upstream session on the accepting node.
+// Redis shares credential-free status with pollers on other nodes. A missing
+// local job is an unknown observation, not proof that generation failed.
 
 // videoGenerateTimeout bounds one 10-second clip. Successful clips finish in
 // about 1 to 2 minutes, so a clip still missing after this long has stalled
 // upstream and only keeps the user waiting.
 const videoGenerateTimeout = 6 * time.Minute
-
-// videoTimeoutError rewords the SDK's generic "等待回复中断" so a clip that ran
-// out of time says so. A long video keeps its "第 i/n 段" prefix.
-func videoTimeoutError(err error) error {
-	if err == nil || !errors.Is(err, context.DeadlineExceeded) {
-		return err
-	}
-	msg := err.Error()
-	reworded := strings.Replace(msg, "等待回复中断", fmt.Sprintf("视频生成超时（%d 分钟未完成）", int(videoGenerateTimeout/time.Minute)), 1)
-	if reworded == msg {
-		return err
-	}
-	return &musesdk.Error{Kind: musesdk.KindOf(err), Msg: reworded, Err: err}
-}
 
 // maxVideoSeconds is the longest clip Muse generates in one request.
 const maxVideoSeconds = musesdk.MaxVideoSegmentSeconds
@@ -94,16 +78,35 @@ var videoJoinMode = common.GetEnvOrDefaultString("MUSE_VIDEO_JOIN", musesdk.Join
 // longVideoTimeout bounds a whole segmented job, including per-segment file
 // retrieval and final join.
 func longVideoTimeout(segments int) time.Duration {
-	return time.Duration(segments)*(videoGenerateTimeout+6*time.Minute) + 6*time.Minute
+	return time.Duration(segments)*(videoGenerateTimeout+6*time.Minute) + 17*time.Minute
 }
 
 type videoJob struct {
-	Status   string `json:"status"`
-	Progress int    `json:"progress"`
-	Reason   string `json:"reason,omitempty"`
-	file     string
-	mime     string
-	finished time.Time
+	Status            string           `json:"status"`
+	Progress          int              `json:"progress"`
+	Reason            string           `json:"reason,omitempty"`
+	Code              string           `json:"code,omitempty"`
+	Stage             string           `json:"stage,omitempty"`
+	Segment           int              `json:"segment,omitempty"`
+	Segments          int              `json:"segments,omitempty"`
+	Attempt           int              `json:"attempt,omitempty"`
+	SubmittedAt       int64            `json:"submitted_at,omitempty"`
+	StageStartedAt    int64            `json:"stage_started_at,omitempty"`
+	Deadline          int64            `json:"deadline,omitempty"`
+	ExecutionDeadline int64            `json:"execution_deadline,omitempty"`
+	Owner             string           `json:"owner,omitempty"`
+	UpdatedAt         int64            `json:"updated_at,omitempty"`
+	StageSeconds      map[string]int64 `json:"stage_seconds,omitempty"`
+	file              string
+	mime              string
+	finished          time.Time
+	input             *videoInput
+	state             json.RawMessage
+	keyIndex          int
+	tried             map[int]bool
+	readyAt           time.Time
+	ctx               context.Context
+	cancel            context.CancelFunc
 }
 
 var (
@@ -128,6 +131,8 @@ func cleanupVideoJobs(ctx context.Context) {
 		videoJobsMu.Lock()
 		for id, job := range videoJobs {
 			if !job.finished.IsZero() && job.finished.Before(forget) {
+				_ = os.Remove(videoJobPath(id, ".json"))
+				_ = os.Remove(videoJobPath(id, ".input.json"))
 				delete(videoJobs, id)
 			}
 		}
@@ -505,16 +510,44 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 	}
 	jobID := info.PublicTaskID
 	req := *a.request
+	sharedEngine()
 	videoJobsMu.Lock()
 	_, exists := videoJobs[jobID]
 	if !exists {
-		videoJobs[jobID] = &videoJob{Status: model.TaskStatusQueued}
+		input := &videoInput{ChannelID: req.slot.channelID, MultiKey: req.slot.multiKey, Prompt: req.prompt, Refs: req.refs}
+		if v := req.long; v != nil {
+			input.Long = &videoLongInput{Limit: v.limit, Seconds: v.seconds, Request: v.req, Extras: v.extras, First: v.first, Last: v.last, Refs: v.refs}
+		}
+		now := time.Now()
+		deadline := now.Add(videoQueueTimeout + videoExecutionBudget(input))
+		if constant.TaskTimeoutMinutes > 0 {
+			if global := now.Add(time.Duration(constant.TaskTimeoutMinutes) * time.Minute); global.Before(deadline) {
+				deadline = global
+			}
+		}
+		ctx, cancel := context.WithDeadline(context.Background(), deadline)
+		job := &videoJob{Status: model.TaskStatusQueued, Stage: "queued", Owner: common.NodeName,
+			SubmittedAt: now.Unix(), StageStartedAt: now.Unix(), Deadline: deadline.Unix(), input: input, ctx: ctx, cancel: cancel}
+		if err := writeVideoJSON(videoJobPath(jobID, ".input.json"), input); err != nil {
+			cancel()
+			videoJobsMu.Unlock()
+			return nil, err
+		}
+		if err := persistVideoJobLocked(jobID, job); err != nil {
+			cancel()
+			videoJobsMu.Unlock()
+			return nil, err
+		}
+		videoJobs[jobID] = job
 	}
 	videoJobsMu.Unlock()
 	if !exists {
-		scheduleVideo(&queuedVideo{jobID: jobID, slot: req.slot, run: func(acc *musesdk.Account) ([]musesdk.Media, error) {
+		err := scheduleVideo(&queuedVideo{jobID: jobID, slot: req.slot, run: func(acc *musesdk.Account) ([]musesdk.Media, error) {
 			return runVideoJob(jobID, acc, req)
 		}})
+		if err != nil {
+			finishVideoJob(jobID, nil, err)
+		}
 	}
 	return jsonResponse(http.StatusOK, []byte(`{}`)), nil
 }
@@ -568,10 +601,18 @@ func (p *videoPanic) Error() string { return fmt.Sprintf("muse video job panic: 
 // scheduler decides whether a failure is retried on another key.
 func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []musesdk.Media, err error) {
 	videoJobsMu.Lock()
+	job := videoJobs[jobID]
+	if job == nil || job.ctx == nil {
+		videoJobsMu.Unlock()
+		return nil, context.Canceled
+	}
+	ctx, cancel := context.WithDeadline(job.ctx, time.Unix(job.ExecutionDeadline, 0))
+	stateBody := append([]byte(nil), job.state...)
 	if job := videoJobs[jobID]; job != nil && job.Status == model.TaskStatusQueued {
 		job.Status = model.TaskStatusInProgress
 	}
 	videoJobsMu.Unlock()
+	defer cancel()
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			files, err = nil, &videoPanic{value: recovered}
@@ -581,32 +622,45 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 		videoJobsMu.Lock()
 		if job := videoJobs[jobID]; job != nil {
 			job.Status = model.TaskStatusInProgress
-			job.Progress = min(pct, 99)
+			job.Progress = max(job.Progress, min(pct, 99))
 		}
 		videoJobsMu.Unlock()
 	}
 	if long := req.long; long != nil {
+		var state musesdk.LongVideoState
+		if len(stateBody) > 0 {
+			if err := common.Unmarshal(stateBody, &state); err != nil {
+				return nil, &musesdk.NoRetry{Err: err}
+			}
+		}
 		onProgress(5)
 		ratio := aspectRatio(long.req.Size)
 		if ratio == "" {
 			ratio = aspectRatio(long.extras.AspectRatio)
 		}
 		var plan []int
-		pctx, pcancel := context.WithTimeout(context.Background(), time.Minute)
-		shots, planErr := sharedEngine().PlanStoryboard(pctx, acc, musesdk.StoryboardRequest{
-			Prompt:         long.req.Prompt,
-			MaxSeconds:     long.limit,
-			TargetSeconds:  long.seconds,
-			SegmentSeconds: maxVideoSeconds,
-			Refs:           long.allRefs(),
-			HasFirstFrame:  long.first != nil,
-			HasLastFrame:   long.last != nil,
-			AspectRatio:    ratio,
-			CameraMovement: long.extras.CameraMovement,
-			Style:          long.extras.Style,
-			NegativePrompt: long.extras.NegativePrompt,
-		})
-		pcancel()
+		var shots = long.shots
+		var planErr error
+		if len(state.Plan) > 0 {
+			plan = state.Plan
+		} else if len(shots) == 0 {
+			setVideoStage(jobID, "planning", 0, 0)
+			pctx, pcancel := context.WithTimeout(ctx, time.Minute)
+			shots, planErr = sharedEngine().PlanStoryboard(pctx, acc, musesdk.StoryboardRequest{
+				Prompt:         long.req.Prompt,
+				MaxSeconds:     long.limit,
+				TargetSeconds:  long.seconds,
+				SegmentSeconds: maxVideoSeconds,
+				Refs:           long.allRefs(),
+				HasFirstFrame:  long.first != nil,
+				HasLastFrame:   long.last != nil,
+				AspectRatio:    ratio,
+				CameraMovement: long.extras.CameraMovement,
+				Style:          long.extras.Style,
+				NegativePrompt: long.extras.NegativePrompt,
+			})
+			pcancel()
+		}
 		if planErr == nil && len(shots) > 0 {
 			long.shots = shots
 			plan = make([]int, len(shots))
@@ -616,23 +670,30 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 				total += s.Seconds
 			}
 			long.seconds = total
+			videoJobsMu.Lock()
+			if job := videoJobs[jobID]; job != nil && job.input != nil && job.input.Long != nil {
+				job.input.Long.Shots, job.input.Long.Seconds = shots, total
+				planErr = writeVideoJSON(videoJobPath(jobID, ".input.json"), job.input)
+			}
+			videoJobsMu.Unlock()
+			if planErr != nil {
+				return nil, &musesdk.NoRetry{Err: planErr}
+			}
 			common.SysLog(common.LogText("muse video %s: planned %d shots (%v seconds, total %ds)", jobID, len(shots), plan, total))
 		} else if planErr != nil {
 			common.SysLog(common.LogText("muse video %s: storyboard planning fallback (%s)", jobID, planErr.Error()))
 		}
-		segments := len(plan)
-		if segments == 0 {
-			segments = len(musesdk.SplitVideoSeconds(long.seconds, maxVideoSeconds))
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), longVideoTimeout(segments))
-		defer cancel()
 		file, err := sharedEngine().GenerateLongVideo(ctx, acc, musesdk.LongVideoRequest{
-			Seconds:    long.seconds,
-			Plan:       plan,
-			Segment:    long.segment,
-			Timeout:    videoGenerateTimeout,
-			OnProgress: onProgress,
-			Join:       videoJoinMode,
+			Seconds:     long.seconds,
+			Plan:        plan,
+			Segment:     long.segment,
+			Timeout:     videoGenerateTimeout,
+			OnProgress:  onProgress,
+			Join:        videoJoinMode,
+			JoinTimeout: 16 * time.Minute,
+			State:       &state,
+			SaveState:   func(state *musesdk.LongVideoState) error { return saveVideoState(jobID, state) },
+			OnStage:     func(stage string, segment, count int) { setVideoStage(jobID, stage, segment, count) },
 			OnJoin: func(where string, vmErr error) {
 				if vmErr != nil {
 					common.SysLog(common.LogText("muse video %s: VM join failed, joined locally: %s", jobID, vmErr.Error()))
@@ -642,10 +703,14 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 		if file != nil {
 			files = []musesdk.Media{*file}
 		}
-		return files, mediaRefusal(videoTimeoutError(err), "video")
+		return files, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), videoGenerateTimeout+6*time.Minute)
-	defer cancel()
+	var state musesdk.GenerationState
+	if len(stateBody) > 0 {
+		if err := common.Unmarshal(stateBody, &state); err != nil {
+			return nil, &musesdk.NoRetry{Err: err}
+		}
+	}
 	files, err = sharedEngine().Generate(ctx, acc, musesdk.GenRequest{
 		Prompt:     req.prompt,
 		Kind:       "video",
@@ -653,8 +718,11 @@ func runVideoJob(jobID string, acc *musesdk.Account, req videoRequest) (files []
 		N:          1,
 		Timeout:    videoGenerateTimeout,
 		OnProgress: onProgress,
+		State:      &state,
+		SaveState:  func(state *musesdk.GenerationState) error { return saveVideoState(jobID, state) },
+		OnStage:    func(stage string) { setVideoStage(jobID, stage, 1, 1) },
 	})
-	return files, mediaRefusal(videoTimeoutError(err), "video")
+	return files, err
 }
 
 func finishVideoJob(jobID string, files []musesdk.Media, err error) {
@@ -665,26 +733,62 @@ func finishVideoJob(jobID string, files []musesdk.Media, err error) {
 		removeMedia(files)
 		return
 	}
+	if !job.finished.IsZero() {
+		removeMedia(files)
+		return
+	}
+	if job.cancel != nil {
+		defer job.cancel()
+	}
 	job.finished = time.Now()
+	if job.StageSeconds == nil {
+		job.StageSeconds = map[string]int64{}
+	}
+	if job.StageStartedAt > 0 {
+		job.StageSeconds[job.Stage] += max(0, job.finished.Unix()-job.StageStartedAt)
+	}
+	defer func() {
+		// Terminal jobs cannot resume. Release reference-image input and
+		// partial clips instead of retaining potentially large files forever.
+		previousState := job.state
+		job.state = nil
+		if err := persistVideoJobLocked(jobID, job); err != nil {
+			job.state = previousState
+			common.SysError(common.LogText("muse video %s final checkpoint failed: %v", jobID, err))
+		} else {
+			if job.input != nil && job.input.Long != nil {
+				var state musesdk.LongVideoState
+				if common.Unmarshal(previousState, &state) == nil {
+					removeMedia(state.Segments)
+				}
+			}
+			_ = os.Remove(videoJobPath(jobID, ".input.json"))
+			job.input = nil
+		}
+	}()
 	if err == nil && len(files) == 0 {
 		err = errors.New("muse returned no video")
 	}
 	if err != nil {
 		removeMedia(files)
 		job.Status = model.TaskStatusFailure
-		job.Reason = err.Error()
+		if job.Code == "" {
+			job.Code, job.Reason = videoFailure(err, job.Stage)
+		}
 		return
 	}
 	removeMedia(files[1:])
-	job.Status = model.TaskStatusSuccess
-	job.Progress = 100
 	job.file = mediaPath(files[0])
 	job.mime = files[0].Mime
 	// Name the file after the task so ServeVideo still finds it after a
 	// restart has emptied videoJobs.
-	if named := videoFilePath(jobID, filepath.Ext(job.file)); os.Rename(job.file, named) == nil {
-		job.file = named
+	named := videoFilePath(jobID, filepath.Ext(job.file))
+	if err := os.Rename(job.file, named); err != nil {
+		job.Status, job.Code, job.Reason = model.TaskStatusFailure, "storage_failed", "Video could not be saved"
+		return
 	}
+	job.file = named
+	job.Status, job.Progress, job.Stage = model.TaskStatusSuccess, 100, "completed"
 }
 
 const videoFilePrefix = "video-"
@@ -722,7 +826,13 @@ func removeExpiredVideoFiles(cutoff time.Time) {
 }
 
 func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*channel.TaskSubmitResponse, *taskdto.TaskError) {
-	return &channel.TaskSubmitResponse{UpstreamTaskID: info.PublicTaskID}, nil
+	videoJobsMu.Lock()
+	body, err := common.Marshal(videoJobs[info.PublicTaskID])
+	videoJobsMu.Unlock()
+	if err != nil {
+		return nil, service.TaskErrorWrapperLocal(err, "video_state_invalid", http.StatusInternalServerError)
+	}
+	return &channel.TaskSubmitResponse{UpstreamTaskID: info.PublicTaskID, TaskData: body}, nil
 }
 
 func (a *TaskAdaptor) GetModelList() []string {
@@ -734,26 +844,65 @@ func (a *TaskAdaptor) GetChannelName() string {
 }
 
 func (a *TaskAdaptor) FetchTask(baseUrl, key string, task *model.Task, proxy string) (*http.Response, error) {
-	videoJobsMu.Lock()
-	job := videoJobs[task.GetUpstreamTaskID()]
-	var snapshot videoJob
-	if job != nil {
-		snapshot = *job
-	}
-	videoJobsMu.Unlock()
-	if job == nil {
-		// A job that finished before a restart left its video on disk.
-		sharedEngine()
-		if path, _ := findVideoFile(task.GetUpstreamTaskID()); path == "" {
-			return jsonResponse(http.StatusNotFound, []byte(`{"status":"NOT_FOUND"}`)), nil
-		}
-		snapshot = videoJob{Status: model.TaskStatusSuccess, Progress: 100}
-	}
+	sharedEngine()
+	snapshot := loadVideoSnapshot(task)
 	body, err := common.Marshal(snapshot)
 	if err != nil {
 		return nil, err
 	}
 	return jsonResponse(http.StatusOK, body), nil
+}
+
+func loadVideoSnapshot(task *model.Task) videoJob {
+	id := task.GetUpstreamTaskID()
+	_ = restoreVideoJob(id)
+	videoJobsMu.Lock()
+	job := videoJobs[task.GetUpstreamTaskID()]
+	var snapshot videoJob
+	if job != nil {
+		snapshot = *job
+		snapshot.StageSeconds = maps.Clone(job.StageSeconds)
+	}
+	videoJobsMu.Unlock()
+	if job == nil {
+		if path, _ := findVideoFile(id); path != "" {
+			snapshot = videoJob{Status: model.TaskStatusSuccess, Progress: 100, Stage: "completed"}
+		} else {
+			if common.RedisEnabled && common.RDB != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				body, err := common.RDB.Get(ctx, "muse:video:"+id).Bytes()
+				cancel()
+				if err == nil {
+					_ = common.Unmarshal(body, &snapshot)
+				}
+			}
+			if snapshot.Status == "" {
+				// Submission stores the original deadline in Task.Data, so a
+				// poller never guesses a shorter budget from a model alias.
+				_ = common.Unmarshal(task.Data, &snapshot)
+				if snapshot.Status == model.TaskStatusSuccess || snapshot.Status == model.TaskStatusFailure {
+					return snapshot
+				}
+				started := task.SubmitTime
+				if started == 0 {
+					started = task.CreatedAt
+				}
+				if snapshot.Deadline == 0 && constant.TaskTimeoutMinutes > 0 {
+					snapshot.Deadline = started + int64(constant.TaskTimeoutMinutes)*60
+				}
+				status := string(task.Status)
+				if status == "" || status == string(model.TaskStatusUnknown) {
+					status = model.TaskStatusInProgress
+				}
+				progress, _ := strconv.Atoi(strings.TrimSuffix(task.Progress, "%"))
+				snapshot.Status, snapshot.Progress, snapshot.Stage, snapshot.Owner = status, max(0, min(progress, 99)), "status_unknown", task.PrivateData.NodeName
+			}
+			if snapshot.Status != model.TaskStatusSuccess && snapshot.Status != model.TaskStatusFailure && snapshot.Deadline > 0 && time.Now().Unix() >= snapshot.Deadline {
+				snapshot.Status, snapshot.Code, snapshot.Reason = model.TaskStatusFailure, "recovery_timeout", "Video task status could not be recovered before its deadline"
+			}
+		}
+	}
+	return snapshot
 }
 
 func (a *TaskAdaptor) ParseTaskResult(task *model.Task, resp *http.Response, respBody []byte) (*relaycommon.TaskInfo, error) {
@@ -763,7 +912,7 @@ func (a *TaskAdaptor) ParseTaskResult(task *model.Task, resp *http.Response, res
 	}
 	result := &relaycommon.TaskInfo{TaskID: task.GetUpstreamTaskID(), Status: job.Status, Reason: job.Reason}
 	if job.Status == model.TaskStatusQueued {
-		result.Progress = "0%"
+		result.Progress = fmt.Sprintf("%d%%", max(0, min(job.Progress, 99)))
 	} else if job.Status == model.TaskStatusInProgress && job.Progress > 0 {
 		result.Progress = fmt.Sprintf("%d%%", min(job.Progress, 99))
 	}
@@ -772,8 +921,21 @@ func (a *TaskAdaptor) ParseTaskResult(task *model.Task, resp *http.Response, res
 
 func (a *TaskAdaptor) ConvertToOpenAIVideo(task *model.Task) ([]byte, error) {
 	video := task.ToOpenAIVideo()
+	var snapshot videoJob
+	_ = common.Unmarshal(task.Data, &snapshot)
+	video.SetMetadata("stage", snapshot.Stage)
+	video.SetMetadata("segment", snapshot.Segment)
+	video.SetMetadata("segments", snapshot.Segments)
+	video.SetMetadata("attempt", snapshot.Attempt)
+	video.SetMetadata("deadline", snapshot.Deadline)
+	video.SetMetadata("stage_started_at", snapshot.StageStartedAt)
+	video.SetMetadata("stage_seconds", snapshot.StageSeconds)
 	if task.Status == model.TaskStatusFailure {
-		video.Error = &dto.OpenAIVideoError{Message: task.FailReason, Code: "generation_failed"}
+		code := snapshot.Code
+		if code == "" {
+			code = "generation_failed"
+		}
+		video.Error = &dto.OpenAIVideoError{Message: task.FailReason, Code: code}
 	}
 	return common.Marshal(video)
 }
@@ -786,8 +948,18 @@ func DeleteVideo(task *model.Task) {
 	id := task.GetUpstreamTaskID()
 	dropQueuedVideo(id)
 	videoJobsMu.Lock()
+	if job := videoJobs[id]; job != nil && job.cancel != nil {
+		job.cancel()
+	}
 	delete(videoJobs, id)
+	_ = os.Remove(videoJobPath(id, ".json"))
+	_ = os.Remove(videoJobPath(id, ".input.json"))
 	videoJobsMu.Unlock()
+	if common.RedisEnabled && common.RDB != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_ = common.RDB.Del(ctx, "muse:video:"+id).Err()
+		cancel()
+	}
 	if path, _ := findVideoFile(id); path != "" {
 		_ = os.Remove(path)
 	}

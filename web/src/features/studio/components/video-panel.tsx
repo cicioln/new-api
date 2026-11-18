@@ -52,6 +52,7 @@ import {
   StudioHero,
   Tag,
 } from './shared'
+import { VideoTaskProgress } from './video-task-progress'
 
 const RATIOS: SizePreset[] = [
   { value: '', label: 'Auto', w: 0, h: 0 },
@@ -144,26 +145,27 @@ export function VideoPanel(props: {
   }
 
   const list = tasks.data ?? []
+  const emptyState = tasks.isLoading ? (
+    <p className='text-muted-foreground py-24 text-center text-sm'>
+      {t('Loading...')}
+    </p>
+  ) : (
+    <StudioHero
+      title={t('Video')}
+      suggestions={[
+        t('Hot air balloons rising out of a valley'),
+        t('City time-lapse from day to night'),
+        t('Waves on rocks in slow motion at sunset'),
+      ]}
+      onPick={setPrompt}
+    />
+  )
 
   return (
     <>
       <div className='min-h-0 flex-1 overflow-y-auto px-4 pt-5 pb-3 md:px-7'>
         {list.length === 0 ? (
-          tasks.isLoading ? (
-            <p className='text-muted-foreground py-24 text-center text-sm'>
-              {t('Loading...')}
-            </p>
-          ) : (
-            <StudioHero
-              title={t('Video')}
-              suggestions={[
-                t('Hot air balloons rising out of a valley'),
-                t('City time-lapse from day to night'),
-                t('Waves on rocks in slow motion at sunset'),
-              ]}
-              onPick={setPrompt}
-            />
-          )
+          emptyState
         ) : (
           <div className='mx-auto grid max-w-[900px] gap-6'>
             <RetentionNotice kind='video' />
@@ -185,9 +187,11 @@ export function VideoPanel(props: {
                   <JobHeader prompt={text || t('Video')}>
                     {running && (
                       <Tag tone='running'>
-                        {inProgress && Number.isFinite(progress) && progress > 0
-                          ? `${t('Generating')} · ${progress}%`
-                          : t('Queued')}
+                        <VideoTaskProgress
+                          data={task.data}
+                          inProgress={inProgress}
+                          progress={progress}
+                        />
                       </Tag>
                     )}
                     {running && task.submit_time > 0 && (
@@ -230,11 +234,11 @@ export function VideoPanel(props: {
                       <div style={{ aspectRatio: aspect }}>
                         <PendingTile
                           label={
-                            inProgress &&
-                            Number.isFinite(progress) &&
-                            progress > 0
-                              ? `${progress}%`
-                              : t('Queued')
+                            <VideoTaskProgress
+                              data={task.data}
+                              inProgress={inProgress}
+                              progress={progress}
+                            />
                           }
                           progress={
                             inProgress && Number.isFinite(progress)
@@ -248,7 +252,11 @@ export function VideoPanel(props: {
                     {failed && (
                       <div style={{ aspectRatio: aspect }}>
                         <FailedTile
-                          message={task.fail_reason || t('Generation failed')}
+                          message={
+                            task.fail_reason
+                              ? t(task.fail_reason)
+                              : t('Generation failed')
+                          }
                           className='size-full'
                           actions={
                             <>

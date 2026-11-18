@@ -1,6 +1,7 @@
 package muse
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ func resetScheduler(t *testing.T, concurrency, queueLimit int) {
 	activeVideos, videoQueues = map[string]int{}, map[int][]*queuedVideo{}
 	schedMu.Unlock()
 	t.Cleanup(func() {
+		videoWorkers.Wait()
 		accountConcurrency, channelQueueLimit = prevConcurrency, prevLimit
 		schedMu.Lock()
 		activeVideos, videoQueues = map[string]int{}, map[int][]*queuedVideo{}
@@ -230,7 +232,7 @@ func TestSchedulerRetriesFailedJobOnEveryOtherKey(t *testing.T) {
 
 	job := final()
 	assert.Equal(t, model.TaskStatusFailure, job.Status)
-	assert.Equal(t, "视频生成超时（6 分钟未完成）", job.Reason)
+	assert.Equal(t, "generation_failed", job.Code)
 	assert.ElementsMatch(t, []string{accountID(9006, 0), accountID(9006, 1), accountID(9006, 2)}, r.accountsOf("a"), "each key tried exactly once")
 	r.idle(t)
 }
@@ -246,9 +248,19 @@ func TestSchedulerDoesNotRetryRefusal(t *testing.T) {
 
 	job := final()
 	assert.Equal(t, model.TaskStatusFailure, job.Status)
-	assert.Equal(t, "无法生成该视频", job.Reason)
+	assert.Equal(t, "generation_refused", job.Code)
 	r.idle(t)
 	assert.Len(t, r.accountsOf("a"), 1)
+}
+
+func TestSchedulerDoesNotReplayUncertainGeneration(t *testing.T) {
+	for _, err := range []error{
+		&musesdk.NoRetry{Err: &musesdk.Error{Kind: musesdk.KindTransient, Msg: "download failed"}},
+		context.DeadlineExceeded, context.Canceled,
+	} {
+		assert.False(t, tryNextKey(err))
+	}
+	assert.True(t, tryNextKey(&musesdk.Error{Kind: musesdk.KindQuota, Msg: "quota exhausted before submission"}))
 }
 
 func TestSchedulerStopsRetryingOnceAKeySucceeds(t *testing.T) {

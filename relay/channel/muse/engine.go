@@ -48,6 +48,7 @@ func sharedEngine() *musesdk.ProtoEngine {
 		engine.SetHooks(onCookiesRotated, nil)
 		go engine.Janitor(context.Background())
 		go cleanupVideoJobs(context.Background())
+		go maintainVideoJobs()
 	})
 	return engine
 }

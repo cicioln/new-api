@@ -1,4 +1,8 @@
 {
+	"muse video %s checkpoint failed: %v": "Muse 视频 %s 保存检查点失败：%v",
+	"muse video %s recovery failed: %v": "Muse 视频 %s 恢复失败：%v",
+	"muse shared video status failed: %v": "Muse 视频共享状态更新失败：%v",
+	"muse video %s final checkpoint failed: %v": "Muse 视频 %s 保存最终状态失败：%v",
   "%d quota points": "%d 点额度",
   "%s after refresh: %s": "%s（刷新凭证后重试）: %s",
   "%s failed: %s": "%s 构建失败，%s",

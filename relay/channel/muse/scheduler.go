@@ -1,9 +1,11 @@
 package muse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	musesdk "github.com/CoolkHz/muse-protocol-go/muse"
 	"github.com/QuantumNous/new-api/common"
@@ -18,12 +20,10 @@ import (
 // and starts as soon as a key of that channel frees up. A channel whose queue
 // is full rejects new jobs with 429, so the relay can try another channel.
 //
-// A job that fails on a key runs again from the start on another key of its
-// channel it has not tried, ahead of the jobs still waiting, until every key
-// has failed it. Only then does the task fail.
+// A safely retryable failure moves to the queue tail for another enabled key,
+// bounded by the attempt limit, provider backoff and original task deadline.
 //
-// Like the jobs themselves, the queue lives in this process only: queued jobs
-// are lost on restart and their tasks fail and are refunded.
+// The owner node restores jobs and their queue state from durable checkpoints.
 
 var (
 	accountConcurrency = common.GetEnvOrDefault("MUSE_ACCOUNT_CONCURRENCY", 1)
@@ -49,12 +49,15 @@ type queuedVideo struct {
 	jobID string
 	slot  videoSlot
 	// tried holds the indexes of the keys the job has already failed on.
-	tried map[int]bool
-	run   func(acc *musesdk.Account) ([]musesdk.Media, error)
+	tried   map[int]bool
+	run     func(acc *musesdk.Account) ([]musesdk.Media, error)
+	resumed bool
+	readyAt time.Time
 }
 
 var (
 	schedMu      sync.Mutex
+	videoWorkers sync.WaitGroup
 	activeVideos = map[string]int{}         // account ID -> running video jobs
 	videoQueues  = map[int][]*queuedVideo{} // channel ID -> waiting jobs, oldest first
 )
@@ -133,11 +136,17 @@ func videoQueueFull(slot videoSlot) bool {
 }
 
 // scheduleVideo starts the job on a free key of its channel, or queues it.
-func scheduleVideo(job *queuedVideo) {
+func scheduleVideo(job *queuedVideo) error {
 	schedMu.Lock()
 	defer schedMu.Unlock()
+	if !job.resumed && len(videoQueues[job.slot.channelID]) >= max(channelQueueLimit, 0) {
+		if _, free := freeKeyLocked(job.slot, job.tried); !free {
+			return errors.New("Muse video queue is full")
+		}
+	}
 	videoQueues[job.slot.channelID] = append(videoQueues[job.slot.channelID], job)
 	dispatchLocked(job.slot.channelID)
+	return nil
 }
 
 // dispatchLocked starts, in queue order, every waiting job of the channel
@@ -146,6 +155,10 @@ func dispatchLocked(channelID int) {
 	queue := videoQueues[channelID]
 	waiting := queue[:0]
 	for _, job := range queue {
+		if time.Now().Before(job.readyAt) {
+			waiting = append(waiting, job)
+			continue
+		}
 		if key, ok := freeKeyLocked(job.slot, job.tried); ok {
 			startLocked(job, key)
 			continue
@@ -163,8 +176,41 @@ func dispatchLocked(channelID int) {
 // schedMu must be held.
 func startLocked(job *queuedVideo, key channelKey) {
 	activeVideos[accountID(job.slot.channelID, key.index)]++
+	videoWorkers.Add(1)
 	go func() {
+		defer videoWorkers.Done()
+		videoJobsMu.Lock()
+		var prepareErr error
+		if state := videoJobs[job.jobID]; state != nil && state.input != nil {
+			if state.ctx.Err() != nil {
+				prepareErr = state.ctx.Err()
+			}
+			if state.Status == model.TaskStatusQueued && time.Now().Unix()-state.StageStartedAt >= int64(videoQueueTimeout/time.Second) {
+				prepareErr = context.DeadlineExceeded
+			}
+			if !state.finished.IsZero() {
+				prepareErr = context.Canceled
+			}
+			state.keyIndex = key.index
+			state.tried = job.tried
+			if !job.resumed {
+				state.Attempt++
+			}
+			if state.ExecutionDeadline == 0 {
+				state.ExecutionDeadline = min(state.Deadline, time.Now().Add(videoExecutionBudget(state.input)).Unix())
+			}
+			if time.Now().Unix() >= state.ExecutionDeadline {
+				prepareErr = context.DeadlineExceeded
+			}
+			if prepareErr == nil {
+				prepareErr = persistVideoJobLocked(job.jobID, state)
+			}
+		}
+		videoJobsMu.Unlock()
 		acc, err := accountFor(job.slot.channelID, key.index, job.slot.multiKey, key.key, job.slot.proxy)
+		if prepareErr != nil {
+			err = prepareErr
+		}
 		var files []musesdk.Media
 		if err == nil {
 			files, err = job.run(acc)
@@ -174,7 +220,7 @@ func startLocked(job *queuedVideo, key channelKey) {
 }
 
 // finishAttempt frees the key the job ran on. A job that failed there and
-// still has untried keys goes back to the front of the queue; any other job
+// still has untried keys goes back to the tail of the queue; any other job
 // is finished.
 func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err error) {
 	if err != nil {
@@ -187,9 +233,12 @@ func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err 
 		delete(activeVideos, id)
 	}
 	// videoJobsMu is taken inside schedMu here and never the other way round.
-	retry := err != nil && tryNextKey(err) && job.markTried(key.index) && requeueVideoJob(job.jobID)
+	readyAt := time.Now().Add(musesdk.RetryAfterOf(err))
+	retry := err != nil && tryNextKey(err) && job.markTried(key.index) && requeueVideoJob(job.jobID, job.tried, readyAt)
 	if retry {
-		videoQueues[channelID] = append([]*queuedVideo{job}, videoQueues[channelID]...)
+		job.resumed = false
+		job.readyAt = readyAt
+		videoQueues[channelID] = append(videoQueues[channelID], job)
 	}
 	dispatchLocked(channelID)
 	schedMu.Unlock()
@@ -201,16 +250,27 @@ func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err 
 	finishVideoJob(job.jobID, files, err)
 }
 
-// requeueVideoJob shows a job that will run again as queued from the start.
+// requeueVideoJob preserves progress and the retry delay for another attempt.
 // It reports false when the task was deleted meanwhile.
-func requeueVideoJob(jobID string) bool {
+func requeueVideoJob(jobID string, tried map[int]bool, readyAt time.Time) bool {
 	videoJobsMu.Lock()
 	defer videoJobsMu.Unlock()
 	job := videoJobs[jobID]
 	if job == nil {
 		return false
 	}
-	job.Status, job.Progress = model.TaskStatusQueued, 0
+	if job.ctx != nil && (job.ctx.Err() != nil || job.Attempt >= videoMaxAttempts ||
+		(job.ExecutionDeadline > 0 && time.Now().Unix() >= job.ExecutionDeadline)) {
+		return false
+	}
+	job.Status, job.Stage, job.StageStartedAt = model.TaskStatusQueued, "retrying", time.Now().Unix()
+	job.tried = tried
+	job.readyAt = readyAt
+	// Retryable means the SDK knows this attempt did not start generation.
+	job.state = nil
+	if err := persistVideoJobLocked(jobID, job); err != nil {
+		return false
+	}
 	return true
 }
 
@@ -234,8 +294,8 @@ func (job *queuedVideo) markTried(index int) bool {
 // way on every key.
 func tryNextKey(err error) bool {
 	var crashed *videoPanic
-	kind := musesdk.KindOf(err)
-	return kind != musesdk.KindBadRequest && kind != musesdk.KindRefusal && !errors.As(err, &crashed)
+	return err != nil && musesdk.Retryable(err) && !errors.As(err, &crashed) &&
+		!errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded)
 }
 
 // logVideoFailure logs a failed attempt with the model's own reply when it

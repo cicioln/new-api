@@ -22,7 +22,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { getUserGroups, getUserModels } from '@/features/playground/api'
 import { QUOTA_TYPE_VALUES } from '@/features/pricing/constants'
 import { usePricingData } from '@/features/pricing/hooks'
-import type { PricingModel } from '@/features/pricing/types'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { requireServerSuccess } from '@/lib/server-error-message'
 
@@ -50,8 +49,11 @@ export function useStudioGroups(kind: StudioKind) {
   const groups = useMemo(() => {
     const enabled = new Set<string>()
     for (const model of pricing.models) {
-      if (!(model.supported_endpoint_types ?? []).includes(KIND_ENDPOINT[kind]))
+      if (
+        !(model.supported_endpoint_types ?? []).includes(KIND_ENDPOINT[kind])
+      ) {
         continue
+      }
       for (const group of model.enable_groups ?? []) enabled.add(group)
     }
     const direct = userGroups.filter((item) => enabled.has(item.value))
@@ -91,7 +93,7 @@ export function useStudioModels(kind: StudioKind, group: string) {
     return userModels
       .map((option) => byName.get(option.value))
       .filter(
-        (model): model is PricingModel =>
+        (model): model is NonNullable<typeof model> =>
           model != null &&
           (model.supported_endpoint_types ?? []).includes(KIND_ENDPOINT[kind])
       )
@@ -99,8 +101,9 @@ export function useStudioModels(kind: StudioKind, group: string) {
 
   const [modelName, setModelName] = useState('')
   useEffect(() => {
-    if (models.length === 0 || models.some((m) => m.model_name === modelName))
+    if (models.length === 0 || models.some((m) => m.model_name === modelName)) {
       return
+    }
     setModelName(models[0].model_name)
   }, [models, modelName])
 

@@ -19,6 +19,21 @@ For commercial licensing, please contact support@quantumnous.com
 // Static translation keys that don't get picked up by the t('...') regex.
 // These cover dynamic labels (e.g. constants, configs) that are passed into t at runtime.
 export const STATIC_I18N_KEYS = [
+  'Video queue wait timed out',
+  'Video download timed out',
+  'Video assembly timed out',
+  'Video generation timed out',
+  'Video task canceled',
+  'Video generated but download failed',
+  'Video assembly failed',
+  'Video request was rejected',
+  'Video generation was refused',
+  'Video account is unavailable',
+  'Video account quota is exhausted',
+  'Video generation is rate limited',
+  'Video generation failed',
+  'Video could not be saved',
+  'Video task status could not be recovered before its deadline',
   'Task usage metadata is unavailable. Pricing details cannot be displayed.',
   'This expression cannot be expanded into a price table. View the original expression below.',
   'This operation is only supported for vLLM or SGLang channels',
