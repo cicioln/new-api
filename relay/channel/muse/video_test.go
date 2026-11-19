@@ -123,7 +123,7 @@ func TestVideoRetryKeepsDeadlineAndProgress(t *testing.T) {
 	videoJobsMu.Unlock()
 	t.Cleanup(func() { videoJobsMu.Lock(); delete(videoJobs, id); videoJobsMu.Unlock() })
 	readyAt := time.Now().Add(30 * time.Second)
-	assert.True(t, requeueVideoJob(id, map[int]bool{0: true}, readyAt))
+	assert.True(t, requeueVideoJob(id, map[int]bool{0: true}, readyAt, nil))
 	body, err := os.ReadFile(videoJobPath(id, ".json"))
 	require.NoError(t, err)
 	var checkpoint videoCheckpoint
@@ -133,10 +133,10 @@ func TestVideoRetryKeepsDeadlineAndProgress(t *testing.T) {
 	assert.Equal(t, deadline, job.ExecutionDeadline)
 	assert.Equal(t, 35, job.Progress)
 	job.Attempt = videoMaxAttempts
-	assert.False(t, requeueVideoJob(id, nil, readyAt))
+	assert.False(t, requeueVideoJob(id, nil, readyAt, nil))
 	job.Attempt = 1
 	cancel()
-	assert.False(t, requeueVideoJob(id, nil, readyAt))
+	assert.False(t, requeueVideoJob(id, nil, readyAt, nil))
 }
 
 func TestExpiredQueuedVideoStopsWithoutGenerating(t *testing.T) {

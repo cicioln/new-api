@@ -2,6 +2,7 @@ package muse
 
 import (
 	"context"
+	"crypto/sha256"
 	"sync"
 	"testing"
 	"time"
@@ -20,12 +21,14 @@ func resetScheduler(t *testing.T, concurrency, queueLimit int) {
 	accountConcurrency, channelQueueLimit = concurrency, queueLimit
 	schedMu.Lock()
 	activeVideos, videoQueues = map[string]int{}, map[int][]*queuedVideo{}
+	videoQuotaCooldowns = map[string]videoQuotaCooldown{}
 	schedMu.Unlock()
 	t.Cleanup(func() {
 		videoWorkers.Wait()
 		accountConcurrency, channelQueueLimit = prevConcurrency, prevLimit
 		schedMu.Lock()
 		activeVideos, videoQueues = map[string]int{}, map[int][]*queuedVideo{}
+		videoQuotaCooldowns = map[string]videoQuotaCooldown{}
 		schedMu.Unlock()
 	})
 }
@@ -256,11 +259,74 @@ func TestSchedulerDoesNotRetryRefusal(t *testing.T) {
 func TestSchedulerDoesNotReplayUncertainGeneration(t *testing.T) {
 	for _, err := range []error{
 		&musesdk.NoRetry{Err: &musesdk.Error{Kind: musesdk.KindTransient, Msg: "download failed"}},
+		&musesdk.NoRetry{Err: &musesdk.Error{Kind: musesdk.KindQuota, Msg: "quota exhausted after an earlier segment"}},
 		context.DeadlineExceeded, context.Canceled,
 	} {
 		assert.False(t, tryNextKey(err))
 	}
 	assert.True(t, tryNextKey(&musesdk.Error{Kind: musesdk.KindQuota, Msg: "quota exhausted before submission"}))
+}
+
+func TestSchedulerQuotaSwitchSkipsExhaustedKeyForOtherTasks(t *testing.T) {
+	resetScheduler(t, 1, 5)
+	r := newRecorder()
+	slot := twoKeySlot(9020)
+	final := trackJob(t, "quota-switch")
+	require.NoError(t, scheduleVideo(r.job("quota-switch", slot)))
+	r.wait(t, "quota-switch")
+	videoJobsMu.Lock()
+	videoJobs["quota-switch"].Attempt = videoMaxAttempts
+	videoJobsMu.Unlock()
+	// A full-day retry delay applies only to the exhausted account.
+	r.fail("quota-switch", &musesdk.Error{Kind: musesdk.KindQuota, Msg: "video_daily_budget_exhausted", RetryAfter: 24 * time.Hour})
+	r.wait(t, "quota-switch")
+	assert.Equal(t, []string{accountID(9020, 0), accountID(9020, 1)}, r.accountsOf("quota-switch"))
+	r.release("quota-switch")
+	final()
+
+	require.NoError(t, scheduleVideo(r.job("later-task", slot)))
+	r.wait(t, "later-task")
+	assert.Equal(t, []string{accountID(9020, 1)}, r.accountsOf("later-task"))
+	r.release("later-task")
+}
+
+func TestSchedulerAllQuotaExhaustedFinishesQueuedTasks(t *testing.T) {
+	resetScheduler(t, 1, 5)
+	r := newRecorder()
+	slot := twoKeySlot(9021)
+	final := trackJob(t, "all-exhausted")
+	require.NoError(t, scheduleVideo(r.job("all-exhausted", slot)))
+	r.wait(t, "all-exhausted")
+	quota := &musesdk.Error{Kind: musesdk.KindQuota, Msg: "video_daily_budget_exhausted"}
+	r.fail("all-exhausted", quota)
+	r.wait(t, "all-exhausted")
+	queued := trackJob(t, "queued-exhausted")
+	require.NoError(t, scheduleVideo(r.job("queued-exhausted", slot)))
+	r.fail("all-exhausted", quota)
+	assert.Equal(t, "quota_exhausted", final().Code)
+	assert.Equal(t, "quota_exhausted", queued().Code)
+	assert.Empty(t, r.accountsOf("queued-exhausted"))
+	assert.Len(t, r.accountsOf("all-exhausted"), 2)
+}
+
+func TestSchedulerQuotaCooldownExpiresAndKeyReplacementIsUsable(t *testing.T) {
+	resetScheduler(t, 1, 5)
+	slot := twoKeySlot(9022)
+	schedMu.Lock()
+	defer schedMu.Unlock()
+	id := accountID(slot.channelID, 0)
+	videoQuotaCooldowns[id] = videoQuotaCooldown{keyHash: sha256.Sum256([]byte(testCookie)), until: time.Now().Add(time.Hour)}
+	key, ok := freeKeyLocked(slot, nil)
+	require.True(t, ok)
+	assert.Equal(t, 1, key.index)
+	slot.keys[0].key = "hatch_sess=replacement; hatch_vml=v1"
+	key, ok = freeKeyLocked(slot, nil)
+	require.True(t, ok)
+	assert.Equal(t, 0, key.index)
+	videoQuotaCooldowns[id] = videoQuotaCooldown{keyHash: sha256.Sum256([]byte(slot.keys[0].key)), until: time.Now().Add(-time.Second)}
+	key, ok = freeKeyLocked(slot, nil)
+	require.True(t, ok)
+	assert.Equal(t, 0, key.index)
 }
 
 func TestSchedulerStopsRetryingOnceAKeySucceeds(t *testing.T) {

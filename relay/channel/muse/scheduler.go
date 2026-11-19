@@ -2,6 +2,7 @@ package muse
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"sync"
@@ -56,11 +57,41 @@ type queuedVideo struct {
 }
 
 var (
-	schedMu      sync.Mutex
-	videoWorkers sync.WaitGroup
-	activeVideos = map[string]int{}         // account ID -> running video jobs
-	videoQueues  = map[int][]*queuedVideo{} // channel ID -> waiting jobs, oldest first
+	schedMu             sync.Mutex
+	videoWorkers        sync.WaitGroup
+	activeVideos        = map[string]int{}         // account ID -> running video jobs
+	videoQueues         = map[int][]*queuedVideo{} // channel ID -> waiting jobs, oldest first
+	videoQuotaCooldowns = map[string]videoQuotaCooldown{}
 )
+
+type videoQuotaCooldown struct {
+	keyHash [32]byte
+	until   time.Time
+}
+
+// videoKeyHasQuota is called with schedMu held. Replacing a channel key must
+// not inherit the old account's cooldown; no credentials are stored here.
+func videoKeyHasQuota(channelID int, key channelKey) bool {
+	id := accountID(channelID, key.index)
+	cooldown, ok := videoQuotaCooldowns[id]
+	if !ok {
+		return true
+	}
+	if time.Now().Before(cooldown.until) && cooldown.keyHash == sha256.Sum256([]byte(key.key)) {
+		return false
+	}
+	delete(videoQuotaCooldowns, id)
+	return true
+}
+
+func hasVideoQuotaKey(slot videoSlot, tried map[int]bool) bool {
+	for _, key := range slot.keys {
+		if !tried[key.index] && videoKeyHasQuota(slot.channelID, key) {
+			return true
+		}
+	}
+	return false
+}
 
 func accountID(channelID, keyIndex int) string {
 	return fmt.Sprintf("channel-%d-%d", channelID, keyIndex)
@@ -106,7 +137,7 @@ func channelVideoKeys(channelID, selectedIndex int, selectedKey string, multiKey
 func freeKeyLocked(slot videoSlot, tried map[int]bool) (channelKey, bool) {
 	best, bestActive, found := channelKey{}, 0, false
 	for _, k := range slot.keys {
-		if tried[k.index] {
+		if tried[k.index] || !videoKeyHasQuota(slot.channelID, k) {
 			continue
 		}
 		limit := max(accountConcurrency, 1)
@@ -155,6 +186,10 @@ func dispatchLocked(channelID int) {
 	queue := videoQueues[channelID]
 	waiting := queue[:0]
 	for _, job := range queue {
+		if !hasVideoQuotaKey(job.slot, job.tried) {
+			finishVideoJob(job.jobID, nil, &musesdk.Error{Kind: musesdk.KindQuota, Msg: "Video account quota is exhausted"})
+			continue
+		}
 		if time.Now().Before(job.readyAt) {
 			waiting = append(waiting, job)
 			continue
@@ -234,7 +269,16 @@ func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err 
 	}
 	// videoJobsMu is taken inside schedMu here and never the other way round.
 	readyAt := time.Now().Add(musesdk.RetryAfterOf(err))
-	retry := err != nil && tryNextKey(err) && job.markTried(key.index) && requeueVideoJob(job.jobID, job.tried, readyAt)
+	if err != nil && musesdk.KindOf(err) == musesdk.KindQuota {
+		cooldown := musesdk.RetryAfterOf(err)
+		if cooldown <= 0 {
+			cooldown = 24 * time.Hour
+		}
+		videoQuotaCooldowns[id] = videoQuotaCooldown{keyHash: sha256.Sum256([]byte(key.key)), until: time.Now().Add(cooldown)}
+		// Retry-After belongs to this account, not an unused account's quota.
+		readyAt = time.Now()
+	}
+	retry := err != nil && tryNextKey(err) && job.markTried(key.index) && requeueVideoJob(job.jobID, job.tried, readyAt, err)
 	if retry {
 		job.resumed = false
 		job.readyAt = readyAt
@@ -252,15 +296,21 @@ func finishAttempt(job *queuedVideo, key channelKey, files []musesdk.Media, err 
 
 // requeueVideoJob preserves progress and the retry delay for another attempt.
 // It reports false when the task was deleted meanwhile.
-func requeueVideoJob(jobID string, tried map[int]bool, readyAt time.Time) bool {
+func requeueVideoJob(jobID string, tried map[int]bool, readyAt time.Time, attemptErr error) bool {
 	videoJobsMu.Lock()
 	defer videoJobsMu.Unlock()
 	job := videoJobs[jobID]
 	if job == nil {
 		return false
 	}
-	if job.ctx != nil && (job.ctx.Err() != nil || job.Attempt >= videoMaxAttempts ||
-		(job.ExecutionDeadline > 0 && time.Now().Unix() >= job.ExecutionDeadline)) {
+	if !job.finished.IsZero() {
+		return false
+	}
+	// Explicit quota rejection did not generate a video. It may try each
+	// remaining key once even when the ordinary transient retry cap is hit.
+	if (job.ctx != nil && job.ctx.Err() != nil) ||
+		(job.Attempt >= videoMaxAttempts && musesdk.KindOf(attemptErr) != musesdk.KindQuota) ||
+		(job.ExecutionDeadline > 0 && time.Now().Unix() >= job.ExecutionDeadline) {
 		return false
 	}
 	job.Status, job.Stage, job.StageStartedAt = model.TaskStatusQueued, "retrying", time.Now().Unix()
@@ -281,12 +331,7 @@ func (job *queuedVideo) markTried(index int) bool {
 		job.tried = map[int]bool{}
 	}
 	job.tried[index] = true
-	for _, k := range job.slot.keys {
-		if !job.tried[k.index] {
-			return true
-		}
-	}
-	return false
+	return hasVideoQuotaKey(job.slot, job.tried)
 }
 
 // tryNextKey reports whether another key might succeed where this one
