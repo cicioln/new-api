@@ -58,9 +58,11 @@ const FAMILY_COLORS: Record<string, string> = {
   mistral: '#FF7000',
   doubao: '#3B82F6',
   minimax: '#A855F7',
+  muse: '#FF5A1F',
 }
 
 const VERSION_RE = /^([vkr]?)(\d+(?:\.\d+)?[a-z]?)$/
+const DURATION_TAG_RE = /^\d+s$/
 const DATE_RE = /^(\d{4}|\d{8})$/
 
 function capitalize(word: string): string {
@@ -72,6 +74,7 @@ function formatTag(token: string): string {
     return `${token.slice(0, 4)}-${token.slice(4, 6)}-${token.slice(6)}`
   }
   if (/^\d{4}$/.test(token)) return `${token.slice(0, 2)}/${token.slice(2)}`
+  if (DURATION_TAG_RE.test(token)) return token
   if (/^\d+(\.\d+)?[bkm]$/.test(token)) return token.toUpperCase()
   return capitalize(token)
 }
@@ -93,6 +96,10 @@ export function parseModelName(id: string): ParsedModelName {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i]
     if (DATE_RE.test(token) && (version || family)) {
+      tags.push(formatTag(token))
+      continue
+    }
+    if (DURATION_TAG_RE.test(token) && family) {
       tags.push(formatTag(token))
       continue
     }

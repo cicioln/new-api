@@ -8199,6 +8199,25 @@
     "Video task terminated by administrator": "管理员已终止视频任务",
     "Task is already finished": "任务已经结束",
     "Task status changed; refresh and try again": "任务状态已改变，请刷新后重试",
-    "Only video tasks can be terminated": "只能终止视频任务"
-  }
+    "Only video tasks can be terminated": "只能终止视频任务",
+    "Model type": "模型类型",
+    "Video · {{count}} tiers": "视频 · {{count}} 档时长",
+    "Native audio": "原生有声",
+    "Audio Video": "有声视频",
+    "Text · Image · Continuation": "文生 · 图生 · 尾帧续写",
+    "Text & Image to Video": "文生 / 图生视频",
+    "Video duration tiers": "视频时长档位",
+    "Frame Continuation": "首尾帧 / 续写",
+    "Style & Script Presets": "风格 & 脚本预设",
+    "24h success rate": "24h 成功率",
+    "Avg duration": "平均耗时",
+    "sec short": "秒",
+    "Up to {{seconds}}s · Auto-refund on failure": "按次计费 · 最长 {{seconds}} 秒 · 失败自动退款",
+    "Create video": "去创作",
+    "Create image": "去生图",
+    "Video generation": "视频生成",
+    "Collapse to series card": "收起为系列卡",
+    "Expand all {{count}} duration tiers": "展开全部 {{count}} 个时长档位"
+  },
+  "Video duration is below the selected model tier": "视频实际时长未达到所选模型档位要求"
 }

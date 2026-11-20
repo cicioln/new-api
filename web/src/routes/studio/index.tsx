@@ -17,14 +17,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import z from 'zod'
 
 import { Studio } from '@/features/studio'
 import { resolveAuthentication } from '@/lib/auth-session'
 import { isSidebarModuleEnabled } from '@/lib/nav-modules'
 import { useAuthStore } from '@/stores/auth-store'
 
+const studioSearchSchema = z.object({
+  view: z.enum(['image', 'video', 'gallery']).optional().catch(undefined),
+  model: z.string().optional(),
+})
+
 // Full-page workspace under the site header, outside the console sidebar.
 export const Route = createFileRoute('/studio/')({
+  validateSearch: studioSearchSchema,
   beforeLoad: async ({ location }) => {
     await resolveAuthentication()
     const { auth } = useAuthStore.getState()

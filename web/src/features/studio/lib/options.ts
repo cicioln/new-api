@@ -81,7 +81,11 @@ export function useStudioGroups(kind: StudioKind) {
 }
 
 /** Models of one kind the user can call in the group, with their pricing. */
-export function useStudioModels(kind: StudioKind, group: string) {
+export function useStudioModels(
+  kind: StudioKind,
+  group: string,
+  initialModel?: string
+) {
   const pricing = usePricingData()
   const { data: userModels = [], isLoading } = useQuery({
     queryKey: ['playground-models', group],
@@ -99,13 +103,15 @@ export function useStudioModels(kind: StudioKind, group: string) {
       )
   }, [pricing.models, userModels, kind])
 
-  const [modelName, setModelName] = useState('')
+  const [modelName, setModelName] = useState(initialModel ?? '')
   useEffect(() => {
     if (models.length === 0 || models.some((m) => m.model_name === modelName)) {
       return
     }
-    setModelName(models[0].model_name)
-  }, [models, modelName])
+    const preferred =
+      initialModel && models.find((m) => m.model_name === initialModel)
+    setModelName(preferred ? preferred.model_name : models[0].model_name)
+  }, [models, modelName, initialModel])
 
   const model = models.find((m) => m.model_name === modelName)
   const groupRatio = pricing.groupRatio[group] ?? 1

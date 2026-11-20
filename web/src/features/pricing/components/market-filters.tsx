@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Video } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -27,10 +28,19 @@ import {
   MARKET_STATUS_FILTERS,
   type MarketStatusFilter,
 } from '../lib/market'
+import {
+  getModalityLabelKey,
+  MARKET_MODALITIES,
+  type MarketModality,
+} from '../lib/video-market'
 import { MarketStatusDot } from './market-status'
 
 export interface MarketFiltersProps {
   total: number
+  modalityCounts?: Record<MarketModality, number>
+  modality?: MarketModality
+  onToggleModality?: (modality: MarketModality) => void
+  onClearModality?: () => void
   vendors: { name: string; icon?: string; count: number }[]
   selectedVendors: string[]
   onToggleVendor: (vendor: string) => void
@@ -125,12 +135,48 @@ function FilterChip(props: {
 
 export function MarketFilters(props: MarketFiltersProps) {
   const { t } = useTranslation()
+  const activeModalities = props.modalityCounts
+    ? MARKET_MODALITIES.filter((m) => (props.modalityCounts?.[m] ?? 0) > 0)
+    : []
 
   return (
     <section
       aria-label={t('Filters')}
       className={cn('bg-card rounded-xl border px-4 py-1', props.className)}
     >
+      {activeModalities.length > 1 && props.onToggleModality && (
+        <FilterRow label={t('Model type')}>
+          <div
+            role='radiogroup'
+            aria-label={t('Model type')}
+            className='contents'
+          >
+            <FilterChip
+              radio
+              checked={!props.modality}
+              onSelect={() => props.onClearModality?.()}
+              count={props.total}
+            >
+              {t('All')}
+            </FilterChip>
+            {activeModalities.map((modality) => (
+              <FilterChip
+                key={modality}
+                radio
+                checked={props.modality === modality}
+                onSelect={() => props.onToggleModality?.(modality)}
+                count={props.modalityCounts?.[modality]}
+              >
+                {modality === 'video' && (
+                  <Video aria-hidden className='size-3.5 shrink-0' />
+                )}
+                {t(getModalityLabelKey(modality))}
+              </FilterChip>
+            ))}
+          </div>
+        </FilterRow>
+      )}
+
       <FilterRow label={t('Model vendor')}>
         <FilterChip
           radio

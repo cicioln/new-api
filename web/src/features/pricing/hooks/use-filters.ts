@@ -29,6 +29,7 @@ import {
   type MarketSort,
   type MarketStatusFilter,
 } from '../lib/market'
+import type { MarketModality } from '../lib/video-market'
 import type { PricingModel, TokenUnit } from '../types'
 
 export function useFilters(
@@ -37,6 +38,9 @@ export function useFilters(
 ) {
   const search = useSearch({ from: '/pricing/' })
   const [searchInput, setSearchInput] = useState(search.search ?? '')
+  const [modality, setModality] = useState<MarketModality | undefined>(
+    search.type
+  )
   const [vendors, setVendors] = useState<string[]>(
     search.vendor ? [search.vendor] : []
   )
@@ -57,6 +61,13 @@ export function useFilters(
   const debouncedSearch = useDebounce(searchInput, 200)
   // 未选分组即「全部」：不按分组过滤，价格按各模型可用的最低分组倍率展示
   const group = selectedGroup
+
+  const toggleModality = useCallback(
+    (next: MarketModality) =>
+      setModality((prev) => (prev === next ? undefined : next)),
+    []
+  )
+  const clearModality = useCallback(() => setModality(undefined), [])
 
   const toggleVendor = useCallback(
     // Single-select: picking a vendor replaces the current one. The group
@@ -81,6 +92,7 @@ export function useFilters(
   const clearSearch = useCallback(() => setSearchInput(''), [])
   const clearAll = useCallback(() => {
     setSearchInput('')
+    setModality(undefined)
     setVendors([])
     setStatus(undefined)
     setGroup(undefined)
@@ -90,17 +102,19 @@ export function useFilters(
     () =>
       filterMarketModels(models, {
         search: debouncedSearch,
+        modality,
         vendors,
         status,
         group,
         sort: sortBy,
         perf,
       }),
-    [models, debouncedSearch, vendors, status, group, sortBy, perf]
+    [models, debouncedSearch, modality, vendors, status, group, sortBy, perf]
   )
 
   return {
     searchInput,
+    modality,
     vendors,
     status,
     group,
@@ -109,6 +123,8 @@ export function useFilters(
     tokenUnit,
     showRechargePrice,
     setSearchInput,
+    toggleModality,
+    clearModality,
     toggleVendor,
     clearVendors,
     toggleStatus,

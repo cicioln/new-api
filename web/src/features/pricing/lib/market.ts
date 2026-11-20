@@ -21,6 +21,7 @@ import type { SuccessRatePoint } from '@/features/performance-metrics/types'
 import { EXCLUDED_GROUPS } from '../constants'
 import type { PricingModel } from '../types'
 import { filterBySearch, getSortPrice } from './filters'
+import { getModelModality, type MarketModality } from './video-market'
 
 // ----------------------------------------------------------------------------
 // Model market helpers
@@ -211,6 +212,7 @@ const VENDOR_COLORS: Record<string, string> = {
   ByteDance: '#3B82F6',
   Tencent: '#22C55E',
   MiniMax: '#A855F7',
+  Muse: '#FF5A1F',
 }
 
 const FALLBACK_COLORS = [
@@ -283,6 +285,7 @@ export function supportsPelicanTest(model: PricingModel): boolean {
 
 export type MarketFilterOptions = {
   search: string
+  modality?: MarketModality
   vendors: string[]
   status?: MarketStatusFilter
   group?: string
@@ -300,6 +303,9 @@ export function filterMarketModels(
 ): PricingModel[] {
   const result = filterBySearch(models, options.search.trim()).filter(
     (model) => {
+      if (options.modality && getModelModality(model) !== options.modality) {
+        return false
+      }
       if (
         options.vendors.length > 0 &&
         !options.vendors.includes(model.vendor_name ?? '')

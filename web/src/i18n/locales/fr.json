@@ -2843,7 +2843,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Projets liés",
     "footer.defaultCopyright": "Tous droits réservés.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
+    "footer.newapi.projectAttributionSuffix": "Tous droits réservés. Conçu et développé par les contributeurs du projet.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Pour les canaux personnalisés avancés, ceci ne s’applique qu’aux routes /v1/responses sans conversion de protocole.",
     "GitHub ID is empty!": "L’ID GitHub est vide !",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Pour les canaux ajoutés après le 10 mai 2025, pas besoin de supprimer \".\" des noms de modèles lors du déploiement",
@@ -8131,6 +8131,25 @@
     "Video task terminated by administrator": "Tâche vidéo arrêtée par un administrateur",
     "Task is already finished": "La tâche est déjà terminée",
     "Task status changed; refresh and try again": "Le statut a changé ; actualisez puis réessayez",
-    "Only video tasks can be terminated": "Seules les tâches vidéo peuvent être arrêtées"
-  }
+    "Only video tasks can be terminated": "Seules les tâches vidéo peuvent être arrêtées",
+    "Model type": "Type de modèle",
+    "Video · {{count}} tiers": "Vidéo · {{count}} durées",
+    "Native audio": "Audio natif",
+    "Audio Video": "Vidéo audio",
+    "Text · Image · Continuation": "Texte · Image · Suite",
+    "Text & Image to Video": "Texte et image en vidéo",
+    "Video duration tiers": "Durées vidéo",
+    "Frame Continuation": "Continuation",
+    "Style & Script Presets": "Styles et scripts",
+    "24h success rate": "Taux de succès 24h",
+    "Avg duration": "Durée moyenne",
+    "sec short": "s",
+    "Up to {{seconds}}s · Auto-refund on failure": "Jusqu'à {{seconds}}s · Remboursement auto en cas d'échec",
+    "Create video": "Créer",
+    "Create image": "Générer",
+    "Video generation": "Génération vidéo",
+    "Collapse to series card": "Regrouper en série",
+    "Expand all {{count}} duration tiers": "Afficher les {{count}} durées"
+  },
+  "Video duration is below the selected model tier": "La durée de la vidéo est inférieure au minimum requis pour le modèle sélectionné"
 }

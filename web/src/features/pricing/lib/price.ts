@@ -278,3 +278,45 @@ export function formatRequestPrice(
     minimumFractionDigits,
   })
 }
+
+/**
+ * Format fixed per-request price divided by a unit count (e.g. seconds for
+ * duration-tiered video models). Returns undefined when not applicable.
+ */
+export function formatRequestPricePerUnit(
+  model: PricingModel,
+  divisor: number,
+  showWithRecharge = false,
+  priceRate = 1,
+  usdExchangeRate = 1,
+  selectedGroup?: string,
+  showCurrencySymbol = true,
+  minimumFractionDigits = 2
+): string | undefined {
+  if (
+    model.quota_type !== QUOTA_TYPE_VALUES.REQUEST ||
+    !Number.isFinite(divisor) ||
+    divisor <= 0 ||
+    !model.model_price ||
+    model.model_price <= 0
+  ) {
+    return undefined
+  }
+
+  const displayGroupRatio = getDisplayGroupRatio(model, selectedGroup)
+  let priceInUSD = (model.model_price * displayGroupRatio) / divisor
+  priceInUSD = applyRechargeRate(
+    priceInUSD,
+    showWithRecharge,
+    priceRate,
+    usdExchangeRate
+  )
+
+  return formatBillingCurrencyFromUSD(priceInUSD, {
+    showSymbol: showCurrencySymbol,
+    digitsLarge: 4,
+    digitsSmall: 4,
+    abbreviate: false,
+    minimumFractionDigits,
+  })
+}

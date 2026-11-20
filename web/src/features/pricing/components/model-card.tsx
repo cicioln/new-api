@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Clock, Wrench } from 'lucide-react'
+import { Clock, Image as ImageIcon, Wrench } from 'lucide-react'
 import { memo, useMemo, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -36,6 +36,7 @@ import {
   type MarketPerf,
 } from '../lib/market'
 import { getFamilyColor, parseModelName } from '../lib/model-name'
+import { formatExactSeconds, isImageModel } from '../lib/video-market'
 import type { PricingModel, TokenUnit } from '../types'
 import {
   MarketDetailsButton,
@@ -157,6 +158,7 @@ export interface ModelCardProps {
   model: PricingModel
   onClick: (modelName: string) => void
   onTest?: (modelName: string) => void
+  onOpenStudio?: (modelName: string, kind: 'video' | 'image') => void
   priceRate?: number
   usdExchangeRate?: number
   tokenUnit?: TokenUnit
@@ -169,6 +171,7 @@ export interface ModelCardProps {
 
 export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const { t } = useTranslation()
+  const imageModel = isImageModel(props.model)
   const prices = useMarketPrice(props.model, {
     tokenUnit: props.tokenUnit ?? DEFAULT_TOKEN_UNIT,
     showRechargePrice: props.showRechargePrice ?? false,
@@ -268,7 +271,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       )}
 
       {groups.length > 0 &&
-        (maintenance || !props.perf ? (
+        (maintenance || !props.perf || imageModel ? (
           <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
             <small className='text-subtle-foreground mr-0.5 text-[11px]'>
               {t('Group')}
@@ -282,7 +285,26 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           />
         ))}
 
-      {maintenance ? null : props.perf ? (
+      {maintenance ? null : imageModel ? (
+        <div
+          aria-label={t('Performance metrics for the last 24 hours')}
+          className='text-subtle-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11.5px]'
+        >
+          <span>
+            {t('Success rate')}{' '}
+            <MarketSuccessRate perf={props.perf} className='font-semibold' />
+          </span>
+          <span aria-hidden className='opacity-40'>
+            ·
+          </span>
+          <span>
+            {t('Avg duration')}{' '}
+            <b className='text-foreground font-mono font-medium tabular-nums'>
+              {formatExactSeconds(props.perf?.latencyMs)}
+            </b>
+          </span>
+        </div>
+      ) : props.perf ? (
         <div
           aria-label={t('Performance metrics for the last 24 hours')}
           className='text-subtle-foreground flex flex-col gap-1.5 text-[11.5px]'
@@ -364,8 +386,32 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           </div>
         ))}
         {prices.length < 2 && <div />}
-        {props.onTest && (
-          <PelicanButton model={props.model} onTest={props.onTest} />
+        {imageModel ? (
+          maintenance ? (
+            <button
+              type='button'
+              disabled
+              className='bg-card text-subtle-foreground inline-flex h-7 cursor-not-allowed items-center gap-[5px] rounded-[7px] border px-2.5 text-[12.5px] whitespace-nowrap opacity-45'
+            >
+              <Wrench aria-hidden className='size-3.5' strokeWidth={1.8} />
+              {t('Under maintenance')}
+            </button>
+          ) : props.onOpenStudio ? (
+            <button
+              type='button'
+              onClick={() =>
+                props.onOpenStudio?.(props.model.model_name, 'image')
+              }
+              className='bg-card text-muted-foreground hover:border-primary hover:text-primary inline-flex h-7 cursor-pointer items-center gap-[5px] rounded-[7px] border px-2.5 text-[12.5px] whitespace-nowrap transition-colors'
+            >
+              <ImageIcon aria-hidden className='size-3.5' strokeWidth={1.8} />
+              {t('Create image')}
+            </button>
+          ) : null
+        ) : (
+          props.onTest && (
+            <PelicanButton model={props.model} onTest={props.onTest} />
+          )
         )}
       </div>
     </article>

@@ -2843,7 +2843,7 @@
     "footer.columns.related.links.oneApi": "Один API",
     "footer.columns.related.title": "Связанные проекты",
     "footer.defaultCopyright": "Все права защищены.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
+    "footer.newapi.projectAttributionSuffix": "Все права защищены. Разработано участниками проекта.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Для расширенных пользовательских каналов это действует только для маршрутов /v1/responses без преобразования протокола.",
     "GitHub ID is empty!": "GitHub ID не указан!",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Для каналов, добавленных после 10 мая 2025 г., не нужно удалять \".\" из имён моделей при развёртывании",
@@ -8131,6 +8131,25 @@
     "Video task terminated by administrator": "Видеозадача остановлена администратором",
     "Task is already finished": "Задача уже завершена",
     "Task status changed; refresh and try again": "Статус задачи изменился; обновите страницу и повторите",
-    "Only video tasks can be terminated": "Можно остановить только видеозадачи"
-  }
+    "Only video tasks can be terminated": "Можно остановить только видеозадачи",
+    "Model type": "Тип модели",
+    "Video · {{count}} tiers": "Видео · {{count}} длит.",
+    "Native audio": "Нативный звук",
+    "Audio Video": "Видео со звуком",
+    "Text · Image · Continuation": "Текст · Фото · Продолжение",
+    "Text & Image to Video": "Текст и фото в видео",
+    "Video duration tiers": "Длительность видео",
+    "Frame Continuation": "Продолжение кадра",
+    "Style & Script Presets": "Пресеты стиля и сценария",
+    "24h success rate": "Успешность за 24ч",
+    "Avg duration": "Среднее время",
+    "sec short": "с",
+    "Up to {{seconds}}s · Auto-refund on failure": "До {{seconds}}с · Автовозврат при ошибке",
+    "Create video": "Создать",
+    "Create image": "Создать",
+    "Video generation": "Генерация видео",
+    "Collapse to series card": "Свернуть в серию",
+    "Expand all {{count}} duration tiers": "Показать все {{count}} длит."
+  },
+  "Video duration is below the selected model tier": "Длительность видео ниже минимальной для выбранного уровня модели"
 }

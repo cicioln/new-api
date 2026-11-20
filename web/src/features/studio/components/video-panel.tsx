@@ -72,12 +72,13 @@ function maxSecondsFor(modelName: string): number {
 
 export function VideoPanel(props: {
   group: string
+  initialModel?: string
   references: ReferenceImage[]
   onReferencesChange: (images: ReferenceImage[]) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const models = useStudioModels('video', props.group)
+  const models = useStudioModels('video', props.group, props.initialModel)
   const tasks = useVideoTasks()
   const [prompt, setPrompt] = useState('')
   const [ratio, setRatio] = useState('')

@@ -2843,7 +2843,7 @@
     "footer.columns.related.links.oneApi": "One API",
     "footer.columns.related.title": "Các Dự Án Liên Quan",
     "footer.defaultCopyright": "Bản quyền được bảo lưu.",
-    "footer.new\u0061pi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
+    "footer.newapi.projectAttributionSuffix": "Bản quyền được bảo lưu. Được thiết kế và phát triển bởi các cộng tác viên dự án.",
     "For advanced custom channels this applies only to /v1/responses routes without protocol conversion.": "Với kênh tùy chỉnh nâng cao, thiết lập này chỉ áp dụng cho các route /v1/responses không chuyển đổi giao thức.",
     "GitHub ID is empty!": "ID GitHub trống!",
     "For channels added after May 10, 2025, no need to remove \".\" from model names during deployment": "Đối với các kênh được thêm sau ngày 10 tháng 5 năm 2025, không cần loại bỏ \".\" khỏi tên mô hình trong quá trình triển khai",
@@ -8131,6 +8131,25 @@
     "Video task terminated by administrator": "Quản trị viên đã dừng tác vụ video",
     "Task is already finished": "Tác vụ đã kết thúc",
     "Task status changed; refresh and try again": "Trạng thái tác vụ đã thay đổi; hãy làm mới và thử lại",
-    "Only video tasks can be terminated": "Chỉ có thể dừng tác vụ video"
-  }
+    "Only video tasks can be terminated": "Chỉ có thể dừng tác vụ video",
+    "Model type": "Loại mô hình",
+    "Video · {{count}} tiers": "Video · {{count}} mức thời lượng",
+    "Native audio": "Âm thanh gốc",
+    "Audio Video": "Video có âm thanh",
+    "Text · Image · Continuation": "Văn bản · Ảnh · Nối tiếp",
+    "Text & Image to Video": "Văn bản & ảnh thành video",
+    "Video duration tiers": "Mức thời lượng video",
+    "Frame Continuation": "Nối tiếp khung hình",
+    "Style & Script Presets": "Mẫu phong cách & kịch bản",
+    "24h success rate": "Tỷ lệ thành công 24h",
+    "Avg duration": "Thời gian TB",
+    "sec short": "giây",
+    "Up to {{seconds}}s · Auto-refund on failure": "Tối đa {{seconds}}s · Tự động hoàn tiền khi lỗi",
+    "Create video": "Tạo video",
+    "Create image": "Tạo ảnh",
+    "Video generation": "Tạo video",
+    "Collapse to series card": "Thu gọn theo dòng",
+    "Expand all {{count}} duration tiers": "Mở rộng {{count}} mức thời lượng"
+  },
+  "Video duration is below the selected model tier": "Thời lượng video chưa đạt mức tối thiểu của mô hình đã chọn"
 }

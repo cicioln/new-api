@@ -95,13 +95,14 @@ function sizeLabel(size: string, muse: boolean) {
 
 export function ImagePanel(props: {
   group: string
+  initialModel?: string
   references: ReferenceImage[]
   onReferencesChange: (images: ReferenceImage[]) => void
   onToVideo: (src: string) => void
 }) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const models = useStudioModels('image', props.group)
+  const models = useStudioModels('image', props.group, props.initialModel)
   const jobs = useImageJobs()
   const [prompt, setPrompt] = useState('')
   const [size, setSize] = useState(SIZES[0].value)

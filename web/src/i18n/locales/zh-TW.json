@@ -8199,6 +8199,25 @@
     "Video task terminated by administrator": "管理員已終止影片任務",
     "Task is already finished": "任務已經結束",
     "Task status changed; refresh and try again": "任務狀態已變更，請重新整理後重試",
-    "Only video tasks can be terminated": "只能終止影片任務"
-  }
+    "Only video tasks can be terminated": "只能終止影片任務",
+    "Model type": "模型類型",
+    "Video · {{count}} tiers": "影片 · {{count}} 檔時長",
+    "Native audio": "原生有聲",
+    "Audio Video": "有聲影片",
+    "Text · Image · Continuation": "文生 · 圖生 · 尾幀續寫",
+    "Text & Image to Video": "文生 / 圖生影片",
+    "Video duration tiers": "影片時長檔位",
+    "Frame Continuation": "首尾幀 / 續寫",
+    "Style & Script Presets": "風格 & 腳本預設",
+    "24h success rate": "24h 成功率",
+    "Avg duration": "平均耗時",
+    "sec short": "秒",
+    "Up to {{seconds}}s · Auto-refund on failure": "按次計費 · 最長 {{seconds}} 秒 · 失敗自動退款",
+    "Create video": "去創作",
+    "Create image": "去生圖",
+    "Video generation": "影片生成",
+    "Collapse to series card": "收起為系列卡",
+    "Expand all {{count}} duration tiers": "展開全部 {{count}} 個時長檔位"
+  },
+  "Video duration is below the selected model tier": "影片實際時長未達所選模型級別要求"
 }

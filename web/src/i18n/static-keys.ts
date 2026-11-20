@@ -19,6 +19,10 @@ For commercial licensing, please contact support@quantumnous.com
 // Static translation keys that don't get picked up by the t('...') regex.
 // These cover dynamic labels (e.g. constants, configs) that are passed into t at runtime.
 export const STATIC_I18N_KEYS = [
+  'Text to Video',
+  'Image to Video',
+  'Frame Continuation',
+  'Style & Script Presets',
   'Video queue wait timed out',
   'Video download timed out',
   'Video assembly timed out',

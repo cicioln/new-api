@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useSearch } from '@tanstack/react-router'
 import { Image, LayoutGrid, Video, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -48,7 +49,8 @@ const VIEWS: { value: StudioView; label: string; icon: LucideIcon }[] = [
 
 export function Studio() {
   const { t } = useTranslation()
-  const [view, setView] = useState<StudioView>('image')
+  const search = useSearch({ from: '/studio/' })
+  const [view, setView] = useState<StudioView>(search.view ?? 'image')
   const imageGroups = useStudioGroups('image')
   const videoGroups = useStudioGroups('video')
   const [imageRefs, setImageRefs] = useState<ReferenceImage[]>([])
@@ -151,6 +153,7 @@ export function Studio() {
           >
             <ImagePanel
               group={imageGroups.group}
+              initialModel={search.view === 'image' ? search.model : undefined}
               references={imageRefs}
               onReferencesChange={setImageRefs}
               onToVideo={(src) => void sendToVideo(src)}
@@ -162,6 +165,7 @@ export function Studio() {
           >
             <VideoPanel
               group={videoGroups.group}
+              initialModel={search.view === 'video' ? search.model : undefined}
               references={videoRefs}
               onReferencesChange={setVideoRefs}
             />

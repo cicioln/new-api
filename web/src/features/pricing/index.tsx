@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useNavigate } from '@tanstack/react-router'
 import { AlertCircle, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
@@ -44,9 +45,15 @@ import {
   getModelMarketStatus,
   type MarketStatusFilter,
 } from './lib/market'
+import {
+  getModalityLabelKey,
+  getModelModality,
+  type MarketModality,
+} from './lib/video-market'
 
 export function Pricing() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [selectedModelName, setSelectedModelName] = useState<string | null>(
     null
   )
@@ -109,6 +116,18 @@ export function Pricing() {
       }))
   }, [models, vendors])
 
+  const modalityCounts = useMemo(() => {
+    const counts: Record<MarketModality, number> = {
+      chat: 0,
+      video: 0,
+      image: 0,
+    }
+    for (const model of models) {
+      counts[getModelModality(model)] += 1
+    }
+    return counts
+  }, [models])
+
   const statusCounts = useMemo(() => {
     const counts: Record<MarketStatusFilter, number> = {
       ok: 0,
@@ -149,6 +168,13 @@ export function Pricing() {
       onRemove: filters.clearSearch,
     })
   }
+  if (filters.modality) {
+    chips.push({
+      key: `m-${filters.modality}`,
+      label: t(getModalityLabelKey(filters.modality)),
+      onRemove: filters.clearModality,
+    })
+  }
   for (const vendor of filters.vendors) {
     chips.push({
       key: `v-${vendor}`,
@@ -179,6 +205,15 @@ export function Pricing() {
     []
   )
   const openTest = useCallback((name: string) => setTestModelName(name), [])
+  const openStudio = useCallback(
+    (modelName: string, kind: 'video' | 'image') => {
+      void navigate({
+        to: '/studio',
+        search: { view: kind, model: modelName },
+      })
+    },
+    [navigate]
+  )
 
   const shared = {
     models: filters.filteredModels,
@@ -245,10 +280,12 @@ export function Pricing() {
         {...shared}
         sort={filters.sortBy}
         groups={groups}
+        searchQuery={filters.searchInput}
         onGroupClick={(name) =>
           name === filters.group ? filters.resetGroup() : filters.setGroup(name)
         }
         onModelClick={openModel}
+        onOpenStudio={openStudio}
       />
     )
   }
@@ -288,6 +325,10 @@ export function Pricing() {
 
           <MarketFilters
             total={models.length}
+            modalityCounts={modalityCounts}
+            modality={filters.modality}
+            onToggleModality={filters.toggleModality}
+            onClearModality={filters.clearModality}
             vendors={vendorCounts}
             selectedVendors={filters.vendors}
             onToggleVendor={filters.toggleVendor}
