@@ -73,9 +73,15 @@ const WORD_OVERRIDES: Record<string, string> = {
   kling: 'Kling',
   vidu: 'Vidu',
   seedance: 'Seedance',
+  seedream: 'Seedream',
   hailuo: 'Hailuo',
   wan: 'Wan',
   jimeng: 'Jimeng',
+  gpt: 'GPT',
+  flux: 'Flux',
+  imagen: 'Imagen',
+  ideogram: 'Ideogram',
+  midjourney: 'Midjourney',
   pro: 'Pro',
   max: 'Max',
   hd: 'HD',
@@ -225,4 +231,82 @@ export function formatTimecode(sec: number): string {
   const mins = Math.floor(safe / 60)
   const rem = safe % 60
   return `${String(mins).padStart(2, '0')}:${String(rem).padStart(2, '0')}`
+}
+
+/** Human-readable display title for an image model ID. */
+export function getImageDisplayTitle(model: PricingModel): string {
+  const base = model.model_name.trim().split('/').pop() ?? model.model_name
+  return formatVideoTitle(base)
+}
+
+export type ImageSpecMetadata = {
+  /** Optional explicit resolution token such as "4K" or "2K". */
+  resolution?: string
+  /** Whether the model outputs native / original aspect ratio high-res images. */
+  nativeResolution: boolean
+  /** Capability label keys (passed to i18n `t()`). */
+  capabilities: string[]
+  /** Output format badge text. */
+  formatLabel: string
+}
+
+/**
+ * Extracts factual display metadata for an image model from its description,
+ * tags and model name.
+ */
+export function parseImageMetadata(model: PricingModel): ImageSpecMetadata {
+  const text = `${model.model_name} ${model.tags ?? ''} ${model.description ?? ''}`
+  const resMatch = /\b(4k|2k|hd)\b/i.exec(text)
+  const resolution = resMatch ? resMatch[1].toUpperCase() : undefined
+  const nativeResolution =
+    /原生尺寸|原生高分|native/i.test(text) || /muse-image/i.test(model.model_name)
+
+  const supportsEdit =
+    /图生图|改图|编辑|参考图|image[- ]to[- ]image|img2img|edit|reference/i.test(
+      text
+    ) || /muse-image/i.test(model.model_name)
+  const supportsMultiRef =
+    /参考图|reference/i.test(text) || /muse-image/i.test(model.model_name)
+
+  const capabilities: string[] = ['Text to Image']
+  if (supportsEdit) capabilities.push('Image to Image')
+  if (supportsMultiRef) capabilities.push('Multi-image reference')
+
+  return {
+    resolution,
+    nativeResolution,
+    capabilities,
+    formatLabel: 'PNG / WebP',
+  }
+}
+
+export type StructuredDescription = {
+  useCase?: string
+  notes?: string
+}
+
+/**
+ * Splits structured descriptions following the `适合用途｜... · 使用注意｜...`
+ * convention used by Muse and other media models into clean sections.
+ */
+export function parseStructuredDescription(
+  description: string | undefined
+): StructuredDescription | null {
+  const text = description?.trim()
+  if (!text) return null
+  const useMatch =
+    /适合用途[｜|：:]\s*([\s\S]*?)(?=(?:\s*[·•\n]\s*)?使用注意[｜|：:]|$)/.exec(
+      text
+    )
+  const noteMatch = /使用注意[｜|：:]\s*([\s\S]*)$/.exec(text)
+  const useCase = useMatch?.[1]
+    ?.trim()
+    .replace(/[·•]\s*$/, '')
+    .trim()
+  const notes = noteMatch?.[1]?.trim()
+  if (!useCase && !notes) return null
+  return {
+    useCase: useCase || undefined,
+    notes: notes || undefined,
+  }
 }

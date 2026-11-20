@@ -28,12 +28,17 @@ import {
   parseModelName,
   type ParsedModelName,
 } from '../lib/model-name'
-import { getVideoSeriesInfo, isVideoModel } from '../lib/video-market'
+import {
+  getVideoSeriesInfo,
+  isImageModel,
+  isVideoModel,
+} from '../lib/video-market'
 import type { PricingModel, TokenUnit } from '../types'
 import { formatGroupRatio, RATIO_TONE } from './market-filters'
 import { VendorAvatar } from './market-parts'
 import { ModelCard } from './model-card'
 import {
+  ImageModelCard,
   VideoSeriesCard,
   VideoSingleCard,
   type VideoTierEntry,
@@ -53,7 +58,7 @@ export interface ModelCardGridProps {
   selectedGroup?: string
   sort?: MarketSort
   /** Pricing groups shown in the market, in display order. */
-  groups?: { name: string; ratio: number }[]
+  groups?: { name: string; ratio: number; desc?: string }[]
   /** Toggles the group filter; clicking the selected group clears it. */
   onGroupClick?: (group: string) => void
 }
@@ -65,20 +70,21 @@ type VendorSection = {
   icon?: string
   entries: Entry[]
   families: ParsedModelName[]
-  groups: { name: string; ratio: number }[]
+  groups: { name: string; ratio: number; desc?: string }[]
   maintenance: number
 }
 
 /**
  * Splits models into vendor sections with a fixed order that does not depend
  * on creation time or traffic: vendors and families by name, and inside a
- * family the newest version first. Sorting by price keeps the price order
- * inside each section. Models under maintenance always go last.
+ * family the newest version first. Sorting by price or popularity keeps the
+ * incoming sorted order inside each section. Models under maintenance always
+ * go last.
  */
 function buildSections(
   models: PricingModel[],
   sort: MarketSort | undefined,
-  groups: { name: string; ratio: number }[]
+  groups: { name: string; ratio: number; desc?: string }[]
 ): VendorSection[] {
   const sections = new Map<string, VendorSection>()
   for (const model of models) {
@@ -142,7 +148,7 @@ function buildSections(
 
     // Fixed card order: family by name, newest version first, plain models
     // before tagged variants, then the model ID as the final tie-break.
-    if (sort !== 'price') {
+    if (sort !== 'price' && sort !== 'hot') {
       section.entries.sort(
         (a, b) =>
           (familyOrder.get(a.parsed.family) ?? 0) -
@@ -244,6 +250,59 @@ export const ModelCardGrid = memo(function ModelCardGrid(
     return null
   }
 
+  const renderSingleCard = (model: PricingModel, latest: boolean) => {
+    const key = model.id ?? model.model_name
+    const modelPerf = props.perf.get(model.model_name)
+    if (isVideoModel(model)) {
+      return (
+        <VideoSingleCard
+          key={key}
+          model={model}
+          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
+          priceRate={props.priceRate}
+          usdExchangeRate={props.usdExchangeRate}
+          showRechargePrice={props.showRechargePrice}
+          selectedGroup={props.selectedGroup}
+          perf={modelPerf}
+          onClick={props.onModelClick}
+          onOpenStudio={props.onOpenStudio}
+        />
+      )
+    }
+    if (isImageModel(model)) {
+      return (
+        <ImageModelCard
+          key={key}
+          model={model}
+          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
+          priceRate={props.priceRate}
+          usdExchangeRate={props.usdExchangeRate}
+          showRechargePrice={props.showRechargePrice}
+          selectedGroup={props.selectedGroup}
+          perf={modelPerf}
+          onClick={props.onModelClick}
+          onOpenStudio={props.onOpenStudio}
+        />
+      )
+    }
+    return (
+      <ModelCard
+        key={key}
+        model={model}
+        latest={latest}
+        tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
+        priceRate={props.priceRate}
+        usdExchangeRate={props.usdExchangeRate}
+        showRechargePrice={props.showRechargePrice}
+        selectedGroup={props.selectedGroup}
+        perf={modelPerf}
+        onClick={props.onModelClick}
+        onTest={props.onTest}
+        onOpenStudio={props.onOpenStudio}
+      />
+    )
+  }
+
   return (
     <div className='flex flex-col gap-7'>
       {sections.map((section) => {
@@ -255,6 +314,9 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             ...prev,
             [section.vendor]: !prev[section.vendor],
           }))
+        const activeGroupInSection = props.selectedGroup
+          ? section.groups.find((g) => g.name === props.selectedGroup)
+          : undefined
 
         // In expanded mode, show video duration tiers sorted ascending first,
         // then remaining models in their regular order.
@@ -276,85 +338,118 @@ export const ModelCardGrid = memo(function ModelCardGrid(
             aria-label={section.vendor || t('Other')}
             className='flex flex-col gap-3'
           >
-            <header className='flex flex-wrap items-center gap-x-2.5 gap-y-1.5 border-b pb-2'>
-              <VendorAvatar
-                name={section.vendor || '?'}
-                icon={section.icon}
-                className='size-6 rounded-md text-[11px]'
-              />
-              <h3 className='text-[15px] font-semibold'>
-                {section.vendor || t('Other')}
-              </h3>
-              <span className='text-subtle-foreground text-xs tabular-nums'>
-                {t('{{count}} models', { count: section.entries.length })}
-              </span>
-              {section.maintenance > 0 && (
-                <span className='inline-flex h-5 items-center rounded-full bg-indigo-500/12 px-2 text-[11px] font-medium text-indigo-600 dark:text-indigo-400'>
-                  {t('{{count}} under maintenance', {
-                    count: section.maintenance,
-                  })}
+            <header className='flex flex-col gap-2 border-b pb-2.5'>
+              <div className='flex flex-wrap items-center gap-x-2.5 gap-y-1.5'>
+                <VendorAvatar
+                  name={section.vendor || '?'}
+                  icon={section.icon}
+                  className='size-6 rounded-md text-[11px]'
+                />
+                <h3 className='text-[15px] font-semibold'>
+                  {section.vendor || t('Other')}
+                </h3>
+                <span className='text-subtle-foreground text-xs tabular-nums'>
+                  {t('{{count}} models', { count: section.entries.length })}
                 </span>
-              )}
-              {section.groups.map((group) => {
-                const checked = props.selectedGroup === group.name
-                return (
-                  <button
-                    key={group.name}
-                    type='button'
-                    aria-pressed={checked}
-                    onClick={() => props.onGroupClick?.(group.name)}
-                    className={cn(
-                      'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border pr-1 pl-3 text-[12.5px] font-medium antialiased transition-colors',
-                      checked
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'bg-card text-foreground/85 border-foreground/15 hover:border-foreground/40 hover:text-foreground'
-                    )}
-                  >
-                    {group.name}
-                    <span
+                {section.maintenance > 0 && (
+                  <span className='inline-flex h-5 items-center rounded-full bg-indigo-500/12 px-2 text-[11px] font-medium text-indigo-600 dark:text-indigo-400'>
+                    {t('{{count}} under maintenance', {
+                      count: section.maintenance,
+                    })}
+                  </span>
+                )}
+                {section.groups.map((group) => {
+                  const checked = props.selectedGroup === group.name
+                  return (
+                    <button
+                      key={group.name}
+                      type='button'
+                      aria-pressed={checked}
+                      title={group.desc || group.name}
+                      onClick={() => props.onGroupClick?.(group.name)}
                       className={cn(
-                        'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
+                        'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border pr-1 pl-3 text-[12.5px] font-medium antialiased transition-colors',
                         checked
-                          ? 'bg-background/20 text-background'
-                          : RATIO_TONE[Math.sign(group.ratio - 1)]
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'bg-card text-foreground/85 border-foreground/15 hover:border-foreground/40 hover:text-foreground'
                       )}
                     >
-                      ×{formatGroupRatio(group.ratio)}
-                    </span>
+                      {group.name}
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
+                          checked
+                            ? 'bg-background/20 text-background'
+                            : RATIO_TONE[Math.sign(group.ratio - 1)]
+                        )}
+                      >
+                        ×{formatGroupRatio(group.ratio)}
+                      </span>
+                    </button>
+                  )
+                })}
+                {hasSeries && (
+                  <button
+                    type='button'
+                    onClick={toggleExpand}
+                    className='bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground ml-auto inline-flex h-7 cursor-pointer items-center rounded-lg border px-2.5 text-xs font-medium transition-colors'
+                  >
+                    {expanded
+                      ? t('Collapse to series card')
+                      : t('Expand all {{count}} duration tiers', {
+                          count: grouped.collapsibleTierCount,
+                        })}
                   </button>
-                )
-              })}
-              {hasSeries && (
-                <button
-                  type='button'
-                  onClick={toggleExpand}
-                  className='bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground ml-auto inline-flex h-7 cursor-pointer items-center rounded-lg border px-2.5 text-xs font-medium transition-colors'
-                >
-                  {expanded
-                    ? t('Collapse to series card')
-                    : t('Expand all {{count}} duration tiers', {
-                        count: grouped.collapsibleTierCount,
+                )}
+                {!hasSeries && section.families.length > 1 && (
+                  <span className='text-muted-foreground ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs'>
+                    {section.families.map((family) => (
+                      <span
+                        key={family.family}
+                        className='inline-flex items-center gap-1.5'
+                        style={
+                          {
+                            '--family': getFamilyColor(family),
+                          } as CSSProperties
+                        }
+                      >
+                        <i
+                          aria-hidden
+                          className='size-2 rounded-[2px] bg-(--family)'
+                        />
+                        {family.label}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+
+              {/* Group Description Ribbon when a group in this section is selected */}
+              {activeGroupInSection && (
+                <div className='bg-primary/10 text-foreground flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-xs'>
+                  <div className='flex min-w-0 flex-1 items-center gap-2'>
+                    <span className='text-primary shrink-0 font-semibold'>
+                      {t('Priced with “{{name}}” ×{{ratio}}', {
+                        name: activeGroupInSection.name,
+                        ratio: formatGroupRatio(activeGroupInSection.ratio),
                       })}
-                </button>
-              )}
-              {!hasSeries && section.families.length > 1 && (
-                <span className='text-muted-foreground ml-auto flex flex-wrap gap-x-3 gap-y-1 text-xs'>
-                  {section.families.map((family) => (
-                    <span
-                      key={family.family}
-                      className='inline-flex items-center gap-1.5'
-                      style={
-                        { '--family': getFamilyColor(family) } as CSSProperties
-                      }
-                    >
-                      <i
-                        aria-hidden
-                        className='size-2 rounded-[2px] bg-(--family)'
-                      />
-                      {family.label}
                     </span>
-                  ))}
-                </span>
+                    {activeGroupInSection.desc && (
+                      <span className='text-muted-foreground truncate'>
+                        {activeGroupInSection.desc}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() =>
+                      props.onGroupClick?.(activeGroupInSection.name)
+                    }
+                    className='text-primary shrink-0 cursor-pointer text-[11.5px] font-medium hover:underline'
+                  >
+                    {t('Reset to lowest price')}
+                  </button>
+                </div>
               )}
             </header>
             <div className='grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
@@ -379,69 +474,12 @@ export const ModelCardGrid = memo(function ModelCardGrid(
                       />
                     ))}
                     {grouped.otherEntries.map(({ model, latest }) =>
-                      isVideoModel(model) ? (
-                        <VideoSingleCard
-                          key={model.id ?? model.model_name}
-                          model={model}
-                          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
-                          priceRate={props.priceRate}
-                          usdExchangeRate={props.usdExchangeRate}
-                          showRechargePrice={props.showRechargePrice}
-                          selectedGroup={props.selectedGroup}
-                          perf={props.perf.get(model.model_name)}
-                          onClick={props.onModelClick}
-                          onOpenStudio={props.onOpenStudio}
-                        />
-                      ) : (
-                        <ModelCard
-                          key={model.id ?? model.model_name}
-                          model={model}
-                          latest={latest}
-                          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
-                          priceRate={props.priceRate}
-                          usdExchangeRate={props.usdExchangeRate}
-                          showRechargePrice={props.showRechargePrice}
-                          selectedGroup={props.selectedGroup}
-                          perf={props.perf.get(model.model_name)}
-                          onClick={props.onModelClick}
-                          onTest={props.onTest}
-                          onOpenStudio={props.onOpenStudio}
-                        />
-                      )
+                      renderSingleCard(model, latest)
                     )}
                   </>
                 )
                 : (expanded ? expandedEntries : section.entries).map(
-                    ({ model, latest }) =>
-                      isVideoModel(model) ? (
-                        <VideoSingleCard
-                          key={model.id ?? model.model_name}
-                          model={model}
-                          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
-                          priceRate={props.priceRate}
-                          usdExchangeRate={props.usdExchangeRate}
-                          showRechargePrice={props.showRechargePrice}
-                          selectedGroup={props.selectedGroup}
-                          perf={props.perf.get(model.model_name)}
-                          onClick={props.onModelClick}
-                          onOpenStudio={props.onOpenStudio}
-                        />
-                      ) : (
-                        <ModelCard
-                          key={model.id ?? model.model_name}
-                          model={model}
-                          latest={latest}
-                          tokenUnit={props.tokenUnit ?? DEFAULT_TOKEN_UNIT}
-                          priceRate={props.priceRate}
-                          usdExchangeRate={props.usdExchangeRate}
-                          showRechargePrice={props.showRechargePrice}
-                          selectedGroup={props.selectedGroup}
-                          perf={props.perf.get(model.model_name)}
-                          onClick={props.onModelClick}
-                          onTest={props.onTest}
-                          onOpenStudio={props.onOpenStudio}
-                        />
-                      )
+                    ({ model, latest }) => renderSingleCard(model, latest)
                   )}
             </div>
           </section>

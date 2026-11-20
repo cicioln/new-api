@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "Waiting to retry",
     "Planning video shots": "Planning video shots",
     "Connecting to video service": "Connecting to video service",
@@ -23,9 +26,6 @@
     "Video generation failed": "Video generation failed",
     "Video could not be saved": "Video could not be saved",
     "Video task status could not be recovered before its deadline": "Video task status could not be recovered before its deadline",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copy",
     "，": ", ",
     ", and": ", and",
@@ -8217,7 +8217,28 @@
     "Create image": "Create",
     "Video generation": "Video generation",
     "Collapse to series card": "Collapse to series card",
-    "Expand all {{count}} duration tiers": "Expand all {{count}} duration tiers"
+    "Expand all {{count}} duration tiers": "Expand all {{count}} duration tiers",
+    "Model Plaza": "Model Plaza",
+    "{{models}} models · {{vendors}} vendors": "{{models}} models · {{vendors}} vendors",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing",
+    "Sort by": "Sort by",
+    "Lowest price": "Lowest price",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)",
+    "Priced with “{{name}}” ×{{ratio}}": "Priced with “{{name}}” ×{{ratio}}",
+    "Reset to lowest price": "Reset to lowest price",
+    "Text to Image": "Text to Image",
+    "Image to Image": "Image to Image",
+    "Multi-image reference": "Multi-image reference",
+    "Native resolution": "Native resolution",
+    "Image generation": "Image generation",
+    "image unit": "image",
+    "Per request · Native image": "Per request · Native image",
+    "Switch duration tier": "Switch duration tier",
+    "Suitable for": "Suitable for",
+    "Usage notes": "Usage notes",
+    "Enter video studio": "Enter video studio",
+    "Enter image studio": "Enter image studio",
+    "Run pelican test": "Run pelican test"
   },
   "Video duration is below the selected model tier": "Video duration is below the selected model tier"
 }

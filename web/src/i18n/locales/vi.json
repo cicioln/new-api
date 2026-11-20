@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "Đang chờ thử lại",
     "Planning video shots": "Đang lập cảnh quay video",
     "Connecting to video service": "Đang kết nối dịch vụ video",
@@ -23,9 +26,6 @@
     "Video generation failed": "Tạo video thất bại",
     "Video could not be saved": "Không thể lưu video",
     "Video task status could not be recovered before its deadline": "Không thể khôi phục trạng thái video trước thời hạn",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_bản sao",
     "，": ", ",
     ", and": ", và",
@@ -8149,7 +8149,28 @@
     "Create image": "Tạo ảnh",
     "Video generation": "Tạo video",
     "Collapse to series card": "Thu gọn theo dòng",
-    "Expand all {{count}} duration tiers": "Mở rộng {{count}} mức thời lượng"
+    "Expand all {{count}} duration tiers": "Mở rộng {{count}} mức thời lượng",
+    "Model Plaza": "Sàn mô hình",
+    "{{models}} models · {{vendors}} vendors": "{{models}} mô hình · {{vendors}} nhà cung cấp",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "Xem trạng thái 24h, hệ số nhóm và giá ưu đãi cho các mô hình hội thoại, video và hình ảnh",
+    "Sort by": "Sắp xếp",
+    "Lowest price": "Giá thấp nhất",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "Tìm tên mô hình, nhà cung cấp hoặc tính năng (vd: opus, muse, 60s, deepseek)",
+    "Priced with “{{name}}” ×{{ratio}}": "Đang tính giá theo “{{name}}” ×{{ratio}}",
+    "Reset to lowest price": "Đặt lại giá thấp nhất",
+    "Text to Image": "Văn bản thành ảnh",
+    "Image to Image": "Ảnh thành ảnh",
+    "Multi-image reference": "Tham chiếu nhiều ảnh",
+    "Native resolution": "Độ phân giải gốc",
+    "Image generation": "Tạo hình ảnh",
+    "image unit": "ảnh",
+    "Per request · Native image": "Theo lượt · Ảnh gốc",
+    "Switch duration tier": "Chuyển mức thời lượng",
+    "Suitable for": "Phù hợp cho",
+    "Usage notes": "Lưu ý sử dụng",
+    "Enter video studio": "Vào studio video",
+    "Enter image studio": "Vào studio ảnh",
+    "Run pelican test": "Chạy bài kiểm tra bồ nông"
   },
   "Video duration is below the selected model tier": "Thời lượng video chưa đạt mức tối thiểu của mô hình đã chọn"
 }

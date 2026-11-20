@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Video } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { Image as ImageIcon, Search, SlidersHorizontal, Video } from 'lucide-react'
+import type { ReactNode, RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getLobeIcon } from '@/lib/lobe-icon'
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 
 import {
   getStatusLabelKey,
+  getVendorAvatar,
   MARKET_STATUS_FILTERS,
   type MarketStatusFilter,
 } from '../lib/market'
@@ -37,6 +38,9 @@ import { MarketStatusDot } from './market-status'
 
 export interface MarketFiltersProps {
   total: number
+  searchInput: string
+  onSearchChange: (value: string) => void
+  searchRef?: RefObject<HTMLInputElement | null>
   modalityCounts?: Record<MarketModality, number>
   modality?: MarketModality
   onToggleModality?: (modality: MarketModality) => void
@@ -49,7 +53,8 @@ export interface MarketFiltersProps {
   status?: MarketStatusFilter
   onToggleStatus: (status: MarketStatusFilter) => void
   onClearStatus: () => void
-  trailing?: ReactNode
+  mobileFiltersOpen?: boolean
+  onToggleMobileFilters?: () => void
   className?: string
 }
 
@@ -65,21 +70,11 @@ export const RATIO_TONE: Record<number, string> = {
   1: 'bg-warning/15 text-warning',
 }
 
-function FilterRow(props: { label: string; children: ReactNode }) {
-  return (
-    <div
-      role='group'
-      aria-label={props.label}
-      className='flex items-start gap-3 py-2.5 not-first:border-t max-sm:flex-col max-sm:gap-2'
-    >
-      <span className='text-subtle-foreground w-16 shrink-0 pt-[5px] text-xs font-medium'>
-        {props.label}
-      </span>
-      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-1.5'>
-        {props.children}
-      </div>
-    </div>
-  )
+const STATUS_ACTIVE_CLASS: Record<MarketStatusFilter, string> = {
+  ok: 'border-success/50 bg-success/12 text-success',
+  warn: 'border-warning/50 bg-warning/12 text-warning',
+  bad: 'border-indigo-500/50 bg-indigo-500/12 text-indigo-600 dark:text-indigo-400',
+  none: 'border-foreground bg-foreground text-background',
 }
 
 function FilterChip(props: {
@@ -89,6 +84,7 @@ function FilterChip(props: {
   count?: ReactNode
   /** Group price ratio, shown as a tinted badge: green below 1, amber above. */
   ratio?: number
+  className?: string
   children: ReactNode
 }) {
   return (
@@ -98,10 +94,11 @@ function FilterChip(props: {
       aria-checked={props.checked}
       onClick={props.onSelect}
       className={cn(
-        'inline-flex h-7 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] transition-colors',
+        'inline-flex h-7 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium transition-colors',
         props.checked
           ? 'border-foreground bg-foreground text-background'
-          : 'bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+          : 'bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+        props.className
       )}
     >
       <span className='flex min-w-0 items-center gap-1.5 truncate'>
@@ -110,7 +107,7 @@ function FilterChip(props: {
       {props.count != null && (
         <span
           className={cn(
-            'font-mono text-[11px]',
+            'font-mono text-[11px] tabular-nums',
             props.checked ? 'text-background/70' : 'text-subtle-foreground'
           )}
         >
@@ -120,7 +117,7 @@ function FilterChip(props: {
       {props.ratio != null && (
         <span
           className={cn(
-            'rounded-full px-1.5 py-px font-mono text-[11.5px] leading-4 font-semibold',
+            'rounded-full px-1.5 py-px font-mono text-[11px] leading-4 font-semibold',
             props.checked
               ? 'bg-background/20 text-background'
               : RATIO_TONE[Math.sign(props.ratio - 1)]
@@ -138,93 +135,200 @@ export function MarketFilters(props: MarketFiltersProps) {
   const activeModalities = props.modalityCounts
     ? MARKET_MODALITIES.filter((m) => (props.modalityCounts?.[m] ?? 0) > 0)
     : []
+  const visibleStatuses = MARKET_STATUS_FILTERS.filter(
+    (s) => (props.statusCounts[s] ?? 0) > 0 || props.status === s
+  )
 
   return (
     <section
       aria-label={t('Filters')}
-      className={cn('bg-card rounded-xl border px-4 py-1', props.className)}
+      className={cn(
+        'bg-card space-y-2.5 rounded-xl border p-3',
+        props.className
+      )}
     >
-      {activeModalities.length > 1 && props.onToggleModality && (
-        <FilterRow label={t('Model type')}>
+      {/* Layer 1: Search Input + Modality Segmented Tabs on one compact row */}
+      <div className='flex flex-col items-stretch gap-2.5 lg:flex-row lg:items-center'>
+        <div className='flex min-w-0 flex-1 items-center gap-2'>
+          {props.onToggleMobileFilters && (
+            <button
+              type='button'
+              aria-expanded={props.mobileFiltersOpen}
+              aria-label={t('Filter')}
+              onClick={props.onToggleMobileFilters}
+              className={cn(
+                'bg-background text-muted-foreground hover:text-foreground hidden h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors max-sm:inline-flex',
+                props.mobileFiltersOpen && 'border-foreground text-foreground'
+              )}
+            >
+              <SlidersHorizontal aria-hidden className='size-3.5' />
+              {t('Filter')}
+            </button>
+          )}
+          <label className='relative min-w-0 flex-1'>
+            <Search
+              aria-hidden
+              className='text-subtle-foreground absolute top-2.5 left-3 size-4'
+              strokeWidth={2}
+            />
+            <input
+              ref={props.searchRef}
+              value={props.searchInput}
+              onChange={(event) => props.onSearchChange(event.target.value)}
+              placeholder={t(
+                'Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)'
+              )}
+              aria-label={t('Search models')}
+              className='border-input bg-background focus:border-foreground focus:ring-primary/20 h-9 w-full rounded-lg border pr-9 pl-9 text-[13px] transition-[border-color,box-shadow] outline-none focus:ring-3'
+            />
+            <kbd className='text-subtle-foreground bg-card absolute top-2 right-2.5 rounded border px-1.5 py-px font-mono text-[10.5px]'>
+              /
+            </kbd>
+          </label>
+        </div>
+
+        {activeModalities.length > 1 && props.onToggleModality && (
           <div
             role='radiogroup'
             aria-label={t('Model type')}
-            className='contents'
+            className='bg-muted inline-flex shrink-0 items-center gap-1 overflow-x-auto rounded-lg p-1'
           >
-            <FilterChip
-              radio
-              checked={!props.modality}
-              onSelect={() => props.onClearModality?.()}
-              count={props.total}
+            <button
+              type='button'
+              role='radio'
+              aria-checked={!props.modality}
+              onClick={() => props.onClearModality?.()}
+              className={cn(
+                'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                !props.modality
+                  ? 'bg-card text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
             >
-              {t('All')}
-            </FilterChip>
-            {activeModalities.map((modality) => (
-              <FilterChip
-                key={modality}
-                radio
-                checked={props.modality === modality}
-                onSelect={() => props.onToggleModality?.(modality)}
-                count={props.modalityCounts?.[modality]}
-              >
-                {modality === 'video' && (
-                  <Video aria-hidden className='size-3.5 shrink-0' />
-                )}
-                {t(getModalityLabelKey(modality))}
-              </FilterChip>
-            ))}
+              <span>{t('All')}</span>
+              <span className='font-mono text-[11px] opacity-65 tabular-nums'>
+                {props.total}
+              </span>
+            </button>
+            {activeModalities.map((modality) => {
+              const checked = props.modality === modality
+              return (
+                <button
+                  key={modality}
+                  type='button'
+                  role='radio'
+                  aria-checked={checked}
+                  onClick={() => props.onToggleModality?.(modality)}
+                  className={cn(
+                    'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium whitespace-nowrap transition-colors',
+                    checked
+                      ? 'bg-card text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {modality === 'video' && (
+                    <Video aria-hidden className='size-3.5 shrink-0' />
+                  )}
+                  {modality === 'image' && (
+                    <ImageIcon aria-hidden className='size-3.5 shrink-0' />
+                  )}
+                  <span>{t(getModalityLabelKey(modality))}</span>
+                  <span className='font-mono text-[11px] opacity-65 tabular-nums'>
+                    {props.modalityCounts?.[modality]}
+                  </span>
+                </button>
+              )
+            })}
           </div>
-        </FilterRow>
-      )}
+        )}
+      </div>
 
-      <FilterRow label={t('Model vendor')}>
-        <FilterChip
-          radio
-          checked={props.selectedVendors.length === 0}
-          onSelect={props.onClearVendors}
-          count={props.total}
+      {/* Layer 2: Vendor Chips + Compact Right-Aligned Status Pills */}
+      <div
+        className={cn(
+          'flex flex-wrap items-center justify-between gap-2.5 border-t pt-2.5',
+          props.onToggleMobileFilters &&
+            !props.mobileFiltersOpen &&
+            'max-sm:hidden'
+        )}
+      >
+        <div
+          role='radiogroup'
+          aria-label={t('Model vendor')}
+          className='flex min-w-0 flex-1 flex-wrap items-center gap-1.5'
         >
-          {t('All')}
-        </FilterChip>
-        {props.vendors.map((vendor) => (
-          <FilterChip
-            key={vendor.name}
-            radio
-            checked={props.selectedVendors.includes(vendor.name)}
-            onSelect={() => props.onToggleVendor(vendor.name)}
-            count={vendor.count}
-          >
-            {vendor.icon && getLobeIcon(vendor.icon, 14)}
-            <span className='truncate'>{vendor.name}</span>
-          </FilterChip>
-        ))}
-      </FilterRow>
-
-      <FilterRow label={t('Status')}>
-        <div role='radiogroup' aria-label={t('Status')} className='contents'>
+          <span className='text-subtle-foreground mr-0.5 shrink-0 text-[11.5px] font-medium'>
+            {t('Model vendor')}
+          </span>
           <FilterChip
             radio
-            checked={!props.status}
-            onSelect={props.onClearStatus}
+            checked={props.selectedVendors.length === 0}
+            onSelect={props.onClearVendors}
             count={props.total}
           >
             {t('All')}
           </FilterChip>
-          {MARKET_STATUS_FILTERS.map((status) => (
-            <FilterChip
-              key={status}
-              radio
-              checked={props.status === status}
-              onSelect={() => props.onToggleStatus(status)}
-              count={props.statusCounts[status]}
-            >
-              <MarketStatusDot status={status} />
-              {t(getStatusLabelKey(status))}
-            </FilterChip>
-          ))}
+          {props.vendors.map((vendor) => {
+            const avatar = getVendorAvatar(vendor.name)
+            return (
+              <FilterChip
+                key={vendor.name}
+                radio
+                checked={props.selectedVendors.includes(vendor.name)}
+                onSelect={() => props.onToggleVendor(vendor.name)}
+                count={vendor.count}
+              >
+                {vendor.icon ? (
+                  getLobeIcon(vendor.icon, 14)
+                ) : (
+                  <span
+                    aria-hidden
+                    className='size-2 shrink-0 rounded-full'
+                    style={{ backgroundColor: avatar.color }}
+                  />
+                )}
+                <span className='truncate'>{vendor.name}</span>
+              </FilterChip>
+            )
+          })}
         </div>
-        {props.trailing && <div className='ml-auto'>{props.trailing}</div>}
-      </FilterRow>
+
+        {visibleStatuses.length > 0 && (
+          <div
+            role='radiogroup'
+            aria-label={t('Status')}
+            className='flex shrink-0 flex-wrap items-center gap-1.5'
+          >
+            <span className='text-subtle-foreground mr-0.5 text-[11.5px] font-medium'>
+              {t('Status')}
+            </span>
+            {visibleStatuses.map((status) => {
+              const checked = props.status === status
+              return (
+                <button
+                  key={status}
+                  type='button'
+                  role='radio'
+                  aria-checked={checked}
+                  onClick={() => props.onToggleStatus(status)}
+                  className={cn(
+                    'inline-flex h-[26px] cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors',
+                    checked
+                      ? STATUS_ACTIVE_CLASS[status]
+                      : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                  )}
+                >
+                  <MarketStatusDot status={status} />
+                  <span>{t(getStatusLabelKey(status))}</span>
+                  <span className='font-mono text-[10.5px] opacity-75 tabular-nums'>
+                    {props.statusCounts[status]}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

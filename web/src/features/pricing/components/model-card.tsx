@@ -82,7 +82,7 @@ function MaintenanceRibbon(props: { note?: string; until?: number }) {
   )
 }
 
-const GROUP_CACHE_MAX_ROWS = 4
+const GROUP_CACHE_MAX_ROWS = 2
 
 const CACHE_LEVEL_TEXT: Record<CacheRateLevel, string> = {
   high: 'text-emerald-600 dark:text-emerald-400',
@@ -95,14 +95,25 @@ const CACHE_LEVEL_BAR: Record<CacheRateLevel, string> = {
   low: 'bg-muted-foreground/40',
 }
 
-/** One row per group: name, cache hit meter and percentage. */
+/** Compact per-group cache hit rows (max 2, or just the selected group). */
 function GroupCacheTable(props: {
   groups: string[]
   rates: Record<string, number>
+  selectedGroup?: string
 }) {
   const { t } = useTranslation()
-  const shown = props.groups.slice(0, GROUP_CACHE_MAX_ROWS)
-  const rest = props.groups.slice(shown.length)
+  const ordered = useMemo(() => {
+    if (props.selectedGroup && props.groups.includes(props.selectedGroup)) {
+      return [props.selectedGroup]
+    }
+    const withData = props.groups.filter((g) => props.rates[g] != null)
+    const withoutData = props.groups.filter((g) => props.rates[g] == null)
+    return [...withData, ...withoutData]
+  }, [props.groups, props.rates, props.selectedGroup])
+
+  const shown = ordered.slice(0, GROUP_CACHE_MAX_ROWS)
+  const rest = props.groups.filter((g) => !shown.includes(g))
+
   return (
     <div
       role='list'
@@ -110,9 +121,6 @@ function GroupCacheTable(props: {
       title={t('Cache hit rate: cached input tokens / all input tokens')}
       className='flex flex-col gap-1.5'
     >
-      <small className='text-muted-foreground text-[11.5px]'>
-        {t('Group cache hit rate')}
-      </small>
       {shown.map((group) => {
         const rate = props.rates[group]
         const level = getCacheRateLevel(rate)
@@ -120,9 +128,9 @@ function GroupCacheTable(props: {
           <div
             key={group}
             role='listitem'
-            className='grid grid-cols-[minmax(0,1fr)_88px_38px] items-center gap-2.5 text-[12px] antialiased'
+            className='grid grid-cols-[minmax(0,1fr)_68px_36px] items-center gap-2 text-[11.5px] antialiased'
           >
-            <span className='text-foreground/80 truncate font-medium'>
+            <span className='text-muted-foreground truncate font-medium'>
               {group}
             </span>
             <span className='bg-muted h-1.5 overflow-hidden rounded-full'>
@@ -133,7 +141,7 @@ function GroupCacheTable(props: {
             </span>
             <b
               className={cn(
-                'text-right font-mono font-semibold tabular-nums',
+                'text-right font-mono text-[11px] font-semibold tabular-nums',
                 CACHE_LEVEL_TEXT[level]
               )}
             >
@@ -145,7 +153,7 @@ function GroupCacheTable(props: {
       {rest.length > 0 && (
         <span
           title={rest.join(', ')}
-          className='text-subtle-foreground text-[11px]'
+          className='text-subtle-foreground text-[10.5px]'
         >
           {t('+{{count}} more groups', { count: rest.length })}
         </span>
@@ -193,6 +201,9 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const familyColor = getFamilyColor(parsed)
   const maintenance = props.model.maintenance
   const dim = maintenance ? MAINTENANCE_DIM_CLASS : undefined
+  const groupCacheRates = props.perf?.groupCacheHitRates ?? {}
+  const hasGroupCacheData = groups.some((g) => groupCacheRates[g] != null)
+
   return (
     // Only the Details button opens the side panel, so the card itself is a
     // plain region with a default cursor and text selection.
@@ -209,11 +220,11 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         } as CSSProperties
       }
     >
-      <div className='flex items-center gap-3'>
+      <div className='flex items-start gap-2.5'>
         <span
           aria-hidden
           className={cn(
-            'grid size-[46px] shrink-0 place-items-center rounded-[10px] bg-(--family)/12',
+            'grid size-10 shrink-0 place-items-center rounded-[10px] bg-(--family)/12',
             dim
           )}
         >
@@ -223,31 +234,31 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           />
         </span>
         <div className={cn('min-w-0 flex-1', dim)}>
-          <div className='flex flex-wrap items-baseline gap-x-2 text-[19px] leading-tight tracking-[-0.01em]'>
+          <div className='flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[17px] leading-tight tracking-[-0.01em]'>
             <strong className='font-bold break-all'>{parsed.label}</strong>
             {parsed.version && (
-              <span className='font-medium text-(--family) tabular-nums'>
+              <span className='font-mono text-[15.5px] font-semibold text-(--family) tabular-nums'>
                 {parsed.version}
               </span>
             )}
+            {props.latest && (
+              <span className='inline-flex h-[18px] items-center rounded-full bg-(--family)/12 px-1.5 text-[10.5px] font-medium text-(--family)'>
+                {t('Latest')}
+              </span>
+            )}
+            {parsed.tags.map((tag) => (
+              <span
+                key={tag}
+                className='text-muted-foreground inline-flex h-[18px] items-center rounded-full border px-1.5 text-[10.5px]'
+              >
+                {tag}
+              </span>
+            ))}
           </div>
-          {(props.latest || parsed.tags.length > 0) && (
-            <div className='mt-1 flex flex-wrap gap-1'>
-              {props.latest && (
-                <span className='inline-flex h-5 items-center rounded-full bg-(--family)/12 px-2 text-[11px] font-medium text-(--family)'>
-                  {t('Latest')}
-                </span>
-              )}
-              {parsed.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className='text-muted-foreground inline-flex h-5 items-center rounded-full border px-2 text-[11px]'
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+          <MarketModelName
+            name={props.model.model_name}
+            className='text-subtle-foreground mt-0.5 text-[11px] font-normal'
+          />
         </div>
         {maintenance && (
           <span className='inline-flex h-[22px] shrink-0 items-center gap-1 rounded-md bg-indigo-500/12 px-2 text-xs font-medium text-indigo-600 dark:text-indigo-400'>
@@ -261,17 +272,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         />
       </div>
 
-      <MarketModelName
-        name={props.model.model_name}
-        className={cn('text-subtle-foreground text-[11.5px] font-normal', dim)}
-      />
-
       {maintenance && (
         <MaintenanceRibbon note={maintenance.note} until={maintenance.until} />
       )}
 
       {groups.length > 0 &&
-        (maintenance || !props.perf || imageModel ? (
+        (maintenance || !props.perf || imageModel || !hasGroupCacheData ? (
           <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
             <small className='text-subtle-foreground mr-0.5 text-[11px]'>
               {t('Group')}
@@ -281,7 +287,8 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         ) : (
           <GroupCacheTable
             groups={groups}
-            rates={props.perf.groupCacheHitRates ?? {}}
+            rates={groupCacheRates}
+            selectedGroup={props.selectedGroup}
           />
         ))}
 
@@ -307,22 +314,22 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
       ) : props.perf ? (
         <div
           aria-label={t('Performance metrics for the last 24 hours')}
-          className='text-subtle-foreground flex flex-col gap-1.5 text-[11.5px]'
+          className='text-subtle-foreground flex flex-col gap-1.5 pt-0.5 text-[11px]'
         >
-          <div className='flex flex-wrap items-center gap-x-3.5 gap-y-1 whitespace-nowrap'>
-            <span>
+          <div className='grid grid-cols-3 items-baseline gap-1 whitespace-nowrap'>
+            <span className='truncate'>
               {t('Status')}{' '}
-              <MarketSuccessRate perf={props.perf} className='font-medium' />
+              <MarketSuccessRate perf={props.perf} className='font-semibold' />
             </span>
-            <span>
+            <span className='truncate text-center'>
               {t('Latency')}{' '}
-              <b className='text-foreground font-mono font-medium'>
+              <b className='text-foreground font-mono font-medium tabular-nums'>
                 {formatMarketLatency(props.perf?.latencyMs)}
               </b>
             </span>
-            <span>
+            <span className='truncate text-right'>
               {t('Throughput short')}{' '}
-              <b className='text-foreground font-mono font-medium'>
+              <b className='text-foreground font-mono font-medium tabular-nums'>
                 {formatMarketTps(props.perf?.tps)}
                 {props.perf?.tps != null && (
                   <span className='text-subtle-foreground font-normal'>
@@ -332,20 +339,8 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 )}
               </b>
             </span>
-            <span
-              title={
-                props.perf?.cacheHitRate != null
-                  ? t('Cache hit rate: cached input tokens / all input tokens')
-                  : t('No cache data')
-              }
-            >
-              {t('Cache short')}{' '}
-              <b className='font-mono font-medium text-sky-600 dark:text-sky-400'>
-                {formatCacheHitRate(props.perf?.cacheHitRate)}
-              </b>
-            </span>
           </div>
-          <MarketStatusBars perf={props.perf} className='h-5' />
+          <MarketStatusBars perf={props.perf} className='h-3.5' />
         </div>
       ) : (
         <div

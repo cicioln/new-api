@@ -99,7 +99,7 @@ export function MarketModelName(props: {
         <CopyButton
           value={props.name}
           aria-label={t('Copy model name')}
-          className='text-subtle-foreground size-[22px] rounded-[5px] opacity-0 transition-opacity group-hover/market:opacity-100 focus-visible:opacity-100'
+          className='text-subtle-foreground size-[22px] rounded-[5px] opacity-55 transition-opacity group-hover/market:opacity-100 focus-visible:opacity-100'
           iconClassName='size-[13px]'
         />
       </span>

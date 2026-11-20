@@ -252,6 +252,24 @@ export function getVendorAvatar(vendorName: string): {
 }
 
 /**
+ * Safely resolves the operational description of a group from `usable_group`,
+ * supporting both `{ desc, ratio }` objects and plain string values returned
+ * by `/api/pricing`.
+ */
+export function getGroupDescription(
+  usableGroup:
+    | Record<string, string | { desc?: string; ratio?: number }>
+    | undefined,
+  group: string
+): string {
+  if (!usableGroup) return ''
+  const entry = usableGroup[group]
+  if (!entry) return ''
+  if (typeof entry === 'string') return entry.trim()
+  return entry.desc?.trim() ?? ''
+}
+
+/**
  * Groups a viewer can price against, in configured order. A group removed
  * from group pricing is hidden even though the viewer's own group stays
  * usable, matching the backend rule for selectable groups.

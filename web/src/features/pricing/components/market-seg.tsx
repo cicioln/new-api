@@ -16,12 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { ReactNode } from 'react'
+
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
 export interface MarketSegProps<T extends string> {
   value: T
-  options: { value: T; label: string }[]
+  options: { value: T; label: ReactNode; className?: string }[]
   onChange: (value: T) => void
   'aria-label': string
   className?: string
@@ -44,7 +46,10 @@ export function MarketSeg<T extends string>(props: MarketSegProps<T>) {
         <ToggleGroupItem
           key={option.value}
           value={option.value}
-          className='text-subtle-foreground hover:text-foreground aria-pressed:text-foreground h-[26px] min-w-0 rounded-md px-2.5 text-[12.5px] font-normal hover:bg-transparent aria-pressed:font-medium'
+          className={cn(
+            'text-subtle-foreground hover:text-foreground aria-pressed:text-foreground h-[26px] min-w-0 rounded-md px-2.5 text-[12.5px] font-normal hover:bg-transparent aria-pressed:font-medium',
+            option.className
+          )}
         >
           {option.label}
         </ToggleGroupItem>

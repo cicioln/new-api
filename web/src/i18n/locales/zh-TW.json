@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "等待重試",
     "Planning video shots": "規劃影片分鏡",
     "Connecting to video service": "連線至影片服務",
@@ -23,9 +26,6 @@
     "Video generation failed": "影片生成失敗",
     "Video could not be saved": "無法儲存影片",
     "Video task status could not be recovered before its deadline": "未能在任務時限內恢復影片狀態",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_複製",
     "，": "，",
     ", and": "，和",
@@ -8217,7 +8217,28 @@
     "Create image": "去生圖",
     "Video generation": "影片生成",
     "Collapse to series card": "收起為系列卡",
-    "Expand all {{count}} duration tiers": "展開全部 {{count}} 個時長檔位"
+    "Expand all {{count}} duration tiers": "展開全部 {{count}} 個時長檔位",
+    "Model Plaza": "模型廣場",
+    "{{models}} models · {{vendors}} vendors": "{{models}} 個模型 · {{vendors}} 家廠商",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "即時查看對話、影片與圖像模型的 24h 運行狀態、分組倍率與折後定價，點擊任意模型可查看 API 接入範例",
+    "Sort by": "排序方式",
+    "Lowest price": "低價優先",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "搜尋模型名稱、廠商或能力（如 opus, muse, 60s, deepseek）",
+    "Priced with “{{name}}” ×{{ratio}}": "目前按「{{name}}」×{{ratio}} 計價",
+    "Reset to lowest price": "恢復預設最低價",
+    "Text to Image": "文生圖",
+    "Image to Image": "圖生圖",
+    "Multi-image reference": "多圖參考",
+    "Native resolution": "原生高解析度",
+    "Image generation": "圖像生成",
+    "image unit": "張",
+    "Per request · Native image": "按次計費 · 原生出圖",
+    "Switch duration tier": "切換同系列時長檔位",
+    "Suitable for": "適合用途",
+    "Usage notes": "使用注意與參數說明",
+    "Enter video studio": "進入影片創作工坊",
+    "Enter image studio": "進入圖像工坊",
+    "Run pelican test": "執行鵜鶘測試"
   },
   "Video duration is below the selected model tier": "影片實際時長未達所選模型級別要求"
 }

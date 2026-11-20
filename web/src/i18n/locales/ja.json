@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "再試行を待機中",
     "Planning video shots": "動画の構成を計画中",
     "Connecting to video service": "動画サービスに接続中",
@@ -23,9 +26,6 @@
     "Video generation failed": "動画の生成に失敗しました",
     "Video could not be saved": "動画を保存できませんでした",
     "Video task status could not be recovered before its deadline": "期限内に動画タスクの状態を復元できませんでした",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copy",
     "，": "、",
     ", and": "、および",
@@ -8149,7 +8149,28 @@
     "Create image": "画像を生成",
     "Video generation": "動画生成",
     "Collapse to series card": "シリーズカードに折りたたむ",
-    "Expand all {{count}} duration tiers": "全 {{count}} プランを展開"
+    "Expand all {{count}} duration tiers": "全 {{count}} プランを展開",
+    "Model Plaza": "モデル広場",
+    "{{models}} models · {{vendors}} vendors": "{{models}} モデル · {{vendors}} プロバイダー",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "チャット・動画・画像モデルの24時間稼働状況、グループ倍率、割引価格を確認できます",
+    "Sort by": "並び替え",
+    "Lowest price": "価格が安い順",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "モデル名・プロバイダー・機能を検索（例: opus, muse, 60s, deepseek）",
+    "Priced with “{{name}}” ×{{ratio}}": "「{{name}}」×{{ratio}} で価格計算中",
+    "Reset to lowest price": "最安価格に戻す",
+    "Text to Image": "テキストから画像",
+    "Image to Image": "画像から画像",
+    "Multi-image reference": "複数画像参照",
+    "Native resolution": "ネイティブ高解像度",
+    "Image generation": "画像生成",
+    "image unit": "枚",
+    "Per request · Native image": "1回あたり課金 · ネイティブ出力",
+    "Switch duration tier": "動画尺を切り替え",
+    "Suitable for": "おすすめの用途",
+    "Usage notes": "利用時の注意点",
+    "Enter video studio": "動画スタジオへ",
+    "Enter image studio": "画像スタジオへ",
+    "Run pelican test": "ペリカンテストを実行"
   },
   "Video duration is below the selected model tier": "動画の長さが選択したモデルの最低要件を満たしていません"
 }

@@ -17,13 +17,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useNavigate } from '@tanstack/react-router'
-import { AlertCircle, Search } from 'lucide-react'
+import { AlertCircle, LayoutGrid, List } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { PublicLayout } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 import {
   LoadingSkeleton,
@@ -40,9 +39,11 @@ import { useMarketPerf } from './hooks/use-market-perf'
 import { usePricingData } from './hooks/use-pricing-data'
 import {
   getDefaultMarketGroup,
+  getGroupDescription,
   getMarketGroups,
-  getStatusLabelKey,
   getModelMarketStatus,
+  getStatusLabelKey,
+  type MarketSort,
   type MarketStatusFilter,
 } from './lib/market'
 import {
@@ -50,6 +51,7 @@ import {
   getModelModality,
   type MarketModality,
 } from './lib/video-market'
+import type { TokenUnit } from './types'
 
 export function Pricing() {
   const { t } = useTranslation()
@@ -146,6 +148,7 @@ export function Pricing() {
       groupNames.map((name) => ({
         name,
         ratio: groupRatio[name] ?? usableGroup[name]?.ratio ?? 1,
+        desc: getGroupDescription(usableGroup, name),
       })),
     [groupNames, groupRatio, usableGroup]
   )
@@ -273,7 +276,13 @@ export function Pricing() {
       </div>
     )
   } else if (filters.viewMode === VIEW_MODES.TABLE) {
-    content = <PricingTable {...shared} onModelClick={openModel} />
+    content = (
+      <PricingTable
+        {...shared}
+        onModelClick={openModel}
+        onOpenStudio={openStudio}
+      />
+    )
   } else {
     content = (
       <ModelCardGrid
@@ -292,39 +301,88 @@ export function Pricing() {
 
   return (
     <PublicLayout showMainContainer={false}>
-      <div className='mx-auto w-full max-w-[1600px] px-4 pt-8 pb-16 md:px-7'>
+      <div className='mx-auto w-full max-w-[1600px] px-4 pt-6 pb-16 md:px-7'>
         <div className='min-w-0'>
-          <div className='mb-4 flex flex-wrap items-center gap-2.5'>
-            <Button
-              variant='outline'
-              className='hidden max-sm:inline-flex'
-              aria-expanded={filtersOpen}
-              onClick={() => setFiltersOpen((prev) => !prev)}
-            >
-              {t('Filter')}
-            </Button>
-            <label className='relative min-w-[200px] flex-1'>
-              <Search
-                aria-hidden
-                className='text-subtle-foreground absolute top-3 left-3 size-4'
-                strokeWidth={2}
+          {/* Compact Page Header & Global Utility Controls */}
+          <div className='mb-4 flex flex-wrap items-end justify-between gap-3'>
+            <div className='min-w-0 space-y-1'>
+              <div className='flex flex-wrap items-center gap-2.5'>
+                <h1 className='text-[22px] leading-none font-bold tracking-tight'>
+                  {t('Model Plaza')}
+                </h1>
+                {!isLoading && models.length > 0 && (
+                  <span className='bg-card text-muted-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11.5px] tabular-nums'>
+                    <span
+                      aria-hidden
+                      className='bg-success size-1.5 rounded-full'
+                    />
+                    {t('{{models}} models · {{vendors}} vendors', {
+                      models: models.length,
+                      vendors: vendorCounts.length,
+                    })}
+                  </span>
+                )}
+              </div>
+              <p className='text-subtle-foreground text-[12.5px]'>
+                {t(
+                  'Browse chat, video, and image models with 24h status, group ratios, and discounted pricing'
+                )}
+              </p>
+            </div>
+
+            <div className='flex flex-wrap items-center gap-2'>
+              <MarketSeg<MarketSort>
+                value={filters.sortBy}
+                onChange={filters.setSortBy}
+                aria-label={t('Sort by')}
+                options={[
+                  { value: 'new', label: t('Default') },
+                  { value: 'hot', label: t('Popular') },
+                  { value: 'price', label: t('Lowest price') },
+                ]}
               />
-              <input
-                ref={searchRef}
-                value={filters.searchInput}
-                onChange={(event) => filters.setSearchInput(event.target.value)}
-                placeholder={t('Search models, e.g. claude, gpt, deepseek')}
-                aria-label={t('Search models')}
-                className='border-input bg-card focus:border-foreground focus:ring-primary/20 h-10 w-full rounded-lg border pr-10 pl-9 text-sm transition-[border-color,box-shadow] outline-none focus:ring-3'
+              <MarketSeg<TokenUnit>
+                value={filters.tokenUnit}
+                onChange={filters.setTokenUnit}
+                aria-label={t('Token unit')}
+                options={[
+                  { value: 'M', label: '/1M', className: 'font-mono px-2' },
+                  { value: 'K', label: '/1K', className: 'font-mono px-2' },
+                ]}
               />
-              <kbd className='text-subtle-foreground bg-background absolute top-2.5 right-2.5 rounded border px-1.5 py-px font-mono text-[11px]'>
-                /
-              </kbd>
-            </label>
+              <MarketSeg<ViewMode>
+                value={filters.viewMode}
+                onChange={filters.setViewMode}
+                aria-label={t('View')}
+                options={[
+                  {
+                    value: VIEW_MODES.CARD,
+                    label: (
+                      <span className='inline-flex items-center gap-1'>
+                        <LayoutGrid aria-hidden className='size-3.5' />
+                        {t('Cards')}
+                      </span>
+                    ),
+                  },
+                  {
+                    value: VIEW_MODES.TABLE,
+                    label: (
+                      <span className='inline-flex items-center gap-1'>
+                        <List aria-hidden className='size-3.5' />
+                        {t('Table')}
+                      </span>
+                    ),
+                  },
+                ]}
+              />
+            </div>
           </div>
 
           <MarketFilters
             total={models.length}
+            searchInput={filters.searchInput}
+            onSearchChange={filters.setSearchInput}
+            searchRef={searchRef}
             modalityCounts={modalityCounts}
             modality={filters.modality}
             onToggleModality={filters.toggleModality}
@@ -337,21 +395,12 @@ export function Pricing() {
             status={filters.status}
             onToggleStatus={filters.toggleStatus}
             onClearStatus={filters.clearStatus}
-            trailing={
-              <MarketSeg<ViewMode>
-                value={filters.viewMode}
-                onChange={filters.setViewMode}
-                aria-label={t('View')}
-                options={[
-                  { value: VIEW_MODES.CARD, label: t('Cards') },
-                  { value: VIEW_MODES.TABLE, label: t('Table') },
-                ]}
-              />
-            }
-            className={cn('mb-4 max-sm:hidden', filtersOpen && 'max-sm:block')}
+            mobileFiltersOpen={filtersOpen}
+            onToggleMobileFilters={() => setFiltersOpen((prev) => !prev)}
+            className='mb-4'
           />
 
-          <div className='mb-3.5 flex min-h-8 flex-wrap items-center justify-between gap-2.5'>
+          <div className='mb-3.5 flex min-h-7 flex-wrap items-center justify-between gap-2.5'>
             <div className='text-subtle-foreground flex flex-wrap items-center gap-1.5 text-[13px]'>
               <span>
                 <Trans
@@ -369,7 +418,7 @@ export function Pricing() {
                   key={chip.key}
                   type='button'
                   onClick={chip.onRemove}
-                  className='bg-muted text-foreground group inline-flex h-[26px] items-center gap-1.5 rounded-md pr-2 pl-2.5 text-[12.5px]'
+                  className='bg-muted text-foreground group inline-flex h-[26px] cursor-pointer items-center gap-1.5 rounded-md pr-2 pl-2.5 text-[12.5px]'
                 >
                   {chip.label}
                   <i className='text-subtle-foreground group-hover:text-foreground not-italic'>
@@ -381,7 +430,7 @@ export function Pricing() {
                 <button
                   type='button'
                   onClick={filters.clearAll}
-                  className='text-primary text-[12.5px]'
+                  className='text-primary cursor-pointer text-[12.5px] hover:underline'
                 >
                   {t('Clear all')}
                 </button>
@@ -400,6 +449,10 @@ export function Pricing() {
             if (!open) setSelectedModelName(null)
           }}
           model={selectedModel}
+          allModels={models}
+          onSelectModel={openModel}
+          onOpenStudio={openStudio}
+          onTest={openTest}
           groupRatio={groupRatio}
           usableGroup={usableGroup}
           endpointMap={

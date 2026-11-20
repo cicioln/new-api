@@ -20,10 +20,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  ArrowRight,
+  Bird,
   CalendarClock,
   Code2,
   FileText,
+  Film,
   HeartPulse,
+  Image as ImageIcon,
   Info,
   Layers,
   Maximize2,
@@ -61,7 +65,7 @@ import { requireServerSuccess } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
-import { DEFAULT_TOKEN_UNIT } from '../constants'
+import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { useBillingTime } from '../hooks/use-billing-time'
 import { usePricingData } from '../hooks/use-pricing-data'
 import type { ParsedTaskTier } from '../lib/billing-expr'
@@ -78,9 +82,14 @@ import {
   type DynamicPriceEntry,
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
+import { getGroupDescription, supportsPelicanTest } from '../lib/market'
 import { getAvailableGroups, isTokenBasedModel } from '../lib/model-helpers'
 import { withPluginPricing } from '../lib/plugin-pricing'
-import { formatFixedPrice, formatGroupPrice } from '../lib/price'
+import {
+  formatFixedPrice,
+  formatGroupPrice,
+  formatRequestPrice,
+} from '../lib/price'
 import {
   evaluateTaskUsageExamples,
   getTaskEnumFields,
@@ -94,6 +103,18 @@ import {
   taskTierConditions,
   pricingDisplayFallbackKey,
 } from '../lib/task-price-display'
+import {
+  formatExactSeconds,
+  getImageDisplayTitle,
+  getVideoDisplayTitle,
+  getVideoSeriesInfo,
+  isImageModel,
+  isVideoModel,
+  parseImageMetadata,
+  parseStructuredDescription,
+  parseVideoDurationSeconds,
+  parseVideoMetadata,
+} from '../lib/video-market'
 import type {
   ModelCapability,
   PriceType,
@@ -104,6 +125,12 @@ import { DynamicPricingBreakdown } from './dynamic-pricing-breakdown'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelDetailsApi } from './model-details-api'
 import { ModelDetailsPerformance } from './model-details-performance'
+import {
+  CINEMA_GRID_STYLE,
+  cinemaBackdropStyle,
+  imageBackdropStyle,
+  resolveVideoAccent,
+} from './video-model-card'
 
 // ----------------------------------------------------------------------------
 // Local UI helpers
@@ -265,8 +292,16 @@ function OverviewMetric(props: {
   )
 }
 
-function OverviewSummaryGrid(props: { model: PricingModel }) {
+function OverviewSummaryGrid(props: {
+  model: PricingModel
+  priceRate?: number
+  usdExchangeRate?: number
+  showRechargePrice?: boolean
+}) {
   const { t } = useTranslation()
+  const videoModel = isVideoModel(props.model)
+  const imageModel = isImageModel(props.model)
+  const isMedia = videoModel || imageModel
   const metricsQuery = useQuery({
     queryKey: ['perf-metrics', props.model.model_name],
     queryFn: async () =>
@@ -278,6 +313,42 @@ function OverviewSummaryGrid(props: { model: PricingModel }) {
   const successRate = summary?.success_rate ?? Number.NaN
   const avgTps = summary?.avg_tps ?? 0
   const avgLatency = summary?.avg_latency_ms ?? 0
+
+  if (isMedia) {
+    const isFixed = props.model.quota_type === QUOTA_TYPE_VALUES.REQUEST
+    const unitPrice = isFixed
+      ? `${formatRequestPrice(
+          props.model,
+          props.showRechargePrice ?? false,
+          props.priceRate ?? 1,
+          props.usdExchangeRate ?? 1,
+          undefined,
+          true,
+          2
+        )} / ${imageModel ? t('image unit') : t('request')}`
+      : t('Per token')
+
+    return (
+      <div className='bg-muted/20 grid overflow-hidden rounded-lg border sm:grid-cols-3 sm:divide-x'>
+        <OverviewMetric
+          icon={HeartPulse}
+          label={t('24h success rate')}
+          value={formatUptimePct(successRate)}
+          valueClassName={getSuccessRateTextClass(successRate)}
+        />
+        <OverviewMetric
+          icon={Timer}
+          label={t('Avg duration')}
+          value={formatExactSeconds(avgLatency > 0 ? avgLatency : undefined)}
+        />
+        <OverviewMetric
+          icon={Sparkles}
+          label={t('Unit price')}
+          value={unitPrice}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className='bg-muted/20 grid overflow-hidden rounded-lg border sm:grid-cols-3 sm:divide-x'>
@@ -597,12 +668,120 @@ function ModelBackendDetailsSection(props: { model: PricingModel }) {
 function ModelHeader(props: { model: PricingModel }) {
   const { t } = useTranslation()
   const model = props.model
+  const videoModel = isVideoModel(model)
+  const imageModel = isImageModel(model)
+  const description = model.description || model.vendor_description || null
+  const structuredDesc = parseStructuredDescription(model.description)
+
+  if (videoModel || imageModel) {
+    const accent = videoModel ? resolveVideoAccent(model) : '#A855F7'
+    const displayTitle = videoModel
+      ? getVideoDisplayTitle(model)
+      : getImageDisplayTitle(model)
+    const durationSec = videoModel
+      ? parseVideoDurationSeconds(model.model_name)
+      : undefined
+    const videoMeta = videoModel ? parseVideoMetadata(model) : null
+    const imageMeta = imageModel ? parseImageMetadata(model) : null
+    const specLine = videoMeta
+      ? [videoMeta.specLine, videoMeta.hasAudio ? t('Native audio') : '', 'MP4']
+          .filter(Boolean)
+          .join(' · ')
+      : imageMeta
+        ? [
+            imageMeta.nativeResolution ? t('Native resolution') : '',
+            imageMeta.resolution ?? '',
+            imageMeta.formatLabel,
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        : ''
+
+    return (
+      <header className='space-y-3'>
+        <div
+          className='relative overflow-hidden rounded-xl p-4 text-white sm:p-5'
+          style={
+            videoModel
+              ? cinemaBackdropStyle(accent)
+              : imageBackdropStyle('#A855F7')
+          }
+        >
+          <div
+            aria-hidden
+            className='pointer-events-none absolute inset-0'
+            style={CINEMA_GRID_STYLE}
+          />
+          <div className='relative z-10 flex items-start gap-3'>
+            <span
+              aria-hidden
+              className='grid size-10 shrink-0 place-items-center rounded-[10px] border border-white/15 bg-white/10'
+            >
+              {videoModel ? (
+                <Film className='size-5' style={{ color: accent }} />
+              ) : (
+                <ImageIcon className='size-5 text-purple-300' />
+              )}
+            </span>
+            <div className='min-w-0 flex-1'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <h1 className='text-lg leading-tight font-bold tracking-tight sm:text-xl'>
+                  {displayTitle}
+                </h1>
+                {durationSec && (
+                  <span
+                    className='rounded px-2 py-0.5 font-mono text-xs leading-none font-bold text-white tabular-nums'
+                    style={{ backgroundColor: accent }}
+                  >
+                    {durationSec}s
+                  </span>
+                )}
+                {imageModel && (
+                  <span className='rounded bg-purple-500/85 px-2 py-0.5 text-[11px] leading-none font-semibold text-white'>
+                    {t('Image')}
+                  </span>
+                )}
+                {model.vendor_name && (
+                  <span className='rounded-full bg-white/15 px-2 py-0.5 text-[11px] text-white/90'>
+                    {model.vendor_name}
+                  </span>
+                )}
+              </div>
+              <div className='mt-1.5 flex items-center gap-1.5'>
+                <span className='truncate font-mono text-xs text-white/80'>
+                  {model.model_name}
+                </span>
+                <CopyButton
+                  value={model.model_name || ''}
+                  className='size-5 rounded text-white/75 hover:bg-white/10 hover:text-white'
+                  iconClassName='size-3'
+                  tooltip={t('Copy model name')}
+                  successTooltip={t('Copied!')}
+                  aria-label={t('Copy model name')}
+                />
+              </div>
+              {specLine && (
+                <div className='mt-2 font-mono text-[11px] text-white/75'>
+                  {specLine}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {!structuredDesc && description && (
+          <p className='text-muted-foreground text-sm leading-relaxed'>
+            {description}
+          </p>
+        )}
+      </header>
+    )
+  }
+
   const modelIconKey = model.icon || model.vendor_icon
   const modelIcon = modelIconKey ? getLobeIcon(modelIconKey, 20) : null
-  const description = model.description || model.vendor_description || null
 
   return (
-    <header className='pb-4'>
+    <header className='pb-2'>
       <div className='flex items-center gap-2.5'>
         {modelIcon}
         <h1 className='font-mono text-xl font-bold tracking-tight sm:text-2xl'>
@@ -624,7 +803,7 @@ function ModelHeader(props: { model: PricingModel }) {
         <span className='text-muted-foreground/30'>·</span>
         <ModelBillingModeBadge model={model} />
       </div>
-      {description && (
+      {!structuredDesc && description && (
         <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
           {description}
         </p>
@@ -1198,8 +1377,15 @@ function ProviderGroupPricingSection(
             return (
               <div key={group} className='overflow-hidden rounded-lg border'>
                 <div className='bg-muted/20 flex items-center justify-between gap-3 border-b px-3 py-2'>
-                  <GroupBadge group={group} size='sm' />
-                  <span className='text-muted-foreground font-mono text-xs'>
+                  <div className='min-w-0'>
+                    <GroupBadge group={group} size='sm' />
+                    {getGroupDescription(props.usableGroup, group) && (
+                      <div className='text-muted-foreground mt-0.5 truncate text-[11px]'>
+                        {getGroupDescription(props.usableGroup, group)}
+                      </div>
+                    )}
+                  </div>
+                  <span className='text-muted-foreground shrink-0 font-mono text-xs'>
                     {ratio}x
                   </span>
                 </div>
@@ -1389,7 +1575,19 @@ function ProviderGroupPricingSection(
             header: t('Group'),
             className: thClass,
             cellClassName: 'py-2.5',
-            cell: (group) => <GroupBadge group={group} size='sm' />,
+            cell: (group) => {
+              const desc = getGroupDescription(props.usableGroup, group)
+              return (
+                <div className='min-w-0'>
+                  <GroupBadge group={group} size='sm' />
+                  {desc && (
+                    <div className='text-muted-foreground mt-1 max-w-[280px] text-[11px] leading-snug whitespace-normal'>
+                      {desc}
+                    </div>
+                  )}
+                </div>
+              )
+            },
           },
           {
             id: 'ratio',
@@ -1458,6 +1656,10 @@ const TAB_META: Record<
 
 export interface ModelDetailsContentProps {
   model: PricingModel
+  allModels?: PricingModel[]
+  onSelectModel?: (modelName: string) => void
+  onOpenStudio?: (modelName: string, kind: 'video' | 'image') => void
+  onTest?: (modelName: string) => void
   groupRatio: Record<string, number>
   usableGroup: Record<string, { desc: string; ratio: number }>
   endpointMap: Record<string, { path?: string; method?: string }>
@@ -1486,6 +1688,35 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
     simpleTaskPricing ||
     taskTiers.length === 0
 
+  const structuredDesc = useMemo(
+    () => parseStructuredDescription(props.model.description),
+    [props.model.description]
+  )
+
+  const seriesSiblings = useMemo(() => {
+    if (!props.allModels || !props.onSelectModel) return []
+    const info = getVideoSeriesInfo(props.model)
+    if (!info) return []
+    const matched = props.allModels
+      .flatMap((m) => {
+        const siblingInfo = getVideoSeriesInfo(m)
+        if (
+          !siblingInfo ||
+          siblingInfo.key !== info.key ||
+          (m.vendor_name ?? '') !== (props.model.vendor_name ?? '')
+        ) {
+          return []
+        }
+        return [{ model: m, durationSec: siblingInfo.durationSec }]
+      })
+      .sort((a, b) => a.durationSec - b.durationSec)
+    return matched.length >= 2 ? matched : []
+  }, [props.allModels, props.onSelectModel, props.model])
+
+  const seriesAccent = isVideoModel(props.model)
+    ? resolveVideoAccent(props.model)
+    : '#FF5A1F'
+
   return (
     <div className='@container/details space-y-4'>
       <ModelHeader model={props.model} />
@@ -1507,8 +1738,97 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
           })}
         </TabsList>
 
-        <TabsContent value='overview' className='space-y-6 outline-none'>
-          <OverviewSummaryGrid model={props.model} />
+        <TabsContent value='overview' className='space-y-5 outline-none'>
+          <OverviewSummaryGrid
+            model={props.model}
+            priceRate={props.priceRate}
+            usdExchangeRate={props.usdExchangeRate}
+            showRechargePrice={showRechargePrice}
+          />
+
+          {seriesSiblings.length > 0 && props.onSelectModel && (
+            <section className='space-y-2'>
+              <div className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
+                {t('Switch duration tier')}
+              </div>
+              <div className='grid grid-cols-3 gap-1.5 sm:grid-cols-6'>
+                {seriesSiblings.map((sibling) => {
+                  const active =
+                    sibling.model.model_name === props.model.model_name
+                  const tierPrice =
+                    sibling.model.quota_type === QUOTA_TYPE_VALUES.REQUEST
+                      ? formatRequestPrice(
+                          sibling.model,
+                          showRechargePrice,
+                          props.priceRate,
+                          props.usdExchangeRate,
+                          undefined,
+                          true,
+                          2
+                        )
+                      : undefined
+                  return (
+                    <button
+                      key={sibling.model.model_name}
+                      type='button'
+                      onClick={() =>
+                        props.onSelectModel?.(sibling.model.model_name)
+                      }
+                      className={cn(
+                        'flex cursor-pointer flex-col items-center justify-center rounded-lg border px-1.5 py-2 text-center transition-colors',
+                        active
+                          ? 'text-foreground font-semibold'
+                          : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                      )}
+                      style={
+                        active
+                          ? {
+                              borderColor: seriesAccent,
+                              backgroundColor: `color-mix(in srgb, ${seriesAccent} 12%, transparent)`,
+                              color: seriesAccent,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span className='font-mono text-xs leading-tight font-bold tabular-nums'>
+                        {sibling.durationSec}s
+                      </span>
+                      {tierPrice && (
+                        <span className='mt-0.5 font-mono text-[10.5px] leading-tight opacity-85 tabular-nums'>
+                          {tierPrice}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {structuredDesc && (
+            <div className='grid gap-3 @lg/details:grid-cols-2'>
+              {structuredDesc.useCase && (
+                <div className='bg-muted/20 space-y-1.5 rounded-xl border p-3.5'>
+                  <div className='text-foreground text-xs font-semibold'>
+                    {t('Suitable for')}
+                  </div>
+                  <p className='text-muted-foreground text-xs leading-relaxed'>
+                    {structuredDesc.useCase}
+                  </p>
+                </div>
+              )}
+              {structuredDesc.notes && (
+                <div className='bg-muted/20 space-y-1.5 rounded-xl border p-3.5'>
+                  <div className='text-foreground text-xs font-semibold'>
+                    {t('Usage notes')}
+                  </div>
+                  <p className='text-muted-foreground text-xs leading-relaxed'>
+                    {structuredDesc.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <section className='bg-card/60 space-y-5 rounded-xl border p-4 shadow-sm'>
             <SectionTitle>{t('Pricing')}</SectionTitle>
@@ -1574,6 +1894,20 @@ export interface ModelDetailsDrawerProps extends ModelDetailsContentProps {
 export function ModelDetailsDrawer(props: ModelDetailsDrawerProps) {
   const { t } = useTranslation()
   const { open, onOpenChange, ...contentProps } = props
+  const videoModel = isVideoModel(props.model)
+  const imageModel = isImageModel(props.model)
+  const canOpenVideoStudio =
+    videoModel && Boolean(props.onOpenStudio) && !props.model.maintenance
+  const canOpenImageStudio =
+    imageModel && Boolean(props.onOpenStudio) && !props.model.maintenance
+  const canRunPelican =
+    !videoModel &&
+    !imageModel &&
+    Boolean(props.onTest) &&
+    supportsPelicanTest(props.model) &&
+    !props.model.maintenance
+  const showFooter = canOpenVideoStudio || canOpenImageStudio || canRunPelican
+  const videoAccent = videoModel ? resolveVideoAccent(props.model) : '#FF5A1F'
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -1590,6 +1924,56 @@ export function ModelDetailsDrawer(props: ModelDetailsDrawerProps) {
         <div className='flex-1 overflow-y-auto px-4 pt-11 pb-5 sm:px-6 sm:pt-12 sm:pb-6'>
           <ModelDetailsContent {...contentProps} />
         </div>
+        {showFooter && (
+          <div className='bg-card/95 flex items-center justify-between gap-3 border-t px-4 py-3 backdrop-blur-xs sm:px-6'>
+            <span className='text-muted-foreground min-w-0 truncate font-mono text-xs'>
+              {props.model.model_name}
+            </span>
+            {canOpenVideoStudio && (
+              <button
+                type='button'
+                onClick={() => {
+                  onOpenChange(false)
+                  props.onOpenStudio?.(props.model.model_name, 'video')
+                }}
+                className='inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90'
+                style={{ backgroundColor: videoAccent }}
+              >
+                <Sparkles aria-hidden className='size-3.5' strokeWidth={2.1} />
+                {t('Enter video studio')}
+                <ArrowRight aria-hidden className='size-3.5' />
+              </button>
+            )}
+            {canOpenImageStudio && (
+              <button
+                type='button'
+                onClick={() => {
+                  onOpenChange(false)
+                  props.onOpenStudio?.(props.model.model_name, 'image')
+                }}
+                className='inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-[#a855f7] px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90'
+              >
+                <ImageIcon aria-hidden className='size-3.5' strokeWidth={2} />
+                {t('Enter image studio')}
+                <ArrowRight aria-hidden className='size-3.5' />
+              </button>
+            )}
+            {canRunPelican && (
+              <Button
+                size='sm'
+                onClick={() => {
+                  onOpenChange(false)
+                  props.onTest?.(props.model.model_name)
+                }}
+                className='h-9 shrink-0 gap-1.5'
+              >
+                <Bird aria-hidden className='size-3.5' strokeWidth={2} />
+                {t('Run pelican test')}
+                <ArrowRight aria-hidden className='size-3.5' />
+              </Button>
+            )}
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   )
@@ -1622,6 +2006,21 @@ export function ModelDetails() {
 
   const handleBack = () => {
     navigate({ to: '/pricing', search })
+  }
+
+  const handleSelectModel = (nextModelName: string) => {
+    void navigate({
+      to: '/pricing/$modelId',
+      params: { modelId: nextModelName },
+      search,
+    })
+  }
+
+  const handleOpenStudio = (modelName: string, kind: 'video' | 'image') => {
+    void navigate({
+      to: '/studio',
+      search: { view: kind, model: modelName },
+    })
   }
 
   if (isLoading) {
@@ -1682,6 +2081,9 @@ export function ModelDetails() {
 
         <ModelDetailsContent
           model={model}
+          allModels={models}
+          onSelectModel={handleSelectModel}
+          onOpenStudio={handleOpenStudio}
           groupRatio={groupRatio || {}}
           usableGroup={usableGroup || {}}
           autoGroups={autoGroups || []}

@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "En attente de nouvelle tentative",
     "Planning video shots": "Planification des plans vidéo",
     "Connecting to video service": "Connexion au service vidéo",
@@ -23,9 +26,6 @@
     "Video generation failed": "Échec de la génération vidéo",
     "Video could not be saved": "Impossible d’enregistrer la vidéo",
     "Video task status could not be recovered before its deadline": "Impossible de récupérer l’état vidéo avant l’échéance",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_copie",
     "，": ", ",
     ", and": ", et",
@@ -8149,7 +8149,28 @@
     "Create image": "Générer",
     "Video generation": "Génération vidéo",
     "Collapse to series card": "Regrouper en série",
-    "Expand all {{count}} duration tiers": "Afficher les {{count}} durées"
+    "Expand all {{count}} duration tiers": "Afficher les {{count}} durées",
+    "Model Plaza": "Place des modèles",
+    "{{models}} models · {{vendors}} vendors": "{{models}} modèles · {{vendors}} fournisseurs",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "Consultez les modèles de chat, vidéo et image avec statut 24h, ratios de groupe et tarifs",
+    "Sort by": "Trier par",
+    "Lowest price": "Prix croissant",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "Rechercher un modèle, fournisseur ou capacité (ex. opus, muse, 60s, deepseek)",
+    "Priced with “{{name}}” ×{{ratio}}": "Tarifié avec « {{name}} » ×{{ratio}}",
+    "Reset to lowest price": "Réinitialiser au prix le plus bas",
+    "Text to Image": "Texte vers image",
+    "Image to Image": "Image vers image",
+    "Multi-image reference": "Référence multi-images",
+    "Native resolution": "Résolution native",
+    "Image generation": "Génération d’images",
+    "image unit": "image",
+    "Per request · Native image": "Par requête · Image native",
+    "Switch duration tier": "Changer la durée",
+    "Suitable for": "Idéal pour",
+    "Usage notes": "Notes d’utilisation",
+    "Enter video studio": "Ouvrir le studio vidéo",
+    "Enter image studio": "Ouvrir le studio image",
+    "Run pelican test": "Lancer le test pélican"
   },
   "Video duration is below the selected model tier": "La durée de la vidéo est inférieure au minimum requis pour le modèle sélectionné"
 }

@@ -16,7 +16,15 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { ChevronRight, Clock, Film, Play, Sparkles, Wrench } from 'lucide-react'
+import {
+  ChevronRight,
+  Clock,
+  Film,
+  Image as ImageIcon,
+  Play,
+  Sparkles,
+  Wrench,
+} from 'lucide-react'
 import { memo, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -36,7 +44,9 @@ import { formatRequestPrice, formatRequestPricePerUnit } from '../lib/price'
 import {
   formatExactSeconds,
   formatTimecode,
+  getImageDisplayTitle,
   getVideoDisplayTitle,
+  parseImageMetadata,
   parseVideoDurationSeconds,
   parseVideoMetadata,
 } from '../lib/video-market'
@@ -81,19 +91,25 @@ function VideoMaintenanceRibbon(props: { note?: string; until?: number }) {
   )
 }
 
-function cinemaBackdropStyle(accent: string): CSSProperties {
+export function cinemaBackdropStyle(accent: string): CSSProperties {
   return {
     backgroundImage: `radial-gradient(125% 95% at 90% 10%, color-mix(in srgb, ${accent} 32%, transparent) 0%, transparent 56%), radial-gradient(95% 95% at 10% 90%, rgb(168 85 247 / 0.2) 0%, transparent 58%), linear-gradient(145deg, #12141a 0%, #1b1c23 55%, #161317 100%)`,
   }
 }
 
-const CINEMA_GRID_STYLE: CSSProperties = {
+export function imageBackdropStyle(accent = '#A855F7'): CSSProperties {
+  return {
+    backgroundImage: `radial-gradient(125% 95% at 90% 10%, color-mix(in srgb, ${accent} 34%, transparent) 0%, transparent 58%), radial-gradient(95% 95% at 10% 90%, rgb(236 72 153 / 0.22) 0%, transparent 60%), linear-gradient(145deg, #15121d 0%, #1d1727 55%, #17131c 100%)`,
+  }
+}
+
+export const CINEMA_GRID_STYLE: CSSProperties = {
   backgroundImage:
     'linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px)',
   backgroundSize: '26px 26px',
 }
 
-function resolveVideoAccent(model: PricingModel): string {
+export function resolveVideoAccent(model: PricingModel): string {
   if (/muse/i.test(model.model_name) || /muse/i.test(model.vendor_name ?? '')) {
     return '#FF5A1F'
   }
@@ -645,7 +661,7 @@ export const VideoSingleCard = memo(function VideoSingleCard(
                 <CopyButton
                   value={model.model_name}
                   aria-label={t('Copy model name')}
-                  className='size-4 rounded text-white/70 opacity-0 transition-opacity group-hover/market:opacity-100 hover:text-white focus-visible:opacity-100'
+                  className='size-4 rounded text-white/70 opacity-65 transition-opacity group-hover/market:opacity-100 hover:text-white focus-visible:opacity-100'
                   iconClassName='size-3'
                 />
               </div>
@@ -774,6 +790,229 @@ export const VideoSingleCard = memo(function VideoSingleCard(
               style={{ backgroundColor: accent }}
             >
               {t('Create video')}
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+})
+
+const IMAGE_ACCENT = '#A855F7'
+
+export interface ImageModelCardProps {
+  model: PricingModel
+  perf?: MarketPerf
+  onClick: (modelName: string) => void
+  onOpenStudio?: (modelName: string, kind: 'video' | 'image') => void
+  priceRate?: number
+  usdExchangeRate?: number
+  tokenUnit?: TokenUnit
+  showRechargePrice?: boolean
+  selectedGroup?: string
+}
+
+export const ImageModelCard = memo(function ImageModelCard(
+  props: ImageModelCardProps
+) {
+  const { t } = useTranslation()
+  const model = props.model
+  const title = getImageDisplayTitle(model)
+  const meta = useMemo(() => parseImageMetadata(model), [model])
+  const groups = filterValidGroups(model)
+  const maintenance = model.maintenance
+  const dim = maintenance ? MAINTENANCE_DIM_CLASS : undefined
+
+  const prices = useMarketPrice(model, {
+    tokenUnit: props.tokenUnit ?? DEFAULT_TOKEN_UNIT,
+    showRechargePrice: props.showRechargePrice ?? false,
+    priceRate: props.priceRate ?? 1,
+    usdExchangeRate: props.usdExchangeRate ?? 1,
+    group: props.selectedGroup,
+  })
+  const isFixed = model.quota_type === QUOTA_TYPE_VALUES.REQUEST
+  const primaryPrice = isFixed
+    ? (prices.find((p) => p.key === 'price') ?? prices[0])
+    : prices[0]
+
+  const specSummary =
+    [
+      meta.nativeResolution ? t('Native resolution') : '',
+      meta.resolution ?? '',
+    ]
+      .filter(Boolean)
+      .join(' · ') || t('Image generation')
+
+  return (
+    <article
+      aria-label={model.model_name}
+      className={cn(
+        'group/market bg-card hover:shadow-card relative flex min-w-0 flex-col overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-150',
+        maintenance ? 'border-indigo-500/35' : 'hover:border-(--family)/45'
+      )}
+      style={
+        {
+          '--family': IMAGE_ACCENT,
+          ...(maintenance && { backgroundImage: MAINTENANCE_STRIPES }),
+        } as CSSProperties
+      }
+    >
+      {/* Purple Media Header (Unified visual family with Video card) */}
+      <div
+        className={cn('relative overflow-hidden px-4 pt-3.5 pb-3 text-white', dim)}
+        style={imageBackdropStyle(IMAGE_ACCENT)}
+      >
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-0'
+          style={CINEMA_GRID_STYLE}
+        />
+        <div className='relative z-10 flex items-start justify-between gap-2'>
+          <div className='flex min-w-0 items-center gap-2.5'>
+            <span
+              aria-hidden
+              className='grid size-9 shrink-0 place-items-center rounded-[9px] border border-white/15 bg-white/10 text-purple-300'
+            >
+              <ImageIcon className='size-4' />
+            </span>
+            <div className='min-w-0'>
+              <div className='flex flex-wrap items-center gap-1.5'>
+                <strong className='text-[15.5px] leading-tight font-bold tracking-[-0.01em]'>
+                  {title}
+                </strong>
+                <span className='rounded bg-purple-500/85 px-1.5 py-0.5 text-[10.5px] leading-none font-semibold text-white'>
+                  {t('Image')}
+                </span>
+              </div>
+              <div className='mt-0.5 flex items-center gap-1'>
+                <span
+                  title={model.model_name}
+                  className='truncate font-mono text-[11px] text-white/75'
+                >
+                  {model.model_name}
+                </span>
+                <CopyButton
+                  value={model.model_name}
+                  aria-label={t('Copy model name')}
+                  className='size-4 rounded text-white/70 opacity-65 transition-opacity group-hover/market:opacity-100 hover:text-white focus-visible:opacity-100'
+                  iconClassName='size-3'
+                />
+              </div>
+            </div>
+          </div>
+          <button
+            type='button'
+            aria-label={t('Details')}
+            title={t('Details')}
+            onClick={() => props.onClick(model.model_name)}
+            className='-my-1 -mr-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-white/70 transition-colors hover:bg-white/10 hover:text-white'
+          >
+            <ChevronRight aria-hidden className='size-4' strokeWidth={1.9} />
+          </button>
+        </div>
+
+        <div className='relative z-10 mt-2.5 flex items-center justify-between gap-2 text-[11px] text-white/80'>
+          <span className='truncate'>{specSummary}</span>
+          <span className='shrink-0 font-mono text-[10.5px] text-white/85'>
+            {meta.formatLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className='flex flex-1 flex-col gap-3 p-4'>
+        {maintenance && (
+          <VideoMaintenanceRibbon
+            note={maintenance.note}
+            until={maintenance.until}
+          />
+        )}
+
+        <div className={cn('flex flex-wrap gap-1.5', dim)}>
+          {meta.capabilities.map((capKey) => (
+            <span
+              key={capKey}
+              className='bg-muted text-muted-foreground inline-flex h-[22px] items-center rounded-md px-2 text-[11px] font-medium'
+            >
+              {t(capKey)}
+            </span>
+          ))}
+        </div>
+
+        {!maintenance && (
+          <div
+            aria-label={t('Performance metrics for the last 24 hours')}
+            className='text-subtle-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11.5px]'
+          >
+            <span>
+              {t('Success rate')}{' '}
+              <MarketSuccessRate perf={props.perf} className='font-semibold' />
+            </span>
+            <span aria-hidden className='opacity-40'>
+              ·
+            </span>
+            <span>
+              {t('Avg duration')}{' '}
+              <b className='text-foreground font-mono font-medium tabular-nums'>
+                {formatExactSeconds(props.perf?.latencyMs)}
+              </b>
+            </span>
+          </div>
+        )}
+
+        {groups.length > 0 && (
+          <div className={cn('flex flex-wrap items-center gap-1.5', dim)}>
+            <small className='text-subtle-foreground mr-0.5 text-[11px]'>
+              {t('Group')}
+            </small>
+            <MarketGroupTags groups={groups} max={4} className='text-[11px]' />
+          </div>
+        )}
+
+        <div
+          role='group'
+          aria-label={t('Pricing')}
+          className='mt-auto flex items-end justify-between gap-2 border-t pt-3'
+        >
+          <div className={cn('min-w-0', dim)}>
+            <div className='flex items-baseline gap-1'>
+              <b className='truncate font-mono text-[16px] leading-none font-bold tabular-nums'>
+                {primaryPrice?.value ?? '—'}
+              </b>
+              <span className='text-subtle-foreground text-[11px]'>
+                {isFixed
+                  ? `/ ${t('image unit')}`
+                  : (primaryPrice?.unit ?? '')}
+              </span>
+            </div>
+            <div className='text-subtle-foreground mt-1 text-[10.5px]'>
+              {isFixed
+                ? t('Per request · Native image')
+                : (primaryPrice?.label ?? t('Per image'))}
+            </div>
+          </div>
+
+          {maintenance ? (
+            <button
+              type='button'
+              disabled
+              className='bg-card text-subtle-foreground inline-flex h-8 cursor-not-allowed items-center gap-1 rounded-lg border px-2.5 text-xs opacity-60'
+            >
+              <Wrench aria-hidden className='size-3.5' strokeWidth={1.8} />
+              {t('Under maintenance')}
+            </button>
+          ) : (
+            <button
+              type='button'
+              onClick={() =>
+                props.onOpenStudio
+                  ? props.onOpenStudio(model.model_name, 'image')
+                  : props.onClick(model.model_name)
+              }
+              className='inline-flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-lg px-3 text-xs font-semibold text-white transition-opacity hover:opacity-90'
+              style={{ backgroundColor: IMAGE_ACCENT }}
+            >
+              {t('Create image')}
             </button>
           )}
         </div>

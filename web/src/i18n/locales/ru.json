@@ -1,5 +1,8 @@
 {
   "translation": {
+    "360": "360",
+    "1000": "1000",
+    "10000": "10000",
     "Waiting to retry": "Ожидание повторной попытки",
     "Planning video shots": "Планирование сцен видео",
     "Connecting to video service": "Подключение к видеосервису",
@@ -23,9 +26,6 @@
     "Video generation failed": "Ошибка генерации видео",
     "Video could not be saved": "Не удалось сохранить видео",
     "Video task status could not be recovered before its deadline": "Не удалось восстановить состояние видео до истечения срока",
-    "360": "360",
-    "1000": "1000",
-    "10000": "10000",
     "_copy": "_копировать",
     "，": ", ",
     ", and": ", и",
@@ -8149,7 +8149,28 @@
     "Create image": "Создать",
     "Video generation": "Генерация видео",
     "Collapse to series card": "Свернуть в серию",
-    "Expand all {{count}} duration tiers": "Показать все {{count}} длит."
+    "Expand all {{count}} duration tiers": "Показать все {{count}} длит.",
+    "Model Plaza": "Каталог моделей",
+    "{{models}} models · {{vendors}} vendors": "{{models}} моделей · {{vendors}} провайдеров",
+    "Browse chat, video, and image models with 24h status, group ratios, and discounted pricing": "Просматривайте чат-, видео- и графические модели со статусом за 24 ч, коэффициентами групп и ценами",
+    "Sort by": "Сортировка",
+    "Lowest price": "Сначала дешевле",
+    "Search models, vendors, or capabilities (e.g. opus, muse, 60s, deepseek)": "Поиск по модели, провайдеру или возможностям (напр. opus, muse, 60s, deepseek)",
+    "Priced with “{{name}}” ×{{ratio}}": "Расчёт по группе «{{name}}» ×{{ratio}}",
+    "Reset to lowest price": "Сбросить к мин. цене",
+    "Text to Image": "Текст в изображение",
+    "Image to Image": "Изображение в изображение",
+    "Multi-image reference": "Несколько референсов",
+    "Native resolution": "Нативное разрешение",
+    "Image generation": "Генерация изображений",
+    "image unit": "изобр.",
+    "Per request · Native image": "За запрос · Нативное изображение",
+    "Switch duration tier": "Выбрать длительность",
+    "Suitable for": "Подходит для",
+    "Usage notes": "Примечания по использованию",
+    "Enter video studio": "Открыть видеостудию",
+    "Enter image studio": "Открыть фотостудию",
+    "Run pelican test": "Запустить тест пеликана"
   },
   "Video duration is below the selected model tier": "Длительность видео ниже минимальной для выбранного уровня модели"
 }
