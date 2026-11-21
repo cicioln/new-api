@@ -8238,7 +8238,17 @@
     "Usage notes": "使用注意與參數說明",
     "Enter video studio": "進入影片創作工坊",
     "Enter image studio": "進入圖像工坊",
-    "Run pelican test": "執行鵜鶘測試"
+    "Run pelican test": "執行鵜鶘測試",
+    "No key index specified to update": "未指定要更新的金鑰索引",
+    "Key name updated": "金鑰名稱已更新",
+    "Saved key #1": "已儲存金鑰 #1",
+    "Per-Key Configuration ({{count}} keys)": "各 Key 獨立配置（共 {{count}} 個 Key）",
+    "Name optional · Concurrency defaults to global ({{count}})": "名稱選填 · 並發留空跟隨全域（{{count}}）",
+    "Custom name (optional)": "自訂名稱（選填）",
+    "Concurrency": "並發",
+    "Global ({{count}})": "全域({{count}})",
+    "Unnamed": "未命名",
+    "Edit key name": "編輯金鑰名稱"
   },
   "Video duration is below the selected model tier": "影片實際時長未達所選模型級別要求"
 }

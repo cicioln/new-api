@@ -8170,7 +8170,17 @@
     "Usage notes": "Lưu ý sử dụng",
     "Enter video studio": "Vào studio video",
     "Enter image studio": "Vào studio ảnh",
-    "Run pelican test": "Chạy bài kiểm tra bồ nông"
+    "Run pelican test": "Chạy bài kiểm tra bồ nông",
+    "No key index specified to update": "Chưa chỉ định chỉ mục khóa cần cập nhật",
+    "Key name updated": "Đã cập nhật tên khóa",
+    "Saved key #1": "Khóa đã lưu #1",
+    "Per-Key Configuration ({{count}} keys)": "Cấu hình từng khóa ({{count}} khóa)",
+    "Name optional · Concurrency defaults to global ({{count}})": "Tên tùy chọn · Đồng thời mặc định theo toàn cục ({{count}})",
+    "Custom name (optional)": "Tên tùy chỉnh (không bắt buộc)",
+    "Concurrency": "Đồng thời",
+    "Global ({{count}})": "Toàn cục ({{count}})",
+    "Unnamed": "Chưa đặt tên",
+    "Edit key name": "Sửa tên khóa"
   },
   "Video duration is below the selected model tier": "Thời lượng video chưa đạt mức tối thiểu của mô hình đã chọn"
 }

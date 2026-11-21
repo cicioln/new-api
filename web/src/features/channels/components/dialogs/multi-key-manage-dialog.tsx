@@ -17,7 +17,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
-import { Loader2, RefreshCw, Trash2, Power, PowerOff } from 'lucide-react'
+import {
+  Check,
+  Loader2,
+  Pencil,
+  Power,
+  PowerOff,
+  RefreshCw,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -27,6 +36,7 @@ import { StaticDataTable } from '@/components/data-table'
 import { Dialog } from '@/components/dialog'
 import { StatusBadge } from '@/components/status-badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -53,6 +63,7 @@ import {
   enableAllMultiKeys,
   disableAllMultiKeys,
   deleteDisabledMultiKeys,
+  updateMultiKeyName,
 } from '../../api'
 import { MULTI_KEY_FILTER_OPTIONS } from '../../constants'
 import {
@@ -102,12 +113,17 @@ export function MultiKeyManageDialog({
   const [confirmAction, setConfirmAction] =
     useState<MultiKeyConfirmAction | null>(null)
   const [isPerformingAction, setIsPerformingAction] = useState(false)
+  const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null)
+  const [editingKeyName, setEditingKeyName] = useState('')
+  const [isSavingKeyName, setIsSavingKeyName] = useState(false)
 
   // Reset and load data when dialog opens
   useEffect(() => {
     if (open && currentRow) {
       setCurrentPage(1)
       setStatusFilter(null)
+      setEditingKeyIndex(null)
+      setEditingKeyName('')
       loadKeyStatus(1, pageSize, null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,8 +172,56 @@ export function MultiKeyManageDialog({
   }
 
   const handlePageChange = (newPage: number) => {
+    setEditingKeyIndex(null)
     setCurrentPage(newPage)
     loadKeyStatus(newPage, pageSize)
+  }
+
+  const startEditKeyName = (key: KeyStatus) => {
+    setEditingKeyIndex(key.index)
+    setEditingKeyName(key.name || '')
+  }
+
+  const cancelEditKeyName = () => {
+    setEditingKeyIndex(null)
+    setEditingKeyName('')
+  }
+
+  const saveEditKeyName = async (keyIndex: number) => {
+    if (!currentRow || isSavingKeyName) return
+    setIsSavingKeyName(true)
+    try {
+      const trimmed = editingKeyName.trim().slice(0, 64)
+      const response = await updateMultiKeyName(
+        currentRow.id,
+        keyIndex,
+        trimmed
+      )
+      if (response.success) {
+        const savedName = response.data?.name ?? trimmed
+        setKeys((prev) =>
+          prev.map((item) =>
+            item.index === keyIndex ? { ...item, name: savedName } : item
+          )
+        )
+        toast.success(getServerMessage(response) || t('Key name updated'))
+        queryClient.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
+        queryClient.invalidateQueries({
+          queryKey: channelsQueryKeys.detail(currentRow.id),
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['channel-multi-key-status', currentRow.id],
+        })
+        setEditingKeyIndex(null)
+        setEditingKeyName('')
+      } else {
+        handleServerError(response, t('Operation failed'))
+      }
+    } catch (error: unknown) {
+      handleServerError(error, t('Operation failed'))
+    } finally {
+      setIsSavingKeyName(false)
+    }
   }
 
   const performAction = async () => {
@@ -194,6 +258,13 @@ export function MultiKeyManageDialog({
       if (response?.success) {
         toast.success(getServerMessage(response) || t('Operation successful'))
         queryClient.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
+        queryClient.invalidateQueries({
+          queryKey: channelsQueryKeys.detail(currentRow.id),
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['channel-multi-key-status', currentRow.id],
+        })
+        setEditingKeyIndex(null)
 
         // Reload data - reset to page 1 for bulk actions
         const isBulkAction = type.includes('all') || type === 'delete-disabled'
@@ -394,9 +465,107 @@ export function MultiKeyManageDialog({
                   {
                     id: 'index',
                     header: t('Index'),
-                    className: 'w-20',
+                    className: 'w-16',
                     cellClassName: 'font-mono text-sm',
                     cell: (key) => `#${key.index + 1}`,
+                  },
+                  {
+                    id: 'name',
+                    header: t('Key Name'),
+                    className: 'min-w-[220px]',
+                    cell: (key) => {
+                      if (editingKeyIndex === key.index) {
+                        return (
+                          <div className='flex items-center gap-1'>
+                            <Input
+                              value={editingKeyName}
+                              onChange={(e) =>
+                                setEditingKeyName(e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  void saveEditKeyName(key.index)
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault()
+                                  cancelEditKeyName()
+                                }
+                              }}
+                              maxLength={64}
+                              placeholder={t('Custom name (optional)')}
+                              className='h-7 w-40 px-2 text-xs'
+                              disabled={isSavingKeyName}
+                              autoFocus
+                            />
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              className='h-7 w-7'
+                              disabled={isSavingKeyName}
+                              aria-label={t('Save')}
+                              onClick={() => void saveEditKeyName(key.index)}
+                            >
+                              {isSavingKeyName ? (
+                                <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                              ) : (
+                                <Check className='h-3.5 w-3.5' />
+                              )}
+                            </Button>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              className='h-7 w-7'
+                              disabled={isSavingKeyName}
+                              aria-label={t('Cancel')}
+                              onClick={cancelEditKeyName}
+                            >
+                              <X className='h-3.5 w-3.5' />
+                            </Button>
+                          </div>
+                        )
+                      }
+                      return (
+                        <div className='group flex items-center gap-1.5'>
+                          <div className='min-w-0'>
+                            <div className='flex items-center gap-1.5'>
+                              {key.name ? (
+                                <span
+                                  className='max-w-[180px] truncate text-sm font-medium'
+                                  title={key.name}
+                                >
+                                  {key.name}
+                                </span>
+                              ) : (
+                                <span className='text-muted-foreground text-xs'>
+                                  {t('Unnamed')}
+                                </span>
+                              )}
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                size='icon'
+                                className='text-muted-foreground hover:text-foreground h-6 w-6 opacity-60 transition-opacity group-hover:opacity-100'
+                                aria-label={t('Edit key name')}
+                                title={t('Edit key name')}
+                                onClick={() => startEditKeyName(key)}
+                              >
+                                <Pencil className='h-3 w-3' />
+                              </Button>
+                            </div>
+                            {key.key_preview && (
+                              <div
+                                className='text-muted-foreground max-w-[210px] truncate font-mono text-[11px]'
+                                title={key.key_preview}
+                              >
+                                {key.key_preview}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    },
                   },
                   {
                     id: 'status',

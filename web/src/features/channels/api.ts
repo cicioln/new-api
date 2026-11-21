@@ -546,6 +546,30 @@ export async function deleteDisabledMultiKeys(
   }) as Promise<{ success: boolean; message?: string; data?: number }>
 }
 
+/**
+ * Update optional custom name for a specific key in multi-key channel
+ */
+export async function updateMultiKeyName(
+  channelId: number,
+  keyIndex: number,
+  keyName: string
+): Promise<{
+  success: boolean
+  message?: string
+  data?: { index: number; name: string }
+}> {
+  return manageMultiKeys({
+    channel_id: channelId,
+    action: 'update_key_name',
+    key_index: keyIndex,
+    key_name: keyName,
+  }) as Promise<{
+    success: boolean
+    message?: string
+    data?: { index: number; name: string }
+  }>
+}
+
 // ============================================================================
 // Tag Operations
 // ============================================================================

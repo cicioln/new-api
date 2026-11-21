@@ -8170,7 +8170,17 @@
     "Usage notes": "Примечания по использованию",
     "Enter video studio": "Открыть видеостудию",
     "Enter image studio": "Открыть фотостудию",
-    "Run pelican test": "Запустить тест пеликана"
+    "Run pelican test": "Запустить тест пеликана",
+    "No key index specified to update": "Не указан индекс ключа для обновления",
+    "Key name updated": "Название ключа обновлено",
+    "Saved key #1": "Сохранённый ключ #1",
+    "Per-Key Configuration ({{count}} keys)": "Настройка ключей (всего {{count}})",
+    "Name optional · Concurrency defaults to global ({{count}})": "Имя необязательно · Параллелизм по умолчанию глобальный ({{count}})",
+    "Custom name (optional)": "Своё название (необязательно)",
+    "Concurrency": "Параллелизм",
+    "Global ({{count}})": "Глоб. ({{count}})",
+    "Unnamed": "Без имени",
+    "Edit key name": "Изменить название ключа"
   },
   "Video duration is below the selected model tier": "Длительность видео ниже минимальной для выбранного уровня модели"
 }

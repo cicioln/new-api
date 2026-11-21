@@ -8170,7 +8170,17 @@
     "Usage notes": "利用時の注意点",
     "Enter video studio": "動画スタジオへ",
     "Enter image studio": "画像スタジオへ",
-    "Run pelican test": "ペリカンテストを実行"
+    "Run pelican test": "ペリカンテストを実行",
+    "No key index specified to update": "更新するキーのインデックスが指定されていません",
+    "Key name updated": "キー名を更新しました",
+    "Saved key #1": "保存済みキー #1",
+    "Per-Key Configuration ({{count}} keys)": "キー別設定（全 {{count}} 件）",
+    "Name optional · Concurrency defaults to global ({{count}})": "名前は任意 · 並列数が空の場合はグローバル設定（{{count}}）を使用",
+    "Custom name (optional)": "カスタム名（任意）",
+    "Concurrency": "並列数",
+    "Global ({{count}})": "全体({{count}})",
+    "Unnamed": "未設定",
+    "Edit key name": "キー名を編集"
   },
   "Video duration is below the selected model tier": "動画の長さが選択したモデルの最低要件を満たしていません"
 }

@@ -792,11 +792,45 @@ func RefreshCodexChannelCredential(c *gin.Context) {
 	})
 }
 
+const maxMultiKeyNameLength = 64
+
+func normalizeMultiKeyName(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return ""
+	}
+	runes := []rune(trimmed)
+	if len(runes) > maxMultiKeyNameLength {
+		return string(runes[:maxMultiKeyNameLength])
+	}
+	return trimmed
+}
+
+func normalizeMultiKeyNameList(raw map[int]string, maxSize int) map[int]string {
+	if len(raw) == 0 {
+		return nil
+	}
+	normalized := make(map[int]string, len(raw))
+	for idx, name := range raw {
+		if idx < 0 || (maxSize > 0 && idx >= maxSize) {
+			continue
+		}
+		if trimmed := normalizeMultiKeyName(name); trimmed != "" {
+			normalized[idx] = trimmed
+		}
+	}
+	if len(normalized) == 0 {
+		return nil
+	}
+	return normalized
+}
+
 type AddChannelRequest struct {
 	Mode                      string                `json:"mode"`
 	MultiKeyMode              constant.MultiKeyMode `json:"multi_key_mode"`
 	KeyConcurrency            int                   `json:"key_concurrency"`
 	MultiKeyConcurrencyList   map[int]int           `json:"multi_key_concurrency_list"`
+	MultiKeyNameList          map[int]string        `json:"multi_key_name_list"`
 	BatchAddSetKeyPrefix2Name bool                  `json:"batch_add_set_key_prefix_2_name"`
 	Channel                   *model.Channel        `json:"channel"`
 }
@@ -873,6 +907,9 @@ func AddChannel(c *gin.Context) {
 			addChannelRequest.Channel.ChannelInfo.MultiKeyConcurrencyList = normalized
 		}
 	}
+	if addChannelRequest.Channel != nil && len(addChannelRequest.MultiKeyNameList) > 0 {
+		addChannelRequest.Channel.ChannelInfo.MultiKeyNameList = normalizeMultiKeyNameList(addChannelRequest.MultiKeyNameList, 0)
+	}
 	// 使用统一的校验函数
 	if err := validateChannel(addChannelRequest.Channel, true); err != nil {
 		common.ApiError(c, err)
@@ -904,6 +941,12 @@ func AddChannel(c *gin.Context) {
 			}
 			addChannelRequest.Channel.ChannelInfo.MultiKeySize = len(cleanKeys)
 			addChannelRequest.Channel.Key = strings.Join(cleanKeys, "\n")
+		}
+		if addChannelRequest.Channel.ChannelInfo.MultiKeyNameList != nil {
+			addChannelRequest.Channel.ChannelInfo.MultiKeyNameList = normalizeMultiKeyNameList(
+				addChannelRequest.Channel.ChannelInfo.MultiKeyNameList,
+				addChannelRequest.Channel.ChannelInfo.MultiKeySize,
+			)
 		}
 		keys = []string{addChannelRequest.Channel.Key}
 	case "batch":
@@ -1180,10 +1223,11 @@ func DeleteChannelBatch(c *gin.Context) {
 
 type PatchChannel struct {
 	model.Channel
-	MultiKeyMode            *string     `json:"multi_key_mode"`
-	KeyMode                 *string     `json:"key_mode"` // 多key模式下密钥覆盖或者追加
-	KeyConcurrency          *int        `json:"key_concurrency"`
-	MultiKeyConcurrencyList map[int]int `json:"multi_key_concurrency_list"`
+	MultiKeyMode            *string        `json:"multi_key_mode"`
+	KeyMode                 *string        `json:"key_mode"` // 多key模式下密钥覆盖或者追加
+	KeyConcurrency          *int           `json:"key_concurrency"`
+	MultiKeyConcurrencyList map[int]int    `json:"multi_key_concurrency_list"`
+	MultiKeyNameList        map[int]string `json:"multi_key_name_list"`
 }
 
 // MaintenanceNote and MaintenanceUntil apply only to the maintenance status.
@@ -1306,6 +1350,10 @@ func UpdateChannel(c *gin.Context) {
 		} else {
 			channel.ChannelInfo.MultiKeyConcurrencyList = nil
 		}
+		concurrencyUpdated = true
+	}
+	if _, ok := requestData["multi_key_name_list"]; ok {
+		channel.ChannelInfo.MultiKeyNameList = normalizeMultiKeyNameList(channel.MultiKeyNameList, 0)
 		concurrencyUpdated = true
 	}
 
@@ -1813,12 +1861,13 @@ func CopyChannel(c *gin.Context) {
 
 // MultiKeyManageRequest represents the request for multi-key management operations
 type MultiKeyManageRequest struct {
-	ChannelId int    `json:"channel_id"`
-	Action    string `json:"action"`              // "disable_key", "enable_key", "delete_key", "delete_disabled_keys", "get_key_status"
-	KeyIndex  *int   `json:"key_index,omitempty"` // for disable_key, enable_key, and delete_key actions
-	Page      int    `json:"page,omitempty"`      // for get_key_status pagination
-	PageSize  int    `json:"page_size,omitempty"` // for get_key_status pagination
-	Status    *int   `json:"status,omitempty"`    // for get_key_status filtering: 1=enabled, 2=manual_disabled, 3=auto_disabled, nil=all
+	ChannelId int     `json:"channel_id"`
+	Action    string  `json:"action"`              // "disable_key", "enable_key", "delete_key", "delete_disabled_keys", "get_key_status", "update_key_name"
+	KeyIndex  *int    `json:"key_index,omitempty"` // for disable_key, enable_key, delete_key, and update_key_name actions
+	KeyName   *string `json:"key_name,omitempty"`  // for update_key_name action (optional; empty clears custom name)
+	Page      int     `json:"page,omitempty"`      // for get_key_status pagination
+	PageSize  int     `json:"page_size,omitempty"` // for get_key_status pagination
+	Status    *int    `json:"status,omitempty"`    // for get_key_status filtering: 1=enabled, 2=manual_disabled, 3=auto_disabled, nil=all
 }
 
 // MultiKeyStatusResponse represents the response for key status query
@@ -1841,6 +1890,7 @@ type KeyStatus struct {
 	Reason       string `json:"reason,omitempty"`
 	KeyPreview   string `json:"key_preview"` // first 10 chars of key for identification
 	Concurrency  int    `json:"concurrency,omitempty"`
+	Name         string `json:"name,omitempty"`
 }
 
 // ManageMultiKeys handles multi-key management operations
@@ -1951,6 +2001,10 @@ func ManageMultiKeys(c *gin.Context) {
 			if channel.ChannelInfo.MultiKeyConcurrencyList != nil {
 				keyConc = channel.ChannelInfo.MultiKeyConcurrencyList[i]
 			}
+			var keyName string
+			if channel.ChannelInfo.MultiKeyNameList != nil {
+				keyName = channel.ChannelInfo.MultiKeyNameList[i]
+			}
 
 			allKeyStatusList = append(allKeyStatusList, KeyStatus{
 				Index:        i,
@@ -1959,6 +2013,7 @@ func ManageMultiKeys(c *gin.Context) {
 				Reason:       reason,
 				KeyPreview:   keyPreview,
 				Concurrency:  keyConc,
+				Name:         keyName,
 			})
 		}
 
@@ -2147,6 +2202,48 @@ func ManageMultiKeys(c *gin.Context) {
 		common.ApiSuccessT(c, "Disabled {{count}} keys", nil, map[string]any{"count": disabledCount})
 		return
 
+	case "update_key_name":
+		if request.KeyIndex == nil {
+			common.ApiErrorT(c, "No key index specified to update")
+			return
+		}
+
+		keyIndex := *request.KeyIndex
+		if keyIndex < 0 || keyIndex >= channel.ChannelInfo.MultiKeySize {
+			common.ApiErrorT(c, "Key index out of range")
+			return
+		}
+
+		trimmedName := ""
+		if request.KeyName != nil {
+			trimmedName = normalizeMultiKeyName(*request.KeyName)
+		}
+
+		if trimmedName == "" {
+			if channel.ChannelInfo.MultiKeyNameList != nil {
+				delete(channel.ChannelInfo.MultiKeyNameList, keyIndex)
+				if len(channel.ChannelInfo.MultiKeyNameList) == 0 {
+					channel.ChannelInfo.MultiKeyNameList = nil
+				}
+			}
+		} else {
+			if channel.ChannelInfo.MultiKeyNameList == nil {
+				channel.ChannelInfo.MultiKeyNameList = make(map[int]string)
+			}
+			channel.ChannelInfo.MultiKeyNameList[keyIndex] = trimmedName
+		}
+
+		if err := channel.SaveChannelInfo(); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		model.InitChannelCache()
+		common.ApiSuccessT(c, "Key name updated", gin.H{
+			"index": keyIndex,
+			"name":  trimmedName,
+		})
+		return
+
 	case "delete_key":
 		if request.KeyIndex == nil {
 			common.ApiErrorT(c, "No key index specified to delete")
@@ -2165,6 +2262,7 @@ func ManageMultiKeys(c *gin.Context) {
 		var newDisabledTime = make(map[int]int64)
 		var newDisabledReason = make(map[int]string)
 		var newConcurrencyList = make(map[int]int)
+		var newNameList = make(map[int]string)
 
 		newIndex := 0
 		for i, key := range keys {
@@ -2196,6 +2294,13 @@ func ManageMultiKeys(c *gin.Context) {
 					newConcurrencyList[newIndex] = c
 				}
 			}
+			if channel.ChannelInfo.MultiKeyNameList != nil {
+				if n, exists := channel.ChannelInfo.MultiKeyNameList[i]; exists {
+					if trimmed := normalizeMultiKeyName(n); trimmed != "" {
+						newNameList[newIndex] = trimmed
+					}
+				}
+			}
 			newIndex++
 		}
 
@@ -2211,6 +2316,11 @@ func ManageMultiKeys(c *gin.Context) {
 		channel.ChannelInfo.MultiKeyDisabledTime = newDisabledTime
 		channel.ChannelInfo.MultiKeyDisabledReason = newDisabledReason
 		channel.ChannelInfo.MultiKeyConcurrencyList = newConcurrencyList
+		if len(newNameList) > 0 {
+			channel.ChannelInfo.MultiKeyNameList = newNameList
+		} else {
+			channel.ChannelInfo.MultiKeyNameList = nil
+		}
 
 		shouldCloseWebSocket := disableMultiKeyChannelIfUnavailable(channel)
 		err = channel.Update()
@@ -2233,6 +2343,7 @@ func ManageMultiKeys(c *gin.Context) {
 		var newDisabledTime = make(map[int]int64)
 		var newDisabledReason = make(map[int]string)
 		var newConcurrencyList = make(map[int]int)
+		var newNameList = make(map[int]string)
 
 		newIndex := 0
 		for i, key := range keys {
@@ -2267,6 +2378,13 @@ func ManageMultiKeys(c *gin.Context) {
 						newConcurrencyList[newIndex] = c
 					}
 				}
+				if channel.ChannelInfo.MultiKeyNameList != nil {
+					if n, exists := channel.ChannelInfo.MultiKeyNameList[i]; exists {
+						if trimmed := normalizeMultiKeyName(n); trimmed != "" {
+							newNameList[newIndex] = trimmed
+						}
+					}
+				}
 				newIndex++
 			}
 		}
@@ -2283,6 +2401,11 @@ func ManageMultiKeys(c *gin.Context) {
 		channel.ChannelInfo.MultiKeyDisabledTime = newDisabledTime
 		channel.ChannelInfo.MultiKeyDisabledReason = newDisabledReason
 		channel.ChannelInfo.MultiKeyConcurrencyList = newConcurrencyList
+		if len(newNameList) > 0 {
+			channel.ChannelInfo.MultiKeyNameList = newNameList
+		} else {
+			channel.ChannelInfo.MultiKeyNameList = nil
+		}
 
 		shouldCloseWebSocket := disableMultiKeyChannelIfUnavailable(channel)
 		err = channel.Update()

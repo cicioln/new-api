@@ -8238,7 +8238,17 @@
     "Usage notes": "使用注意与参数说明",
     "Enter video studio": "进入视频创作工坊",
     "Enter image studio": "进入图像工坊",
-    "Run pelican test": "运行鹈鹕测试"
+    "Run pelican test": "运行鹈鹕测试",
+    "No key index specified to update": "未指定要更新的密钥索引",
+    "Key name updated": "密钥名称已更新",
+    "Saved key #1": "已保存密钥 #1",
+    "Per-Key Configuration ({{count}} keys)": "各 Key 独立配置（共 {{count}} 个 Key）",
+    "Name optional · Concurrency defaults to global ({{count}})": "名称选填 · 并发留空跟随全局（{{count}}）",
+    "Custom name (optional)": "自定义名称（选填）",
+    "Concurrency": "并发",
+    "Global ({{count}})": "全局({{count}})",
+    "Unnamed": "未命名",
+    "Edit key name": "编辑密钥名称"
   },
   "Video duration is below the selected model tier": "视频实际时长未达到所选模型档位要求"
 }

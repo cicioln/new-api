@@ -264,6 +264,9 @@ export const channelFormSchema = z
     multi_key_concurrency_list: z
       .record(z.string(), z.number().int().min(0))
       .optional(),
+    multi_key_name_list: z
+      .record(z.string(), z.string().max(64))
+      .optional(),
     // Channel extra settings (stored in setting JSON, not sent directly)
     force_format: z.boolean().optional(),
     thinking_to_content: z.boolean().optional(),
@@ -463,6 +466,7 @@ export const CHANNEL_FORM_DEFAULT_VALUES: ChannelFormValues = {
   key_mode: 'append',
   key_concurrency: 0,
   multi_key_concurrency_list: {},
+  multi_key_name_list: {},
   // Channel extra settings
   force_format: false,
   thinking_to_content: false,
@@ -639,6 +643,7 @@ export function transformChannelToFormDefaults(
     key_concurrency: channel.channel_info?.key_concurrency || 0,
     multi_key_concurrency_list:
       channel.channel_info?.multi_key_concurrency_list || {},
+    multi_key_name_list: channel.channel_info?.multi_key_name_list || {},
     // Channel extra settings
     ...extraSettings,
     // Type-specific settings
@@ -871,6 +876,20 @@ function normalizeBaseUrl(value: string | undefined): string {
     .replace(/\/+$/, '')
 }
 
+export function normalizeMultiKeyNameList(
+  raw?: Record<string, string>
+): Record<string, string> {
+  if (!raw) return {}
+  const normalized: Record<string, string> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const trimmed = String(value ?? '').trim()
+    if (trimmed) {
+      normalized[key] = trimmed.slice(0, 64)
+    }
+  }
+  return normalized
+}
+
 /**
  * Transform form data to API payload for creating channel
  */
@@ -879,10 +898,14 @@ export function transformFormDataToCreatePayload(formData: ChannelFormValues): {
   multi_key_mode?: 'random' | 'polling'
   key_concurrency?: number
   multi_key_concurrency_list?: Record<string, number>
+  multi_key_name_list?: Record<string, string>
   batch_add_set_key_prefix_2_name?: boolean
   channel: Partial<Channel>
 } {
   const mode = formData.multi_key_mode || 'single'
+  const normalizedNameList = normalizeMultiKeyNameList(
+    formData.multi_key_name_list
+  )
 
   const channel: Partial<Channel> = {
     name: formData.name,
@@ -928,6 +951,10 @@ export function transformFormDataToCreatePayload(formData: ChannelFormValues): {
       formData.multi_key_concurrency_list &&
       Object.keys(formData.multi_key_concurrency_list).length > 0
         ? formData.multi_key_concurrency_list
+        : undefined,
+    multi_key_name_list:
+      mode === 'multi_to_single' && Object.keys(normalizedNameList).length > 0
+        ? normalizedNameList
         : undefined,
     batch_add_set_key_prefix_2_name:
       mode === 'batch' ? formData.batch_add_set_key_prefix_2_name : undefined,

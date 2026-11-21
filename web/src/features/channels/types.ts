@@ -32,6 +32,7 @@ export const channelInfoSchema = z.object({
   multi_key_mode: z.enum(['random', 'polling']).default('random'),
   key_concurrency: z.number().default(0),
   multi_key_concurrency_list: z.record(z.string(), z.number()).optional(),
+  multi_key_name_list: z.record(z.string(), z.string()).optional(),
 })
 
 export type ChannelInfo = z.infer<typeof channelInfoSchema>
@@ -270,6 +271,7 @@ export interface KeyStatus {
   reason?: string
   key_preview?: string
   concurrency?: number
+  name?: string
 }
 
 export type MultiKeyConfirmAction = {
@@ -359,7 +361,9 @@ export interface MultiKeyManageParams {
     | 'disable_all_keys'
     | 'delete_key'
     | 'delete_disabled_keys'
+    | 'update_key_name'
   key_index?: number
+  key_name?: string
   page?: number
   page_size?: number
   status?: number // 1=enabled, 2=manual_disabled, 3=auto_disabled
@@ -425,6 +429,7 @@ export interface AddChannelRequest {
   multi_key_mode?: 'random' | 'polling'
   key_concurrency?: number
   multi_key_concurrency_list?: Record<string, number>
+  multi_key_name_list?: Record<string, string>
   batch_add_set_key_prefix_2_name?: boolean
   channel: Partial<Channel>
 }

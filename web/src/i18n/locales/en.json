@@ -8238,7 +8238,17 @@
     "Usage notes": "Usage notes",
     "Enter video studio": "Enter video studio",
     "Enter image studio": "Enter image studio",
-    "Run pelican test": "Run pelican test"
+    "Run pelican test": "Run pelican test",
+    "No key index specified to update": "No key index specified to update",
+    "Key name updated": "Key name updated",
+    "Saved key #1": "Saved key #1",
+    "Per-Key Configuration ({{count}} keys)": "Per-Key Configuration ({{count}} keys)",
+    "Name optional · Concurrency defaults to global ({{count}})": "Name optional · Concurrency defaults to global ({{count}})",
+    "Custom name (optional)": "Custom name (optional)",
+    "Concurrency": "Concurrency",
+    "Global ({{count}})": "Global ({{count}})",
+    "Unnamed": "Unnamed",
+    "Edit key name": "Edit key name"
   },
   "Video duration is below the selected model tier": "Video duration is below the selected model tier"
 }

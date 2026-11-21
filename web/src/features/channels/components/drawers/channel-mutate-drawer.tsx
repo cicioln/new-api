@@ -1522,6 +1522,9 @@ export function ChannelMutateDrawer({
       queryClient.invalidateQueries({
         queryKey: channelsQueryKeys.detail(channelId),
       })
+      queryClient.invalidateQueries({
+        queryKey: ['channel-multi-key-status', channelId],
+      })
     }
     onOpenChange(false)
     setOpen(null)
@@ -1608,7 +1611,7 @@ export function ChannelMutateDrawer({
   }, [])
 
   const channelMutation = useChannelMutateForm({
-    currentRow,
+    currentRow: channelData?.data ?? currentRow,
     isEditing,
     isMultiKeyChannel: originIsMultiKeyChannel,
     onSuccess: handleSuccess,
@@ -4757,6 +4760,7 @@ export function ChannelMutateDrawer({
                     name='multi_key_concurrency_list'
                     render={({ field }) => {
                       const concMap = field.value || {}
+                      const nameMap = formValues.multi_key_name_list || {}
                       const defaultConc =
                         formValues.key_concurrency &&
                         formValues.key_concurrency > 0
@@ -4769,7 +4773,7 @@ export function ChannelMutateDrawer({
                               {
                                 index: 0,
                                 status: 1,
-                                key_preview: '已保存密钥 #1',
+                                key_preview: t('Saved key #1'),
                               },
                             ]
                           : []
@@ -4795,34 +4799,43 @@ export function ChannelMutateDrawer({
                               ...enteredLines.map((line, idx) => ({
                                 index: savedKeys.length + idx,
                                 status: 1,
-                                key_preview: `[新增] ${previewLine(line)}`,
+                                key_preview: `[${t('New')}] ${previewLine(line)}`,
                               })),
                             ]
                       if (keysList.length === 0) return <></>
                       return (
                         <FormItem className='space-y-2 border-t pt-3'>
-                          <div className='flex items-center justify-between'>
+                          <div className='flex flex-wrap items-center justify-between gap-1'>
                             <FormLabel className='text-xs font-medium'>
-                              各 Key 独立并发数配置（共 {keysList.length} 个 Key）
+                              {t('Per-Key Configuration ({{count}} keys)', {
+                                count: keysList.length,
+                              })}
                             </FormLabel>
                             <span className='text-muted-foreground text-xs'>
-                              留空则跟随全局（{defaultConc}）
+                              {t(
+                                'Name optional · Concurrency defaults to global ({{count}})',
+                                { count: defaultConc }
+                              )}
                             </span>
                           </div>
-                          <div className='max-h-56 space-y-1.5 overflow-y-auto rounded-md border p-2'>
+                          <div className='max-h-64 space-y-1.5 overflow-y-auto rounded-md border p-2'>
                             {keysList.map((k) => {
                               const idxKey = String(k.index)
                               const customVal = concMap[idxKey]
+                              const customName = nameMap[idxKey] ?? ''
                               return (
                                 <div
                                   key={k.index}
-                                  className='bg-muted/30 flex items-center justify-between gap-2 rounded px-2.5 py-1.5 text-xs'
+                                  className='bg-muted/30 flex flex-col gap-2 rounded px-2.5 py-2 text-xs sm:flex-row sm:items-center sm:justify-between'
                                 >
                                   <div className='flex min-w-0 items-center gap-2'>
                                     <span className='text-muted-foreground shrink-0 font-mono'>
                                       #{k.index + 1}
                                     </span>
-                                    <span className='truncate font-mono'>
+                                    <span
+                                      className='truncate font-mono'
+                                      title={k.key_preview}
+                                    >
                                       {k.key_preview || `Key #${k.index + 1}`}
                                     </span>
                                     <Badge
@@ -4833,38 +4846,69 @@ export function ChannelMutateDrawer({
                                       }
                                       className='h-4 shrink-0 px-1 text-[10px]'
                                     >
-                                      {k.status === 1 ? '启用' : '已禁用'}
+                                      {k.status === 1
+                                        ? t('Enabled')
+                                        : t('Disabled')}
                                     </Badge>
                                   </div>
-                                  <div className='flex shrink-0 items-center gap-1.5'>
-                                    <span className='text-muted-foreground text-[11px]'>
-                                      并发
-                                    </span>
-                                    <Input
-                                      type='number'
-                                      min={0}
-                                      max={100}
-                                      placeholder={`全局(${defaultConc})`}
-                                      className='h-7 w-24 px-2 font-mono text-xs'
-                                      value={
-                                        customVal && customVal > 0
-                                          ? customVal
-                                          : ''
-                                      }
-                                      onChange={(e) => {
-                                        const val = Number.parseInt(
-                                          e.target.value,
-                                          10
-                                        )
-                                        const next = { ...concMap }
-                                        if (Number.isFinite(val) && val > 0) {
-                                          next[idxKey] = val
-                                        } else {
-                                          delete next[idxKey]
+                                  <div className='flex flex-wrap items-center gap-2 sm:shrink-0'>
+                                    <div className='flex min-w-0 flex-1 items-center gap-1.5 sm:flex-initial'>
+                                      <span className='text-muted-foreground shrink-0 text-[11px]'>
+                                        {t('Key Name')}
+                                      </span>
+                                      <Input
+                                        type='text'
+                                        maxLength={64}
+                                        placeholder={t('Custom name (optional)')}
+                                        className='h-7 w-full px-2 text-xs sm:w-36'
+                                        value={customName}
+                                        onChange={(e) => {
+                                          const next = { ...nameMap }
+                                          if (e.target.value.length > 0) {
+                                            next[idxKey] = e.target.value
+                                          } else {
+                                            delete next[idxKey]
+                                          }
+                                          form.setValue(
+                                            'multi_key_name_list',
+                                            next,
+                                            { shouldDirty: true }
+                                          )
+                                        }}
+                                      />
+                                    </div>
+                                    <div className='flex shrink-0 items-center gap-1.5'>
+                                      <span className='text-muted-foreground text-[11px]'>
+                                        {t('Concurrency')}
+                                      </span>
+                                      <Input
+                                        type='number'
+                                        min={0}
+                                        max={100}
+                                        placeholder={t('Global ({{count}})', {
+                                          count: defaultConc,
+                                        })}
+                                        className='h-7 w-22 px-2 font-mono text-xs'
+                                        value={
+                                          customVal && customVal > 0
+                                            ? customVal
+                                            : ''
                                         }
-                                        field.onChange(next)
-                                      }}
-                                    />
+                                        onChange={(e) => {
+                                          const val = Number.parseInt(
+                                            e.target.value,
+                                            10
+                                          )
+                                          const next = { ...concMap }
+                                          if (Number.isFinite(val) && val > 0) {
+                                            next[idxKey] = val
+                                          } else {
+                                            delete next[idxKey]
+                                          }
+                                          field.onChange(next)
+                                        }}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               )

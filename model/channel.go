@@ -71,6 +71,7 @@ type ChannelInfo struct {
 	MultiKeyMode            constant.MultiKeyMode `json:"multi_key_mode"`
 	KeyConcurrency          int                   `json:"key_concurrency,omitempty"`            // 渠道默认单Key并发数（全局并发数，0表示默认1）
 	MultiKeyConcurrencyList map[int]int           `json:"multi_key_concurrency_list,omitempty"` // 针对特定Key的独立并发数，key index -> concurrency
+	MultiKeyNameList        map[int]string        `json:"multi_key_name_list,omitempty"`        // 针对特定Key的自定义名称（非必填），key index -> name
 }
 
 type ChannelSortOptions struct {
@@ -601,6 +602,19 @@ func (channel *Channel) Update() error {
 				if idx < 0 || idx >= channel.ChannelInfo.MultiKeySize || conc <= 0 {
 					delete(channel.ChannelInfo.MultiKeyConcurrencyList, idx)
 				}
+			}
+		}
+		if channel.ChannelInfo.MultiKeyNameList != nil {
+			for idx, name := range channel.ChannelInfo.MultiKeyNameList {
+				trimmed := strings.TrimSpace(name)
+				if idx < 0 || idx >= channel.ChannelInfo.MultiKeySize || trimmed == "" {
+					delete(channel.ChannelInfo.MultiKeyNameList, idx)
+				} else if trimmed != name {
+					channel.ChannelInfo.MultiKeyNameList[idx] = trimmed
+				}
+			}
+			if len(channel.ChannelInfo.MultiKeyNameList) == 0 {
+				channel.ChannelInfo.MultiKeyNameList = nil
 			}
 		}
 	}

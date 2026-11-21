@@ -8170,7 +8170,17 @@
     "Usage notes": "Notes d’utilisation",
     "Enter video studio": "Ouvrir le studio vidéo",
     "Enter image studio": "Ouvrir le studio image",
-    "Run pelican test": "Lancer le test pélican"
+    "Run pelican test": "Lancer le test pélican",
+    "No key index specified to update": "Aucun index de clé spécifié pour la mise à jour",
+    "Key name updated": "Nom de la clé mis à jour",
+    "Saved key #1": "Clé enregistrée #1",
+    "Per-Key Configuration ({{count}} keys)": "Configuration par clé ({{count}} clés)",
+    "Name optional · Concurrency defaults to global ({{count}})": "Nom facultatif · Concurrence globale par défaut ({{count}})",
+    "Custom name (optional)": "Nom personnalisé (facultatif)",
+    "Concurrency": "Concurrence",
+    "Global ({{count}})": "Global ({{count}})",
+    "Unnamed": "Sans nom",
+    "Edit key name": "Modifier le nom de la clé"
   },
   "Video duration is below the selected model tier": "La durée de la vidéo est inférieure au minimum requis pour le modèle sélectionné"
 }

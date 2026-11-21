@@ -32,6 +32,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { createChannel, updateChannel } from '../api'
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../constants'
 import {
+  normalizeMultiKeyNameList,
   transformFormDataToCreatePayload,
   transformFormDataToUpdatePayload,
   type ChannelFormValues,
@@ -108,6 +109,13 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
         const concListChanged =
           JSON.stringify(prevConcList) !== JSON.stringify(nextConcList)
 
+        const prevNameList = normalizeMultiKeyNameList(
+          props.currentRow.channel_info?.multi_key_name_list
+        )
+        const nextNameList = normalizeMultiKeyNameList(data.multi_key_name_list)
+        const nameListChanged =
+          JSON.stringify(prevNameList) !== JSON.stringify(nextNameList)
+
         const response = await updateChannel(props.currentRow.id, {
           ...payloadWithKeyMode,
           ...(canEditSensitive && isTargetMultiKey
@@ -122,6 +130,7 @@ export function useChannelMutateForm(props: UseChannelMutateFormParams) {
           ...(concListChanged
             ? { multi_key_concurrency_list: nextConcList }
             : {}),
+          ...(nameListChanged ? { multi_key_name_list: nextNameList } : {}),
         })
         if (!response.success) {
           throw createServerError(response, t(ERROR_MESSAGES.UPDATE_FAILED))
