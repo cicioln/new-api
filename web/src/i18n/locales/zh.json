@@ -8248,7 +8248,12 @@
     "Concurrency": "并发",
     "Global ({{count}})": "全局({{count}})",
     "Unnamed": "未命名",
-    "Edit key name": "编辑密钥名称"
+    "Edit key name": "编辑密钥名称",
+    "Delete key": "删除密钥",
+    "Remove key": "移除该行密钥",
+    "Pending save": "待保存",
+    "Abnormal (Auto Disabled)": "异常（自动禁用）",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "确定要删除密钥 {{label}} 吗？此操作无法撤销。"
   },
   "Video duration is below the selected model tier": "视频实际时长未达到所选模型档位要求"
 }

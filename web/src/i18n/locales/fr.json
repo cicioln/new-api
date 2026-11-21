@@ -8180,7 +8180,12 @@
     "Concurrency": "Concurrence",
     "Global ({{count}})": "Global ({{count}})",
     "Unnamed": "Sans nom",
-    "Edit key name": "Modifier le nom de la clé"
+    "Edit key name": "Modifier le nom de la clé",
+    "Delete key": "Supprimer la clé",
+    "Remove key": "Retirer cette clé",
+    "Pending save": "En attente",
+    "Abnormal (Auto Disabled)": "Anormal (désactivée auto.)",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "Voulez-vous vraiment supprimer la clé {{label}} ? Cette action est irréversible."
   },
   "Video duration is below the selected model tier": "La durée de la vidéo est inférieure au minimum requis pour le modèle sélectionné"
 }

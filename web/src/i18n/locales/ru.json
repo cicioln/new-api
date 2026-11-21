@@ -8180,7 +8180,12 @@
     "Concurrency": "Параллелизм",
     "Global ({{count}})": "Глоб. ({{count}})",
     "Unnamed": "Без имени",
-    "Edit key name": "Изменить название ключа"
+    "Edit key name": "Изменить название ключа",
+    "Delete key": "Удалить ключ",
+    "Remove key": "Убрать строку ключа",
+    "Pending save": "Не сохранён",
+    "Abnormal (Auto Disabled)": "Сбой (автооткл.)",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "Вы уверены, что хотите удалить ключ {{label}}? Это действие нельзя отменить."
   },
   "Video duration is below the selected model tier": "Длительность видео ниже минимальной для выбранного уровня модели"
 }

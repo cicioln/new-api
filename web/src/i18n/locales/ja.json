@@ -8180,7 +8180,12 @@
     "Concurrency": "並列数",
     "Global ({{count}})": "全体({{count}})",
     "Unnamed": "未設定",
-    "Edit key name": "キー名を編集"
+    "Edit key name": "キー名を編集",
+    "Delete key": "キーを削除",
+    "Remove key": "この行を削除",
+    "Pending save": "未保存",
+    "Abnormal (Auto Disabled)": "異常（自動無効）",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "キー {{label}} を削除してもよろしいですか？この操作は元に戻せません。"
   },
   "Video duration is below the selected model tier": "動画の長さが選択したモデルの最低要件を満たしていません"
 }

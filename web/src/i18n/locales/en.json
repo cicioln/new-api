@@ -8248,7 +8248,12 @@
     "Concurrency": "Concurrency",
     "Global ({{count}})": "Global ({{count}})",
     "Unnamed": "Unnamed",
-    "Edit key name": "Edit key name"
+    "Edit key name": "Edit key name",
+    "Delete key": "Delete key",
+    "Remove key": "Remove key",
+    "Pending save": "Pending save",
+    "Abnormal (Auto Disabled)": "Abnormal (Auto Disabled)",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "Are you sure you want to delete key {{label}}? This action cannot be undone."
   },
   "Video duration is below the selected model tier": "Video duration is below the selected model tier"
 }

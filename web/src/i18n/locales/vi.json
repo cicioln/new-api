@@ -8180,7 +8180,12 @@
     "Concurrency": "Đồng thời",
     "Global ({{count}})": "Toàn cục ({{count}})",
     "Unnamed": "Chưa đặt tên",
-    "Edit key name": "Sửa tên khóa"
+    "Edit key name": "Sửa tên khóa",
+    "Delete key": "Xóa khóa",
+    "Remove key": "Bỏ khóa này",
+    "Pending save": "Chờ lưu",
+    "Abnormal (Auto Disabled)": "Bất thường (tự tắt)",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "Bạn có chắc muốn xóa khóa {{label}} không? Hành động này không thể hoàn tác."
   },
   "Video duration is below the selected model tier": "Thời lượng video chưa đạt mức tối thiểu của mô hình đã chọn"
 }

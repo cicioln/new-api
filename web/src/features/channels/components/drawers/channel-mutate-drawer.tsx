@@ -54,6 +54,7 @@ import { type SubmitErrorHandler, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import {
   sideDrawerContentClassName,
   sideDrawerFooterClassName,
@@ -123,11 +124,13 @@ import {
   requireServerSuccess,
   createServerError,
   getServerErrorMessage,
+  getServerMessage,
 } from '@/lib/server-error-message'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 
 import {
+  deleteMultiKey,
   getAllModels,
   getChannel,
   getChannelDefaultBaseURLs,
@@ -170,6 +173,7 @@ import {
   CHANNEL_TYPE_ADVANCED_CUSTOM,
   channelFormSchema,
   channelsQueryKeys,
+  formatTimestamp,
   getAdvancedCustomStats,
   transformChannelToFormDefaults,
   type ChannelFormValues,
@@ -403,6 +407,20 @@ function SubHeading(props: {
 /** Stable empty list so memoized consumers do not re-run on every render. */
 const NO_UPSTREAM_MODELS: string[] = []
 
+function removeIndexFromRecord<T>(
+  record: Record<string, T> | undefined,
+  removedIndex: number
+): Record<string, T> {
+  if (!record) return {}
+  const next: Record<string, T> = {}
+  for (const [key, value] of Object.entries(record)) {
+    const idx = Number.parseInt(key, 10)
+    if (!Number.isFinite(idx) || idx === removedIndex) continue
+    next[String(idx > removedIndex ? idx - 1 : idx)] = value
+  }
+  return next
+}
+
 export function ChannelMutateDrawer({
   open,
   onOpenChange,
@@ -571,11 +589,21 @@ export function ChannelMutateDrawer({
   const originIsMultiKeyChannel =
     isEditing && channelData?.data?.channel_info?.is_multi_key === true
 
-  const { data: multiKeyStatusData } = useQuery({
+  const {
+    data: multiKeyStatusData,
+    refetch: refetchMultiKeyStatus,
+    isFetching: isFetchingMultiKeyStatus,
+  } = useQuery({
     queryKey: ['channel-multi-key-status', channelId],
     queryFn: () => getMultiKeyStatus(channelId!, 1, 200),
     enabled: Boolean(open && isEditing && channelId && originIsMultiKeyChannel),
   })
+
+  const [pendingDeleteSavedKey, setPendingDeleteSavedKey] = useState<{
+    index: number
+    label: string
+  } | null>(null)
+  const [isDeletingSavedKey, setIsDeletingSavedKey] = useState(false)
 
   // Form setup
   const form = useForm<ChannelFormValues>({
@@ -1042,6 +1070,7 @@ export function ChannelMutateDrawer({
   useEffect(() => {
     if (!open) {
       setModelConfiguration(null)
+      setPendingDeleteSavedKey(null)
       form.reset(CHANNEL_FORM_DEFAULT_VALUES)
       loadedForm.current = null
       setProviderTarget(null)
@@ -1529,6 +1558,67 @@ export function ChannelMutateDrawer({
     onOpenChange(false)
     setOpen(null)
   }, [channelId, queryClient, onOpenChange, setOpen])
+
+  const handleConfirmDeleteSavedKey = useCallback(async () => {
+    if (!pendingDeleteSavedKey || !channelId || isDeletingSavedKey) return
+    setIsDeletingSavedKey(true)
+    try {
+      const response = await deleteMultiKey(
+        channelId,
+        pendingDeleteSavedKey.index
+      )
+      if (response.success) {
+        const hadUnsavedChanges =
+          loadedForm.current?.snapshot !== JSON.stringify(form.getValues())
+        const nextNames = removeIndexFromRecord(
+          form.getValues('multi_key_name_list'),
+          pendingDeleteSavedKey.index
+        )
+        const nextConcs = removeIndexFromRecord(
+          form.getValues('multi_key_concurrency_list'),
+          pendingDeleteSavedKey.index
+        )
+        form.setValue('multi_key_name_list', nextNames, {
+          shouldDirty: hadUnsavedChanges,
+        })
+        form.setValue('multi_key_concurrency_list', nextConcs, {
+          shouldDirty: hadUnsavedChanges,
+        })
+        if (!hadUnsavedChanges && loadedForm.current) {
+          loadedForm.current = {
+            channelId: loadedForm.current.channelId,
+            snapshot: JSON.stringify(form.getValues()),
+          }
+        }
+        toast.success(getServerMessage(response) || t('Key deleted'))
+        setPendingDeleteSavedKey(null)
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ['channel-multi-key-status', channelId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: channelsQueryKeys.detail(channelId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: channelsQueryKeys.lists(),
+          }),
+        ])
+      } else {
+        handleServerError(response, t('Operation failed'))
+      }
+    } catch (error: unknown) {
+      handleServerError(error, t('Operation failed'))
+    } finally {
+      setIsDeletingSavedKey(false)
+    }
+  }, [
+    channelId,
+    form,
+    isDeletingSavedKey,
+    pendingDeleteSavedKey,
+    queryClient,
+    t,
+  ])
 
   // Show missing models confirmation dialog
   const confirmMissingModelMappings = useCallback(
@@ -4766,14 +4856,28 @@ export function ChannelMutateDrawer({
                         formValues.key_concurrency > 0
                           ? formValues.key_concurrency
                           : 1
-                      const savedKeys = originIsMultiKeyChannel
+                      const rawSavedKeys = originIsMultiKeyChannel
                         ? multiKeyStatusData?.data?.keys || []
+                        : []
+                      const savedKeys: Array<{
+                        index: number
+                        status: number
+                        key_preview?: string
+                        reason?: string
+                        disabled_time?: number
+                        source: 'saved' | 'placeholder'
+                      }> = originIsMultiKeyChannel
+                        ? rawSavedKeys.map((item) => ({
+                            ...item,
+                            source: 'saved' as const,
+                          }))
                         : isEditing
                           ? [
                               {
                                 index: 0,
                                 status: 1,
                                 key_preview: t('Saved key #1'),
+                                source: 'placeholder' as const,
                               },
                             ]
                           : []
@@ -4785,13 +4889,24 @@ export function ChannelMutateDrawer({
                         line.length > 24
                           ? `${line.slice(0, 16)}...${line.slice(-4)}`
                           : line
-                      const keysList =
+                      type KeyListItem = {
+                        index: number
+                        status: number
+                        key_preview?: string
+                        reason?: string
+                        disabled_time?: number
+                        source: 'saved' | 'placeholder' | 'entered'
+                        enteredIndex?: number
+                      }
+                      const keysList: KeyListItem[] =
                         !isEditing || keyMode === 'replace'
                           ? enteredLines.length > 0
                             ? enteredLines.map((line, idx) => ({
                                 index: idx,
                                 status: 1,
                                 key_preview: previewLine(line),
+                                source: 'entered' as const,
+                                enteredIndex: idx,
                               }))
                             : savedKeys
                           : [
@@ -4800,17 +4915,82 @@ export function ChannelMutateDrawer({
                                 index: savedKeys.length + idx,
                                 status: 1,
                                 key_preview: `[${t('New')}] ${previewLine(line)}`,
+                                source: 'entered' as const,
+                                enteredIndex: idx,
                               })),
                             ]
                       if (keysList.length === 0) return <></>
+                      const statusSummary = multiKeyStatusData?.data
+                      const handleRemoveEnteredKey = (
+                        enteredIndex: number,
+                        displayIndex: number
+                      ) => {
+                        const remaining = enteredLines.filter(
+                          (_, idx) => idx !== enteredIndex
+                        )
+                        form.setValue('key', remaining.join('\n'), {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                        form.setValue(
+                          'multi_key_name_list',
+                          removeIndexFromRecord(nameMap, displayIndex),
+                          { shouldDirty: true }
+                        )
+                        field.onChange(
+                          removeIndexFromRecord(concMap, displayIndex)
+                        )
+                      }
                       return (
                         <FormItem className='space-y-2 border-t pt-3'>
-                          <div className='flex flex-wrap items-center justify-between gap-1'>
-                            <FormLabel className='text-xs font-medium'>
-                              {t('Per-Key Configuration ({{count}} keys)', {
-                                count: keysList.length,
-                              })}
-                            </FormLabel>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <div className='flex flex-wrap items-center gap-2'>
+                              <FormLabel className='text-xs font-medium'>
+                                {t('Per-Key Configuration ({{count}} keys)', {
+                                  count: keysList.length,
+                                })}
+                              </FormLabel>
+                              {originIsMultiKeyChannel && statusSummary && (
+                                <div className='flex flex-wrap items-center gap-1.5 text-[11px]'>
+                                  <span className='inline-flex items-center gap-1 rounded-full bg-emerald-500/12 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400'>
+                                    <span className='size-1.5 rounded-full bg-emerald-500' />
+                                    {t('Normal')} {statusSummary.enabled_count}
+                                  </span>
+                                  {statusSummary.manual_disabled_count > 0 && (
+                                    <span className='inline-flex items-center gap-1 rounded-full bg-amber-500/12 px-2 py-0.5 font-medium text-amber-600 dark:text-amber-400'>
+                                      <span className='size-1.5 rounded-full bg-amber-500' />
+                                      {t('Manual Disabled')}{' '}
+                                      {statusSummary.manual_disabled_count}
+                                    </span>
+                                  )}
+                                  {statusSummary.auto_disabled_count > 0 && (
+                                    <span className='bg-destructive/12 text-destructive inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium'>
+                                      <span className='bg-destructive size-1.5 rounded-full' />
+                                      {t('Auto Disabled')}{' '}
+                                      {statusSummary.auto_disabled_count}
+                                    </span>
+                                  )}
+                                  <Button
+                                    type='button'
+                                    variant='ghost'
+                                    size='icon'
+                                    className='text-muted-foreground hover:text-foreground h-5 w-5'
+                                    disabled={isFetchingMultiKeyStatus}
+                                    aria-label={t('Refresh')}
+                                    title={t('Refresh')}
+                                    onClick={() => void refetchMultiKeyStatus()}
+                                  >
+                                    <RefreshCw
+                                      className={cn(
+                                        'size-3',
+                                        isFetchingMultiKeyStatus &&
+                                          'animate-spin'
+                                      )}
+                                    />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                             <span className='text-muted-foreground text-xs'>
                               {t(
                                 'Name optional · Concurrency defaults to global ({{count}})',
@@ -4818,98 +4998,202 @@ export function ChannelMutateDrawer({
                               )}
                             </span>
                           </div>
-                          <div className='max-h-64 space-y-1.5 overflow-y-auto rounded-md border p-2'>
+                          <div className='max-h-72 space-y-1.5 overflow-y-auto rounded-md border p-2'>
                             {keysList.map((k) => {
                               const idxKey = String(k.index)
                               const customVal = concMap[idxKey]
                               const customName = nameMap[idxKey] ?? ''
+                              const isSaved = k.source === 'saved'
+                              const isEntered = k.source === 'entered'
+                              const canDeleteRow = isSaved
+                                ? !sensitiveLocked && rawSavedKeys.length > 1
+                                : isEntered
+                                  ? !sensitiveLocked
+                                  : false
+                              const deleteTooltip = !canDeleteRow
+                                ? sensitiveLocked
+                                  ? t('No permission to perform this action')
+                                  : t('Cannot delete the last key')
+                                : isSaved
+                                  ? t('Delete key')
+                                  : t('Remove key')
+                              const statusBadge = isEntered ? (
+                                <span className='inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-sky-500/25 bg-sky-500/10 px-1.5 text-[10px] font-medium text-sky-600 dark:text-sky-400'>
+                                  <span className='size-1.5 rounded-full bg-sky-500' />
+                                  {t('Pending save')}
+                                </span>
+                              ) : k.status === 1 ? (
+                                <span className='inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/12 px-1.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400'>
+                                  <span className='size-1.5 rounded-full bg-emerald-500' />
+                                  {t('Normal')}
+                                </span>
+                              ) : k.status === 2 ? (
+                                <span className='inline-flex h-5 shrink-0 items-center gap-1 rounded-full border border-amber-500/25 bg-amber-500/12 px-1.5 text-[10px] font-medium text-amber-600 dark:text-amber-400'>
+                                  <span className='size-1.5 rounded-full bg-amber-500' />
+                                  {t('Manual Disabled')}
+                                </span>
+                              ) : (
+                                <span className='border-destructive/25 bg-destructive/12 text-destructive inline-flex h-5 shrink-0 items-center gap-1 rounded-full border px-1.5 text-[10px] font-medium'>
+                                  <span className='bg-destructive size-1.5 rounded-full' />
+                                  {t('Abnormal (Auto Disabled)')}
+                                </span>
+                              )
                               return (
                                 <div
-                                  key={k.index}
-                                  className='bg-muted/30 flex flex-col gap-2 rounded px-2.5 py-2 text-xs sm:flex-row sm:items-center sm:justify-between'
+                                  key={`${k.source}-${k.index}`}
+                                  className={cn(
+                                    'flex flex-col gap-1.5 rounded border border-transparent px-2.5 py-2 text-xs',
+                                    isSaved && k.status === 3
+                                      ? 'border-destructive/30 bg-destructive/5'
+                                      : isSaved && k.status === 2
+                                        ? 'border-amber-500/25 bg-amber-500/5'
+                                        : 'bg-muted/30'
+                                  )}
                                 >
-                                  <div className='flex min-w-0 items-center gap-2'>
-                                    <span className='text-muted-foreground shrink-0 font-mono'>
-                                      #{k.index + 1}
-                                    </span>
-                                    <span
-                                      className='truncate font-mono'
-                                      title={k.key_preview}
-                                    >
-                                      {k.key_preview || `Key #${k.index + 1}`}
-                                    </span>
-                                    <Badge
-                                      variant={
-                                        k.status === 1
-                                          ? 'secondary'
-                                          : 'destructive'
-                                      }
-                                      className='h-4 shrink-0 px-1 text-[10px]'
-                                    >
-                                      {k.status === 1
-                                        ? t('Enabled')
-                                        : t('Disabled')}
-                                    </Badge>
-                                  </div>
-                                  <div className='flex flex-wrap items-center gap-2 sm:shrink-0'>
-                                    <div className='flex min-w-0 flex-1 items-center gap-1.5 sm:flex-initial'>
-                                      <span className='text-muted-foreground shrink-0 text-[11px]'>
-                                        {t('Key Name')}
+                                  <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                                    <div className='flex min-w-0 items-center gap-2'>
+                                      <span className='text-muted-foreground shrink-0 font-mono'>
+                                        #{k.index + 1}
                                       </span>
-                                      <Input
-                                        type='text'
-                                        maxLength={64}
-                                        placeholder={t('Custom name (optional)')}
-                                        className='h-7 w-full px-2 text-xs sm:w-36'
-                                        value={customName}
-                                        onChange={(e) => {
-                                          const next = { ...nameMap }
-                                          if (e.target.value.length > 0) {
-                                            next[idxKey] = e.target.value
-                                          } else {
-                                            delete next[idxKey]
-                                          }
-                                          form.setValue(
-                                            'multi_key_name_list',
-                                            next,
-                                            { shouldDirty: true }
-                                          )
-                                        }}
-                                      />
-                                    </div>
-                                    <div className='flex shrink-0 items-center gap-1.5'>
-                                      <span className='text-muted-foreground text-[11px]'>
-                                        {t('Concurrency')}
+                                      <span
+                                        className='truncate font-mono'
+                                        title={k.key_preview}
+                                      >
+                                        {k.key_preview || `Key #${k.index + 1}`}
                                       </span>
-                                      <Input
-                                        type='number'
-                                        min={0}
-                                        max={100}
-                                        placeholder={t('Global ({{count}})', {
-                                          count: defaultConc,
-                                        })}
-                                        className='h-7 w-22 px-2 font-mono text-xs'
-                                        value={
-                                          customVal && customVal > 0
-                                            ? customVal
-                                            : ''
-                                        }
-                                        onChange={(e) => {
-                                          const val = Number.parseInt(
-                                            e.target.value,
-                                            10
-                                          )
-                                          const next = { ...concMap }
-                                          if (Number.isFinite(val) && val > 0) {
-                                            next[idxKey] = val
-                                          } else {
-                                            delete next[idxKey]
+                                      {statusBadge}
+                                    </div>
+                                    <div className='flex flex-wrap items-center gap-2 sm:shrink-0'>
+                                      <div className='flex min-w-0 flex-1 items-center gap-1.5 sm:flex-initial'>
+                                        <span className='text-muted-foreground shrink-0 text-[11px]'>
+                                          {t('Key Name')}
+                                        </span>
+                                        <Input
+                                          type='text'
+                                          maxLength={64}
+                                          placeholder={t(
+                                            'Custom name (optional)'
+                                          )}
+                                          className='h-7 w-full px-2 text-xs sm:w-32'
+                                          value={customName}
+                                          onChange={(e) => {
+                                            const next = { ...nameMap }
+                                            if (e.target.value.length > 0) {
+                                              next[idxKey] = e.target.value
+                                            } else {
+                                              delete next[idxKey]
+                                            }
+                                            form.setValue(
+                                              'multi_key_name_list',
+                                              next,
+                                              { shouldDirty: true }
+                                            )
+                                          }}
+                                        />
+                                      </div>
+                                      <div className='flex shrink-0 items-center gap-1.5'>
+                                        <span className='text-muted-foreground text-[11px]'>
+                                          {t('Concurrency')}
+                                        </span>
+                                        <Input
+                                          type='number'
+                                          min={0}
+                                          max={100}
+                                          placeholder={t('Global ({{count}})', {
+                                            count: defaultConc,
+                                          })}
+                                          className='h-7 w-20 px-2 font-mono text-xs'
+                                          value={
+                                            customVal && customVal > 0
+                                              ? customVal
+                                              : ''
                                           }
-                                          field.onChange(next)
-                                        }}
-                                      />
+                                          onChange={(e) => {
+                                            const val = Number.parseInt(
+                                              e.target.value,
+                                              10
+                                            )
+                                            const next = { ...concMap }
+                                            if (
+                                              Number.isFinite(val) &&
+                                              val > 0
+                                            ) {
+                                              next[idxKey] = val
+                                            } else {
+                                              delete next[idxKey]
+                                            }
+                                            field.onChange(next)
+                                          }}
+                                        />
+                                      </div>
+                                      {(isSaved || isEntered) && (
+                                        <Button
+                                          type='button'
+                                          variant='ghost'
+                                          size='icon'
+                                          className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 shrink-0'
+                                          disabled={
+                                            !canDeleteRow || isDeletingSavedKey
+                                          }
+                                          aria-label={deleteTooltip}
+                                          title={deleteTooltip}
+                                          onClick={() => {
+                                            if (
+                                              isEntered &&
+                                              k.enteredIndex !== undefined
+                                            ) {
+                                              handleRemoveEnteredKey(
+                                                k.enteredIndex,
+                                                k.index
+                                              )
+                                              return
+                                            }
+                                            if (isSaved && canDeleteRow) {
+                                              const parts = [
+                                                `#${k.index + 1}`,
+                                                customName.trim(),
+                                                k.key_preview || '',
+                                              ].filter(Boolean)
+                                              setPendingDeleteSavedKey({
+                                                index: k.index,
+                                                label: parts.join(' · '),
+                                              })
+                                            }
+                                          }}
+                                        >
+                                          <Trash2 className='size-3.5' />
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
+                                  {isSaved &&
+                                    k.status !== 1 &&
+                                    (Boolean(k.reason) ||
+                                      Boolean(k.disabled_time)) && (
+                                      <div
+                                        className={cn(
+                                          'flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-6 text-[11px]',
+                                          k.status === 3
+                                            ? 'text-destructive/90'
+                                            : 'text-muted-foreground'
+                                        )}
+                                      >
+                                        {k.reason && (
+                                          <span
+                                            className='truncate'
+                                            title={k.reason}
+                                          >
+                                            {t('Disabled Reason')}: {k.reason}
+                                          </span>
+                                        )}
+                                        {k.disabled_time != null &&
+                                          k.disabled_time > 0 && (
+                                            <span className='shrink-0 opacity-75'>
+                                              ({formatTimestamp(k.disabled_time)})
+                                            </span>
+                                          )}
+                                      </div>
+                                    )}
                                 </div>
                               )
                             })}
@@ -5408,6 +5692,21 @@ export function ChannelMutateDrawer({
           if (!v) handlePassthroughWarningAction(false)
         }}
         handleConfirm={() => handlePassthroughWarningAction(true)}
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteSavedKey !== null}
+        onOpenChange={(v) => {
+          if (!v && !isDeletingSavedKey) setPendingDeleteSavedKey(null)
+        }}
+        title={t('Delete key')}
+        desc={t(
+          'Are you sure you want to delete key {{label}}? This action cannot be undone.',
+          { label: pendingDeleteSavedKey?.label ?? '' }
+        )}
+        destructive
+        isLoading={isDeletingSavedKey}
+        handleConfirm={() => void handleConfirmDeleteSavedKey()}
       />
     </>
   )

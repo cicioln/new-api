@@ -8248,7 +8248,12 @@
     "Concurrency": "並發",
     "Global ({{count}})": "全域({{count}})",
     "Unnamed": "未命名",
-    "Edit key name": "編輯金鑰名稱"
+    "Edit key name": "編輯金鑰名稱",
+    "Delete key": "刪除金鑰",
+    "Remove key": "移除該行金鑰",
+    "Pending save": "待儲存",
+    "Abnormal (Auto Disabled)": "異常（自動禁用）",
+    "Are you sure you want to delete key {{label}}? This action cannot be undone.": "確定要刪除金鑰 {{label}} 嗎？此操作無法復原。"
   },
   "Video duration is below the selected model tier": "影片實際時長未達所選模型級別要求"
 }
