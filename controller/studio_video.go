@@ -85,7 +85,7 @@ func relayStudioVideo(c *gin.Context) {
 	}
 	writer := &captureWriter{ResponseWriter: c.Writer}
 	c.Writer = writer
-	RelayTask(c)
+	RelayTaskPluginEndpoint(c, RelayTask)
 	c.Writer = writer.ResponseWriter
 
 	if body == nil || writer.Status() != http.StatusOK {

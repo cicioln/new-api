@@ -1998,3 +1998,93 @@ func TestPrepareTaskPluginEndpointFiltersEachSharedCandidate(t *testing.T) {
 		})
 	}
 }
+
+func TestPlaygroundVideoEndpointPinsAndPreparesTaskPlugin(t *testing.T) {
+	require.NoError(t, appI18n.Init())
+	const pluginKey = "pg-video-endpoint-test"
+	const pluginSource = `
+export const meta = {
+  apiVersion: 1,
+  key: "pg-video-endpoint-test",
+  name: "PG Video Endpoint Test",
+  version: "1.0.0",
+  author: { name: "Test" },
+  models: ["pg-plugin-video-10s"],
+  fetchMode: "per_task",
+  protocols: ["openai_video"],
+};
+export function buildSubmitRequest(ctx) {
+  return { url: ctx.baseUrl + "/v1/videos", method: "POST", body: ctx.requestBody };
+}
+export function parseSubmitResponse(res) { return { upstreamTaskId: res.body.id }; }
+export function buildQueryRequest(ctx) { return { url: ctx.baseUrl + "/v1/videos/" + ctx.upstreamTaskId, method: "GET" }; }
+export function parseTaskResult(res) { return { status: "SUCCESS" }; }
+export function listArtifacts() { return [{ key: "video", type: "video" }]; }
+export function buildContentRequest(ctx) { return { url: ctx.baseUrl + "/v1/videos/" + ctx.upstreamTaskId + "/content", method: "GET" }; }
+export const protocols = {
+  openai_video: {
+    decodeRequest: function(ctx) {
+      if (ctx.path !== "/v1/videos") {
+        throw new Error("unexpected protocol path: " + ctx.path);
+      }
+      return {
+        kind: "submit",
+        model: ctx.model,
+        action: "text_to_video",
+        requestBody: Object.assign({}, ctx.body.value, { model: ctx.model }),
+      };
+    },
+    render: function(ctx, task) { return { id: task.task_id, status: "queued" }; },
+  },
+};
+`
+	_, err := jsplugin.DefaultRegistry.Register(pluginSource, jsplugin.Options{})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = jsplugin.DefaultRegistry.Unregister(pluginKey) })
+
+	t.Run("plugin claimed model pins and matches task plugin channel", func(t *testing.T) {
+		router := gin.New()
+		router.POST("/pg/videos", PinTaskPluginEndpoint(), PrepareTaskPluginEndpoint(), func(c *gin.Context) {
+			pinned := c.MustGet(jsplugin.ContextKeyPinnedEndpoint).(jsplugin.PinnedEndpoint)
+			assert.Equal(t, pluginKey, pinned.Plugin.Meta.Key)
+			assert.Equal(t, "openai_video", pinned.Protocol)
+			assert.Equal(t, "create", pinned.Operation.Name)
+			assert.Equal(t, pluginKey, c.GetString("expected_task_plugin_key"))
+			assert.Equal(t, "text_to_video", c.GetString("task_action"))
+			assert.Equal(t, "pg-plugin-video-10s", c.GetString("resolved_task_model"))
+
+			setting := `{"task_plugin_key":"` + pluginKey + `"}`
+			ch := &model.Channel{Id: 25, Type: constant.ChannelTypeTaskPlugin, Setting: &setting}
+			ok, kind := model.ChannelSatisfiesFilters(ch, "pg-plugin-video-10s", service.GetChannelConstraints(c).Filters)
+			assert.True(t, ok, "expected task plugin channel to satisfy filters, rejected by %s", kind)
+
+			// Verify request body remains reusable for Distribute() playground group parsing.
+			var bodyCheck map[string]any
+			require.NoError(t, common.UnmarshalBodyReusable(c, &bodyCheck))
+			assert.Equal(t, "pg-plugin-video-10s", bodyCheck["model"])
+			c.Status(http.StatusNoContent)
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/pg/videos?group=Muse", strings.NewReader(`{"model":"pg-plugin-video-10s","prompt":"A fox in snow","seconds":"10"}`))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	})
+
+	t.Run("unclaimed model falls through without pinning", func(t *testing.T) {
+		router := gin.New()
+		router.POST("/pg/videos", PinTaskPluginEndpoint(), PrepareTaskPluginEndpoint(), func(c *gin.Context) {
+			_, exists := c.Get(jsplugin.ContextKeyPinnedEndpoint)
+			assert.False(t, exists)
+			assert.Empty(t, c.GetString("expected_task_plugin_key"))
+			c.Status(http.StatusNoContent)
+		})
+
+		req := httptest.NewRequest(http.MethodPost, "/pg/videos?group=Muse", strings.NewReader(`{"model":"legacy-video-model","prompt":"A fox in snow"}`))
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	})
+}

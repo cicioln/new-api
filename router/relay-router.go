@@ -65,12 +65,18 @@ func SetRelayRouter(router *gin.Engine) {
 	playgroundRouter := router.Group("/pg")
 	playgroundRouter.Use(middleware.RouteTag("relay"))
 	playgroundRouter.Use(middleware.SystemPerformanceCheck())
-	playgroundRouter.Use(middleware.UserAuth(), middleware.Distribute())
+	playgroundRouter.Use(middleware.UserAuth())
 	{
-		playgroundRouter.POST("/chat/completions", controller.Playground)
-		playgroundRouter.POST("/images/generations", controller.PlaygroundImage)
-		playgroundRouter.POST("/images/edits", controller.PlaygroundImage)
-		playgroundRouter.POST("/videos", controller.PlaygroundVideo)
+		playgroundRouter.POST("/chat/completions", middleware.Distribute(), controller.Playground)
+		playgroundRouter.POST("/images/generations", middleware.Distribute(), controller.PlaygroundImage)
+		playgroundRouter.POST("/images/edits", middleware.Distribute(), controller.PlaygroundImage)
+		playgroundRouter.POST(
+			"/videos",
+			middleware.PinTaskPluginEndpoint(),
+			middleware.PrepareTaskPluginEndpoint(),
+			middleware.Distribute(),
+			controller.PlaygroundVideo,
+		)
 	}
 	// Studio images are opened by <img> tags, so the signed URL is the credential.
 	router.GET("/pg/studio/media/:access/:name", middleware.RouteTag("relay"), controller.StudioImageContent)

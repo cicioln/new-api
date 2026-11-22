@@ -321,6 +321,17 @@ func PrepareTaskPluginRoute() gin.HandlerFunc {
 	}
 }
 
+// taskPluginEndpointPath maps console studio aliases to the canonical host
+// protocol path plugins declare against.
+func taskPluginEndpointPath(path string) string {
+	switch path {
+	case "/pg/videos":
+		return "/v1/videos"
+	default:
+		return path
+	}
+}
+
 // PinTaskPluginEndpoint decides shared-endpoint ownership without executing
 // plugin code. Invalid or unidentifiable ordinary requests deliberately fall
 // through so the existing endpoint remains responsible for its validation.
@@ -331,10 +342,11 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+		endpointPath := taskPluginEndpointPath(c.Request.URL.Path)
 
 		modelRequest, err := getModelFromRequest(c)
 		if err != nil {
-			if _, _, protocolPath := pluginruntime.LookupHostProtocolOperation(c.Request.Method, c.Request.URL.Path); protocolPath {
+			if _, _, protocolPath := pluginruntime.LookupHostProtocolOperation(c.Request.Method, endpointPath); protocolPath {
 				abortWithOpenAiMessage(c, invalidRequestStatus(err), i18n.T(c, i18n.MsgDistributorInvalidRequest, map[string]any{"Error": err.Error()}))
 				return
 			}
@@ -370,7 +382,7 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 				rewriteTo = target.Alias
 			}
 		}
-		binding, found := generation.LookupEndpoint(c.Request.Method, c.Request.URL.Path, lookupModel)
+		binding, found := generation.LookupEndpoint(c.Request.Method, endpointPath, lookupModel)
 		if !found || binding.Plugin == nil {
 			c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
 			c.Next()
@@ -384,7 +396,7 @@ func PinTaskPluginEndpoint() gin.HandlerFunc {
 		}
 		modelRequest.Model = pinModel
 		c.Set(contextKeyTaskPluginEndpointModel, *modelRequest)
-		candidates := generation.LookupEndpointCandidates(c.Request.Method, c.Request.URL.Path, lookupModel)
+		candidates := generation.LookupEndpointCandidates(c.Request.Method, endpointPath, lookupModel)
 		if len(candidates) == 0 {
 			candidates = []pluginruntime.ProtocolBinding{binding}
 		}
@@ -556,6 +568,7 @@ func PrepareTaskPluginEndpoint() gin.HandlerFunc {
 			abortWithOpenAiMessage(c, status, err.Error())
 			return
 		}
+		requestContext.Path = taskPluginEndpointPath(requestContext.Path)
 		if body, ok := requestContext.Body.(map[string]any); ok {
 			if fields, ok := body["fields"].(map[string][]string); ok {
 				if values := fields["model"]; len(values) > 0 && values[0] != pinned.Model {
