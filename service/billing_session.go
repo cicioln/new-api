@@ -57,7 +57,9 @@ func (s *BillingSession) Settle(actualQuota int) error {
 	}
 	// 1) 调整资金来源（仅在尚未提交时执行，防止重复调用）
 	if !s.fundingSettled {
-		if err := s.funding.Settle(delta); err != nil {
+		err := s.funding.Settle(delta)
+		s.syncSubscriptionSettleToRelayInfo()
+		if err != nil {
 			return err
 		}
 		s.fundingSettled = true
@@ -76,8 +78,10 @@ func (s *BillingSession) Settle(actualQuota int) error {
 				s.relayInfo.UserId, s.relayInfo.TokenId, delta, tokenErr.Error()))
 		}
 	}
-	// 3) 更新 relayInfo 上的订阅 PostDelta（用于日志）
-	if s.funding.Source() == BillingSourceSubscription {
+	// 3) 更新 relayInfo 上的订阅 PostDelta / WalletOverflow（用于日志与通知）
+	if _, ok := s.funding.(*SubscriptionFunding); ok {
+		s.syncSubscriptionSettleToRelayInfo()
+	} else if s.funding.Source() == BillingSourceSubscription {
 		s.relayInfo.SubscriptionPostDelta += int64(delta)
 	}
 	s.settled = true
@@ -138,6 +142,10 @@ func (s *BillingSession) NeedsRefund() bool {
 func (s *BillingSession) needsRefundLocked() bool {
 	if s.settled || s.refunded || s.fundingSettled {
 		// fundingSettled 时资金来源已提交结算，不能再退预扣费
+		return false
+	}
+	// 订阅已提交结算（即便后续钱包溢出扣费失败），同样禁止回退预扣费
+	if sub, ok := s.funding.(*SubscriptionFunding); ok && sub.HasSettledSnapshot {
 		return false
 	}
 	if s.tokenConsumed > 0 {
@@ -363,6 +371,7 @@ func (s *BillingSession) syncRelayInfo() {
 		info.SubscriptionId = sub.subscriptionId
 		info.SubscriptionPreConsumed = sub.preConsumed + int64(s.extraReserved)
 		info.SubscriptionPostDelta = 0
+		info.SubscriptionWalletOverflow = 0
 		info.SubscriptionAmountTotal = sub.AmountTotal
 		info.SubscriptionAmountUsedAfterPreConsume = sub.AmountUsedAfter + int64(s.extraReserved)
 		info.SubscriptionPlanId = sub.PlanId
@@ -370,7 +379,21 @@ func (s *BillingSession) syncRelayInfo() {
 	} else {
 		info.SubscriptionId = 0
 		info.SubscriptionPreConsumed = 0
+		info.SubscriptionWalletOverflow = 0
 	}
+}
+
+func (s *BillingSession) syncSubscriptionSettleToRelayInfo() {
+	sub, ok := s.funding.(*SubscriptionFunding)
+	if !ok || !sub.HasSettledSnapshot || s.relayInfo == nil {
+		return
+	}
+	s.relayInfo.SubscriptionPostDelta = sub.SettledSubDelta
+	s.relayInfo.SubscriptionWalletOverflow = sub.SettledWalletOverflow
+	if sub.AmountTotal > 0 {
+		s.relayInfo.SubscriptionAmountTotal = sub.AmountTotal
+	}
+	s.relayInfo.SubscriptionAmountUsedAfterPreConsume = sub.SettledAmountUsed - sub.SettledSubDelta
 }
 
 // ---------------------------------------------------------------------------

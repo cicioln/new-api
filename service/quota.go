@@ -444,10 +444,21 @@ func postConsumeQuotaWithResult(relayInfo *relaycommon.RelayInfo, quota int, pre
 		}
 		delta := int64(quota)
 		if delta != 0 {
-			if err := model.PostConsumeUserSubscriptionDelta(relayInfo.SubscriptionId, delta); err != nil {
-				return result, err
+			res, settleErr := model.SettleUserSubscriptionDelta(relayInfo.SubscriptionId, delta)
+			if settleErr != nil {
+				return result, settleErr
 			}
-			relayInfo.SubscriptionPostDelta += delta
+			relayInfo.SubscriptionPostDelta += res.SubscriptionDelta
+			if res.AmountTotal > 0 {
+				relayInfo.SubscriptionAmountTotal = res.AmountTotal
+			}
+			relayInfo.SubscriptionAmountUsedAfterPreConsume = res.AmountUsed - relayInfo.SubscriptionPostDelta
+			if res.Overflow > 0 {
+				if err := model.DecreaseUserQuota(relayInfo.UserId, int(res.Overflow), false); err != nil {
+					return result, err
+				}
+				relayInfo.SubscriptionWalletOverflow += res.Overflow
+			}
 		}
 	} else {
 		// Wallet

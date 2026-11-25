@@ -89,6 +89,12 @@ type SubscriptionFunding struct {
 	AmountUsedAfter int64
 	PlanId          int
 	PlanTitle       string
+	// 以下字段在 Settle 后填充，供 BillingSession 同步到 RelayInfo
+	SettledSubDelta       int64
+	SettledWalletOverflow int64
+	SettledAmountUsed     int64
+	HasSettledSnapshot    bool
+	pendingWalletOverflow int64
 }
 
 func (s *SubscriptionFunding) Source() string { return BillingSourceSubscription }
@@ -115,7 +121,32 @@ func (s *SubscriptionFunding) Settle(delta int) error {
 	if delta == 0 {
 		return nil
 	}
-	return model.PostConsumeUserSubscriptionDelta(s.subscriptionId, int64(delta))
+	if s.pendingWalletOverflow > 0 {
+		if err := model.DecreaseUserQuota(s.userId, int(s.pendingWalletOverflow), false); err != nil {
+			return err
+		}
+		s.SettledWalletOverflow += s.pendingWalletOverflow
+		s.pendingWalletOverflow = 0
+		return nil
+	}
+	res, err := model.SettleUserSubscriptionDelta(s.subscriptionId, int64(delta))
+	if err != nil {
+		return err
+	}
+	s.SettledSubDelta += res.SubscriptionDelta
+	s.SettledAmountUsed = res.AmountUsed
+	s.HasSettledSnapshot = true
+	if res.AmountTotal > 0 {
+		s.AmountTotal = res.AmountTotal
+	}
+	if res.Overflow > 0 {
+		if err := model.DecreaseUserQuota(s.userId, int(res.Overflow), false); err != nil {
+			s.pendingWalletOverflow = res.Overflow
+			return err
+		}
+		s.SettledWalletOverflow += res.Overflow
+	}
+	return nil
 }
 
 func (s *SubscriptionFunding) Refund() error {

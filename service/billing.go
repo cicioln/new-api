@@ -76,6 +76,14 @@ func SettleBilling(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, actualQuo
 			return err
 		}
 
+		if relayInfo.SubscriptionWalletOverflow > 0 {
+			logger.LogInfo(ctx, common.LogText("subscription quota exhausted during settlement, charged overflow %s to wallet (subscription_id=%d, user_id=%d)",
+				logger.FormatQuota(int(relayInfo.SubscriptionWalletOverflow)),
+				relayInfo.SubscriptionId,
+				relayInfo.UserId,
+			))
+		}
+
 		// 发送额度通知（订阅计费使用订阅剩余额度）
 		if actualQuota != 0 {
 			if relayInfo.BillingSource == BillingSourceSubscription {

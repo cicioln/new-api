@@ -1535,3 +1535,76 @@ func PostConsumeUserSubscriptionDelta(userSubscriptionId int, delta int64) error
 		return tx.Save(&sub).Error
 	})
 }
+
+type SubscriptionSettleResult struct {
+	SubscriptionDelta int64
+	Overflow          int64
+	AmountTotal       int64
+	AmountUsed        int64
+}
+
+// SettleUserSubscriptionDelta applies a post-execution delta to a user subscription.
+// Unlike PostConsumeUserSubscriptionDelta (which rejects over-limit reservations),
+// a positive delta exceeding AmountTotal caps AmountUsed at AmountTotal and returns
+// the excess in Overflow so callers can charge the remainder to the user's wallet.
+func SettleUserSubscriptionDelta(userSubscriptionId int, delta int64) (*SubscriptionSettleResult, error) {
+	if userSubscriptionId <= 0 {
+		return nil, errors.New("invalid userSubscriptionId")
+	}
+	res := &SubscriptionSettleResult{}
+	if delta == 0 {
+		return res, nil
+	}
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var sub UserSubscription
+		if err := lockForUpdate(tx).
+			Where("id = ?", userSubscriptionId).
+			First(&sub).Error; err != nil {
+			return err
+		}
+		if delta < 0 {
+			newUsed := max(sub.AmountUsed+delta, 0)
+			applied := newUsed - sub.AmountUsed
+			if applied != 0 {
+				sub.AmountUsed = newUsed
+				if err := tx.Save(&sub).Error; err != nil {
+					return err
+				}
+			}
+			res.SubscriptionDelta = applied
+			res.AmountTotal = sub.AmountTotal
+			res.AmountUsed = sub.AmountUsed
+			return nil
+		}
+
+		if sub.AmountTotal > 0 {
+			remain := max(sub.AmountTotal-sub.AmountUsed, 0)
+			if delta > remain {
+				if remain > 0 {
+					sub.AmountUsed = sub.AmountTotal
+					if err := tx.Save(&sub).Error; err != nil {
+						return err
+					}
+				}
+				res.SubscriptionDelta = remain
+				res.Overflow = delta - remain
+				res.AmountTotal = sub.AmountTotal
+				res.AmountUsed = sub.AmountUsed
+				return nil
+			}
+		}
+
+		sub.AmountUsed += delta
+		if err := tx.Save(&sub).Error; err != nil {
+			return err
+		}
+		res.SubscriptionDelta = delta
+		res.AmountTotal = sub.AmountTotal
+		res.AmountUsed = sub.AmountUsed
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
