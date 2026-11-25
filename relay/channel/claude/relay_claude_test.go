@@ -1,10 +1,13 @@
 package claude
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
@@ -503,4 +506,172 @@ func TestClaudeResponsePassesInputTransformationsThrough(t *testing.T) {
 		transformations + `,"usage":{"input_tokens":5,"output_tokens":1}}}`
 	require.Nil(t, HandleStreamResponseData(c, info, &ClaudeResponseInfo{Usage: &dto.Usage{}}, event))
 	assert.Contains(t, w.Body.String(), "data: "+event+"\n")
+}
+
+func TestClaudeStreamHandler_RejectsErrorsAndPrematureEmptyEOF(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	previousTimeout := constant.StreamingTimeout
+	constant.StreamingTimeout = 30
+	t.Cleanup(func() { constant.StreamingTimeout = previousTimeout })
+
+	msgStart := `event: message_start` + "\n" +
+		`data: {"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5","content":[],"usage":{"input_tokens":0,"output_tokens":0}}}` + "\n\n"
+	msgStartWithPlaceholder := `event: message_start` + "\n" +
+		`data: {"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5","content":[],"usage":{"input_tokens":50000,"output_tokens":1}}}` + "\n\n"
+
+	for _, tc := range []struct {
+		name           string
+		body           string
+		wantStatus     int
+		wantSkipRetry  bool
+		wantMsgContain string
+	}{
+		{
+			name:           "bare JSON error appended after message_start",
+			body:           msgStart + `{"error":{"message":"Quota exhausted (429) on AmazonQ","type":"api_error"},"type":"error"}` + "\n",
+			wantStatus:     http.StatusInternalServerError,
+			wantMsgContain: "Quota exhausted (429) on AmazonQ",
+		},
+		{
+			name:           "SSE error event without inner error type",
+			body:           msgStart + "event: error\ndata: {\"type\":\"error\",\"error\":{\"message\":\"upstream 500 failure\"}}\n\n",
+			wantStatus:     http.StatusInternalServerError,
+			wantMsgContain: "upstream 500 failure",
+		},
+		{
+			name:           "premature EOF after message_start without output",
+			body:           msgStart,
+			wantStatus:     http.StatusBadGateway,
+			wantSkipRetry:  true,
+			wantMsgContain: "ended prematurely",
+		},
+		{
+			name:           "premature EOF after message_start placeholder output_tokens=1",
+			body:           msgStartWithPlaceholder,
+			wantStatus:     http.StatusBadGateway,
+			wantSkipRetry:  true,
+			wantMsgContain: "ended prematurely",
+		},
+		{
+			name:           "completely empty 200 SSE body remains retryable",
+			body:           "",
+			wantStatus:     http.StatusBadGateway,
+			wantSkipRetry:  false,
+			wantMsgContain: "ended prematurely",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+			info := &relaycommon.RelayInfo{
+				RelayFormat: types.RelayFormatClaude,
+				IsStream:    true,
+				DisablePing: true,
+				ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: "claude-opus-5-5"},
+			}
+			info.SetEstimatePromptTokens(87447)
+
+			resp := &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": {"text/event-stream"}},
+				Body:       io.NopCloser(strings.NewReader(tc.body)),
+			}
+			usage, apiErr := ClaudeStreamHandler(c, resp, info)
+			require.NotNil(t, apiErr)
+			assert.Nil(t, usage)
+			assert.Equal(t, tc.wantStatus, apiErr.StatusCode)
+			assert.Equal(t, tc.wantSkipRetry, types.IsSkipRetryError(apiErr))
+			assert.Contains(t, apiErr.Error(), tc.wantMsgContain)
+		})
+	}
+}
+
+func TestClaudeStreamHandler_StillBillsPartialOutputAndClientCancel(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	previousTimeout := constant.StreamingTimeout
+	constant.StreamingTimeout = 30
+	t.Cleanup(func() { constant.StreamingTimeout = previousTimeout })
+
+	t.Run("partial text before EOF still bills", func(t *testing.T) {
+		body := "event: message_start\n" +
+			`data: {"type":"message_start","message":{"id":"msg_1","model":"claude-opus-5-5","usage":{"input_tokens":0,"output_tokens":0}}}` + "\n\n" +
+			"event: content_block_delta\n" +
+			`data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello world"}}` + "\n\n"
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+		info := &relaycommon.RelayInfo{
+			RelayFormat: types.RelayFormatClaude,
+			IsStream:    true,
+			DisablePing: true,
+			ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: "claude-opus-5-5"},
+		}
+		info.SetEstimatePromptTokens(1200)
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": {"text/event-stream"}},
+			Body:       io.NopCloser(strings.NewReader(body)),
+		}
+		usage, apiErr := ClaudeStreamHandler(c, resp, info)
+		require.Nil(t, apiErr)
+		require.NotNil(t, usage)
+		assert.Equal(t, 1200, usage.PromptTokens)
+		assert.Greater(t, usage.CompletionTokens, 0)
+	})
+
+	t.Run("client disconnect after message_start keeps settlement", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		pr, pw := io.Pipe()
+		defer pr.Close()
+		defer pw.Close()
+
+		firstWrite := make(chan struct{})
+		w := &firstWriteRecorder{
+			ResponseRecorder: httptest.NewRecorder(),
+			firstWrite:       firstWrite,
+		}
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil).WithContext(ctx)
+		info := &relaycommon.RelayInfo{
+			RelayFormat: types.RelayFormatClaude,
+			IsStream:    true,
+			DisablePing: true,
+			ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: "claude-opus-5-5"},
+		}
+		info.SetEstimatePromptTokens(1200)
+		resp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": {"text/event-stream"}},
+			Body:       pr,
+		}
+
+		go func() {
+			_, _ = io.WriteString(pw, "event: message_start\n"+
+				`data: {"type":"message_start","message":{"id":"msg_1","model":"claude-opus-5-5","usage":{"input_tokens":500,"output_tokens":0}}}`+"\n\n")
+			<-firstWrite
+			cancel()
+		}()
+
+		usage, apiErr := ClaudeStreamHandler(c, resp, info)
+		require.Nil(t, apiErr)
+		require.NotNil(t, usage)
+		assert.Equal(t, 500, usage.PromptTokens)
+		assert.Equal(t, relaycommon.StreamEndReasonClientGone, info.StreamStatus.EndReason)
+	})
+}
+
+type firstWriteRecorder struct {
+	*httptest.ResponseRecorder
+	firstWrite chan struct{}
+	once       sync.Once
+}
+
+func (r *firstWriteRecorder) Write(p []byte) (int, error) {
+	n, err := r.ResponseRecorder.Write(p)
+	if n > 0 {
+		r.once.Do(func() { close(r.firstWrite) })
+	}
+	return n, err
 }

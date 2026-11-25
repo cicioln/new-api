@@ -96,7 +96,7 @@ func ClaudeResponsesStreamHandler(c *gin.Context, resp *http.Response, info *rel
 			sr.Stop(streamErr)
 			return
 		}
-		if claudeError := claudeResponse.GetClaudeError(); claudeError != nil && claudeError.Type != "" {
+		if claudeError := extractClaudeStreamError(&claudeResponse); claudeError != nil {
 			if failResponsesStream(fmt.Errorf("%s", claudeError.Message)) {
 				sr.Stop(streamErr)
 				return
@@ -159,11 +159,24 @@ func ClaudeResponsesStreamHandler(c *gin.Context, resp *http.Response, info *rel
 			}
 		}
 	})
+	info.StreamStatus.RequireTerminal()
 	if streamErr != nil {
 		return nil, streamErr
 	}
 	if streamFailed {
+		if claudeInfo.ResponseText.Len() == 0 && claudeInfo.ToolUseCount == 0 && !claudeInfo.Done {
+			return &dto.Usage{}, nil
+		}
 		return claudeInfo.Usage, nil
+	}
+	if incompleteErr := incompleteEmptyClaudeStreamError(info, claudeInfo); incompleteErr != nil {
+		if failResponsesStream(incompleteErr) {
+			if streamErr != nil {
+				return nil, streamErr
+			}
+			return &dto.Usage{}, nil
+		}
+		return nil, incompleteErr
 	}
 
 	HandleStreamFinalResponse(c, info, claudeInfo)
