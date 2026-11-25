@@ -180,3 +180,17 @@ func TestStreamStatus_Summary_NilSafe(t *testing.T) {
 	var s *StreamStatus
 	assert.Equal(t, "StreamStatus<nil>", s.Summary())
 }
+
+func TestStreamStatus_MissingTerminal(t *testing.T) {
+	t.Parallel()
+	var nilStatus *StreamStatus
+	assert.False(t, nilStatus.MissingTerminal())
+
+	s := NewStreamStatus()
+	assert.False(t, s.MissingTerminal())
+	s.RequireTerminal()
+	assert.True(t, s.MissingTerminal())
+
+	s.MarkCompleted()
+	assert.False(t, s.MissingTerminal())
+}

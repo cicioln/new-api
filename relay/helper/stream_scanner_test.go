@@ -272,6 +272,21 @@ func TestStreamScannerHandler_SkipsNonDataLines(t *testing.T) {
 	assert.Equal(t, int64(100), count.Load())
 }
 
+func TestStreamScannerHandler_ForwardsBareJSONErrorLine(t *testing.T) {
+	t.Parallel()
+
+	bareErr := `{"error":{"message":"Quota exhausted (429) on AmazonQ","type":"api_error"},"type":"error"}`
+	body := "event: message_start\ndata: {\"type\":\"message_start\"}\n\n" + bareErr + "\n"
+	c, resp, info := setupStreamTest(t, strings.NewReader(body))
+
+	var received []string
+	StreamScannerHandler(c, resp, info, func(data string, sr *StreamResult) {
+		received = append(received, data)
+	})
+
+	require.Equal(t, []string{`{"type":"message_start"}`, bareErr}, received)
+}
+
 func TestStreamScannerHandler_DataWithExtraSpaces(t *testing.T) {
 	t.Parallel()
 

@@ -103,6 +103,68 @@ func FormatClaudeResponseInfo(claudeResponse *dto.ClaudeResponse, oaiResponse *d
 	return relayconvert.FormatClaudeResponseInfo(claudeResponse, oaiResponse, claudeInfo)
 }
 
+func extractClaudeStreamError(claudeResponse *dto.ClaudeResponse) *types.ClaudeError {
+	if claudeResponse == nil {
+		return nil
+	}
+	if claudeError := claudeResponse.GetClaudeError(); claudeError != nil && (claudeError.Type != "" || claudeError.Message != "") {
+		if claudeError.Type == "" {
+			claudeError.Type = "upstream_error"
+		}
+		return claudeError
+	}
+	if claudeResponse.Type == "error" {
+		return &types.ClaudeError{
+			Type:    "upstream_error",
+			Message: "upstream returned an error event",
+		}
+	}
+	return nil
+}
+
+// incompleteEmptyClaudeStreamError rejects a Claude SSE stream that ended
+// upstream without reaching message_delta/message_stop and without streaming
+// any content or tool call. Proxies that flush HTTP 200 + message_start before
+// failing upstream otherwise fall through to local prompt-token estimation and
+// bill failed requests. Client disconnects keep normal settlement.
+func incompleteEmptyClaudeStreamError(info *relaycommon.RelayInfo, claudeInfo *ClaudeResponseInfo) *types.NewAPIError {
+	if claudeInfo == nil || claudeInfo.Done {
+		return nil
+	}
+	if info != nil && info.StreamStatus != nil {
+		if info.StreamStatus.ResponseOutcome() == string(relaycommon.ResponseOutcomeCompleted) {
+			return nil
+		}
+		if info.StreamStatus.EndReason == relaycommon.StreamEndReasonClientGone {
+			return nil
+		}
+	}
+	if claudeInfo.ResponseText.Len() > 0 || claudeInfo.ToolUseCount > 0 {
+		return nil
+	}
+	if claudeInfo.Usage != nil && claudeInfo.Usage.CompletionTokens > 1 {
+		// Anthropic message_start often reports output_tokens=1 as a placeholder
+		// before any content block is emitted; only >1 indicates real output
+		// when no content deltas were received.
+		return nil
+	}
+	if info != nil && info.StreamStatus != nil {
+		info.StreamStatus.MarkFailed(string(types.ErrorCodeEmptyResponse), string(types.ErrorTypeUpstreamError), http.StatusBadGateway)
+	}
+	var opts []types.NewAPIErrorOptions
+	if info != nil && info.ReceivedResponseCount > 0 {
+		opts = append(opts, types.ErrOptionWithSkipRetry())
+	}
+	return types.WithClaudeError(
+		types.ClaudeError{
+			Type:    "api_error",
+			Message: "upstream stream ended prematurely without completing message",
+		},
+		http.StatusBadGateway,
+		opts...,
+	)
+}
+
 func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claudeInfo *ClaudeResponseInfo, data string) *types.NewAPIError {
 	var claudeResponse dto.ClaudeResponse
 	err := common.UnmarshalJsonStr(data, &claudeResponse)
@@ -110,7 +172,7 @@ func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claud
 		common.SysLog(common.LogText("error unmarshalling stream response: %s", err.Error()))
 		return types.NewError(err, types.ErrorCodeBadResponseBody)
 	}
-	if claudeError := claudeResponse.GetClaudeError(); claudeError != nil && claudeError.Type != "" {
+	if claudeError := extractClaudeStreamError(&claudeResponse); claudeError != nil {
 		return types.WithClaudeError(*claudeError, http.StatusInternalServerError)
 	}
 	if claudeResponse.Type == "message_start" && claudeResponse.Message != nil {
@@ -354,6 +416,9 @@ func ClaudeStreamHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	info.StreamStatus.RequireTerminal()
 	if err != nil {
 		return nil, err
+	}
+	if incompleteErr := incompleteEmptyClaudeStreamError(info, claudeInfo); incompleteErr != nil {
+		return nil, incompleteErr
 	}
 
 	HandleStreamFinalResponse(c, info, claudeInfo)

@@ -170,6 +170,15 @@ func (s *StreamStatus) ResponseFailed() bool {
 	return s.ResponseOutcome() == string(ResponseOutcomeFailed)
 }
 
+func (s *StreamStatus) MissingTerminal() bool {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.expectsTerminal && s.response == ResponseOutcomeUnknown
+}
+
 func (s *StreamStatus) OutcomeSnapshot() StreamOutcome {
 	if s == nil {
 		return StreamOutcome{}

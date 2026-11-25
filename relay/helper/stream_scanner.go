@@ -117,6 +117,25 @@ func (w *streamResponseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
+// extractStreamLineData extracts the payload from an SSE stream line.
+// In addition to standard `data:` and `[DONE]` lines, it preserves bare JSON
+// error objects (e.g. `{"type":"error",...}` or `{"error":...}`) appended
+// mid-stream by proxies or older gateways after HTTP 200 headers were flushed.
+func extractStreamLineData(line string) (string, bool) {
+	if len(line) >= 5 && line[:5] == "data:" {
+		payload := strings.TrimSpace(line[5:])
+		return payload, payload != ""
+	}
+	if len(line) >= 6 && line[:6] == "[DONE]" {
+		return "[DONE]", true
+	}
+	trimmed := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmed, "{") && strings.HasSuffix(trimmed, "}") && strings.Contains(trimmed, `"error"`) {
+		return trimmed, true
+	}
+	return "", false
+}
+
 func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo, dataHandler func(data string, sr *StreamResult)) {
 
 	if resp == nil || dataHandler == nil {
@@ -298,15 +317,8 @@ func StreamScannerHandler(c *gin.Context, resp *http.Response, info *relaycommon
 			data := scanner.Text()
 			logger.LogDebug(c, "stream scanner data: %s", data)
 
-			if len(data) < 6 {
-				continue
-			}
-			if data[:5] != "data:" && data[:6] != "[DONE]" {
-				continue
-			}
-			data = data[5:]
-			data = strings.TrimSpace(data)
-			if data == "" {
+			data, ok := extractStreamLineData(data)
+			if !ok {
 				continue
 			}
 			if !strings.HasPrefix(data, "[DONE]") {
